@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import type { Profile, MatchHistory } from '../types';
 import { ProfileDashboard } from './ProfileDashboard';
 import { exportElementAsImage } from '../utils/exportImage';
+import { MatchImageExport } from './MatchImageExport';
 
 interface ProfileTabProps {
   profiles: Record<string, Profile>;
@@ -88,10 +89,13 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                   <button 
                     className="btn-ghost" 
                     style={{ fontSize: '0.85em', padding: '4px 8px' }}
-                    onClick={() => exportElementAsImage(`history-item-${i}`, `Dartcounter-Match-${m.date.replace(/[^a-zA-Z0-9]/g, '-')}.png`)}
+                    onClick={() => exportElementAsImage(`export-node-${i}`, `Dartcounter-Match-${m.date.replace(/[^a-zA-Z0-9]/g, '-')}.png`)}
                   >
                     📸 Als Bild teilen
                   </button>
+                  <div style={{ position: 'absolute', left: '-15000px', top: 0 }}>
+                    <MatchImageExport matchData={m} profiles={profiles} exportId={`export-node-${i}`} />
+                  </div>
                 </div>
               </div>
             ))

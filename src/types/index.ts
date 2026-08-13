@@ -77,6 +77,10 @@ export interface PlayerStats {
   checkoutSuccesses?: number;
   bestMatchLeg?: number;
   legHistory?: string[];
+  hundredPlus?: number;
+  oneFortyPlus?: number;
+  oneEighty?: number;
+  highestCheckout?: number;
 }
 
 export interface MatchHistory {

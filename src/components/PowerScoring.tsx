@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import type { Profile, Dart } from '../types';
 import { Keypad } from './Keypad';
 import { getBotDart } from '../utils/bot';
-import { playDartHitSound, playSciFiHitSound } from '../utils/audio';
+import { playDartHitSound, playSciFiHitSound, speak, play180Sound } from '../utils/audio';
 
 interface PowerScoringProps {
   players: string[];
@@ -93,6 +93,13 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
   const processRoundEnd = (darts: Dart[]) => {
     const roundScore = darts.reduce((sum, d) => sum + d.value, 0);
     
+    // Announce score
+    if (roundScore === 180) {
+      play180Sound();
+    } else {
+      speak(roundScore.toString());
+    }
+    
     setGameState(prev => {
       const newState = [...prev];
       newState[activePlayer].score += roundScore;
@@ -102,6 +109,8 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
     if (activePlayer === players.length - 1) {
       if (currentRound === rounds) {
         // Game Over
+        setCurrentRoundDarts([]); // Fix visual double bug
+        
         const finalResults = gameState.map((p, i) => ({
            name: p.name,
            score: p.score + (i === activePlayer ? roundScore : 0)

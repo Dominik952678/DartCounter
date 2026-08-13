@@ -13,6 +13,8 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, onStartMiniG
   const [playerCount, setPlayerCount] = useState<number>(1);
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
   const [powerScoringRounds, setPowerScoringRounds] = useState<number>(10);
+  const [checkoutRounds, setCheckoutRounds] = useState<number>(1);
+  const [checkoutTargets, setCheckoutTargets] = useState<number>(10);
 
   const profileNames = Object.keys(profiles);
 
@@ -57,7 +59,9 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, onStartMiniG
     }
 
     onStartMiniGame(selectedMode, chosenPlayers, {
-      rounds: powerScoringRounds
+      rounds: powerScoringRounds,
+      checkoutRounds: checkoutRounds,
+      checkoutTargets: checkoutTargets
     });
   };
 
@@ -160,6 +164,53 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, onStartMiniG
                 ))}
               </div>
             </div>
+          )}
+
+          {selectedMode === 'checkout' && (
+            <>
+            <div className="card">
+              <div className="card-header">
+                <h2>Rundenlimit (Anzahl Targets)</h2>
+              </div>
+              <div className="segment-control">
+                {[5, 10, 15, 20].map(r => (
+                  <label key={r} className={checkoutTargets === r ? 'active' : ''}>
+                    <input 
+                      type="radio" 
+                      name="checkoutTargets" 
+                      value={r} 
+                      checked={checkoutTargets === r}
+                      onChange={() => setCheckoutTargets(r)}
+                    />
+                    <span>{r}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="card">
+              <div className="card-header">
+                <h2>Versuche pro Finish (Runden)</h2>
+              </div>
+              <div className="segment-control">
+                {[1, 2, 3, 5].map(r => (
+                  <label key={r} className={checkoutRounds === r ? 'active' : ''}>
+                    <input 
+                      type="radio" 
+                      name="checkoutRounds" 
+                      value={r} 
+                      checked={checkoutRounds === r}
+                      onChange={() => setCheckoutRounds(r)}
+                    />
+                    <span>{r} {r === 1 ? 'Runde' : 'Runden'}</span>
+                  </label>
+                ))}
+              </div>
+              <p style={{ fontSize: '0.85em', color: '#888', marginTop: '10px', textAlign: 'center' }}>
+                1 Runde = 3 Darts um das Finish zu checken.
+              </p>
+            </div>
+            </>
           )}
 
           <button className="btn-success btn-large" onClick={handleStart}>

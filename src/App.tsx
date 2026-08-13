@@ -541,7 +541,11 @@ export default function App() {
             checkoutAttempts: p.checkoutAttempts,
             checkoutSuccesses: p.checkoutSuccesses,
             bestMatchLeg: p.bestMatchLeg,
-            legHistory: [...p.legHistory]
+            legHistory: [...p.legHistory],
+            hundredPlus: p.hundredPlus,
+            oneFortyPlus: p.oneFortyPlus,
+            oneEighty: p.oneEighty,
+            highestCheckout: p.highestCheckout
         }))
     };
     
@@ -712,6 +716,8 @@ export default function App() {
         <CheckoutTraining 
           players={miniGameConfig.players}
           profiles={profiles}
+          checkoutRounds={miniGameConfig.settings.checkoutRounds || 1}
+          checkoutTargets={miniGameConfig.settings.checkoutTargets || 10}
           onAbort={() => setScreen('start')}
           onFinish={async (results) => {
              const newProfiles = { ...profiles };

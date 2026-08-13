@@ -3,11 +3,13 @@ import type { Profile, Dart } from '../types';
 import { Keypad } from './Keypad';
 import { getCheckoutSuggestion } from '../utils/checkouts';
 import { getBotDart } from '../utils/bot';
-import { playDartHitSound, playSciFiHitSound } from '../utils/audio';
+import { playDartHitSound, playSciFiHitSound, speak } from '../utils/audio';
 
 interface CheckoutTrainingProps {
   players: string[];
   profiles: Record<string, Profile>;
+  checkoutRounds: number;
+  checkoutTargets: number;
   onFinish: (results: { name: string; score: number; roundsCompleted: number; attempts: number; dartsUsed: number }[]) => void;
   onAbort: () => void;
 }
@@ -19,6 +21,8 @@ interface PlayerState {
   color?: string;
   targetScore: number;
   currentScore: number;
+  scoreAtStartOfRound: number;
+  roundsOnCurrentTarget: number;
   dartsUsed: number;
   roundsCompleted: number;
   attempts: number;
@@ -27,7 +31,7 @@ interface PlayerState {
 
 const generateRandomScore = () => Math.floor(Math.random() * (120 - 2 + 1)) + 2;
 
-export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, profiles, onFinish, onAbort }) => {
+export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, profiles, checkoutRounds, checkoutTargets, onFinish, onAbort }) => {
   const [gameState, setGameState] = useState<PlayerState[]>(() => 
     players.map(p => {
         const target = generateRandomScore();
@@ -38,6 +42,8 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
             color: profiles[p]?.color,
             targetScore: target,
             currentScore: target,
+            scoreAtStartOfRound: target,
+            roundsOnCurrentTarget: 0,
             dartsUsed: 0,
             roundsCompleted: 0,
             attempts: 0,
@@ -117,51 +123,113 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
   };
 
   const processCheckout = (dartsCount: number) => {
+    let finalAttempts = 0;
     setGameState(prev => {
       const next = [...prev];
       const p = next[activePlayer];
-      p.dartsUsed += dartsCount;
+      p.dartsUsed += (p.roundsOnCurrentTarget * 3) + dartsCount;
       p.roundsCompleted += 1;
       p.attempts += 1;
       p.bestCheckout = Math.max(p.bestCheckout, p.targetScore);
+      finalAttempts = p.attempts;
       
-      const newTarget = generateRandomScore();
-      p.targetScore = newTarget;
-      p.currentScore = newTarget;
+      if (p.attempts < checkoutTargets) {
+        const newTarget = generateRandomScore();
+        p.targetScore = newTarget;
+        p.currentScore = newTarget;
+        p.scoreAtStartOfRound = newTarget;
+        p.roundsOnCurrentTarget = 0;
+      }
       return next;
     });
-    nextPlayer();
+
+    if (activeP.targetScore >= 100) {
+      // High Finish sound will play and then say "Game Shot" inside its own logic or we can just call it
+      speak("Game Shot");
+    } else {
+      speak("Game Shot");
+    }
+    
+    nextPlayer(finalAttempts);
   };
 
   const processBust = () => {
+    let finalAttempts = 0;
     setGameState(prev => {
       const next = [...prev];
       const p = next[activePlayer];
-      p.attempts += 1;
       
-      const newTarget = generateRandomScore();
-      p.targetScore = newTarget;
-      p.currentScore = newTarget;
+      p.roundsOnCurrentTarget += 1;
+      if (p.roundsOnCurrentTarget >= checkoutRounds) {
+        p.attempts += 1;
+        finalAttempts = p.attempts;
+        
+        if (p.attempts < checkoutTargets) {
+          const newTarget = generateRandomScore();
+          p.targetScore = newTarget;
+          p.currentScore = newTarget;
+          p.scoreAtStartOfRound = newTarget;
+          p.roundsOnCurrentTarget = 0;
+        }
+      } else {
+        p.currentScore = p.scoreAtStartOfRound;
+      }
       return next;
     });
-    nextPlayer();
+    
+    speak("No Score");
+    nextPlayer(finalAttempts);
   };
 
   const processEndTurn = () => {
+    let finalAttempts = 0;
     setGameState(prev => {
       const next = [...prev];
       const p = next[activePlayer];
-      p.attempts += 1;
       
-      const newTarget = generateRandomScore();
-      p.targetScore = newTarget;
-      p.currentScore = newTarget;
+      p.roundsOnCurrentTarget += 1;
+      if (p.roundsOnCurrentTarget >= checkoutRounds) {
+        p.attempts += 1;
+        finalAttempts = p.attempts;
+        
+        if (p.attempts < checkoutTargets) {
+          const newTarget = generateRandomScore();
+          p.targetScore = newTarget;
+          p.currentScore = newTarget;
+          p.scoreAtStartOfRound = newTarget;
+          p.roundsOnCurrentTarget = 0;
+        }
+      } else {
+        p.scoreAtStartOfRound = p.currentScore;
+      }
       return next;
     });
-    nextPlayer();
+    
+    const roundScore = currentRoundDarts.reduce((s, d) => s + d.value, 0);
+    speak(roundScore.toString());
+    
+    nextPlayer(finalAttempts);
   };
 
-  const nextPlayer = () => {
+  const nextPlayer = (attemptsForActivePlayer: number = 0) => {
+    // If the active player is the LAST player and they just hit the target limit -> End game
+    if (activePlayer === players.length - 1 && attemptsForActivePlayer >= checkoutTargets) {
+      setCurrentRoundDarts([]); // Fix visual bug
+      setGameState(finalState => {
+        setTimeout(() => {
+          onFinish(finalState.map(p => ({ 
+            name: p.name, 
+            score: p.bestCheckout, 
+            roundsCompleted: p.roundsCompleted, 
+            attempts: p.attempts, 
+            dartsUsed: p.dartsUsed 
+          })));
+        }, 500);
+        return finalState;
+      });
+      return;
+    }
+    
     setActivePlayer((activePlayer + 1) % players.length);
     setCurrentRoundDarts([]);
     setIsProcessing(false);
@@ -185,15 +253,9 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
         <button className="btn-danger" onClick={onAbort} style={{ width: 'auto' }}>Abbrechen</button>
         <div style={{ textAlign: 'center', flex: 1 }}>
           <h2 style={{ margin: 0 }}>🎯 Checkout Training</h2>
-          <span style={{ color: '#999', fontSize: '0.9em' }}>Spiele bis du beendest</span>
+          <span style={{ color: '#999', fontSize: '0.9em' }}>Target {activeP.attempts + 1} / {checkoutTargets}</span>
         </div>
-        <button className="btn-success" onClick={() => onFinish(gameState.map(p => ({ 
-            name: p.name, 
-            score: p.bestCheckout, 
-            roundsCompleted: p.roundsCompleted, 
-            attempts: p.attempts, 
-            dartsUsed: p.dartsUsed 
-        })))} style={{ width: 'auto' }}>Beenden</button>
+        <div style={{ width: '80px' }}></div>
       </div>
 
       <div className="scoreboard" style={{ display: 'flex', gap: '10px', overflowX: 'auto', padding: '10px 0' }}>
@@ -220,8 +282,20 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
                  <span>Quote: {p.attempts > 0 ? Math.round((p.roundsCompleted / p.attempts) * 100) : 0}%</span>
                  <span>Darts/CO: {p.roundsCompleted > 0 ? (p.dartsUsed / p.roundsCompleted).toFixed(1) : '-'}</span>
                </div>
-               <div style={{ fontSize: '0.85em', color: 'var(--text-dim)' }}>
-                 ({p.roundsCompleted} / {p.attempts} Checkouts)
+               
+               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '5px', marginTop: '10px', width: '100%' }}>
+                 <div style={{ background: 'rgba(255,255,255,0.05)', padding: '5px', borderRadius: '4px' }}>
+                   <div style={{ fontSize: '0.8em', color: '#888' }}>Target</div>
+                   <div>{p.targetScore}</div>
+                 </div>
+                 <div style={{ background: 'rgba(255,255,255,0.05)', padding: '5px', borderRadius: '4px' }}>
+                   <div style={{ fontSize: '0.8em', color: '#888' }}>Erfolge</div>
+                   <div>{p.roundsCompleted}/{p.attempts}</div>
+                 </div>
+                 <div style={{ background: 'rgba(255,255,255,0.05)', padding: '5px', borderRadius: '4px' }}>
+                   <div style={{ fontSize: '0.8em', color: '#888' }}>Runde</div>
+                   <div>{p.roundsOnCurrentTarget + 1}/{checkoutRounds}</div>
+                 </div>
                </div>
             </div>
           </div>

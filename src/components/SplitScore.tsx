@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import type { Profile, Dart } from '../types';
-import { playDartHitSound, playSciFiHitSound } from '../utils/audio';
+import { playDartHitSound, playSciFiHitSound, speak, play180Sound } from '../utils/audio';
 
 interface SplitScoreProps {
   players: string[];
@@ -144,6 +144,16 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
       }
     }
     
+    if (hitAny) {
+      if (roundScore === 180) {
+        play180Sound();
+      } else {
+        speak(roundScore.toString());
+      }
+    } else {
+      speak("Halbiert");
+    }
+
     setGameState(prev => {
       const newState = [...prev];
       if (hitAny) {
@@ -157,6 +167,7 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
     if (activePlayer === players.length - 1) {
       if (currentRoundIndex === TARGETS.length - 1) {
         // Game Over
+        setCurrentRoundDarts([]); // Fix visual double bug
         setTimeout(() => {
           // calculate final results with the updated state
           setGameState(finalState => {
