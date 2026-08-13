@@ -1,0 +1,15 @@
+version: '3'
+services:
+  couchdb:
+    image: couchdb:latest
+    container_name: dart_sync_db
+    environment:
+      - COUCHDB_USER=admin
+      - COUCHDB_PASSWORD=admin # Für dein Heimnetz anpassen
+    ports:
+      - "5984:5984"
+    volumes:
+      - couchdb_data:/opt/couchdb/data
+
+volumes:
+  couchdb_data:
