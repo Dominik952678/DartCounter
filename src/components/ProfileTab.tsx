@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Profile, MatchHistory } from '../types';
 import { ProfileDashboard } from './ProfileDashboard';
+import { DartboardHeatmap } from './DartboardHeatmap';
 import { exportElementAsImage } from '../utils/exportImage';
 import { MatchImageExport } from './MatchImageExport';
 import { useAuthStore } from '../store/useAuthStore';
@@ -31,55 +32,11 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
   const [profileError, setProfileError] = useState<string | null>(null);
 
   const profileNames = Object.keys(profiles);
-
-  if (!user) {
-    return (
-      <div className="screen active-screen" style={{ padding: '20px', paddingBottom: '100px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
-        <div className="card" style={{ maxWidth: '420px', width: '100%', padding: '36px 24px', textAlign: 'center' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🔒</div>
-          <h2 style={{ marginBottom: '12px', fontSize: '1.6em', color: 'var(--text)' }}>
-            Profile & Statistiken
-          </h2>
-          <p style={{ color: 'var(--text-dim)', fontSize: '0.95em', lineHeight: '1.5', marginBottom: '24px' }}>
-            Als Gast spielst du mit temporären Namen ohne dauerhafte Speicherung.
-            Erstelle dir einen kostenlosen Account, um:
-          </p>
-
-          <div style={{ textAlign: 'left', background: 'var(--surface)', padding: '16px', borderRadius: '12px', marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.9em' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>✅</span> <strong>Eigene Spieler & Bots</strong> anlegen und verwalten
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>✅</span> <strong>Averages, First 9 & Triple-Quoten</strong> dauerhaft speichern
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>✅</span> <strong>Wurfradar & Kuchendiagramme</strong> für jedes Profil
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>✅</span> <strong>Head-to-Head Duelle</strong> & Match-Historie
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <button 
-              className="btn-primary btn-large" 
-              onClick={() => navigate('/auth')}
-              style={{ fontSize: '1.1em' }}
-            >
-              🔑 Jetzt kostenlos anmelden
-            </button>
-            <button 
-              className="btn-ghost" 
-              onClick={() => navigate('/offline')}
-              style={{ color: 'var(--text-dim)' }}
-            >
-              Weiter als Gast spielen
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const [previewProfile, setPreviewProfile] = useState<string>(
+    user?.user_metadata?.username && profiles[user.user_metadata.username] 
+      ? user.user_metadata.username 
+      : profileNames[0] || ''
+  );
 
   const handleCreateProfile = () => {
     const name = newProfileName.trim();
@@ -239,6 +196,32 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
 
       <div className="hero-glow-bg-profile" />
 
+      {!user && (
+        <div style={{
+          background: 'rgba(10, 132, 255, 0.1)',
+          border: '1px solid rgba(10, 132, 255, 0.3)',
+          borderRadius: '12px',
+          padding: '10px 14px',
+          marginBottom: '16px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '12px',
+          flexWrap: 'wrap'
+        }}>
+          <span style={{ fontSize: '0.82em', color: 'var(--text)' }}>
+            💡 <strong>Gast-Modus:</strong> Profile & Statistiken werden lokal auf diesem Gerät gespeichert.
+          </span>
+          <button 
+            className="btn-primary"
+            onClick={() => navigate('/auth')}
+            style={{ padding: '4px 12px', fontSize: '0.78em', minHeight: '30px' }}
+          >
+            🔑 Cloud-Login
+          </button>
+        </div>
+      )}
+
       <div className="app-header">
         <h1>👤 Profile & Historie</h1>
         <p className="subtitle">Verwalte deine Spieler und Statistiken</p>
@@ -324,7 +307,34 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
         </div>
       </div>
 
-
+      {/* 2D Dartboard Heatmap Overview on Profile Tab */}
+      {profileNames.length > 0 && (
+        <div style={{ marginTop: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
+            <h3 style={{ margin: 0, fontSize: '1.15em' }}>🎯 Treffer-Board Vorschau</h3>
+            <select
+              value={previewProfile || profileNames[0]}
+              onChange={(e) => setPreviewProfile(e.target.value)}
+              style={{
+                background: '#24242c',
+                color: '#fff',
+                border: '1px solid var(--card-border)',
+                padding: '6px 12px',
+                borderRadius: '8px',
+                fontSize: '0.85em'
+              }}
+            >
+              {profileNames.map(name => (
+                <option key={name} value={name}>{name}</option>
+              ))}
+            </select>
+          </div>
+          <DartboardHeatmap 
+            profile={profiles[previewProfile || profileNames[0]]} 
+            title={`2D Heatmap: ${previewProfile || profileNames[0]}`} 
+          />
+        </div>
+      )}
 
       {/* spacer for bottom nav */}
       <div style={{ height: '120px' }}></div>

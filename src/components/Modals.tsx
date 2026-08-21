@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Player, MatchHistory } from '../types';
+import { DartboardHeatmap } from './DartboardHeatmap';
 
 export const Toast: React.FC<{
   message: string;
@@ -270,6 +271,13 @@ export const StatsModal: React.FC<{
                               L{li + 1}: Ø{avg}
                             </span>
                           ))}
+                        </div>
+                      )}
+
+                      {/* 2D Treffer-Heatmap for this match */}
+                      {pData.segmentHits && Object.keys(pData.segmentHits).length > 0 && (
+                        <div style={{ marginTop: '12px' }}>
+                          <DartboardHeatmap customHits={pData.segmentHits} title={`Treffer-Board: ${pData.name}`} />
                         </div>
                       )}
                     </>
