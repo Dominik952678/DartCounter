@@ -551,14 +551,27 @@ button:active, .btn:active {
     min-height: 140px;
   }
 
+  .game-screen-left .player.active-player {
+    border-color: rgba(10, 132, 255, 0.6);
+    box-shadow: 0 0 28px rgba(10, 132, 255, 0.25), inset 0 0 12px rgba(10, 132, 255, 0.1);
+  }
+
   .game-screen-left .player .score {
-    font-size: 3.8em;
-    margin: 8px 0;
+    font-size: 4.2em;
+    font-weight: 900;
+    margin: 6px 0;
+    text-shadow: 0 2px 16px rgba(0, 0, 0, 0.6);
   }
 
   .game-screen-right .keypad {
     max-width: 100%;
     margin: 0;
+    background: rgba(28, 28, 30, 0.7);
+    padding: 16px;
+    border-radius: var(--radius);
+    border: 1px solid var(--card-border);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
   }
 
   .game-screen-right .numpad-grid {
@@ -568,11 +581,31 @@ button:active, .btn:active {
   .game-screen-right .num-btn {
     min-height: 56px;
     font-size: 1.45em;
+    border-radius: 12px;
   }
 
   .game-screen-right .mod-btn {
     min-height: 50px;
-    font-size: 1.05em;
+    font-size: 1.1em;
+    border-radius: 12px;
+  }
+}
+
+/* ── 4K & Big Screen TV Optimization (>= 1400px Landscape) ── */
+@media (min-width: 1400px) and (orientation: landscape) {
+  .game-screen-layout {
+    max-width: 1500px;
+    padding: 20px 40px;
+  }
+  .game-screen-left .player .score {
+    font-size: 5.2em;
+  }
+  .game-screen-right {
+    max-width: 540px;
+  }
+  .game-screen-right .num-btn {
+    min-height: 64px;
+    font-size: 1.6em;
   }
 }
 

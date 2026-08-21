@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import type { Profile, MatchHistory } from '../types';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Cell } from 'recharts';
 import { HeadToHead } from './HeadToHead';
+import { DartboardHeatmap } from './DartboardHeatmap';
 
 interface ProfileDashboardProps {
   profileName: string;
@@ -399,6 +400,11 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* 2D Dartboard Heatmap */}
+            <div style={{ marginTop: '20px' }}>
+              <DartboardHeatmap profile={profile} />
             </div>
 
             {/* Mini-Games Stats */}

@@ -48,28 +48,61 @@ export const initAudio = () => {
 
 // --- Web Speech API (TTS) ---
 
-export const speak = (text: string) => {
-  if (!soundEnabled || !window.speechSynthesis) return;
+// --- Web Speech API (TTS Darts Caller) ---
 
-  // Wir brechen laufende Ansagen ab, damit es sich nicht überschneidet
-  window.speechSynthesis.cancel();
+export const speak = (text: string, isExcited = false) => {
+  if (!soundEnabled || typeof window === 'undefined' || !window.speechSynthesis) return;
 
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = 'en-GB'; // Britischer Darts Caller
-  utterance.rate = 1.05; // Etwas flotter
-  utterance.pitch = 1.1; // Etwas aufgeregter
-  
-  // Versuchen eine männliche britische Stimme zu finden (optional)
-  const voices = window.speechSynthesis.getVoices();
-  const enVoice = voices.find(v => v.lang === 'en-GB' && v.name.toLowerCase().includes('male'));
-  if (enVoice) {
-    utterance.voice = enVoice;
+  try {
+    // Wir brechen laufende Ansagen ab, damit es sich nicht überschneidet
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-GB'; // Britischer Darts Caller
+    utterance.rate = isExcited ? 1.15 : 1.05;
+    utterance.pitch = isExcited ? 1.25 : 1.05;
+    
+    const voices = window.speechSynthesis.getVoices();
+    // Versuchen eine tiefe oder britische Stimme zu finden
+    const enVoice = voices.find(v => (v.lang === 'en-GB' || v.lang.startsWith('en')) && v.name.toLowerCase().includes('male')) 
+      || voices.find(v => v.lang === 'en-GB') 
+      || voices.find(v => v.lang.startsWith('en'));
+    
+    if (enVoice) {
+      utterance.voice = enVoice;
+    }
+
+    window.speechSynthesis.speak(utterance);
+  } catch {
+    // Ignore TTS errors in restrictive environments
   }
-
-  window.speechSynthesis.speak(utterance);
 };
 
-// --- Web Audio API (Arcade Synths) ---
+export const announceScore = (score: number) => {
+  if (score === 180) {
+    speak("One Hundred and Eighty!", true);
+  } else if (score === 0) {
+    speak("No score");
+  } else {
+    speak(score.toString());
+  }
+};
+
+export const announceCheckoutRequirement = (playerName: string, remainingScore: number) => {
+  if (remainingScore <= 170 && remainingScore > 1) {
+    speak(`${playerName}, you require ${remainingScore}`);
+  }
+};
+
+export const announceGameShot = (isMatchWin: boolean) => {
+  if (isMatchWin) {
+    speak("Game, shot, and the match!", true);
+  } else {
+    speak("Game shot!", true);
+  }
+};
+
+// --- Web Audio API (Arcade Synths & Crowd Applause) ---
 
 const playTone = (frequency: number, type: OscillatorType, duration: number, vol = 0.1, delay = 0) => {
   const ctx = getAudioCtx();
@@ -91,30 +124,61 @@ const playTone = (frequency: number, type: OscillatorType, duration: number, vol
   osc.stop(startTime + duration);
 };
 
+export const playCrowdCheer = () => {
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+
+  // Synthesize stadium applause & noise
+  const bufferSize = ctx.sampleRate * 1.5;
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) {
+    data[i] = Math.random() * 2 - 1;
+  }
+
+  const noise = ctx.createBufferSource();
+  noise.buffer = buffer;
+
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'bandpass';
+  filter.frequency.value = 1000;
+  filter.Q.value = 0.8;
+
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.05, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.3);
+  gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 1.5);
+
+  noise.connect(filter);
+  filter.connect(gain);
+  gain.connect(ctx.destination);
+
+  noise.start();
+  noise.stop(ctx.currentTime + 1.5);
+};
+
 export const playSciFiHitSound = (type: 'T20' | 'T19' | 'Bull') => {
   const ctx = getAudioCtx();
   if (!ctx) return;
   
-  // Melodisches "Dum-Du-Dyp"
   let f1 = 523.25; // C5
   let f2 = 659.25; // E5
   let f3 = 783.99; // G5
   let vol = 0.2;
-  const waveType: OscillatorType = 'sine'; // Weich, nicht grell
+  const waveType: OscillatorType = 'sine';
 
   if (type === 'T19') {
-    f1 = 440.00; // A4
-    f2 = 523.25; // C5
-    f3 = 659.25; // E5
+    f1 = 440.00;
+    f2 = 523.25;
+    f3 = 659.25;
     vol = 0.15;
   } else if (type === 'Bull') {
-    f1 = 261.63; // C4
-    f2 = 329.63; // E4
-    f3 = 392.00; // G4
+    f1 = 261.63;
+    f2 = 329.63;
+    f3 = 392.00;
     vol = 0.25;
   }
 
-  // Präzises Audio-Scheduling
   playTone(f1, waveType, 0.1, vol, 0);
   playTone(f2, waveType, 0.1, vol, 0.08);
   playTone(f3, waveType, 0.2, vol, 0.16);
@@ -123,7 +187,6 @@ export const playSciFiHitSound = (type: 'T20' | 'T19' | 'Bull') => {
 export const playDartHitSound = () => {
   const ctx = getAudioCtx();
   if (!ctx) return;
-  // Dumpfes "Tock" (Pfeil landet im Board)
   const osc = ctx.createOscillator();
   const gainNode = ctx.createGain();
 
@@ -143,7 +206,7 @@ export const playDartHitSound = () => {
 export const playBustSound = () => {
   const ctx = getAudioCtx();
   if (!ctx) return;
-  // Ein tiefer, absteigender Buzzer
+  
   const osc = ctx.createOscillator();
   const gainNode = ctx.createGain();
   
@@ -162,19 +225,20 @@ export const playBustSound = () => {
 
 export const playHighFinishSound = () => {
   if (!soundEnabled) return;
-  // Kleiner Sieges-Jingle (Dur-Dreiklang)
   playTone(523.25, 'triangle', 0.2, 0.1, 0); // C5
   playTone(659.25, 'triangle', 0.2, 0.1, 0.15); // E5
   playTone(783.99, 'triangle', 0.4, 0.1, 0.3); // G5
   playTone(1046.50, 'triangle', 0.6, 0.1, 0.45); // C6
+  playCrowdCheer();
 };
 
 export const play180Sound = () => {
   if (!soundEnabled) return;
-  speak("One Hundred and Eighty!");
+  announceScore(180);
+  playCrowdCheer();
 };
 
-// Um Stimmen einmal vorzuladen (Chrome Bug Fix)
-if (window.speechSynthesis) {
+// Um Stimmen einmal vorzuladen (Chrome / WebKit)
+if (typeof window !== 'undefined' && window.speechSynthesis) {
   window.speechSynthesis.getVoices();
 }

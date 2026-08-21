@@ -31,6 +31,17 @@ globalThis.ResizeObserver = class ResizeObserver {
 
 // Mock Web Speech API
 if (typeof window !== 'undefined') {
+  globalThis.SpeechSynthesisUtterance = class {
+    text: string = '';
+    lang: string = 'en-GB';
+    rate: number = 1;
+    pitch: number = 1;
+    voice: any = null;
+    constructor(text?: string) {
+      if (text) this.text = text;
+    }
+  } as any;
+
   window.speechSynthesis = {
     speak: vi.fn(),
     cancel: vi.fn(),

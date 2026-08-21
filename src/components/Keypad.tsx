@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import type { Dart } from '../types';
+import { triggerHaptic } from '../utils/haptics';
 
 interface KeypadProps {
   currentRoundDarts: Dart[];
@@ -24,6 +25,35 @@ export const Keypad: React.FC<KeypadProps> = ({
   abortGame,
   canUndo
 }) => {
+  useEffect(() => {
+    if (roundBust) {
+      triggerHaptic('bust');
+    }
+  }, [roundBust]);
+
+  const handleAddDartClick = (baseValue: number) => {
+    if (baseValue === 0) {
+      triggerHaptic('click');
+    } else if (currentMultiplier === 3) {
+      triggerHaptic('triple');
+    } else if (currentMultiplier === 2) {
+      triggerHaptic('double');
+    } else {
+      triggerHaptic('single');
+    }
+    addDart(baseValue);
+  };
+
+  const handleToggleMultiplier = (mult: number) => {
+    triggerHaptic('click');
+    toggleMultiplier(mult);
+  };
+
+  const handleUndo = () => {
+    triggerHaptic('click');
+    undoSingleDart();
+  };
+
   const roundTotal = currentRoundDarts.reduce((sum, d) => sum + d.value, 0);
 
   const getTotalColorClass = (total: number) => {
@@ -143,14 +173,14 @@ export const Keypad: React.FC<KeypadProps> = ({
       <div className="modifier-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
         <button 
           className={`mod-btn ${currentMultiplier === 2 ? 'mod-active-double' : ''}`} 
-          onClick={() => toggleMultiplier(2)}
+          onClick={() => handleToggleMultiplier(2)}
           disabled={isProcessing}
         >
           Double
         </button>
         <button 
           className={`mod-btn ${currentMultiplier === 3 ? 'mod-active-triple' : ''}`} 
-          onClick={() => toggleMultiplier(3)}
+          onClick={() => handleToggleMultiplier(3)}
           disabled={isProcessing}
         >
           Triple
@@ -162,7 +192,7 @@ export const Keypad: React.FC<KeypadProps> = ({
       {/* Number Pad */}
       <div className={`numpad-grid ${currentMultiplier === 2 ? 'modifier-active-2' : ''} ${currentMultiplier === 3 ? 'modifier-active-3' : ''}`}>
         {numpadButtons.map(i => (
-          <button key={i} className="num-btn" onClick={() => addDart(i)} disabled={isProcessing}>
+          <button key={i} className="num-btn" onClick={() => handleAddDartClick(i)} disabled={isProcessing}>
             {i}
           </button>
         ))}
@@ -174,13 +204,13 @@ export const Keypad: React.FC<KeypadProps> = ({
             cursor: currentMultiplier === 3 ? 'not-allowed' : 'pointer',
             transition: 'opacity 0.2s'
           }} 
-          onClick={() => addDart(25)} 
+          onClick={() => handleAddDartClick(25)} 
           disabled={isProcessing || currentMultiplier === 3}
           title={currentMultiplier === 3 ? "Triple Bull existiert nicht" : undefined}
         >
           Bull
         </button>
-        <button className="num-btn mod-miss" style={{ gridColumn: 'span 2' }} onClick={() => addDart(0)} disabled={isProcessing}>
+        <button className="num-btn mod-miss" style={{ gridColumn: 'span 2' }} onClick={() => handleAddDartClick(0)} disabled={isProcessing}>
           Miss
         </button>
       </div>
@@ -189,7 +219,7 @@ export const Keypad: React.FC<KeypadProps> = ({
       <div className="keypad-actions">
         <button 
           className="btn-warning" 
-          onClick={undoSingleDart} 
+          onClick={handleUndo} 
           disabled={canUndo !== undefined ? !canUndo : (currentRoundDarts.length === 0)}
         >
           ⟲ Zurück

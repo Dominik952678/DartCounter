@@ -2,7 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import type { GameState, Profile, MatchHistory, GameConfig, Player } from '../types';
 import { saveMatch, getMatches, saveProfiles } from '../db/database';
 import { getBotDart } from '../utils/bot';
-import { playSciFiHitSound, play180Sound, playBustSound, playHighFinishSound, speak, playDartHitSound } from '../utils/audio';
+import { playSciFiHitSound, play180Sound, playBustSound, playHighFinishSound, speak, playDartHitSound, announceScore, announceGameShot } from '../utils/audio';
+import { triggerHaptic } from '../utils/haptics';
 
 interface UseGameEngineProps {
   profiles: Record<string, Profile>;
@@ -199,18 +200,21 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches, setScree
     if (bust || isWin || state.currentRoundDarts.length === 3) {
       if (bust) {
         setCelebration({ type: 'bust', playerIndex: state.activePlayer });
+        triggerHaptic('bust');
         playBustSound();
       } else if (isWin) {
         setCelebration({ type: 'checkout', playerIndex: state.activePlayer });
+        triggerHaptic('victory');
         if (roundTotal >= 100) {
             playHighFinishSound();
         }
-        speak("Game Shot");
+        announceGameShot(false);
       } else if (state.currentRoundDarts.length === 3 && roundTotal === 180) {
         setCelebration({ type: '180', playerIndex: state.activePlayer });
+        triggerHaptic('180');
         play180Sound();
       } else if (state.currentRoundDarts.length === 3) {
-        speak(roundTotal.toString());
+        announceScore(roundTotal);
       }
 
       setGameState(s => ({ ...s, isProcessing: true }));
