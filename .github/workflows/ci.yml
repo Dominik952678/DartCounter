@@ -42,3 +42,18 @@ jobs:
           name: dist-build
           path: dist/
           retention-days: 7
+
+      - name: 🚀 Deploy to Netlify (Production)
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        run: |
+          if [ -n "$NETLIFY_AUTH_TOKEN" ] && [ -n "$NETLIFY_SITE_ID" ]; then
+            echo "Deploying to Netlify via Netlify CLI..."
+            npx netlify-cli deploy --prod --dir=dist --site="$NETLIFY_SITE_ID" --auth="$NETLIFY_AUTH_TOKEN"
+          else
+            echo "Netlify Secrets (NETLIFY_AUTH_TOKEN / NETLIFY_SITE_ID) not configured in GitHub Secrets."
+            echo "If using Netlify Git Integration, Netlify automatically deploys on push via netlify.toml."
+          fi
+
