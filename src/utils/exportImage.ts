@@ -3,7 +3,7 @@ import html2canvas from 'html2canvas';
 export const exportElementAsImage = async (elementId: string, filename: string) => {
   const el = document.getElementById(elementId);
   if (!el) {
-    alert("Element nicht gefunden!");
+    console.warn("Element für Bild-Export nicht gefunden:", elementId);
     return;
   }
   
@@ -46,6 +46,5 @@ export const exportElementAsImage = async (elementId: string, filename: string) 
     }, 'image/png');
   } catch (err) {
     console.error("Export failed", err);
-    alert("Fehler beim Erstellen des Bildes.");
   }
 };

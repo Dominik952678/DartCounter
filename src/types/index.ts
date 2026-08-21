@@ -17,6 +17,7 @@ export interface Profile {
   isBot?: boolean;
   targetAverage?: number;
   segmentHits?: Record<string, number>;
+  triplesHit?: number;
   color?: string;
   powerScoring?: { bestScore: number; matchesPlayed: number; wins: number; totalScore?: number };
   splitScore?: { bestScore: number; matchesPlayed: number; wins: number; totalScore?: number };
@@ -24,10 +25,15 @@ export interface Profile {
 }
 
 export interface GameConfig {
+  mode?: 'standard' | 'powerscoring' | 'splitscore' | 'checkout';
   startScore: number;
   outMode: 'SO' | 'DO' | 'MO';
   setsToWin: number;
   legsToWin: number;
+  // Minigame config
+  rounds?: number;
+  checkoutRounds?: number;
+  checkoutTargets?: number;
 }
 
 export interface Player {
@@ -52,6 +58,7 @@ export interface Player {
   isBot?: boolean;
   targetAverage?: number;
   segmentHits: Record<string, number>;
+  triplesHit?: number;
   color?: string;
   bestMatchLeg?: number;
 }
@@ -81,12 +88,22 @@ export interface PlayerStats {
   oneFortyPlus?: number;
   oneEighty?: number;
   highestCheckout?: number;
+  segmentHits?: Record<string, number>;
+  triplesHit?: number;
+  
+  // Minigame specific
+  score?: number;
+  attempts?: number;
+  dartsUsed?: number;
 }
 
 export interface MatchHistory {
   _id?: string;
   _rev?: string;
   type?: 'match';
+  isOnline?: boolean;
+  gameType?: 'standard' | 'powerScoring' | 'splitScore' | 'checkoutTraining';
+  config?: GameConfig;
   date: string;
   winner: string;
   players: PlayerStats[];

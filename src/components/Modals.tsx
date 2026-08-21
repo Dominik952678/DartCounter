@@ -1,5 +1,148 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import type { Player, MatchHistory } from '../types';
+
+export const Toast: React.FC<{
+  message: string;
+  type: 'success' | 'error' | 'info';
+  visible: boolean;
+}> = ({ message, type, visible }) => {
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        top: visible ? '20px' : '-100px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        backgroundColor: type === 'error' ? 'var(--red, #ff4444)' : type === 'success' ? 'var(--green, #00C851)' : 'var(--blue, #33b5e5)',
+        color: '#fff',
+        padding: '12px 24px',
+        borderRadius: 'var(--radius, 8px)',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+        transition: 'top 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+        zIndex: 9999,
+        fontWeight: 'bold',
+        pointerEvents: 'none',
+      }}
+    >
+      {message}
+    </div>
+  );
+};
+
+const bottomSheetStyles = `
+  .bottom-sheet-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.88);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    animation: fadeIn 0.3s ease-out;
+  }
+  
+  .bottom-sheet-content {
+    background-color: #141418;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: var(--radius, 16px);
+    width: 92%;
+    max-width: 520px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 26px 22px;
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.95);
+    position: relative;
+    animation: scaleUp 0.3s ease-out;
+    color: #ffffff;
+  }
+
+  @media (max-width: 767px) {
+    .bottom-sheet-overlay {
+      align-items: flex-end;
+    }
+    .bottom-sheet-content {
+      width: 100%;
+      max-width: 100%;
+      border-radius: 24px 24px 0 0;
+      padding: 32px 20px 24px;
+      animation: slideUp 0.3s ease-out forwards;
+      transform: translateY(100%);
+    }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  
+  @keyframes scaleUp {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .drag-handle {
+    display: none;
+    width: 40px;
+    height: 4px;
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  @media (max-width: 767px) {
+    .drag-handle {
+      display: block;
+    }
+  }
+
+  .confetti {
+    font-size: 2.5rem;
+    animation: bounce 1s infinite alternate;
+    display: inline-block;
+  }
+
+  @keyframes bounce {
+    from { transform: translateY(0); }
+    to { transform: translateY(-10px); }
+  }
+    
+  .search-bar {
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: var(--radius, 8px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: #1c1c22;
+    color: #fff;
+    margin-bottom: 16px;
+    font-size: 16px;
+    outline: none;
+  }
+
+  .search-bar:focus {
+    border-color: var(--blue);
+  }
+    
+  .history-item-modern {
+    background: #1c1c22;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius, 12px);
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+`;
 
 export const StatsModal: React.FC<{
   isOpen: boolean;
@@ -8,70 +151,140 @@ export const StatsModal: React.FC<{
   matchData: MatchHistory | null;
   onClose: () => void;
 }> = ({ isOpen, winnerIndex, players, matchData, onClose }) => {
-  const modalRef = useRef<HTMLDivElement>(null);
-
   if (!isOpen || winnerIndex === null || !matchData) return null;
   
-  const winnerName = players[winnerIndex].name;
+  const winnerName = players[winnerIndex]?.name || matchData.winner;
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content" style={{ textAlign: 'center' }} ref={modalRef}>
-        <div className="match-result-header">
-          <span className="trophy-icon">🏆</span>
-          <h2>{winnerName} gewinnt!</h2>
-        </div>
-        
-        <div className="match-result-grid">
-          {players.map((p, i) => {
-            const isWinner = i === winnerIndex;
-            return (
-              <div key={i} className={`match-result-player ${isWinner ? 'winner' : ''}`}>
-                <div className="result-name">{p.isBot ? '🤖 ' : ''}{p.name}</div>
-                <div className="result-score">{p.sets} : {matchData.players[i].legs}</div>
-                <div className="result-stats">
-                  <div className="result-stat">
-                    <span className="result-stat-label">Average</span>
-                    <span className="result-stat-value accent-green">{matchData.players[i].avg}</span>
-                  </div>
-                  <div className="result-stat">
-                    <span className="result-stat-label">First 9</span>
-                    <span className="result-stat-value accent-orange">{matchData.players[i].first9}</span>
-                  </div>
-                  {matchData.players[i].bestMatchLeg !== undefined && (
-                    <div className="result-stat" style={{ gridColumn: 'span 2' }}>
-                      <span className="result-stat-label">Best Leg</span>
-                      <span className="result-stat-value accent-blue">{matchData.players[i].bestMatchLeg} Darts</span>
+    <>
+      <style>{bottomSheetStyles}</style>
+      <div className="bottom-sheet-overlay" onClick={onClose}>
+        <div className="bottom-sheet-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '540px' }}>
+          <div className="drag-handle" />
+          
+          <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+            <div className="confetti">🏆</div>
+            <h2 style={{ color: 'var(--green)', margin: '8px 0', fontSize: '1.8em' }}>{winnerName} gewinnt!</h2>
+            <p style={{ color: 'var(--text-dim)', margin: 0, fontSize: '0.95em' }}>Match-Statistik & Analyse</p>
+          </div>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '20px' }}>
+            {matchData.players.map((pData, i) => {
+              const isWinner = pData.name === matchData.winner;
+              const playerObj = players[i];
+              const coQuote = (pData.checkoutAttempts && pData.checkoutAttempts > 0)
+                ? (((pData.checkoutSuccesses || 0) / pData.checkoutAttempts) * 100).toFixed(1) + '%'
+                : '–';
+              const tripleQuote = (pData.triplesHit && pData.matchDarts && pData.matchDarts > 0)
+                ? (((pData.triplesHit || 0) / pData.matchDarts) * 100).toFixed(1) + '%'
+                : '–';
+
+              return (
+                <div key={i} style={{ 
+                  background: isWinner ? 'rgba(0, 210, 106, 0.12)' : '#1c1c22',
+                  border: `1.5px solid ${isWinner ? 'var(--green)' : 'rgba(255, 255, 255, 0.1)'}`,
+                  borderRadius: 'var(--radius, 12px)',
+                  padding: '16px'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '1.2em' }}>{playerObj?.isBot ? '🤖' : '👤'}</span>
+                      <strong style={{ fontSize: '1.2em', color: isWinner ? 'var(--green)' : 'var(--text)' }}>
+                        {pData.name} {isWinner ? '👑' : ''}
+                      </strong>
                     </div>
+                    <span style={{ fontSize: '1.1em', fontWeight: 800, background: '#121216', border: '1px solid rgba(255, 255, 255, 0.08)', padding: '4px 12px', borderRadius: '8px' }}>
+                      {matchData.gameType && matchData.gameType !== 'standard'
+                        ? (pData.score !== undefined ? `${pData.score} Pkt` : '')
+                        : (pData.sets !== undefined ? `${pData.sets}S : ${pData.legs}L` : `${pData.legs} Legs`)}
+                    </span>
+                  </div>
+                  
+                  {matchData.gameType && matchData.gameType !== 'standard' ? (
+                    <div style={{ display: 'grid', gridTemplateColumns: matchData.gameType === 'checkoutTraining' ? '1fr 1fr 1fr' : '1fr', gap: '8px', marginBottom: '6px' }}>
+                      <div style={{ background: '#24242c', border: '1px solid rgba(255, 255, 255, 0.08)', padding: '12px 8px', borderRadius: '8px', textAlign: 'center' }}>
+                        <div style={{ fontSize: '0.75em', color: 'var(--text-dim)', marginBottom: '2px' }}>
+                          {matchData.gameType === 'checkoutTraining' ? 'Bestes Checkout' : 'Punkte (Score)'}
+                        </div>
+                        <div style={{ color: 'var(--green)', fontWeight: 800, fontSize: '1.4em' }}>{pData.score || 0}</div>
+                      </div>
+                      {matchData.gameType === 'checkoutTraining' && (
+                        <>
+                          <div style={{ background: '#24242c', border: '1px solid rgba(255, 255, 255, 0.08)', padding: '12px 8px', borderRadius: '8px', textAlign: 'center' }}>
+                            <div style={{ fontSize: '0.75em', color: 'var(--text-dim)', marginBottom: '2px' }}>Versuche</div>
+                            <div style={{ color: 'var(--orange)', fontWeight: 800, fontSize: '1.4em' }}>{pData.attempts || 0}</div>
+                          </div>
+                          <div style={{ background: '#24242c', border: '1px solid rgba(255, 255, 255, 0.08)', padding: '12px 8px', borderRadius: '8px', textAlign: 'center' }}>
+                            <div style={{ fontSize: '0.75em', color: 'var(--text-dim)', marginBottom: '2px' }}>Darts</div>
+                            <div style={{ color: 'var(--blue)', fontWeight: 800, fontSize: '1.4em' }}>{pData.dartsUsed || 0}</div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ) : (
+                    <>
+                      {/* Primary Stats Grid */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '10px' }}>
+                        <div style={{ background: '#24242c', border: '1px solid rgba(255, 255, 255, 0.08)', padding: '10px 8px', borderRadius: '8px', textAlign: 'center' }}>
+                          <div style={{ fontSize: '0.75em', color: 'var(--text-dim)', marginBottom: '2px' }}>Average</div>
+                          <div style={{ color: 'var(--green)', fontWeight: 800, fontSize: '1.1em' }}>{pData.avg}</div>
+                        </div>
+                        <div style={{ background: '#24242c', border: '1px solid rgba(255, 255, 255, 0.08)', padding: '10px 8px', borderRadius: '8px', textAlign: 'center' }}>
+                          <div style={{ fontSize: '0.75em', color: 'var(--text-dim)', marginBottom: '2px' }}>First 9</div>
+                          <div style={{ color: 'var(--orange)', fontWeight: 800, fontSize: '1.1em' }}>{pData.first9}</div>
+                        </div>
+                        <div style={{ background: '#24242c', border: '1px solid rgba(255, 255, 255, 0.08)', padding: '10px 8px', borderRadius: '8px', textAlign: 'center' }}>
+                          <div style={{ fontSize: '0.75em', color: 'var(--text-dim)', marginBottom: '2px' }}>Best Leg</div>
+                          <div style={{ color: 'var(--blue)', fontWeight: 800, fontSize: '1.1em' }}>
+                            {pData.bestMatchLeg ? `${pData.bestMatchLeg} Darts` : '–'}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Secondary Quotas */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '10px' }}>
+                        <div style={{ background: '#24242c', border: '1px solid rgba(255, 255, 255, 0.08)', padding: '8px 10px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: '0.8em', color: 'var(--text-dim)' }}>Checkout-Quote:</span>
+                          <strong style={{ color: 'var(--text)' }}>{coQuote}</strong>
+                        </div>
+                        <div style={{ background: '#24242c', border: '1px solid rgba(255, 255, 255, 0.08)', padding: '8px 10px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: '0.8em', color: 'var(--text-dim)' }}>Triple-Quote:</span>
+                          <strong style={{ color: 'var(--text)' }}>{tripleQuote}</strong>
+                        </div>
+                      </div>
+
+                      {/* Highlights Grid */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', background: '#24242c', border: '1px solid rgba(255, 255, 255, 0.08)', padding: '10px 6px', borderRadius: '8px', fontSize: '0.82em', textAlign: 'center' }}>
+                        <div><span style={{ color: 'var(--text-dim)' }}>180:</span> <strong style={{ color: 'var(--orange)' }}>{pData.oneEighty || 0}</strong></div>
+                        <div><span style={{ color: 'var(--text-dim)' }}>140+:</span> <strong>{pData.oneFortyPlus || 0}</strong></div>
+                        <div><span style={{ color: 'var(--text-dim)' }}>100+:</span> <strong>{pData.hundredPlus || 0}</strong></div>
+                        <div><span style={{ color: 'var(--text-dim)' }}>Finish:</span> <strong style={{ color: 'var(--green)' }}>{pData.highestCheckout || '–'}</strong></div>
+                      </div>
+
+                      {/* Leg Averages progression if available */}
+                      {pData.legHistory && pData.legHistory.length > 0 && (
+                        <div style={{ marginTop: '10px', display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+                          <span style={{ fontSize: '0.75em', color: 'var(--text-dim)' }}>Legs:</span>
+                          {pData.legHistory.map((avg, li) => (
+                            <span key={li} style={{ fontSize: '0.75em', background: '#24242c', border: '1px solid rgba(255, 255, 255, 0.08)', padding: '2px 6px', borderRadius: '4px' }}>
+                              L{li + 1}: Ø{avg}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
-              </div>
-            );
-          })}
-        </div>
-        
-        <div className="leg-averages-section">
-          <h3>Averages pro Leg</h3>
-          {players.map((p, i) => {
-            if (p.legHistory.length > 0) {
-              return (
-                <div key={i} className="leg-avg-row">
-                  <span className="leg-avg-name">{p.name}</span>
-                  <span className="leg-avg-values">{p.legHistory.join(' · ')}</span>
-                </div>
               );
-            }
-            return null;
-          })}
-        </div>
-        
-        <div style={{ marginTop: '20px' }}>
-          <button className="btn-success" onClick={onClose} style={{ width: '100%' }}>
+            })}
+          </div>
+          
+          <button className="btn-success" onClick={onClose} style={{ width: '100%', padding: '16px', fontSize: '1.1em', borderRadius: 'var(--radius, 8px)', border: 'none', background: 'var(--green, #00C851)', color: '#fff', fontWeight: 'bold', cursor: 'pointer' }}>
             Weiter zum Menü
           </button>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 
@@ -83,40 +296,54 @@ export const HistoryModal: React.FC<{
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h2 style={{ margin: 0 }}>Match Historie</h2>
-          <button className="btn-secondary" onClick={onClose} style={{ padding: '8px 16px', fontSize: '0.9em' }}>Schließen</button>
-        </div>
-        <div>
-          {history.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px 0', color: '#666' }}>
-              <div style={{ fontSize: '2em', marginBottom: '10px' }}>🎯</div>
-              <p>Noch keine Matches gespeichert.</p>
-            </div>
-          ) : (
-            [...history].reverse().map((m, i) => (
-              <div key={i} className="history-item">
-                <div className="history-header">
-                  <span className="history-winner">🏆 {m.winner}</span>
-                  <span className="history-date">{m.date}</span>
-                </div>
-                <div className="history-players">
-                  {m.players.map((p, j) => (
-                    <div key={j} className="history-player-row">
-                      <span className="history-player-name">{p.name}</span>
-                      <span className="history-player-score">{p.sets}:{p.legs}</span>
-                      <span className="history-player-avg">Ø {p.avg}</span>
-                      <span className="history-player-f9">F9: {p.first9}</span>
-                    </div>
-                  ))}
-                </div>
+    <>
+      <style>{bottomSheetStyles}</style>
+      <div className="bottom-sheet-overlay" onClick={onClose}>
+        <div className="bottom-sheet-content" onClick={(e) => e.stopPropagation()}>
+          <div className="drag-handle" />
+          
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <h2 style={{ margin: 0 }}>Match Historie</h2>
+            <button className="btn-secondary" onClick={onClose} style={{ padding: '8px 16px', borderRadius: '20px', border: '1px solid var(--card-border, #333)', background: 'var(--surface, #2a2a2a)', color: 'var(--text, #fff)', cursor: 'pointer' }}>✕</button>
+          </div>
+          
+          <input 
+            type="text" 
+            className="search-bar" 
+            placeholder="🔍 Matches durchsuchen..." 
+          />
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {history.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-dim, #aaa)' }}>
+                <div style={{ fontSize: '2.5em', marginBottom: '12px' }}>🎯</div>
+                <p>Noch keine Matches gespeichert.</p>
               </div>
-            ))
-          )}
+            ) : (
+              [...history].reverse().map((m, i) => (
+                <div key={i} className="history-item-modern">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', paddingBottom: '8px', borderBottom: '1px solid var(--card-border, #333)' }}>
+                    <span style={{ color: 'var(--green, #00C851)', fontWeight: 'bold' }}>🏆 {m.winner}</span>
+                    <span style={{ color: 'var(--text-dim, #aaa)', fontSize: '0.9em' }}>{m.date}</span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {m.players.map((p, j) => (
+                      <div key={j} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontWeight: p.name === m.winner ? 'bold' : 'normal' }}>{p.name}</span>
+                        <div style={{ display: 'flex', gap: '12px', fontSize: '0.9em', color: 'var(--text-dim, #aaa)' }}>
+                          <span>Ø {p.avg}</span>
+                          <span>F9: {p.first9}</span>
+                          <span style={{ color: 'var(--text, #fff)', fontWeight: 'bold', width: '32px', textAlign: 'right' }}>{p.sets}:{p.legs}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };

@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import type { GameConfig, Profile, MatchHistory } from '../types';
 import { MatchSetup } from './MatchSetup';
-import { TrainingHub } from './TrainingHub';
-import { ProfileTab } from './ProfileTab';
-import { BottomNav } from './BottomNav';
+import { TrainingHub, type MiniGameMode } from './TrainingHub';
 
 interface HomeContainerProps {
   profiles: Record<string, Profile>;
@@ -12,49 +11,80 @@ interface HomeContainerProps {
   onUpdateProfile: (name: string, updates: Partial<Profile>) => void;
   onDeleteProfile: (name: string) => void;
   onStartGame: (players: string[], config: GameConfig) => void;
+  hasSavedGame?: boolean;
+  onResumeGame?: () => void;
   onStartMiniGame: (mode: string, players: string[], settings: any) => void;
+  setProfiles: (profiles: Record<string, Profile>) => void;
+  defaultTab?: 'match' | 'training';
 }
 
 export const HomeContainer: React.FC<HomeContainerProps> = ({
   profiles,
-  matches,
-  onCreateProfile,
-  onUpdateProfile,
-  onDeleteProfile,
+  setProfiles,
   onStartGame,
-  onStartMiniGame
+  hasSavedGame,
+  onResumeGame,
+  onStartMiniGame,
+  defaultTab = 'match'
 }) => {
-  const [activeTab, setActiveTab] = useState<'match' | 'training' | 'profile'>('match');
+  const [searchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const modeParam = searchParams.get('mode') as MiniGameMode | null;
+
+  const [activeSubTab, setActiveSubTab] = useState<'match' | 'training'>(
+    tabParam === 'training' ? 'training' : defaultTab
+  );
+
+  useEffect(() => {
+    if (tabParam === 'training' || tabParam === 'match') {
+      setActiveSubTab(tabParam);
+    }
+  }, [tabParam]);
 
   return (
-    <div className="home-container">
+    <div className="home-container" style={{ paddingBottom: '20px' }}>
+      <div style={{ maxWidth: '400px', margin: '0 auto 16px auto', padding: '0 12px' }}>
+        <div className="segment-control">
+          <label className={activeSubTab === 'match' ? 'active' : ''}>
+            <input 
+              type="radio" 
+              name="offlineSubTab" 
+              checked={activeSubTab === 'match'} 
+              onChange={() => setActiveSubTab('match')} 
+            />
+            <span>🎯 X01 Match</span>
+          </label>
+          <label className={activeSubTab === 'training' ? 'active' : ''}>
+            <input 
+              type="radio" 
+              name="offlineSubTab" 
+              checked={activeSubTab === 'training'} 
+              onChange={() => setActiveSubTab('training')} 
+            />
+            <span>🏋️ Training</span>
+          </label>
+        </div>
+      </div>
+
       <div className="home-content">
-        {activeTab === 'match' && (
+        {activeSubTab === 'match' ? (
           <MatchSetup 
             profiles={profiles}
+            setProfiles={setProfiles}
             onStartGame={onStartGame}
+            hasSavedGame={hasSavedGame}
+            onResumeGame={onResumeGame}
           />
-        )}
-        
-        {activeTab === 'training' && (
+        ) : (
           <TrainingHub 
             profiles={profiles}
+            setProfiles={setProfiles}
             onStartMiniGame={onStartMiniGame}
-          />
-        )}
-
-        {activeTab === 'profile' && (
-          <ProfileTab 
-            profiles={profiles}
-            matches={matches}
-            onCreateProfile={onCreateProfile}
-            onUpdateProfile={onUpdateProfile}
-            onDeleteProfile={onDeleteProfile}
+            initialMode={modeParam || undefined}
           />
         )}
       </div>
-
-      <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
     </div>
   );
 };
+

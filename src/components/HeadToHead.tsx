@@ -65,8 +65,8 @@ export const HeadToHead: React.FC<HeadToHeadProps> = ({ profileA, profileB, onCl
     },
     {
       label: 'Best Leg',
-      valA: profileA.profile.bestLegDarts,
-      valB: profileB.profile.bestLegDarts,
+      valA: profileA.profile.bestLegDarts && profileA.profile.bestLegDarts > 0 ? profileA.profile.bestLegDarts : undefined,
+      valB: profileB.profile.bestLegDarts && profileB.profile.bestLegDarts > 0 ? profileB.profile.bestLegDarts : undefined,
       format: (v: number | undefined) => formatValue(v),
       higherIsBetter: false,
     },

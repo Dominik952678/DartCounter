@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Scoreboard } from './Scoreboard';
 import { Keypad } from './Keypad';
 import type { Player, GameConfig, Dart } from '../types';
@@ -19,30 +19,109 @@ interface GameScreenProps {
   checkoutPrompt: { maxDarts: number; autoDarts: number; isWin: boolean } | null;
   submitCheckoutPrompt: (darts: number) => void;
   celebration?: { type: string, playerIndex: number } | null;
+  canUndo?: boolean;
 }
 
 export const GameScreen: React.FC<GameScreenProps> = (props) => {
+  const [showAbortConfirm, setShowAbortConfirm] = useState(false);
+
   return (
-    <div className="screen active-screen">
-      <Scoreboard 
-        players={props.players} 
-        activePlayer={props.activePlayer} 
-        startingPlayerOfLeg={props.startingPlayerOfLeg} 
-        config={props.config} 
-        currentRoundDarts={props.currentRoundDarts}
-        celebration={props.celebration}
-      />
-      
-      <Keypad 
-        currentRoundDarts={props.currentRoundDarts}
-        currentMultiplier={props.currentMultiplier}
-        isProcessing={props.isProcessing}
-        roundBust={props.roundBust}
-        addDart={props.addDart}
-        toggleMultiplier={props.toggleMultiplier}
-        undoSingleDart={props.undoSingleDart}
-        abortGame={props.abortGame}
-      />
+    <div className="screen active-screen game-screen-layout" style={{ position: 'relative' }}>
+      {/* Top Match Header */}
+      <div className="match-top-header" style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: '8px 12px',
+        marginBottom: '8px',
+        background: 'rgba(22, 22, 26, 0.6)',
+        backdropFilter: 'blur(12px)',
+        borderRadius: '12px',
+        border: '1px solid var(--card-border)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span style={{ fontWeight: 800, fontSize: '1.05em', color: 'var(--text)' }}>
+            🎯 {props.config.startScore} {props.config.outMode}
+          </span>
+          <span style={{ fontSize: '0.78em', color: 'var(--text-dim)', background: 'rgba(255,255,255,0.06)', padding: '2px 8px', borderRadius: '6px' }}>
+            First to {props.config.legsToWin} Legs {props.config.setsToWin > 1 ? `· ${props.config.setsToWin} Sets` : ''}
+          </span>
+        </div>
+
+        <button 
+          className="btn-ghost" 
+          onClick={() => setShowAbortConfirm(true)}
+          style={{ 
+            fontSize: '0.85em', 
+            color: 'var(--red)', 
+            padding: '6px 12px', 
+            borderRadius: '8px', 
+            border: '1px solid rgba(255, 69, 58, 0.25)',
+            background: 'rgba(255, 69, 58, 0.08)',
+            minHeight: '36px'
+          }}
+        >
+          ✕ Beenden
+        </button>
+      </div>
+
+      <div className="game-screen-body">
+        <div className="game-screen-left">
+          <Scoreboard 
+            players={props.players} 
+            activePlayer={props.activePlayer} 
+            startingPlayerOfLeg={props.startingPlayerOfLeg} 
+            config={props.config} 
+            currentRoundDarts={props.currentRoundDarts}
+            celebration={props.celebration}
+          />
+        </div>
+        
+        <div className="game-screen-right">
+          <Keypad 
+            currentRoundDarts={props.currentRoundDarts}
+            currentMultiplier={props.currentMultiplier}
+            isProcessing={props.isProcessing}
+            roundBust={props.roundBust}
+            addDart={props.addDart}
+            toggleMultiplier={props.toggleMultiplier}
+            undoSingleDart={props.undoSingleDart}
+            abortGame={() => setShowAbortConfirm(true)}
+            canUndo={props.canUndo}
+          />
+        </div>
+      </div>
+
+      {showAbortConfirm && (
+        <div className="modal-overlay" onClick={() => setShowAbortConfirm(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '380px', textAlign: 'center', padding: '28px 20px' }}>
+            <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>⚠️</div>
+            <h3 style={{ marginBottom: '8px', fontSize: '1.3em' }}>Spiel beenden?</h3>
+            <p style={{ color: 'var(--text-dim)', fontSize: '0.9em', lineHeight: '1.4', marginBottom: '22px' }}>
+              Möchtest du das aktuelle Match wirklich abbrechen?
+            </p>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button 
+                className="btn-secondary" 
+                onClick={() => setShowAbortConfirm(false)}
+                style={{ flex: 1 }}
+              >
+                Weiterspielen
+              </button>
+              <button 
+                className="btn-danger" 
+                onClick={() => {
+                  setShowAbortConfirm(false);
+                  props.abortGame();
+                }}
+                style={{ flex: 1 }}
+              >
+                Beenden
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {props.checkoutPrompt && (
         <div className="modal-overlay">

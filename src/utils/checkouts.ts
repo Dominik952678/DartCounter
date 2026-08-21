@@ -186,9 +186,8 @@ export function getCheckoutSuggestion(score: number, outMode: 'SO' | 'DO' | 'MO'
   // If we have 2 darts left (dartsThrown = 1), and the suggestion needs 3 darts, return null
   // Wait, the suggestion is always the optimal path from that score. 
   // If score=100 and dartsThrown=1 (meaning we are on the 2nd dart), the path is "T20 D20". It has 2 parts. 2 darts left. It fits.
-  // If score=160 and dartsThrown=1, the path is "T20 T20 D20" (3 parts). But we only have 2 darts left! So it's impossible.
   if (parts.length > 3 - dartsThrown) {
-    return "Kein Finish möglich";
+    return null;
   }
 
   return suggestion;

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { Player, GameConfig } from '../types';
 import { getCheckoutSuggestion } from '../utils/checkouts';
+import { isSoundEnabled, setSoundEnabled } from '../utils/audio';
 
 interface ScoreboardProps {
   players: Player[];
@@ -19,10 +20,159 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
   currentRoundDarts,
   celebration
 }) => {
-  const [showExtended, setShowExtended] = useState(false);
+  const [soundOn, setSoundOn] = useState(isSoundEnabled());
 
   return (
-    <div className="scoreboard">
+    <div className="scoreboard" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '-4px' }}>
+        <button 
+          onClick={() => {
+            const next = !soundOn;
+            setSoundEnabled(next);
+            setSoundOn(next);
+          }}
+          className="btn-ghost"
+          style={{ 
+            padding: '6px 12px', 
+            fontSize: '0.85em', 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '6px', 
+            borderRadius: '20px',
+            background: soundOn ? 'rgba(0, 210, 106, 0.15)' : 'var(--surface)',
+            border: soundOn ? '1px solid rgba(0, 210, 106, 0.3)' : '1px solid var(--card-border)',
+            color: soundOn ? 'var(--green)' : 'var(--text-dim)',
+            cursor: 'pointer'
+          }}
+          title={soundOn ? 'Sound stummschalten' : 'Sound aktivieren'}
+        >
+          <span>{soundOn ? '🔊' : '🔇'}</span>
+          <span>{soundOn ? 'Caller An' : 'Caller Aus'}</span>
+        </button>
+      </div>
+      <style>{`
+        @keyframes scorePulse {
+          0% { transform: scale(1); }
+          50% { transform: scale(1.1); text-shadow: 0 0 20px var(--player-color, rgba(255,255,255,0.5)); }
+          100% { transform: scale(1); }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateX(-10px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        .score-anim-pulse {
+          animation: scorePulse 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+          display: inline-block;
+          will-change: transform;
+        }
+        .player-card {
+          position: relative;
+          background: var(--card, #1e1e1e);
+          border-radius: var(--radius, 12px);
+          padding: 16px;
+          transition: all 0.3s ease;
+          overflow: hidden;
+          border: 1px solid var(--card-border, #333);
+        }
+        .player-card.is-inactive {
+          opacity: 0.7;
+          transform: scale(0.98);
+          filter: grayscale(20%);
+        }
+        .player-card.is-active {
+          box-shadow: 0 0 15px rgba(255, 255, 255, 0.05);
+          border-left: 6px solid var(--player-color, var(--blue));
+          border-color: var(--card-border, #444);
+          transform: scale(1);
+          opacity: 1;
+          filter: grayscale(0%);
+        }
+        .player-card.is-active::before {
+          content: '';
+          position: absolute;
+          top: 0; left: 0; bottom: 0;
+          width: 30px;
+          background: linear-gradient(90deg, var(--player-color, var(--blue)), transparent);
+          opacity: 0.15;
+          pointer-events: none;
+        }
+        .player-card.checkout-range {
+          background: linear-gradient(145deg, rgba(76, 175, 80, 0.08), var(--card, #1e1e1e));
+        }
+        .score-display {
+          font-size: clamp(3.5rem, 15vw, 6rem);
+          font-weight: 900;
+          line-height: 1;
+          text-align: center;
+          margin: 16px 0;
+          color: var(--text, #fff);
+          text-shadow: 0 4px 12px rgba(0,0,0,0.3);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .player-card.is-active .score-display {
+          color: var(--player-color, var(--text));
+        }
+        .checkout-pill {
+          background: var(--player-color, var(--blue, #2196f3));
+          color: #fff;
+          border-radius: 9999px;
+          padding: 8px 20px;
+          font-weight: 800;
+          font-size: 1.25rem;
+          display: inline-block;
+          margin: 0 auto;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+          text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+          letter-spacing: 0.5px;
+          transform: translateY(0);
+          animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popIn {
+          from { transform: scale(0.9); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+        }
+        .compact-stats {
+          display: grid;
+          grid-template-columns: repeat(5, 1fr);
+          gap: 6px;
+          font-size: 0.85rem;
+          color: var(--text-dim, #aaa);
+          margin-top: 16px;
+          padding-top: 12px;
+          border-top: 1px solid rgba(255,255,255,0.08);
+          text-align: center;
+        }
+        @media (max-width: 420px) {
+          .compact-stats {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+          }
+        }
+        .compact-stats span {
+          white-space: nowrap;
+          background: rgba(0,0,0,0.25);
+          padding: 4px 6px;
+          border-radius: 6px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 4px;
+        }
+        .compact-stats strong {
+          color: var(--text, #fff);
+          font-weight: 700;
+        }
+        .live-preview-darts {
+          font-size: clamp(1.2rem, 5vw, 2rem);
+          color: var(--text-dim, #777);
+          margin-left: 12px;
+          font-weight: 600;
+          animation: fadeIn 0.3s ease-out forwards;
+        }
+      `}</style>
+      
       {players.map((p, i) => {
         const legAvg = p.legDarts > 0 ? ((p.legPts / p.legDarts) * 3).toFixed(1) : "–";
         const matchAvg = p.matchDarts > 0 ? ((p.matchPts / p.matchDarts) * 3).toFixed(1) : "–";
@@ -31,6 +181,7 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
         
         const currentRoundTotal = isActive ? currentRoundDarts.reduce((sum, d) => sum + d.value, 0) : 0;
         const liveScore = p.score - currentRoundTotal;
+        const isCheckoutRange = liveScore <= 170 && liveScore >= 2;
         
         let celebrationClass = '';
         if (celebration && celebration.playerIndex === i) {
@@ -43,51 +194,72 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
           ? ((p.checkoutSuccesses / p.checkoutAttempts) * 100).toFixed(0) 
           : "–";
 
+        const playerColor = p.color || 'var(--blue, #2196f3)';
+
         return (
           <div 
             key={i} 
-            className={`player ${isActive ? 'active' : ''} ${isStarter ? 'is-starter' : ''} ${celebrationClass}`}
-            style={isActive && p.color ? { borderLeftColor: p.color } : undefined}
+            className={`player-card ${isActive ? 'is-active' : 'is-inactive'} ${isStarter ? 'is-starter' : ''} ${celebrationClass} ${isCheckoutRange ? 'checkout-range' : ''}`}
+            style={{ 
+              '--player-color': playerColor,
+              borderLeftColor: isActive ? playerColor : undefined
+            } as React.CSSProperties}
           >
-            <span className="starter-dot" style={p.color ? { backgroundColor: p.color } : undefined}></span>
-            <h3 className="player-name">{p.isBot ? '🤖 ' : ''}{p.name}</h3>
-            <div className="badge-container">
-              <span className="badge">S: <span>{p.sets}</span></span>
-              <span className="badge badge-legs">L: <span>{p.legs}</span></span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span className="starter-dot" style={{ 
+                  backgroundColor: isStarter ? playerColor : 'transparent', 
+                  border: `2px solid ${playerColor}`, 
+                  width: '12px', 
+                  height: '12px', 
+                  borderRadius: '50%', 
+                  display: 'inline-block',
+                  opacity: isStarter ? 1 : 0.2
+                }}></span>
+                <h3 className="player-name" style={{ margin: 0, fontSize: '1.4rem', color: isActive ? playerColor : 'inherit', fontWeight: isActive ? 800 : 600 }}>
+                  {p.isBot ? '🤖 ' : ''}{p.name}
+                </h3>
+              </div>
+              <div className="badge-container" style={{ display: 'flex', gap: '8px' }}>
+                <span className="badge" style={{ background: 'rgba(0,0,0,0.4)', padding: '4px 10px', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 600 }}>S: <strong style={{color: '#fff'}}>{p.sets}</strong></span>
+                <span className="badge badge-legs" style={{ background: 'rgba(0,0,0,0.4)', padding: '4px 10px', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 600 }}>L: <strong style={{color: '#fff'}}>{p.legs}</strong></span>
+              </div>
             </div>
             
-            <div className="score-details" style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px', fontSize: '0.9em', color: '#999' }}>
-              <span>Darts: <strong>{p.legDarts + (isActive ? currentRoundDarts.length : 0)}</strong></span>
-              <span>Runde: <strong>{Math.floor(p.legDarts / 3) + 1}</strong></span>
+            <div className="score-details" style={{ display: 'flex', justifyContent: 'space-between', marginTop: '12px', fontSize: '0.95rem', color: 'var(--text-dim, #999)', fontWeight: 500 }}>
+              <span>Darts: <strong style={{color: 'var(--text, #fff)'}}>{p.legDarts + (isActive ? currentRoundDarts.length : 0)}</strong></span>
+              <span>Runde: <strong style={{color: 'var(--text, #fff)'}}>{Math.floor(p.legDarts / 3) + 1}</strong></span>
             </div>
 
-            <div className="score">{liveScore}</div>
-            
-            {isActive && liveScore <= 170 && getCheckoutSuggestion(liveScore, config.outMode, currentRoundDarts.length) && (
-              <div className="checkout-hint">
-                {getCheckoutSuggestion(liveScore, config.outMode, currentRoundDarts.length)}
-              </div>
-            )}
-
-            <div className="stats-preview">
-              <span>Leg: {legAvg}</span>
-              <span>Match: {matchAvg}</span>
+            <div className="score-display">
+              <span className="score-anim-pulse" key={liveScore}>
+                {liveScore}
+              </span>
+              {isActive && currentRoundTotal > 0 && (
+                <span className="live-preview-darts">
+                  -{currentRoundTotal}
+                </span>
+              )}
             </div>
             
-            {showExtended && (
-              <div className="extended-stats">
-                <span>CO: {coPercent}%</span>
-                <span>100+: {p.hundredPlus}</span>
-                <span>180: {p.oneEighty}</span>
-              </div>
-            )}
+            <div style={{ minHeight: '44px', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {isActive && isCheckoutRange && getCheckoutSuggestion(liveScore, config.outMode, currentRoundDarts.length) && (
+                <div className="checkout-pill">
+                  {getCheckoutSuggestion(liveScore, config.outMode, currentRoundDarts.length)}
+                </div>
+              )}
+            </div>
+
+            <div className="compact-stats">
+              <span>Leg: <strong>{legAvg}</strong></span>
+              <span>Match: <strong>{matchAvg}</strong></span>
+              <span>CO: <strong>{coPercent}%</strong></span>
+              <span>100+: <strong>{p.hundredPlus}</strong></span>
+              <span>180: <strong>{p.oneEighty}</strong></span>
+            </div>
           </div>
         );
       })}
-      
-      <div className="extended-stats-toggle" onClick={() => setShowExtended(!showExtended)}>
-        {showExtended ? '▲ Statistiken ausblenden' : '▼ Mehr Statistiken'}
-      </div>
     </div>
   );
 };

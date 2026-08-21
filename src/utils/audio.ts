@@ -1,10 +1,14 @@
 let audioCtx: AudioContext | null = null;
-let soundEnabled = false;
+let soundEnabled = true;
 
 // Wir versuchen, den Zustand aus localStorage zu lesen (falls vorhanden)
 try {
   const saved = localStorage.getItem('dart_sound_enabled');
-  if (saved !== null) soundEnabled = saved === 'true';
+  if (saved !== null) {
+    soundEnabled = saved === 'true';
+  } else {
+    soundEnabled = true;
+  }
 } catch (e) {
   console.error(e);
 }
