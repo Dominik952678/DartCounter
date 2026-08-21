@@ -259,15 +259,37 @@ export const StatsWidget: React.FC<StatsWidgetProps> = ({ title, mode, isOnline,
                   </div>
                   
                   {chartData.length > 0 && (
-                    <div style={{ marginTop: '20px', height: '120px' }}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={chartData}>
-                          <XAxis dataKey="name" hide />
-                          <YAxis hide domain={['dataMin - 5', 'dataMax + 5']} />
-                          <Tooltip contentStyle={{ backgroundColor: '#1a1a1c', border: 'none' }} labelStyle={{ display: 'none' }} />
-                          <Line type="monotone" dataKey="val" stroke={isOnline ? "var(--blue)" : "var(--green)"} strokeWidth={2} dot={false} />
-                        </LineChart>
-                      </ResponsiveContainer>
+                    <div style={{ marginTop: '20px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                        <span style={{ fontSize: '0.78em', color: 'var(--text-dim)', fontWeight: 600 }}>
+                          📈 {isMinigame ? 'Score-Entwicklung' : '3-Dart Average Trend'}
+                        </span>
+                        <span style={{ fontSize: '0.72em', color: isOnline ? 'var(--blue)' : 'var(--green)' }}>
+                          Letzte Spiele
+                        </span>
+                      </div>
+                      <div style={{ height: '120px' }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={chartData}>
+                            <XAxis dataKey="name" hide />
+                            <YAxis hide domain={['dataMin - 5', 'dataMax + 5']} />
+                            <Tooltip 
+                              contentStyle={{ backgroundColor: '#1a1a1c', border: '1px solid var(--card-border)', borderRadius: '8px' }} 
+                              itemStyle={{ color: '#fff' }}
+                              formatter={(value: any) => [value, isMinigame ? 'Punkte' : '3-Dart Average']}
+                            />
+                            <Line 
+                              type="monotone" 
+                              dataKey="val" 
+                              name={isMinigame ? "Punkte" : "3-Dart Average"}
+                              stroke={isOnline ? "var(--blue)" : "var(--green)"} 
+                              strokeWidth={2.5} 
+                              dot={{ fill: isOnline ? "var(--blue)" : "var(--green)", r: 2.5, strokeWidth: 0 }} 
+                              activeDot={{ r: 5 }} 
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </div>
                     </div>
                   )}
 

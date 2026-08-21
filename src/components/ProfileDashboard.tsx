@@ -491,8 +491,17 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                   <Tooltip 
                     contentStyle={{ backgroundColor: '#1a1a1c', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
                     labelStyle={{ color: '#999' }}
+                    formatter={(val: any) => [val, isMinigame ? 'Punkte (Score)' : '3-Dart Average']}
                   />
-                  <Line type="monotone" dataKey="val" stroke="#0a84ff" strokeWidth={2.5} dot={{ fill: '#0a84ff', r: 3, strokeWidth: 0 }} activeDot={{ r: 5, fill: '#0a84ff' }} />
+                  <Line 
+                    type="monotone" 
+                    dataKey="val" 
+                    name={isMinigame ? "Punkte (Score)" : "3-Dart Average"} 
+                    stroke="#0a84ff" 
+                    strokeWidth={2.5} 
+                    dot={{ fill: '#0a84ff', r: 3, strokeWidth: 0 }} 
+                    activeDot={{ r: 5, fill: '#0a84ff' }} 
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </div>
