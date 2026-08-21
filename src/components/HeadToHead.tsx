@@ -30,7 +30,7 @@ export const HeadToHead: React.FC<HeadToHeadProps> = ({ profileA, profileB, onCl
 
   const formatValue = (val: number | undefined, isPercent = false, isFloat = false) => {
     if (val === undefined || isNaN(val)) return '-';
-    let formatted = isFloat ? val.toFixed(2) : Math.round(val).toString();
+    const formatted = isFloat ? val.toFixed(2) : Math.round(val).toString();
     return isPercent ? `${formatted}%` : formatted;
   };
 

@@ -67,9 +67,9 @@ export function getBotDart(targetAverage: number, currentScore: number): { base:
     // 2. Setup Phase (Stellen auf ein Doppel, wenn currentScore <= 120)
     if (currentScore <= 120) {
         let requiredScore = 0;
-        let preferredLeaves = [40, 32, 24, 16, 8, 4];
+        const preferredLeaves = [40, 32, 24, 16, 8, 4];
         
-        for (let leave of preferredLeaves) {
+        for (const leave of preferredLeaves) {
             if (currentScore - leave > 0) {
                 requiredScore = currentScore - leave;
                 break;
@@ -121,7 +121,7 @@ export function getBotDart(targetAverage: number, currentScore: number): { base:
 
     // 3. Normal Scoring Phase (> 120)
     const avgDart = targetAverage / 3;
-    let targetDartScore = gaussianRandom(avgDart, 10);
+    const targetDartScore = gaussianRandom(avgDart, 10);
     const finalScore = getClosestValidScore(targetDartScore);
     
     if (finalScore === 0) return { base: 0, mult: 1 };

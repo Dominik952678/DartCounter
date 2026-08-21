@@ -31,7 +31,7 @@ export const exportElementAsImage = async (elementId: string, filename: string) 
             title: 'Dartcounter Match',
           });
           return;
-        } catch (e) {
+        } catch {
           // Ignored, user probably cancelled the share sheet
         }
       }

@@ -30,7 +30,7 @@ export default function App() {
   const { profiles, setProfiles, handleCreateProfile, handleUpdateProfile, handleDeleteProfile } = useProfiles(user);
   
   const [savedMatches, setSavedMatches] = useState<MatchHistory[]>([]);
-  const [miniGameConfig, setMiniGameConfig] = useState<{players: string[], settings: any}>({players: [], settings: {}});
+  const [miniGameConfig, setMiniGameConfig] = useState<{players: string[], settings: Record<string, any>}>({players: [], settings: {}});
   const [showHistory, setShowHistory] = useState(false);
   const [soundOn, setSoundOn] = useState(isSoundEnabled());
 
@@ -165,7 +165,7 @@ export default function App() {
                setProfiles(newProfiles);
                await saveProfiles(newProfiles, user?.id);
                
-               let matchData: MatchHistory = {
+               const matchData: MatchHistory = {
                    date: new Date().toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' }),
                    winner: results.reduce((prev, current) => (prev.score > current.score) ? prev : current).name,
                    gameType: 'powerScoring',
@@ -218,7 +218,7 @@ export default function App() {
                setProfiles(newProfiles);
                await saveProfiles(newProfiles, user?.id);
                
-               let matchData: MatchHistory = {
+               const matchData: MatchHistory = {
                    date: new Date().toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' }),
                    winner: results.reduce((prev, current) => (prev.score > current.score) ? prev : current).name,
                    gameType: 'splitScore',
@@ -269,7 +269,7 @@ export default function App() {
                setProfiles(newProfiles);
                await saveProfiles(newProfiles, user?.id);
                
-               let matchData: MatchHistory = {
+               const matchData: MatchHistory = {
                    date: new Date().toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' }),
                    winner: results.reduce((prev, current) => (prev.score > current.score) ? prev : current).name,
                    gameType: 'checkoutTraining',
