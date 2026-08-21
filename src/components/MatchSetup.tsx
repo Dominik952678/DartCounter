@@ -477,33 +477,84 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({ profiles, onStartGame, h
         </div>
         
         <div style={{ marginBottom: '25px' }}>
-          <h3 style={{ fontSize: '1.1em', marginBottom: '15px', color: 'var(--text)' }}>Distanz</h3>
-          <div className="input-row">
-            <div>
-              <label className="section-label">Gewinnsätze (Sets)</label>
-              <input 
-                type="number" 
-                min="1" 
-                max="10" 
-                value={setsToWin} 
-                onChange={(e) => setSetsToWin(e.target.value === '' ? '' : Math.min(10, Math.max(1, parseInt(e.target.value) || 1)))} 
-                onBlur={() => { if (setsToWin === '') setSetsToWin(1) }}
-                style={{ padding: '12px', fontSize: '18px', textAlign: 'center' }}
-              />
-              <small style={{ color: 'var(--text-dim)', fontSize: '0.75em', display: 'block', textAlign: 'center', marginTop: '4px' }}>First to {setsToWin || 1}</small>
+          <h3 style={{ fontSize: '1.1em', marginBottom: '14px', color: 'var(--text)' }}>Distanz</h3>
+          <div className="distance-grid">
+            <div className="distance-card">
+              <div className="distance-header">
+                <span className="distance-title">Sets</span>
+                <span className="distance-subtitle">Gewinnsätze</span>
+              </div>
+              <div className="stepper-box">
+                <button 
+                  type="button"
+                  className="stepper-btn" 
+                  onClick={() => setSetsToWin(Math.max(1, (parseInt(setsToWin.toString()) || 1) - 1))}
+                  disabled={parseInt(setsToWin.toString()) <= 1}
+                  aria-label="Sets verringern"
+                >
+                  −
+                </button>
+                <div className="stepper-val-wrap">
+                  <input 
+                    type="number" 
+                    min="1" 
+                    max="10" 
+                    value={setsToWin} 
+                    onChange={(e) => setSetsToWin(e.target.value === '' ? '' : Math.min(10, Math.max(1, parseInt(e.target.value) || 1)))} 
+                    onBlur={() => { if (setsToWin === '') setSetsToWin(1) }}
+                    className="stepper-input"
+                  />
+                  <span className="stepper-unit">First to {setsToWin || 1}</span>
+                </div>
+                <button 
+                  type="button"
+                  className="stepper-btn" 
+                  onClick={() => setSetsToWin(Math.min(10, (parseInt(setsToWin.toString()) || 1) + 1))}
+                  disabled={parseInt(setsToWin.toString()) >= 10}
+                  aria-label="Sets erhöhen"
+                >
+                  +
+                </button>
+              </div>
             </div>
-            <div>
-              <label className="section-label">Gewinnlegs (pro Satz)</label>
-              <input 
-                type="number" 
-                min="1" 
-                max="15" 
-                value={legsToWin} 
-                onChange={(e) => setLegsToWin(e.target.value === '' ? '' : Math.min(15, Math.max(1, parseInt(e.target.value) || 1)))} 
-                onBlur={() => { if (legsToWin === '') setLegsToWin(1) }}
-                style={{ padding: '12px', fontSize: '18px', textAlign: 'center' }}
-              />
-              <small style={{ color: 'var(--text-dim)', fontSize: '0.75em', display: 'block', textAlign: 'center', marginTop: '4px' }}>First to {legsToWin || 1}</small>
+
+            <div className="distance-card">
+              <div className="distance-header">
+                <span className="distance-title">Legs</span>
+                <span className="distance-subtitle">pro Satz</span>
+              </div>
+              <div className="stepper-box">
+                <button 
+                  type="button"
+                  className="stepper-btn" 
+                  onClick={() => setLegsToWin(Math.max(1, (parseInt(legsToWin.toString()) || 1) - 1))}
+                  disabled={parseInt(legsToWin.toString()) <= 1}
+                  aria-label="Legs verringern"
+                >
+                  −
+                </button>
+                <div className="stepper-val-wrap">
+                  <input 
+                    type="number" 
+                    min="1" 
+                    max="15" 
+                    value={legsToWin} 
+                    onChange={(e) => setLegsToWin(e.target.value === '' ? '' : Math.min(15, Math.max(1, parseInt(e.target.value) || 1)))} 
+                    onBlur={() => { if (legsToWin === '') setLegsToWin(1) }}
+                    className="stepper-input"
+                  />
+                  <span className="stepper-unit">First to {legsToWin || 1}</span>
+                </div>
+                <button 
+                  type="button"
+                  className="stepper-btn" 
+                  onClick={() => setLegsToWin(Math.min(15, (parseInt(legsToWin.toString()) || 1) + 1))}
+                  disabled={parseInt(legsToWin.toString()) >= 15}
+                  aria-label="Legs erhöhen"
+                >
+                  +
+                </button>
+              </div>
             </div>
           </div>
         </div>

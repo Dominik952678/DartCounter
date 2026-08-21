@@ -146,6 +146,141 @@ select:focus, input:focus {
 .input-row > div { flex: 1; text-align: left; }
 .input-row label { font-size: 0.85em; color: var(--text-dim); margin-bottom: 6px; display: block; }
 
+/* ── Symmetrical Distance & Stepper Controls ── */
+.distance-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 360px) {
+  .distance-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
+
+.distance-card {
+  background: var(--surface);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.distance-card:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.distance-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 12px;
+  min-height: 40px;
+  justify-content: center;
+}
+
+.distance-title {
+  font-size: 1.1em;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.distance-subtitle {
+  font-size: 0.75em;
+  color: var(--text-dim);
+  font-weight: 600;
+}
+
+.stepper-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 4px;
+  box-sizing: border-box;
+}
+
+.stepper-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text);
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  font-size: 1.25em;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  min-height: 36px;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.stepper-btn:hover:not(:disabled) {
+  background: var(--blue);
+  color: #fff;
+  border-color: var(--blue);
+}
+
+.stepper-btn:active:not(:disabled) {
+  transform: scale(0.92);
+}
+
+.stepper-btn:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+.stepper-val-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.stepper-input {
+  width: 100%;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  text-align: center;
+  font-size: 1.45em;
+  font-weight: 900;
+  color: var(--text);
+  padding: 0 !important;
+  margin: 0 !important;
+  min-height: auto !important;
+  -moz-appearance: textfield;
+}
+
+.stepper-input::-webkit-outer-spin-button,
+.stepper-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.stepper-unit {
+  font-size: 0.68em;
+  color: var(--text-dim);
+  font-weight: 600;
+  margin-top: 1px;
+}
+
 /* ── Segment Controls (Radio Groups) ───── */
 .radio-group, .segment-control {
   display: flex;
