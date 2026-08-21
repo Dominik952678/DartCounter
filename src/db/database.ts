@@ -19,12 +19,7 @@ export function getGuestDefaultProfiles(): Record<string, Profile> {
 }
 
 export async function getProfiles(userId?: string | null, username?: string): Promise<Record<string, Profile>> {
-  // If not logged in, return temporary in-memory guest profiles
-  if (!userId) {
-    return getGuestDefaultProfiles();
-  }
-
-  const docId = `profiles_${userId}`;
+  const docId = userId ? `profiles_${userId}` : 'profiles_guest';
 
   // Try reading from localStorage cache first for fast offline startup
   let cached: Record<string, Profile> | null = null;
@@ -33,6 +28,11 @@ export async function getProfiles(userId?: string | null, username?: string): Pr
     if (raw) cached = JSON.parse(raw);
   } catch (e) {
     console.error("Error reading cached profiles", e);
+  }
+
+  // If not logged in, return cached or default guest profiles
+  if (!userId) {
+    return cached || getGuestDefaultProfiles();
   }
 
   try {
@@ -85,9 +85,7 @@ export async function getProfiles(userId?: string | null, username?: string): Pr
 }
 
 export async function saveProfiles(profiles: Record<string, Profile>, userId?: string | null): Promise<void> {
-  if (!userId) return; // Guests do not write to persistent cloud database
-
-  const docId = `profiles_${userId}`;
+  const docId = userId ? `profiles_${userId}` : 'profiles_guest';
 
   // Always update local cache
   try {
@@ -95,6 +93,8 @@ export async function saveProfiles(profiles: Record<string, Profile>, userId?: s
   } catch (e) {
     console.error(e);
   }
+
+  if (!userId) return; // Guests do not write to persistent cloud database
 
   try {
     const docData = { profiles, userId, type: 'profiles' };
@@ -109,16 +109,14 @@ export async function saveProfiles(profiles: Record<string, Profile>, userId?: s
 }
 
 export async function saveMatch(match: MatchHistory, userId?: string | null): Promise<void> {
-  if (!userId) return; // Guests do not save matches persistently
-
-  const matchId = `match_${userId}_${Date.now()}`;
+  const localKey = userId ? `matches_${userId}` : 'matches_guest';
+  const matchId = `match_${userId || 'guest'}_${Date.now()}`;
   match.type = 'match';
   match._id = matchId;
-  (match as any).userId = userId;
+  if (userId) (match as any).userId = userId;
 
   // Update local cache of matches
   try {
-    const localKey = `matches_${userId}`;
     const existing = localStorage.getItem(localKey);
     const list: MatchHistory[] = existing ? JSON.parse(existing) : [];
     list.unshift(match);
@@ -126,6 +124,8 @@ export async function saveMatch(match: MatchHistory, userId?: string | null): Pr
   } catch (e) {
     console.error(e);
   }
+
+  if (!userId) return; // Guests do not save to cloud
 
   try {
     const { error } = await supabase
@@ -139,9 +139,7 @@ export async function saveMatch(match: MatchHistory, userId?: string | null): Pr
 }
 
 export async function getMatches(userId?: string | null): Promise<MatchHistory[]> {
-  if (!userId) return []; // Guests have no persistent match history
-
-  const localKey = `matches_${userId}`;
+  const localKey = userId ? `matches_${userId}` : 'matches_guest';
   let cached: MatchHistory[] = [];
   try {
     const raw = localStorage.getItem(localKey);
@@ -149,6 +147,8 @@ export async function getMatches(userId?: string | null): Promise<MatchHistory[]
   } catch (e) {
     console.error(e);
   }
+
+  if (!userId) return cached;
 
   try {
     const { data, error } = await supabase

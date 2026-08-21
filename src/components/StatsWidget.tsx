@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import type { MatchHistory, Profile } from '../types';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
+import { DartboardHeatmap } from './DartboardHeatmap';
 
 interface StatsWidgetProps {
   title: string;
@@ -17,7 +18,7 @@ export const StatsWidget: React.FC<StatsWidgetProps> = ({ title, mode, isOnline,
   const { 
     winRate, matchesPlayed, overallAvg, first9Avg, checkoutQuote, last5Avg, last5First9, last5Checkout, 
     chartData, pieData, radarData, maxRadarHits, isMinigame, minigameAvgScore, minigameBestScore, avgDartsPerLeg,
-    tripleQuote, targetScore
+    tripleQuote, targetScore, displaySegmentHits
   } = useMemo(() => {
     // Filter by online/offline
     let relevantMatches = matches.filter(m => (m.isOnline === true) === isOnline);
@@ -193,7 +194,7 @@ export const StatsWidget: React.FC<StatsWidgetProps> = ({ title, mode, isOnline,
     return { 
       winRate, matchesPlayed, overallAvg, first9Avg, checkoutQuote, last5Avg, last5First9, last5Checkout, 
       chartData, pieData, radarData, maxRadarHits, isMinigame, minigameAvgScore, minigameBestScore, avgDartsPerLeg,
-      tripleQuote, targetScore
+      tripleQuote, targetScore, displaySegmentHits
     };
   }, [matches, profileName, mode, isOnline, baseProfile]);
 
@@ -347,6 +348,11 @@ export const StatsWidget: React.FC<StatsWidgetProps> = ({ title, mode, isOnline,
                               </ResponsiveContainer>
                             </div>
                           </div>
+                      </div>
+
+                      {/* 2D Dartboard Heatmap */}
+                      <div style={{ marginTop: '16px' }}>
+                        <DartboardHeatmap customHits={displaySegmentHits} title="Treffer-Heatmap" />
                       </div>
                     </div>
                   )}

@@ -47,39 +47,6 @@ export const StatsPage: React.FC = () => {
      return Array.from(modes);
   }, [matches]);
 
-  if (!user) {
-    return (
-      <div className="screen active-screen app-container" style={{ padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '80vh' }}>
-        <div className="card" style={{ maxWidth: '420px', width: '100%', padding: '36px 24px', textAlign: 'center' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '16px' }}>📊</div>
-          <h2 style={{ marginBottom: '12px', fontSize: '1.6em', color: 'var(--text)' }}>
-            Statistiken & Analysen
-          </h2>
-          <p style={{ color: 'var(--text-dim)', fontSize: '0.95em', lineHeight: '1.5', marginBottom: '24px' }}>
-            Statistiken, Averages und Spielverläufe werden für angemeldete Accounts dauerhaft in der Cloud gespeichert.
-          </p>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <button 
-              className="btn-primary btn-large" 
-              onClick={() => navigate('/auth')}
-              style={{ fontSize: '1.1em' }}
-            >
-              🔑 Jetzt anmelden / registrieren
-            </button>
-            <button 
-              className="btn-ghost" 
-              onClick={() => navigate('/')}
-              style={{ color: 'var(--text-dim)' }}
-            >
-              Zurück zum Hauptmenü
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   const profileNames = Object.keys(profiles);
 
   return (
@@ -95,6 +62,32 @@ export const StatsPage: React.FC = () => {
         pointerEvents: 'none',
         zIndex: 0
       }} />
+      
+      {!user && (
+        <div style={{
+          background: 'rgba(10, 132, 255, 0.1)',
+          border: '1px solid rgba(10, 132, 255, 0.3)',
+          borderRadius: '12px',
+          padding: '10px 14px',
+          marginBottom: '16px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '12px',
+          flexWrap: 'wrap'
+        }}>
+          <span style={{ fontSize: '0.82em', color: 'var(--text)' }}>
+            💡 <strong>Gast-Modus:</strong> Deine Matches werden lokal im Browser gespeichert.
+          </span>
+          <button 
+            className="btn-primary"
+            onClick={() => navigate('/auth')}
+            style={{ padding: '4px 12px', fontSize: '0.78em', minHeight: '30px' }}
+          >
+            🔑 Cloud-Login
+          </button>
+        </div>
+      )}
       
       <div className="app-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', position: 'relative', zIndex: 1 }}>
         <button className="btn-ghost" onClick={() => navigate('/')} style={{ padding: '6px 14px', fontSize: '0.9em' }}>

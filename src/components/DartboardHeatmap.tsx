@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import type { Profile } from '../types';
 
 interface DartboardHeatmapProps {
@@ -10,22 +10,53 @@ interface DartboardHeatmapProps {
 // Standard PDC sector order clockwise from the top (12 o'clock)
 const SECTORS = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5];
 
+const resolveSegmentHits = (segmentHits: Record<string, number>, key: string): number => {
+  if (segmentHits[key] !== undefined) return segmentHits[key];
+  // Fallback for legacy data with only numeric sector keys (e.g. "20")
+  if (key === 'DB' && segmentHits['50'] !== undefined) return segmentHits['50'];
+  if (key === 'SB' && segmentHits['25'] !== undefined) return segmentHits['25'];
+  if (key.startsWith('S')) {
+    const num = key.slice(1);
+    if (segmentHits[num] !== undefined && segmentHits[`T${num}`] === undefined && segmentHits[`D${num}`] === undefined) {
+      return segmentHits[num];
+    }
+  }
+  return 0;
+};
+
+const EMPTY_HITS: Record<string, number> = {};
+
 export const DartboardHeatmap: React.FC<DartboardHeatmapProps> = ({ profile, customHits, title = "2D Treffer-Heatmap" }) => {
   const [filterMode, setFilterMode] = useState<'all' | 'triples' | 'doubles'>('all');
   const [hoveredSegment, setHoveredSegment] = useState<{ label: string; count: number; percent: number } | null>(null);
 
-  const segmentHits = useMemo(() => {
-    return customHits || profile?.segmentHits || {};
-  }, [customHits, profile]);
+  const segmentHits = customHits || profile?.segmentHits || EMPTY_HITS;
 
-  const totalRecordedHits = useMemo(() => {
-    return Object.values(segmentHits).reduce((sum, count) => sum + count, 0);
-  }, [segmentHits]);
+  const keys = Object.keys(segmentHits);
+  const hasDetailedKeys = keys.some(k => k.startsWith('T') || k.startsWith('D') || k.startsWith('S') || k === 'DB' || k === 'SB');
+  const totalRecordedHits = hasDetailedKeys
+    ? keys
+        .filter(k => k.startsWith('T') || k.startsWith('D') || k.startsWith('S') || k === 'DB' || k === 'SB' || k === 'Miss')
+        .reduce((sum, k) => sum + (segmentHits[k] || 0), 0)
+    : Object.values(segmentHits).reduce((sum, count) => sum + (count || 0), 0);
 
-  const maxHits = useMemo(() => {
-    const values = Object.values(segmentHits);
-    return Math.max(1, ...values);
-  }, [segmentHits]);
+  let maxHits = 1;
+  SECTORS.forEach(s => {
+    if (filterMode === 'all' || filterMode === 'triples') {
+      maxHits = Math.max(maxHits, resolveSegmentHits(segmentHits, `T${s}`));
+    }
+    if (filterMode === 'all' || filterMode === 'doubles') {
+      maxHits = Math.max(maxHits, resolveSegmentHits(segmentHits, `D${s}`));
+    }
+    if (filterMode === 'all') {
+      maxHits = Math.max(maxHits, resolveSegmentHits(segmentHits, `S${s}`));
+    }
+  });
+  if (filterMode !== 'triples') {
+    maxHits = Math.max(maxHits, resolveSegmentHits(segmentHits, 'DB'), resolveSegmentHits(segmentHits, 'SB'));
+  }
+
+  const getSegmentCount = (key: string) => resolveSegmentHits(segmentHits, key);
 
   // Center and geometry
   const cx = 200;
@@ -76,8 +107,6 @@ export const DartboardHeatmap: React.FC<DartboardHeatmapProps> = ({ profile, cus
       return `rgba(255, 69, 58, ${0.7 + intensity * 0.3})`; // Hot Red
     }
   };
-
-  const getSegmentCount = (key: string) => segmentHits[key] || 0;
 
   const handleHover = (label: string, count: number) => {
     const percent = totalRecordedHits > 0 ? (count / totalRecordedHits) * 100 : 0;

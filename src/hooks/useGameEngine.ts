@@ -263,8 +263,23 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches, setScree
 
       if (!updatedPlayer.segmentHits) updatedPlayer.segmentHits = {};
       for (let dart of prevState.currentRoundDarts) {
-          const key = String(dart.base);
-          updatedPlayer.segmentHits[key] = (updatedPlayer.segmentHits[key] || 0) + 1;
+          let segmentKey = '';
+          if (dart.base === 25) {
+              segmentKey = dart.mult === 2 ? 'DB' : 'SB';
+          } else if (dart.base === 0) {
+              segmentKey = 'Miss';
+          } else {
+              const prefix = dart.mult === 3 ? 'T' : (dart.mult === 2 ? 'D' : 'S');
+              segmentKey = `${prefix}${dart.base}`;
+          }
+
+          if (segmentKey) {
+              updatedPlayer.segmentHits[segmentKey] = (updatedPlayer.segmentHits[segmentKey] || 0) + 1;
+          }
+          // Also record numeric key for legacy charts / radar
+          const baseKey = String(dart.base);
+          updatedPlayer.segmentHits[baseKey] = (updatedPlayer.segmentHits[baseKey] || 0) + 1;
+
           if (dart.mult === 3) {
              updatedPlayer.triplesHit = (updatedPlayer.triplesHit || 0) + 1;
           }
@@ -526,9 +541,7 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches, setScree
     });
 
     setProfiles(newProfiles);
-    if (user?.id) {
-      await saveProfiles(newProfiles, user.id);
-    }
+    await saveProfiles(newProfiles, user?.id);
 
     let matchData: MatchHistory = {
         date: new Date().toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' }),
@@ -557,10 +570,8 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches, setScree
         }))
     };
     
-    if (user?.id) {
-      await saveMatch(matchData, user.id);
-      getMatches(user.id).then(setSavedMatches);
-    }
+    await saveMatch(matchData, user?.id);
+    getMatches(user?.id).then(setSavedMatches);
 
     setStatsModalData({
       isOpen: true,
