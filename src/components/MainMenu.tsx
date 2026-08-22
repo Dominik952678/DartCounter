@@ -302,8 +302,25 @@ export const MainMenu: React.FC = () => {
           margin-top: 2px;
         }
 
+        /* ── iPad in Portrait (Non-scrollable, perfectly fitted) ── */
+        @media (min-width: 768px) and (orientation: portrait) {
+          .main-menu-screen {
+            height: 100% !important;
+            max-height: 100% !important;
+            overflow: hidden !important;
+            overscroll-behavior: none !important;
+          }
+
+          .main-menu-card {
+            height: 100% !important;
+            max-height: 100% !important;
+            min-height: 0 !important;
+            overflow: hidden !important;
+          }
+        }
+
         /* ── Landscape / Wide Mode (Fluid dynamic scaling & zero scroll) ── */
-        @media (orientation: landscape) and (min-width: 540px), (min-width: 860px) {
+        @media (orientation: landscape) {
           .main-menu-screen {
             height: 100% !important;
             max-height: 100% !important;
