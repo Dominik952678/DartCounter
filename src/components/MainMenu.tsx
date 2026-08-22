@@ -22,34 +22,76 @@ export const MainMenu: React.FC = () => {
           top: -100px;
           left: 50%;
           transform: translateX(-50%);
-          width: 500px;
+          width: min(500px, 90vw);
           height: 350px;
           background: radial-gradient(circle, rgba(0, 210, 106, 0.12) 0%, rgba(10, 132, 255, 0.08) 50%, transparent 70%);
           pointer-events: none;
           z-index: 0;
         }
 
+        /* ── Fluid, Dynamic Main Card ── */
         .main-menu-card {
           position: relative;
           z-index: 1;
           width: 100%;
-          max-width: 480px;
+          max-width: min(500px, 100%);
           display: flex;
           flex-direction: column;
-          gap: 16px;
+          gap: clamp(10px, 1.8vh, 16px);
           transition: all 0.2s ease;
         }
 
+        /* ── Header Area ── */
         .menu-header-area {
           text-align: center;
-          margin-top: 10px;
-          margin-bottom: 8px;
+          margin-top: clamp(2px, 1vh, 10px);
+          margin-bottom: clamp(2px, 0.8vh, 8px);
         }
 
+        .menu-header-flex {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .menu-header-icon {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: clamp(48px, 6.5vh, 64px);
+          height: clamp(48px, 6.5vh, 64px);
+          border-radius: clamp(14px, 2vh, 20px);
+          background: linear-gradient(135deg, rgba(0, 210, 106, 0.2), rgba(10, 132, 255, 0.2));
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+          margin-bottom: clamp(6px, 1.2vh, 12px);
+          font-size: clamp(1.5rem, 2.5vh, 2rem);
+        }
+
+        .menu-header-title {
+          font-size: clamp(1.8rem, 3.2vh, 2.4rem);
+          font-weight: 900;
+          letter-spacing: -0.03em;
+          background: linear-gradient(135deg, var(--green), var(--blue));
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          margin: 0;
+          line-height: 1.15;
+        }
+
+        .menu-header-subtitle {
+          color: var(--text-dim);
+          font-size: clamp(0.8em, 1.4vh, 0.95em);
+          margin-top: clamp(2px, 0.4vh, 4px);
+          font-weight: 500;
+        }
+
+        /* ── Content Grid Hierarchy ── */
         .menu-content-grid {
           display: flex;
           flex-direction: column;
-          gap: 16px;
+          gap: clamp(10px, 1.8vh, 16px);
           width: 100%;
         }
 
@@ -61,55 +103,49 @@ export const MainMenu: React.FC = () => {
           order: 1;
         }
 
+        .menu-status-bar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: clamp(8px, 1.2vh, 10px) clamp(12px, 1.8vw, 16px);
+          background: rgba(255, 255, 255, 0.03);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border-radius: clamp(10px, 1.5vh, 14px);
+          border: 1px solid var(--card-border);
+        }
+
+        .menu-status-text {
+          font-size: clamp(0.8em, 1.4vh, 0.88em);
+          color: var(--text);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .menu-status-btn {
+          font-size: clamp(0.76em, 1.3vh, 0.82em);
+          font-weight: 700;
+          border-radius: 8px;
+          cursor: pointer;
+          padding: clamp(3px, 0.5vh, 4px) clamp(6px, 1vw, 10px);
+          flex-shrink: 0;
+          transition: all 0.15s ease;
+        }
+
         .menu-right-box {
           order: 2;
           display: flex;
           flex-direction: column;
-          gap: 12px;
-        }
-
-        .menu-training-container {
-          order: 3;
-          margin-top: 0;
-        }
-
-        .training-chips-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 8px;
-        }
-
-        .training-chip {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          padding: 12px 6px;
-          background: var(--surface);
-          border: 1px solid var(--card-border);
-          border-radius: 12px;
-          cursor: pointer;
-          transition: all 0.15s ease;
-          color: var(--text);
-          box-sizing: border-box;
-          text-align: center;
-        }
-
-        .training-chip:hover {
-          background: rgba(255, 255, 255, 0.08);
-          transform: translateY(-2px);
-        }
-
-        .training-chip:active {
-          transform: scale(0.97);
+          gap: clamp(8px, 1.4vh, 12px);
         }
 
         .menu-action-tile {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 18px 20px;
-          border-radius: 16px;
+          padding: clamp(12px, 2vh, 18px) clamp(14px, 2vw, 20px);
+          border-radius: clamp(12px, 1.8vh, 16px);
           background: var(--card);
           border: 1px solid var(--card-border);
           cursor: pointer;
@@ -128,6 +164,35 @@ export const MainMenu: React.FC = () => {
 
         .menu-action-tile:active {
           transform: scale(0.98);
+        }
+
+        .tile-icon {
+          width: clamp(38px, 5.5vh, 48px);
+          height: clamp(38px, 5.5vh, 48px);
+          font-size: clamp(1.6rem, 2.6vh, 2.2rem);
+          border-radius: clamp(10px, 1.4vh, 12px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+
+        .tile-title {
+          font-size: clamp(1.05em, 1.8vh, 1.25em);
+          font-weight: 800;
+          color: var(--text);
+        }
+
+        .tile-desc {
+          font-size: clamp(0.76em, 1.3vh, 0.85em);
+          color: var(--text-dim);
+          margin-top: 2px;
+        }
+
+        .tile-arrow {
+          font-size: clamp(1.2em, 2vh, 1.4em);
+          font-weight: 700;
+          flex-shrink: 0;
         }
 
         .tile-offline {
@@ -166,79 +231,106 @@ export const MainMenu: React.FC = () => {
           box-shadow: 0 8px 24px rgba(94, 92, 230, 0.15);
         }
 
-        /* ── Compact iPhone Scaling (<= 500px: Zero-Scroll Guarantee) ── */
-        @media (max-width: 500px) {
-          .main-menu-card {
-            gap: 8px;
-          }
-          .menu-content-grid {
-            gap: 8px;
-          }
-          .menu-header-icon {
-            width: 44px !important;
-            height: 44px !important;
-            font-size: 1.45rem !important;
-          }
-          .menu-header-subtitle {
-            font-size: 0.8em !important;
-            margin-top: 1px !important;
-          }
-          .menu-status-container > div {
-            padding: 6px 12px !important;
-            border-radius: 10px !important;
-          }
-          .menu-status-container span {
-            font-size: 0.82em !important;
-          }
-          .menu-right-box {
-            gap: 8px !important;
-          }
-          .menu-action-tile {
-            padding: 10px 14px !important;
-            border-radius: 12px !important;
-          }
-          .training-chip span:last-child {
-            font-size: 0.76em !important;
-          }
+        .menu-training-container {
+          order: 3;
+          margin-top: clamp(0px, 0.5vh, 4px);
         }
 
-        /* ── Landscape Widescreen Mode (Logo Top Center | Left Box == Right Box Exactly Aligned) ── */
+        .training-section-label {
+          font-size: clamp(0.74em, 1.2vh, 0.8em);
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          color: var(--text-dim);
+          margin-bottom: clamp(6px, 1vh, 10px);
+          font-weight: 700;
+          padding-left: 4px;
+        }
+
+        .training-chips-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: clamp(6px, 1.2vw, 10px);
+        }
+
+        .training-chip {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: clamp(8px, 1.4vh, 12px) clamp(4px, 1vw, 8px);
+          background: var(--surface);
+          border: 1px solid var(--card-border);
+          border-radius: clamp(10px, 1.5vh, 14px);
+          cursor: pointer;
+          transition: all 0.15s ease;
+          color: var(--text);
+          box-sizing: border-box;
+          text-align: center;
+        }
+
+        .training-chip:hover {
+          background: rgba(255, 255, 255, 0.08);
+          transform: translateY(-2px);
+          border-color: rgba(255, 255, 255, 0.22);
+        }
+
+        .training-chip:active {
+          transform: scale(0.97);
+        }
+
+        .training-chip-icon {
+          font-size: clamp(1.3rem, 2.2vh, 1.6rem);
+        }
+
+        .training-chip-title {
+          font-weight: 700;
+          font-size: clamp(0.76em, 1.3vh, 0.85em);
+          margin-top: 2px;
+        }
+
+        /* ── Landscape / Wide Responsive Mode (Logo Top Center | Left Box == Right Box Exactly Aligned) ── */
         @media (orientation: landscape) and (min-width: 540px), (min-width: 860px) {
           .main-menu-card {
-            max-width: 900px;
-            gap: 10px;
+            max-width: min(960px, 94vw);
+            gap: clamp(8px, 1.5vh, 14px);
           }
+
           .menu-header-area {
             text-align: center;
             margin-top: 0;
-            margin-bottom: 2px;
+            margin-bottom: clamp(0px, 0.5vh, 4px);
           }
+
           .menu-header-icon {
-            width: 38px !important;
-            height: 38px !important;
-            font-size: 1.3rem !important;
+            width: clamp(34px, 5vh, 44px) !important;
+            height: clamp(34px, 5vh, 44px) !important;
+            font-size: clamp(1.2rem, 2vh, 1.5rem) !important;
             margin-bottom: 0 !important;
-            border-radius: 10px !important;
+            border-radius: clamp(8px, 1.2vh, 12px) !important;
           }
+
           .menu-header-title {
-            font-size: 1.6rem !important;
+            font-size: clamp(1.4rem, 2.5vh, 1.8rem) !important;
             line-height: 1.1 !important;
           }
+
           .menu-header-subtitle {
-            font-size: 0.76em !important;
+            font-size: clamp(0.72em, 1.2vh, 0.82em) !important;
             margin-top: 1px !important;
           }
+
           .menu-header-flex {
             display: inline-flex;
+            flex-direction: row;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: clamp(8px, 1.5vw, 14px);
           }
 
           .menu-content-grid {
             display: grid !important;
             grid-template-columns: 1fr 1fr !important;
-            gap: 16px !important;
+            gap: clamp(12px, 2vw, 22px) !important;
             align-items: stretch !important;
           }
 
@@ -246,28 +338,31 @@ export const MainMenu: React.FC = () => {
             display: flex !important;
             flex-direction: column !important;
             justify-content: space-between !important;
-            gap: 10px !important;
+            gap: clamp(8px, 1.2vh, 12px) !important;
             height: 100% !important;
           }
 
           .menu-status-container {
             order: unset !important;
           }
-          .menu-status-container > div {
-            padding: 8px 12px !important;
+
+          .menu-status-bar {
+            padding: clamp(6px, 1vh, 10px) clamp(10px, 1.5vw, 14px) !important;
           }
 
           .menu-training-container {
             order: unset !important;
             margin-top: 0 !important;
           }
+
           .training-chips-grid {
-            gap: 8px !important;
+            gap: clamp(6px, 1vw, 10px) !important;
           }
+
           .training-chip {
             aspect-ratio: 1 / 1 !important;
-            padding: 8px 4px !important;
-            border-radius: 14px !important;
+            padding: clamp(6px, 1vh, 10px) clamp(4px, 0.8vw, 8px) !important;
+            border-radius: clamp(10px, 1.5vh, 14px) !important;
           }
 
           .menu-right-box {
@@ -275,79 +370,81 @@ export const MainMenu: React.FC = () => {
             display: flex !important;
             flex-direction: column !important;
             justify-content: space-between !important;
-            gap: 8px !important;
+            gap: clamp(6px, 1vh, 10px) !important;
             height: 100% !important;
           }
+
           .menu-action-tile {
-            padding: 10px 14px !important;
-            border-radius: 14px !important;
+            padding: clamp(8px, 1.4vh, 14px) clamp(12px, 1.6vw, 18px) !important;
+            border-radius: clamp(10px, 1.5vh, 14px) !important;
           }
+
           .tile-icon {
-            width: 38px !important;
-            height: 38px !important;
-            font-size: 1.6rem !important;
-            border-radius: 10px !important;
+            width: clamp(34px, 5vh, 42px) !important;
+            height: clamp(34px, 5vh, 42px) !important;
+            font-size: clamp(1.4rem, 2.2vh, 1.8rem) !important;
+            border-radius: clamp(8px, 1.2vh, 12px) !important;
+          }
+
+          .tile-title {
+            font-size: clamp(1em, 1.6vh, 1.18em) !important;
+          }
+
+          .tile-desc {
+            font-size: clamp(0.74em, 1.2vh, 0.8em) !important;
           }
         }
 
-        /* ── iPad & Tablet Enhancements (>= 768px: Fill space luxuriously) ── */
-        @media (min-width: 768px) {
+        /* ── Ultra-Compact Height Guard (for small landscape screens <= 440px height) ── */
+        @media (max-height: 440px) and (orientation: landscape) {
           .main-menu-card {
-            max-width: 680px;
-            gap: 16px;
-          }
-          .menu-header-icon {
-            width: 64px !important;
-            height: 64px !important;
-            font-size: 2.1rem !important;
-            margin-bottom: 6px !important;
-          }
-          .menu-header-title {
-            font-size: 2.5rem !important;
-          }
-          .menu-header-subtitle {
-            font-size: 0.95em !important;
-          }
-          .menu-status-container > div {
-            padding: 10px 16px !important;
-            border-radius: 14px !important;
-          }
-          .menu-status-container span {
-            font-size: 0.92em !important;
-          }
-          .menu-right-box {
-            gap: 12px !important;
-          }
-          .menu-action-tile {
-            padding: 18px 22px !important;
-            border-radius: 16px !important;
-          }
-        }
-
-        @media (min-width: 768px) and (orientation: landscape) {
-          .main-menu-card {
-            max-width: 1000px !important;
-            gap: 14px !important;
+            gap: 6px !important;
           }
           .menu-content-grid {
-            gap: 24px !important;
-          }
-          .menu-header-icon {
-            width: 48px !important;
-            height: 48px !important;
-            font-size: 1.6rem !important;
-          }
-          .menu-header-title {
-            font-size: 2rem !important;
-          }
-          .menu-header-subtitle {
-            font-size: 0.88em !important;
-          }
-          .training-chip {
-            padding: 14px 10px !important;
+            gap: 10px !important;
           }
           .menu-action-tile {
-            padding: 14px 18px !important;
+            padding: 6px 10px !important;
+          }
+          .menu-status-bar {
+            padding: 5px 8px !important;
+          }
+          .training-chip {
+            padding: 4px 2px !important;
+          }
+          .training-section-label {
+            margin-bottom: 3px !important;
+          }
+        }
+
+        /* ── iPad & Large Displays (min-width: 768px in portrait) ── */
+        @media (min-width: 768px) and (orientation: portrait) {
+          .main-menu-card {
+            max-width: 640px;
+            gap: 18px;
+          }
+          .menu-header-icon {
+            width: 70px !important;
+            height: 70px !important;
+            font-size: 2.3rem !important;
+            margin-bottom: 14px !important;
+          }
+          .menu-header-title {
+            font-size: 2.6rem !important;
+          }
+          .menu-header-subtitle {
+            font-size: 1rem !important;
+          }
+          .menu-action-tile {
+            padding: 20px 24px !important;
+          }
+          .tile-icon {
+            width: 52px !important;
+            height: 52px !important;
+            font-size: 2.4rem !important;
+          }
+          .training-chip {
+            padding: 16px 8px !important;
           }
         }
       `}</style>
@@ -355,29 +452,17 @@ export const MainMenu: React.FC = () => {
       <div className="hero-glow-bg" />
 
       <div className="main-menu-card">
-        {/* ── Brand Header (Ganz oben zentriert) ── */}
+        {/* ── Brand Header ── */}
         <div className="menu-header-area">
           <div className="menu-header-flex">
-            <div className="menu-header-icon" style={{ 
-              display: 'inline-flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              width: '64px', 
-              height: '64px', 
-              borderRadius: '20px', 
-              background: 'linear-gradient(135deg, rgba(0, 210, 106, 0.2), rgba(10, 132, 255, 0.2))', 
-              border: '1px solid rgba(255, 255, 255, 0.1)', 
-              boxShadow: '0 8px 20px rgba(0,0,0,0.3)', 
-              marginBottom: '12px', 
-              fontSize: '2rem' 
-            }}>
+            <div className="menu-header-icon">
               🎯
             </div>
             <div>
-              <h1 className="menu-header-title" style={{ fontSize: '2.4rem', fontWeight: 900, letterSpacing: '-0.03em', background: 'linear-gradient(135deg, var(--green), var(--blue))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: 0, lineHeight: 1.15 }}>
+              <h1 className="menu-header-title">
                 DARTCOUNTER
               </h1>
-              <p className="menu-header-subtitle" style={{ color: 'var(--text-dim)', fontSize: '0.95em', marginTop: '4px', fontWeight: 500 }}>
+              <p className="menu-header-subtitle">
                 Scoring, Statistiken & Multiplayer
               </p>
             </div>
@@ -390,16 +475,7 @@ export const MainMenu: React.FC = () => {
           <div className="menu-left-box">
             {/* Anmeldung / User-Status-Bar */}
             <div className="menu-status-container">
-              <div style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'space-between', 
-                padding: '10px 16px', 
-                background: 'rgba(255, 255, 255, 0.03)', 
-                backdropFilter: 'blur(12px)',
-                borderRadius: '14px', 
-                border: '1px solid var(--card-border)' 
-              }}>
+              <div className="menu-status-bar">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, overflow: 'hidden' }}>
                   <span style={{ 
                     width: '8px', 
@@ -409,7 +485,7 @@ export const MainMenu: React.FC = () => {
                     boxShadow: user ? '0 0 8px var(--green)' : '0 0 8px var(--orange)',
                     flexShrink: 0
                   }} />
-                  <span style={{ fontSize: '0.88em', color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <span className="menu-status-text">
                     {user ? (
                       <>Eingeloggt als <strong style={{ color: 'var(--blue)' }}>{user.user_metadata?.username || user.email}</strong></>
                     ) : (
@@ -420,14 +496,16 @@ export const MainMenu: React.FC = () => {
                 {user ? (
                   <button 
                     onClick={() => { signOut(); navigate('/'); }}
-                    style={{ background: 'transparent', border: 'none', color: 'var(--red)', fontSize: '0.82em', fontWeight: 600, cursor: 'pointer', padding: '4px 8px', flexShrink: 0 }}
+                    className="menu-status-btn"
+                    style={{ background: 'transparent', border: 'none', color: 'var(--red)' }}
                   >
                     Abmelden
                   </button>
                 ) : (
                   <button 
                     onClick={() => navigate('/auth')}
-                    style={{ background: 'rgba(10, 132, 255, 0.15)', border: '1px solid rgba(10, 132, 255, 0.3)', color: 'var(--blue)', fontSize: '0.82em', fontWeight: 700, borderRadius: '8px', cursor: 'pointer', padding: '4px 10px', flexShrink: 0 }}
+                    className="menu-status-btn"
+                    style={{ background: 'rgba(10, 132, 255, 0.15)', border: '1px solid rgba(10, 132, 255, 0.3)', color: 'var(--blue)' }}
                   >
                     Login / Registrieren
                   </button>
@@ -437,7 +515,7 @@ export const MainMenu: React.FC = () => {
 
             {/* Schnellstart Training */}
             <div className="menu-training-container">
-              <div style={{ fontSize: '0.8em', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-dim)', marginBottom: '10px', fontWeight: 700, paddingLeft: '4px' }}>
+              <div className="training-section-label">
                 Schnellstart Training
               </div>
               <div className="training-chips-grid">
@@ -445,22 +523,22 @@ export const MainMenu: React.FC = () => {
                   className="training-chip" 
                   onClick={() => navigate('/offline?tab=training&mode=checkout')}
                 >
-                  <span style={{ fontSize: '1.5rem' }}>🎯</span>
-                  <span style={{ fontWeight: 700, fontSize: '0.85em' }}>Checkout</span>
+                  <span className="training-chip-icon">🎯</span>
+                  <span className="training-chip-title">Checkout</span>
                 </div>
                 <div 
                   className="training-chip" 
                   onClick={() => navigate('/offline?tab=training&mode=powerscoring')}
                 >
-                  <span style={{ fontSize: '1.5rem' }}>🔥</span>
-                  <span style={{ fontWeight: 700, fontSize: '0.85em' }}>Scoring</span>
+                  <span className="training-chip-icon">🔥</span>
+                  <span className="training-chip-title">Scoring</span>
                 </div>
                 <div 
                   className="training-chip" 
                   onClick={() => navigate('/offline?tab=training&mode=splitscore')}
                 >
-                  <span style={{ fontSize: '1.5rem' }}>➗</span>
-                  <span style={{ fontWeight: 700, fontSize: '0.85em' }}>Split Score</span>
+                  <span className="training-chip-icon">➗</span>
+                  <span className="training-chip-title">Split Score</span>
                 </div>
               </div>
             </div>
@@ -470,42 +548,40 @@ export const MainMenu: React.FC = () => {
           <div className="menu-right-box">
             {/* Offline Match */}
             <div className="menu-action-tile tile-offline" onClick={() => navigate('/offline')}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div className="tile-icon" style={{ fontSize: '2.2rem', width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0, 210, 106, 0.15)', borderRadius: '12px', flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(10px, 1.8vw, 16px)', minWidth: 0 }}>
+                <div className="tile-icon" style={{ background: 'rgba(0, 210, 106, 0.15)' }}>
                   🎯
                 </div>
-                <div>
-                  <div className="tile-title" style={{ fontSize: '1.25em', fontWeight: 800, color: 'var(--text)' }}>
+                <div style={{ minWidth: 0 }}>
+                  <div className="tile-title">
                     {user ? 'Offline Match' : 'Als Gast spielen'}
                   </div>
-                  <div className="tile-desc" style={{ fontSize: '0.85em', color: 'var(--text-dim)', marginTop: '2px' }}>
+                  <div className="tile-desc">
                     X01, Sets/Legs, Training & Bots
                   </div>
                 </div>
               </div>
-              <div style={{ fontSize: '1.4em', color: 'var(--green)', fontWeight: 700 }}>
+              <div className="tile-arrow" style={{ color: 'var(--green)' }}>
                 ➔
               </div>
             </div>
 
             {/* Online Multiplayer */}
             <div className="menu-action-tile tile-online" onClick={handleOnlineClick}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div className="tile-icon" style={{ fontSize: '2.2rem', width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(10, 132, 255, 0.15)', borderRadius: '12px', flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(10px, 1.8vw, 16px)', minWidth: 0 }}>
+                <div className="tile-icon" style={{ background: 'rgba(10, 132, 255, 0.15)' }}>
                   🌍
                 </div>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span className="tile-title" style={{ fontSize: '1.25em', fontWeight: 800, color: 'var(--text)' }}>
-                      Online Multiplayer
-                    </span>
+                <div style={{ minWidth: 0 }}>
+                  <div className="tile-title">
+                    Online Multiplayer
                   </div>
-                  <div className="tile-desc" style={{ fontSize: '0.85em', color: 'var(--text-dim)', marginTop: '2px' }}>
+                  <div className="tile-desc">
                     Räume erstellen & global gegeneinander spielen
                   </div>
                 </div>
               </div>
-              <div style={{ fontSize: '1.4em', color: 'var(--blue)', fontWeight: 700 }}>
+              <div className="tile-arrow" style={{ color: 'var(--blue)' }}>
                 ➔
               </div>
             </div>
@@ -513,39 +589,39 @@ export const MainMenu: React.FC = () => {
             {/* Stats or Auth */}
             {user ? (
               <div className="menu-action-tile tile-stats" onClick={() => navigate('/stats')}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <div className="tile-icon" style={{ fontSize: '2.2rem', width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255, 159, 10, 0.15)', borderRadius: '12px', flexShrink: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(10px, 1.8vw, 16px)', minWidth: 0 }}>
+                  <div className="tile-icon" style={{ background: 'rgba(255, 159, 10, 0.15)' }}>
                     📊
                   </div>
-                  <div>
-                    <div className="tile-title" style={{ fontSize: '1.25em', fontWeight: 800, color: 'var(--text)' }}>
+                  <div style={{ minWidth: 0 }}>
+                    <div className="tile-title">
                       Statistiken & Profile
                     </div>
-                    <div className="tile-desc" style={{ fontSize: '0.85em', color: 'var(--text-dim)', marginTop: '2px' }}>
+                    <div className="tile-desc">
                       Averages, Triple-Quoten, Radar & Historie
                     </div>
                   </div>
                 </div>
-                <div style={{ fontSize: '1.4em', color: 'var(--orange)', fontWeight: 700 }}>
+                <div className="tile-arrow" style={{ color: 'var(--orange)' }}>
                   ➔
                 </div>
               </div>
             ) : (
               <div className="menu-action-tile tile-auth" onClick={() => navigate('/auth')}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  <div className="tile-icon" style={{ fontSize: '2.2rem', width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(94, 92, 230, 0.15)', borderRadius: '12px', flexShrink: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(10px, 1.8vw, 16px)', minWidth: 0 }}>
+                  <div className="tile-icon" style={{ background: 'rgba(94, 92, 230, 0.15)' }}>
                     🔑
                   </div>
-                  <div>
-                    <div className="tile-title" style={{ fontSize: '1.25em', fontWeight: 800, color: 'var(--text)' }}>
+                  <div style={{ minWidth: 0 }}>
+                    <div className="tile-title">
                       Account erstellen / Login
                     </div>
-                    <div className="tile-desc" style={{ fontSize: '0.85em', color: 'var(--text-dim)', marginTop: '2px' }}>
+                    <div className="tile-desc">
                       Profile anlegen & Statistiken dauerhaft sichern
                     </div>
                   </div>
                 </div>
-                <div style={{ fontSize: '1.4em', color: 'var(--purple)', fontWeight: 700 }}>
+                <div className="tile-arrow" style={{ color: 'var(--purple)' }}>
                   ➔
                 </div>
               </div>
