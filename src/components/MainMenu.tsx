@@ -419,9 +419,20 @@ export const MainMenu: React.FC = () => {
 
         /* ── iPad & Large Displays (min-width: 768px in portrait) ── */
         @media (min-width: 768px) and (orientation: portrait) {
+          .main-menu-screen {
+            min-height: calc(100dvh - max(calc(env(safe-area-inset-top) + 16px), 20px) - max(calc(env(safe-area-inset-bottom) + 80px), 90px)) !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            align-items: center !important;
+          }
           .main-menu-card {
             max-width: 640px;
             gap: 18px;
+          }
+          .menu-header-area {
+            margin-top: 0 !important;
+            margin-bottom: 10px !important;
           }
           .menu-header-icon {
             width: 70px !important;
@@ -450,12 +461,20 @@ export const MainMenu: React.FC = () => {
 
         /* ── iPad & Large Displays in Landscape (min-width: 768px, min-height: 500px) ── */
         @media (min-width: 768px) and (orientation: landscape) and (min-height: 500px) {
+          .main-menu-screen {
+            min-height: calc(100dvh - max(calc(env(safe-area-inset-top) + 16px), 20px) - max(calc(env(safe-area-inset-bottom) + 64px), 76px)) !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            align-items: center !important;
+          }
           .main-menu-card {
             max-width: 1040px !important;
             gap: 18px !important;
           }
 
           .menu-header-area {
+            margin-top: 0 !important;
             margin-bottom: 6px !important;
           }
 
