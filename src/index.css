@@ -71,44 +71,24 @@ h3 { font-size: 1.05em; color: var(--text-dim); }
   }
 }
 
-@media (min-width: 768px) and (orientation: portrait) {
-  html, body {
-    overflow: hidden;
-    height: 100%;
-    overscroll-behavior: none;
-  }
+@media (min-width: 768px) {
   .app-container {
     max-width: 1040px;
-    height: 100dvh;
-    max-height: 100dvh;
-    overflow: hidden;
-    overscroll-behavior: none;
     padding: max(calc(env(safe-area-inset-top) + 16px), 20px) 32px max(calc(env(safe-area-inset-bottom) + 80px), 90px) 32px;
   }
 }
 
 @media (orientation: landscape) {
-  html, body {
-    overflow: hidden;
-    height: 100%;
-    overscroll-behavior: none;
-  }
   .app-container {
     max-width: min(1060px, 94vw);
-    height: 100dvh;
-    max-height: 100dvh;
-    overflow: hidden;
-    overscroll-behavior: none;
-    display: flex;
-    flex-direction: column;
-    padding: max(calc(env(safe-area-inset-top) + 4px), 6px) max(calc(env(safe-area-inset-right) + 12px), 16px) max(calc(env(safe-area-inset-bottom) + 54px), 62px) max(calc(env(safe-area-inset-left) + 12px), 16px);
+    padding: max(calc(env(safe-area-inset-top) + 6px), 10px) max(calc(env(safe-area-inset-right) + 12px), 16px) max(calc(env(safe-area-inset-bottom) + 60px), 72px) max(calc(env(safe-area-inset-left) + 12px), 16px);
   }
 }
 
 @media (min-width: 768px) and (orientation: landscape) {
   .app-container {
     max-width: min(1120px, 92vw);
-    padding: max(calc(env(safe-area-inset-top) + 10px), 14px) 32px max(calc(env(safe-area-inset-bottom) + 58px), 68px) 32px;
+    padding: max(calc(env(safe-area-inset-top) + 10px), 14px) 32px max(calc(env(safe-area-inset-bottom) + 68px), 80px) 32px;
   }
 }
 
