@@ -39,47 +39,51 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
         .scoreboard {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-          gap: 6px;
-          margin-bottom: 4px;
+          gap: 8px;
+          height: 100%;
+          margin-bottom: 0;
         }
         .player-card {
           position: relative;
-          background: rgba(26, 26, 30, 0.85);
-          border-radius: 12px;
-          padding: 8px 10px;
+          background: rgba(26, 26, 32, 0.9);
+          border-radius: 14px;
+          padding: 10px 12px;
           transition: all 0.2s ease;
           overflow: hidden;
           border: 1px solid var(--card-border, #333);
           display: flex;
           flex-direction: column;
           justify-content: space-between;
+          height: 100%;
+          box-sizing: border-box;
         }
         .player-card.is-inactive {
-          opacity: 0.65;
-          filter: grayscale(15%);
+          opacity: 0.6;
+          filter: grayscale(20%);
         }
         .player-card.is-active {
-          box-shadow: 0 0 16px rgba(10, 132, 255, 0.15);
-          border-left: 4px solid var(--player-color, var(--blue));
-          border-color: rgba(255, 255, 255, 0.2);
+          box-shadow: 0 0 20px rgba(10, 132, 255, 0.2);
+          border-left: 5px solid var(--player-color, var(--blue));
+          border-color: rgba(255, 255, 255, 0.25);
           opacity: 1;
           filter: grayscale(0%);
-          background: rgba(30, 30, 36, 0.95);
+          background: rgba(30, 30, 38, 0.98);
         }
         .player-card.checkout-range {
-          background: linear-gradient(145deg, rgba(76, 175, 80, 0.1), rgba(26, 26, 30, 0.9));
+          background: linear-gradient(145deg, rgba(76, 175, 80, 0.14), rgba(26, 26, 32, 0.95));
         }
         .score-display {
-          font-size: clamp(2.2rem, 7.5vw, 4.5rem);
+          font-size: clamp(3rem, 10vw, 5.5rem);
           font-weight: 900;
-          line-height: 1;
+          line-height: 0.95;
           text-align: center;
-          margin: 4px 0;
+          margin: auto 0;
           color: var(--text, #fff);
-          text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+          text-shadow: 0 2px 12px rgba(0,0,0,0.5);
           display: flex;
           align-items: center;
           justify-content: center;
+          letter-spacing: -0.02em;
         }
         .player-card.is-active .score-display {
           color: var(--player-color, var(--text));
@@ -87,14 +91,14 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
         .checkout-pill {
           background: var(--player-color, var(--blue, #2196f3));
           color: #fff;
-          border-radius: 6px;
-          padding: 3px 8px;
+          border-radius: 8px;
+          padding: 4px 10px;
           font-weight: 800;
-          font-size: 0.82rem;
+          font-size: 0.92rem;
           display: inline-block;
           margin: 0 auto;
-          box-shadow: 0 2px 6px rgba(0,0,0,0.25);
-          letter-spacing: 0.3px;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+          letter-spacing: 0.4px;
           animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         @keyframes popIn {

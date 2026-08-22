@@ -594,11 +594,14 @@ button:active, .btn:active {
 }
 
 .game-screen-left {
-  flex: 0 0 auto;
+  flex: 1 1 42%;
+  min-height: 130px;
+  display: flex;
+  flex-direction: column;
 }
 
 .game-screen-right {
-  flex: 1;
+  flex: 1.25 1 58%;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
