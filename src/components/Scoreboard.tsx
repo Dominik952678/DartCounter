@@ -109,8 +109,10 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
         @media (min-width: 768px) {
           .scoreboard {
             gap: 12px;
-            margin-bottom: 12px;
+            margin-bottom: 0;
             min-width: 0;
+            height: 100%;
+            width: 100%;
           }
           .player-card {
             padding: 14px 16px;

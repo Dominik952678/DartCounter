@@ -792,65 +792,71 @@ button:active, .btn:active {
     overflow-x: hidden;
     display: flex;
     flex-direction: column;
-    padding: max(calc(env(safe-area-inset-top) + 4px), 6px) 14px max(calc(env(safe-area-inset-bottom) + 4px), 8px);
-    max-width: 1400px;
+    padding: max(calc(env(safe-area-inset-top) + 4px), 6px) clamp(10px, 1.8vw, 20px) max(calc(env(safe-area-inset-bottom) + 4px), 8px);
     width: 100%;
     margin: 0 auto;
     box-sizing: border-box;
   }
 
   .game-screen-body {
-    display: flex;
-    flex-direction: row;
-    gap: clamp(10px, 1.8vw, 20px);
-    flex: 1;
-    min-height: 0;
-    min-width: 0;
-    align-items: stretch;
-    justify-content: space-between;
-    overflow: hidden;
-    overflow-x: hidden;
-    width: 100%;
+    display: grid !important;
+    grid-template-columns: 1fr clamp(340px, 36vw, 480px) !important;
+    gap: clamp(10px, 1.6vw, 20px) !important;
+    flex: 1 !important;
+    min-height: 0 !important;
+    min-width: 0 !important;
+    align-items: stretch !important;
+    overflow: hidden !important;
+    overflow-x: hidden !important;
+    width: 100% !important;
   }
 
   .game-screen-left {
-    flex: 1 1 0%;
-    min-width: 0;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: stretch;
-    min-height: 0;
-    overflow-x: hidden;
-  }
-
-  .game-screen-right {
-    flex: 0 0 clamp(320px, 38vw, 480px);
-    min-width: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    min-height: 0;
-    overflow-x: hidden;
-  }
-
-  .game-screen-right .keypad {
-    max-width: 100%;
-    width: 100%;
-    margin: 0;
+    min-width: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: stretch !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
   }
 
   .game-screen-left .scoreboard {
-    gap: 8px;
-    margin-bottom: 0;
-    min-width: 0;
-    height: 100%;
-    width: 100%;
+    gap: clamp(6px, 1vw, 12px) !important;
+    margin-bottom: 0 !important;
+    min-width: 0 !important;
+    height: 100% !important;
+    width: 100% !important;
+    display: grid !important;
   }
 
   .game-screen-left .player-card {
-    min-width: 0;
-    height: 100%;
+    min-width: 0 !important;
+    height: 100% !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .game-screen-right {
+    min-width: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .game-screen-right .keypad {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    height: 100% !important;
   }
 }
 
