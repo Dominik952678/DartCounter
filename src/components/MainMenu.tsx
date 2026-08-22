@@ -28,107 +28,56 @@ export const MainMenu: React.FC = () => {
           pointer-events: none;
           z-index: 0;
         }
+
         .main-menu-card {
           position: relative;
           z-index: 1;
           width: 100%;
           max-width: 480px;
-          display: grid;
-          grid-template-columns: 1fr;
-          grid-template-areas:
-            "header"
-            "status"
-            "modes"
-            "training";
+          display: flex;
+          flex-direction: column;
           gap: 12px;
           transition: all 0.2s ease;
         }
+
         .menu-header-area {
-          grid-area: header;
           text-align: center;
-          margin-top: 4px;
+          margin-top: 2px;
         }
-        .menu-header-flex {
-          display: block;
+
+        .menu-content-grid {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          width: 100%;
         }
-        .menu-status-area {
-          grid-area: status;
+
+        .menu-left-box {
+          display: contents;
         }
-        .menu-modes-area {
-          grid-area: modes;
+
+        .menu-status-container {
+          order: 1;
+        }
+
+        .menu-right-box {
+          order: 2;
           display: flex;
           flex-direction: column;
           gap: 10px;
         }
-        .menu-training-area {
-          grid-area: training;
+
+        .menu-training-container {
+          order: 3;
           margin-top: 2px;
         }
+
         .training-chips-grid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
           gap: 8px;
         }
-        .menu-action-tile {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 16px 18px;
-          border-radius: 16px;
-          background: var(--card);
-          border: 1px solid var(--card-border);
-          cursor: pointer;
-          transition: transform 0.15s ease, border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
-          text-align: left;
-          width: 100%;
-          color: var(--text);
-          box-sizing: border-box;
-        }
-        .menu-action-tile:hover {
-          transform: translateY(-2px);
-          border-color: rgba(255, 255, 255, 0.18);
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-        }
-        .menu-action-tile:active {
-          transform: scale(0.98);
-        }
-        .tile-offline {
-          background: linear-gradient(135deg, rgba(0, 210, 106, 0.12), rgba(0, 210, 106, 0.02)), var(--card);
-          border-color: rgba(0, 210, 106, 0.35);
-        }
-        .tile-offline:hover {
-          border-color: var(--green);
-          box-shadow: 0 8px 24px rgba(0, 210, 106, 0.15);
-        }
-        .tile-online {
-          background: linear-gradient(135deg, rgba(10, 132, 255, 0.12), rgba(10, 132, 255, 0.02)), var(--card);
-          border-color: rgba(10, 132, 255, 0.35);
-        }
-        .tile-online:hover {
-          border-color: var(--blue);
-          box-shadow: 0 8px 24px rgba(10, 132, 255, 0.15);
-        }
-        .tile-stats {
-          background: linear-gradient(135deg, rgba(255, 159, 10, 0.12), rgba(255, 159, 10, 0.02)), var(--card);
-          border-color: rgba(255, 159, 10, 0.35);
-        }
-        .tile-stats:hover {
-          border-color: var(--orange);
-          box-shadow: 0 8px 24px rgba(255, 159, 10, 0.15);
-        }
-        .tile-auth {
-          background: linear-gradient(135deg, rgba(94, 92, 230, 0.12), rgba(94, 92, 230, 0.02)), var(--card);
-          border-color: rgba(94, 92, 230, 0.35);
-        }
-        .tile-auth:hover {
-          border-color: var(--purple);
-          box-shadow: 0 8px 24px rgba(94, 92, 230, 0.15);
-        }
-        .training-chips-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 8px;
-        }
+
         .training-chip {
           aspect-ratio: 1 / 1;
           display: flex;
@@ -146,14 +95,78 @@ export const MainMenu: React.FC = () => {
           box-sizing: border-box;
           text-align: center;
         }
+
         .training-chip:hover {
           background: rgba(255, 255, 255, 0.08);
           border-color: rgba(255, 255, 255, 0.22);
           transform: translateY(-2px);
           box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
         }
+
         .training-chip:active {
           transform: scale(0.95);
+        }
+
+        .menu-action-tile {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 16px 18px;
+          border-radius: 16px;
+          background: var(--card);
+          border: 1px solid var(--card-border);
+          cursor: pointer;
+          transition: transform 0.15s ease, border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+          text-align: left;
+          width: 100%;
+          color: var(--text);
+          box-sizing: border-box;
+        }
+
+        .menu-action-tile:hover {
+          transform: translateY(-2px);
+          border-color: rgba(255, 255, 255, 0.18);
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+        }
+
+        .menu-action-tile:active {
+          transform: scale(0.98);
+        }
+
+        .tile-offline {
+          background: linear-gradient(135deg, rgba(0, 210, 106, 0.12), rgba(0, 210, 106, 0.02)), var(--card);
+          border-color: rgba(0, 210, 106, 0.35);
+        }
+        .tile-offline:hover {
+          border-color: var(--green);
+          box-shadow: 0 8px 24px rgba(0, 210, 106, 0.15);
+        }
+
+        .tile-online {
+          background: linear-gradient(135deg, rgba(10, 132, 255, 0.12), rgba(10, 132, 255, 0.02)), var(--card);
+          border-color: rgba(10, 132, 255, 0.35);
+        }
+        .tile-online:hover {
+          border-color: var(--blue);
+          box-shadow: 0 8px 24px rgba(10, 132, 255, 0.15);
+        }
+
+        .tile-stats {
+          background: linear-gradient(135deg, rgba(255, 159, 10, 0.12), rgba(255, 159, 10, 0.02)), var(--card);
+          border-color: rgba(255, 159, 10, 0.35);
+        }
+        .tile-stats:hover {
+          border-color: var(--orange);
+          box-shadow: 0 8px 24px rgba(255, 159, 10, 0.15);
+        }
+
+        .tile-auth {
+          background: linear-gradient(135deg, rgba(94, 92, 230, 0.12), rgba(94, 92, 230, 0.02)), var(--card);
+          border-color: rgba(94, 92, 230, 0.35);
+        }
+        .tile-auth:hover {
+          border-color: var(--purple);
+          box-shadow: 0 8px 24px rgba(94, 92, 230, 0.15);
         }
 
         /* ── Compact iPhone Scaling (<= 500px: Zero-Scroll Guarantee) ── */
@@ -161,142 +174,115 @@ export const MainMenu: React.FC = () => {
           .main-menu-card {
             gap: 8px;
           }
-          .menu-header-area {
-            margin-top: 0;
+          .menu-content-grid {
+            gap: 8px;
           }
           .menu-header-icon {
             width: 44px !important;
             height: 44px !important;
             font-size: 1.45rem !important;
-            margin-bottom: 2px !important;
-          }
-          .menu-header-title {
-            font-size: 1.75rem !important;
-            line-height: 1.1 !important;
           }
           .menu-header-subtitle {
             font-size: 0.8em !important;
             margin-top: 1px !important;
           }
-          .menu-status-area {
+          .menu-status-container > div {
             padding: 6px 12px !important;
             border-radius: 10px !important;
           }
-          .menu-status-area span {
+          .menu-status-container span {
             font-size: 0.82em !important;
           }
-          .menu-modes-area {
+          .menu-right-box {
             gap: 8px !important;
           }
           .menu-action-tile {
             padding: 10px 14px !important;
             border-radius: 12px !important;
-          }
-          .tile-icon {
-            width: 38px !important;
-            height: 38px !important;
-            font-size: 1.6rem !important;
-            border-radius: 10px !important;
-          }
-          .tile-title {
-            font-size: 1.05em !important;
-          }
-          .tile-desc {
-            font-size: 0.76em !important;
-          }
-          .training-chips-grid {
-            gap: 6px !important;
-          }
-          .training-chip {
-            padding: 6px 2px !important;
-            border-radius: 12px !important;
-            gap: 3px !important;
-          }
-          .training-chip span:first-child {
-            font-size: 1.4rem !important;
           }
           .training-chip span:last-child {
             font-size: 0.76em !important;
           }
         }
 
-        /* ── Landscape Widescreen Mode (Left: Logo + Status + 3 Square Training Buttons | Right: 3 Modes) ── */
+        /* ── Landscape Widescreen Mode (Logo Top Center | Left Box == Right Box Exactly Aligned) ── */
         @media (orientation: landscape) and (min-width: 540px), (min-width: 860px) {
           .main-menu-card {
-            max-width: 880px;
-            grid-template-columns: 1fr 1.18fr;
-            grid-template-areas:
-              "header   modes"
-              "status   modes"
-              "training modes";
-            gap: 8px 18px;
-            align-items: start;
-          }
-          .menu-header-area {
-            text-align: left;
-            margin-top: 0;
-            display: flex;
-            align-items: center;
-          }
-          .menu-header-flex {
-            display: flex;
-            align-items: center;
+            max-width: 900px;
             gap: 10px;
           }
+          .menu-header-area {
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 2px;
+          }
           .menu-header-icon {
-            width: 40px !important;
-            height: 40px !important;
-            font-size: 1.35rem !important;
+            width: 38px !important;
+            height: 38px !important;
+            font-size: 1.3rem !important;
             margin-bottom: 0 !important;
             border-radius: 10px !important;
           }
           .menu-header-title {
-            font-size: 1.55rem !important;
+            font-size: 1.6rem !important;
             line-height: 1.1 !important;
           }
           .menu-header-subtitle {
             font-size: 0.76em !important;
             margin-top: 1px !important;
           }
-          .menu-status-area {
-            margin-top: 0 !important;
-            padding: 6px 12px !important;
+          .menu-header-flex {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+          }
+
+          .menu-content-grid {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 16px !important;
+            align-items: stretch !important;
+          }
+
+          .menu-left-box {
             display: flex !important;
-            align-items: center !important;
+            flex-direction: column !important;
+            justify-content: space-between !important;
+            gap: 10px !important;
+            height: 100% !important;
+          }
+
+          .menu-status-container {
+            order: unset !important;
+          }
+          .menu-status-container > div {
+            padding: 8px 12px !important;
+          }
+
+          .menu-training-container {
+            order: unset !important;
+            margin-top: 0 !important;
           }
           .training-chips-grid {
-            display: grid !important;
-            grid-template-columns: repeat(3, 1fr) !important;
-            gap: 6px !important;
+            gap: 8px !important;
           }
           .training-chip {
-            aspect-ratio: 1 / 1 !important;
+            padding: 8px 4px !important;
+            border-radius: 14px !important;
+          }
+
+          .menu-right-box {
+            order: unset !important;
+            display: flex !important;
             flex-direction: column !important;
-            align-items: center !important;
-            justify-content: center !important;
-            padding: 6px 2px !important;
-            gap: 4px !important;
-            text-align: center !important;
-            border-radius: 12px !important;
-          }
-          .training-chip span:first-child {
-            font-size: 1.4rem !important;
-          }
-          .training-chip span:last-child {
-            font-size: 0.76em !important;
-          }
-          .menu-modes-area {
+            justify-content: space-between !important;
             gap: 8px !important;
+            height: 100% !important;
           }
           .menu-action-tile {
             padding: 10px 14px !important;
             border-radius: 14px !important;
-          }
-          .tile-icon {
-            width: 38px !important;
-            height: 38px !important;
-            font-size: 1.6rem !important;
-            border-radius: 10px !important;
           }
         }
 
@@ -318,57 +304,29 @@ export const MainMenu: React.FC = () => {
           .menu-header-subtitle {
             font-size: 0.95em !important;
           }
-          .menu-status-area {
+          .menu-status-container > div {
             padding: 10px 16px !important;
             border-radius: 14px !important;
           }
-          .menu-status-area span {
+          .menu-status-container span {
             font-size: 0.92em !important;
           }
-          .menu-modes-area {
+          .menu-right-box {
             gap: 12px !important;
           }
           .menu-action-tile {
             padding: 18px 22px !important;
             border-radius: 16px !important;
           }
-          .tile-icon {
-            width: 48px !important;
-            height: 48px !important;
-            font-size: 2.2rem !important;
-            border-radius: 12px !important;
-          }
-          .tile-title {
-            font-size: 1.25em !important;
-          }
-          .tile-desc {
-            font-size: 0.85em !important;
-          }
-          .training-chips-grid {
-            gap: 12px !important;
-          }
-          .training-chip {
-            padding: 14px 8px !important;
-            border-radius: 16px !important;
-            gap: 6px !important;
-          }
-          .training-chip span:first-child {
-            font-size: 2rem !important;
-          }
-          .training-chip span:last-child {
-            font-size: 0.92em !important;
-          }
         }
 
         @media (min-width: 768px) and (orientation: landscape) {
           .main-menu-card {
             max-width: 1000px !important;
-            grid-template-columns: 1fr 1.2fr !important;
-            grid-template-areas:
-              "header   modes"
-              "status   modes"
-              "training modes" !important;
-            gap: 12px 24px !important;
+            gap: 14px !important;
+          }
+          .menu-content-grid {
+            gap: 24px !important;
           }
           .menu-header-icon {
             width: 48px !important;
@@ -376,13 +334,13 @@ export const MainMenu: React.FC = () => {
             font-size: 1.6rem !important;
           }
           .menu-header-title {
-            font-size: 1.85rem !important;
+            font-size: 2rem !important;
           }
           .menu-header-subtitle {
-            display: block !important;
+            font-size: 0.88em !important;
           }
           .training-chip {
-            padding: 12px 8px !important;
+            padding: 14px 10px !important;
           }
           .menu-action-tile {
             padding: 14px 18px !important;
@@ -393,7 +351,7 @@ export const MainMenu: React.FC = () => {
       <div className="hero-glow-bg" />
 
       <div className="main-menu-card">
-        {/* Brand Header Area */}
+        {/* ── Brand Header (Ganz oben zentriert) ── */}
         <div className="menu-header-area">
           <div className="menu-header-flex">
             <div className="menu-header-icon" style={{ 
@@ -406,7 +364,7 @@ export const MainMenu: React.FC = () => {
               background: 'linear-gradient(135deg, rgba(0, 210, 106, 0.2), rgba(10, 132, 255, 0.2))', 
               border: '1px solid rgba(255, 255, 255, 0.1)',
               boxShadow: '0 8px 20px rgba(0,0,0,0.3)',
-              marginBottom: '8px',
+              marginBottom: '6px',
               fontSize: '1.8rem'
             }}>
               🎯
@@ -422,164 +380,172 @@ export const MainMenu: React.FC = () => {
           </div>
         </div>
 
-        {/* User Account / Guest Status Bar Area */}
-        <div className="menu-status-area" style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'space-between', 
-          padding: '8px 14px', 
-          background: 'rgba(255, 255, 255, 0.03)', 
-          backdropFilter: 'blur(12px)',
-          borderRadius: '12px', 
-          border: '1px solid var(--card-border)' 
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, overflow: 'hidden' }}>
-            <span style={{ 
-              width: '8px', 
-              height: '8px', 
-              borderRadius: '50%', 
-              backgroundColor: user ? 'var(--green)' : 'var(--orange)',
-              boxShadow: user ? '0 0 8px var(--green)' : '0 0 8px var(--orange)',
-              flexShrink: 0
-            }} />
-            <span style={{ fontSize: '0.86em', color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {user ? (
-                <>Eingeloggt als <strong style={{ color: 'var(--blue)' }}>{user.user_metadata?.username || user.email}</strong></>
-              ) : (
-                <span style={{ color: 'var(--text-dim)' }}>Modus: <strong style={{ color: 'var(--text)' }}>Gast</strong></span>
-              )}
-            </span>
-          </div>
-          {user ? (
-            <button 
-              onClick={() => { signOut(); navigate('/'); }}
-              style={{ background: 'transparent', border: 'none', color: 'var(--red)', fontSize: '0.8em', fontWeight: 600, cursor: 'pointer', padding: '3px 6px', flexShrink: 0 }}
-            >
-              Abmelden
-            </button>
-          ) : (
-            <button 
-              onClick={() => navigate('/auth')}
-              style={{ background: 'rgba(10, 132, 255, 0.15)', border: '1px solid rgba(10, 132, 255, 0.3)', color: 'var(--blue)', fontSize: '0.8em', fontWeight: 700, borderRadius: '8px', cursor: 'pointer', padding: '3px 8px', flexShrink: 0 }}
-            >
-              Login
-            </button>
-          )}
-        </div>
-
-        {/* Primary Game Modes Grid Area (Right Column on Landscape) */}
-        <div className="menu-modes-area">
-          {/* Offline Match */}
-          <div className="menu-action-tile tile-offline" onClick={() => navigate('/offline')}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-              <div className="tile-icon" style={{ fontSize: '2rem', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0, 210, 106, 0.15)', borderRadius: '12px', flexShrink: 0 }}>
-                🎯
-              </div>
-              <div>
-                <div className="tile-title" style={{ fontSize: '1.2em', fontWeight: 800, color: 'var(--text)' }}>
-                  {user ? 'Offline Match' : 'Als Gast spielen'}
-                </div>
-                <div className="tile-desc" style={{ fontSize: '0.82em', color: 'var(--text-dim)', marginTop: '2px' }}>
-                  X01, Sets/Legs, Training & Bots
-                </div>
-              </div>
-            </div>
-            <div style={{ fontSize: '1.3em', color: 'var(--green)', fontWeight: 700 }}>
-              ➔
-            </div>
-          </div>
-
-          {/* Online Multiplayer */}
-          <div className="menu-action-tile tile-online" onClick={handleOnlineClick}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-              <div className="tile-icon" style={{ fontSize: '2rem', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(10, 132, 255, 0.15)', borderRadius: '12px', flexShrink: 0 }}>
-                🌍
-              </div>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span className="tile-title" style={{ fontSize: '1.2em', fontWeight: 800, color: 'var(--text)' }}>
-                    Online Multiplayer
+        {/* ── Content Grid: Linke Box & Rechte Box ── */}
+        <div className="menu-content-grid">
+          {/* ── LINKE BOX: Oben Anmeldung, darunter Schnellstart Training ── */}
+          <div className="menu-left-box">
+            {/* Anmeldung / User-Status-Bar */}
+            <div className="menu-status-container">
+              <div style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'space-between', 
+                padding: '8px 14px', 
+                background: 'rgba(255, 255, 255, 0.03)', 
+                backdropFilter: 'blur(12px)',
+                borderRadius: '12px', 
+                border: '1px solid var(--card-border)' 
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, overflow: 'hidden' }}>
+                  <span style={{ 
+                    width: '8px', 
+                    height: '8px', 
+                    borderRadius: '50%', 
+                    backgroundColor: user ? 'var(--green)' : 'var(--orange)',
+                    boxShadow: user ? '0 0 8px var(--green)' : '0 0 8px var(--orange)',
+                    flexShrink: 0
+                  }} />
+                  <span style={{ fontSize: '0.86em', color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {user ? (
+                      <>Eingeloggt als <strong style={{ color: 'var(--blue)' }}>{user.user_metadata?.username || user.email}</strong></>
+                    ) : (
+                      <span style={{ color: 'var(--text-dim)' }}>Modus: <strong style={{ color: 'var(--text)' }}>Gast</strong></span>
+                    )}
                   </span>
                 </div>
-                <div className="tile-desc" style={{ fontSize: '0.82em', color: 'var(--text-dim)', marginTop: '2px' }}>
-                  Räume erstellen & global gegeneinander spielen
-                </div>
+                {user ? (
+                  <button 
+                    onClick={() => { signOut(); navigate('/'); }}
+                    style={{ background: 'transparent', border: 'none', color: 'var(--red)', fontSize: '0.8em', fontWeight: 600, cursor: 'pointer', padding: '3px 6px', flexShrink: 0 }}
+                  >
+                    Abmelden
+                  </button>
+                ) : (
+                  <button 
+                    onClick={() => navigate('/auth')}
+                    style={{ background: 'rgba(10, 132, 255, 0.15)', border: '1px solid rgba(10, 132, 255, 0.3)', color: 'var(--blue)', fontSize: '0.8em', fontWeight: 700, borderRadius: '8px', cursor: 'pointer', padding: '3px 8px', flexShrink: 0 }}
+                  >
+                    Login
+                  </button>
+                )}
               </div>
             </div>
-            <div style={{ fontSize: '1.3em', color: 'var(--blue)', fontWeight: 700 }}>
-              ➔
+
+            {/* Schnellstart Training mit den 3 quadratischen Buttons */}
+            <div className="menu-training-container">
+              <div style={{ fontSize: '0.78em', textTransform: 'uppercase', letterSpacing: '0.8px', color: 'var(--text-dim)', marginBottom: '6px', fontWeight: 700, paddingLeft: '2px' }}>
+                Schnellstart Training
+              </div>
+              <div className="training-chips-grid">
+                <div 
+                  className="training-chip" 
+                  onClick={() => navigate('/offline?tab=training&mode=checkout')}
+                >
+                  <span style={{ fontSize: '1.5rem' }}>🎯</span>
+                  <span style={{ fontWeight: 700, fontSize: '0.82em' }}>Checkout</span>
+                </div>
+                <div 
+                  className="training-chip" 
+                  onClick={() => navigate('/offline?tab=training&mode=powerscoring')}
+                >
+                  <span style={{ fontSize: '1.5rem' }}>🔥</span>
+                  <span style={{ fontWeight: 700, fontSize: '0.82em' }}>Scoring</span>
+                </div>
+                <div 
+                  className="training-chip" 
+                  onClick={() => navigate('/offline?tab=training&mode=splitscore')}
+                >
+                  <span style={{ fontSize: '1.5rem' }}>➗</span>
+                  <span style={{ fontWeight: 700, fontSize: '0.82em' }}>Split</span>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Stats or Auth */}
-          {user ? (
-            <div className="menu-action-tile tile-stats" onClick={() => navigate('/stats')}>
+          {/* ── RECHTE BOX: Die 3 Haupt-Buttons ── */}
+          <div className="menu-right-box">
+            {/* Offline Match */}
+            <div className="menu-action-tile tile-offline" onClick={() => navigate('/offline')}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                <div className="tile-icon" style={{ fontSize: '2rem', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255, 159, 10, 0.15)', borderRadius: '12px', flexShrink: 0 }}>
-                  📊
+                <div className="tile-icon" style={{ fontSize: '2rem', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0, 210, 106, 0.15)', borderRadius: '12px', flexShrink: 0 }}>
+                  🎯
                 </div>
                 <div>
                   <div className="tile-title" style={{ fontSize: '1.2em', fontWeight: 800, color: 'var(--text)' }}>
-                    Statistiken & Profile
+                    {user ? 'Offline Match' : 'Als Gast spielen'}
                   </div>
                   <div className="tile-desc" style={{ fontSize: '0.82em', color: 'var(--text-dim)', marginTop: '2px' }}>
-                    Averages, Triple-Quoten, Radar & Historie
+                    X01, Sets/Legs, Training & Bots
                   </div>
                 </div>
               </div>
-              <div style={{ fontSize: '1.3em', color: 'var(--orange)', fontWeight: 700 }}>
+              <div style={{ fontSize: '1.3em', color: 'var(--green)', fontWeight: 700 }}>
                 ➔
               </div>
             </div>
-          ) : (
-            <div className="menu-action-tile tile-auth" onClick={() => navigate('/auth')}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                <div className="tile-icon" style={{ fontSize: '2rem', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(94, 92, 230, 0.15)', borderRadius: '12px', flexShrink: 0 }}>
-                  🔑
-                </div>
-                <div>
-                  <div className="tile-title" style={{ fontSize: '1.2em', fontWeight: 800, color: 'var(--text)' }}>
-                    Account erstellen / Login
-                  </div>
-                  <div className="tile-desc" style={{ fontSize: '0.82em', color: 'var(--text-dim)', marginTop: '2px' }}>
-                    Profile anlegen & Statistiken dauerhaft sichern
-                  </div>
-                </div>
-              </div>
-              <div style={{ fontSize: '1.3em', color: 'var(--purple)', fontWeight: 700 }}>
-                ➔
-              </div>
-            </div>
-          )}
-        </div>
 
-        {/* Quick Training Shortcuts Area (Square Tiles in a 3-column row) */}
-        <div className="menu-training-area">
-          <div style={{ fontSize: '0.78em', textTransform: 'uppercase', letterSpacing: '0.8px', color: 'var(--text-dim)', marginBottom: '6px', fontWeight: 700, paddingLeft: '2px' }}>
-            Schnellstart Training
-          </div>
-          <div className="training-chips-grid">
-            <div 
-              className="training-chip" 
-              onClick={() => navigate('/offline?tab=training&mode=checkout')}
-            >
-              <span style={{ fontSize: '1.5rem' }}>🎯</span>
-              <span style={{ fontWeight: 700, fontSize: '0.82em' }}>Checkout</span>
+            {/* Online Multiplayer */}
+            <div className="menu-action-tile tile-online" onClick={handleOnlineClick}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div className="tile-icon" style={{ fontSize: '2rem', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(10, 132, 255, 0.15)', borderRadius: '12px', flexShrink: 0 }}>
+                  🌍
+                </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span className="tile-title" style={{ fontSize: '1.2em', fontWeight: 800, color: 'var(--text)' }}>
+                      Online Multiplayer
+                    </span>
+                  </div>
+                  <div className="tile-desc" style={{ fontSize: '0.82em', color: 'var(--text-dim)', marginTop: '2px' }}>
+                    Räume erstellen & global gegeneinander spielen
+                  </div>
+                </div>
+              </div>
+              <div style={{ fontSize: '1.3em', color: 'var(--blue)', fontWeight: 700 }}>
+                ➔
+              </div>
             </div>
-            <div 
-              className="training-chip" 
-              onClick={() => navigate('/offline?tab=training&mode=powerscoring')}
-            >
-              <span style={{ fontSize: '1.5rem' }}>🔥</span>
-              <span style={{ fontWeight: 700, fontSize: '0.82em' }}>Scoring</span>
-            </div>
-            <div 
-              className="training-chip" 
-              onClick={() => navigate('/offline?tab=training&mode=splitscore')}
-            >
-              <span style={{ fontSize: '1.5rem' }}>➗</span>
-              <span style={{ fontWeight: 700, fontSize: '0.82em' }}>Split</span>
-            </div>
+
+            {/* Stats or Auth */}
+            {user ? (
+              <div className="menu-action-tile tile-stats" onClick={() => navigate('/stats')}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                  <div className="tile-icon" style={{ fontSize: '2rem', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255, 159, 10, 0.15)', borderRadius: '12px', flexShrink: 0 }}>
+                    📊
+                  </div>
+                  <div>
+                    <div className="tile-title" style={{ fontSize: '1.2em', fontWeight: 800, color: 'var(--text)' }}>
+                      Statistiken & Profile
+                    </div>
+                    <div className="tile-desc" style={{ fontSize: '0.82em', color: 'var(--text-dim)', marginTop: '2px' }}>
+                      Averages, Triple-Quoten, Radar & Historie
+                    </div>
+                  </div>
+                </div>
+                <div style={{ fontSize: '1.3em', color: 'var(--orange)', fontWeight: 700 }}>
+                  ➔
+                </div>
+              </div>
+            ) : (
+              <div className="menu-action-tile tile-auth" onClick={() => navigate('/auth')}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                  <div className="tile-icon" style={{ fontSize: '2rem', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(94, 92, 230, 0.15)', borderRadius: '12px', flexShrink: 0 }}>
+                    🔑
+                  </div>
+                  <div>
+                    <div className="tile-title" style={{ fontSize: '1.2em', fontWeight: 800, color: 'var(--text)' }}>
+                      Account erstellen / Login
+                    </div>
+                    <div className="tile-desc" style={{ fontSize: '0.82em', color: 'var(--text-dim)', marginTop: '2px' }}>
+                      Profile anlegen & Statistiken dauerhaft sichern
+                    </div>
+                  </div>
+                </div>
+                <div style={{ fontSize: '1.3em', color: 'var(--purple)', fontWeight: 700 }}>
+                  ➔
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
