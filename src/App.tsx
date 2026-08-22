@@ -73,24 +73,27 @@ export default function App() {
   }, [user?.id]);
 
   return (
-    <div className="app-container">
-      <button 
-        className="sound-toggle-btn"
-        onClick={() => {
-          const newState = !soundOn;
-          setSoundEnabled(newState);
-          setSoundOn(newState);
-        }}
-        style={{
-          position: 'absolute', top: '15px', right: '15px', zIndex: 1000, 
-          background: 'rgba(0,0,0,0.5)', border: '1px solid var(--card-border)', 
-          borderRadius: '50%', width: '40px', height: '40px', 
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '1.2em', cursor: 'pointer', padding: 0
-        }}
-      >
-        {soundOn ? '🔊' : '🔇'}
-      </button>
+    <div className={`app-container ${isMatchActive ? 'app-container-match' : ''}`}>
+      {!isMatchActive && (
+        <button 
+          className="sound-toggle-btn"
+          onClick={() => {
+            const newState = !soundOn;
+            setSoundEnabled(newState);
+            setSoundOn(newState);
+          }}
+          style={{
+            position: 'absolute', top: '15px', right: '15px', zIndex: 1000, 
+            background: 'rgba(0,0,0,0.5)', border: '1px solid var(--card-border)', 
+            borderRadius: '50%', width: '40px', height: '40px', 
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '1.2em', cursor: 'pointer', padding: 0
+          }}
+          title={soundOn ? "Sound ausschalten" : "Sound einschalten"}
+        >
+          {soundOn ? '🔊' : '🔇'}
+        </button>
+      )}
 
       <Routes>
         <Route path="/" element={<MainMenu />} />
