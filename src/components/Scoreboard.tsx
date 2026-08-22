@@ -19,8 +19,12 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
   currentRoundDarts,
   celebration
 }) => {
+  const gridColumns = players.length === 1 
+    ? '1fr' 
+    : (players.length === 2 ? '1fr 1fr' : (players.length === 3 ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)'));
+
   return (
-    <div className="scoreboard" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+    <div className="scoreboard" style={{ display: 'grid', gridTemplateColumns: gridColumns, gap: '8px', height: '100%', width: '100%', minWidth: 0, minHeight: 0 }}>
       <style>{`
         @keyframes scorePulse {
           0% { transform: scale(1); }
@@ -36,18 +40,11 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
           display: inline-block;
           will-change: transform;
         }
-        .scoreboard {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-          gap: 8px;
-          height: 100%;
-          margin-bottom: 0;
-        }
         .player-card {
           position: relative;
           background: rgba(26, 26, 32, 0.9);
           border-radius: 14px;
-          padding: 10px 12px;
+          padding: 8px 10px;
           transition: all 0.2s ease;
           overflow: hidden;
           border: 1px solid var(--card-border, #333);
@@ -55,6 +52,7 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
           flex-direction: column;
           justify-content: space-between;
           height: 100%;
+          min-width: 0;
           box-sizing: border-box;
         }
         .player-card.is-inactive {

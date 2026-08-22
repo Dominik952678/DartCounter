@@ -746,8 +746,8 @@ button:active, .btn:active {
   color: #ffffff;
 }
 
-/* ── iPad Landscape & Desktop 2-Column Split Screen (Zero Scroll) ── */
-@media (min-width: 768px) and (orientation: landscape), (min-width: 960px) {
+/* ── Universal Landscape & Desktop 2-Column Split Screen ── */
+@media (orientation: landscape), (min-width: 960px) {
   .game-screen-layout {
     height: 100dvh;
     max-height: 100dvh;
@@ -756,8 +756,8 @@ button:active, .btn:active {
     overflow-x: hidden;
     display: flex;
     flex-direction: column;
-    padding: max(calc(env(safe-area-inset-top) + 8px), 10px) 20px max(calc(env(safe-area-inset-bottom) + 8px), 12px);
-    max-width: 1200px;
+    padding: max(calc(env(safe-area-inset-top) + 4px), 6px) 14px max(calc(env(safe-area-inset-bottom) + 4px), 8px);
+    max-width: 1300px;
     width: 100%;
     margin: 0 auto;
     box-sizing: border-box;
@@ -766,7 +766,7 @@ button:active, .btn:active {
   .game-screen-body {
     display: flex;
     flex-direction: row;
-    gap: 16px;
+    gap: 14px;
     flex: 1;
     min-height: 0;
     min-width: 0;
@@ -783,15 +783,13 @@ button:active, .btn:active {
     flex-direction: column;
     justify-content: center;
     min-height: 0;
-    overflow-y: auto;
     overflow-x: hidden;
-    padding-right: 4px;
   }
 
   .game-screen-right {
     flex: 1;
     min-width: 0;
-    max-width: 440px;
+    max-width: 480px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -800,57 +798,120 @@ button:active, .btn:active {
   }
 
   .game-screen-left .scoreboard {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 10px;
+    gap: 8px;
     margin-bottom: 0;
     min-width: 0;
+    height: 100%;
+    width: 100%;
   }
 
-  .game-screen-left .player {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    min-height: 140px;
+  .game-screen-left .player-card {
+    min-width: 0;
+    height: 100%;
   }
+}
 
-  .game-screen-left .player.active-player {
-    border-color: rgba(10, 132, 255, 0.6);
-    box-shadow: 0 0 28px rgba(10, 132, 255, 0.25), inset 0 0 12px rgba(10, 132, 255, 0.1);
+/* ── Compact Mobile Phones in Landscape (Height <= 520px) ── */
+@media (orientation: landscape) and (max-height: 520px) {
+  .game-screen-layout {
+    padding: 2px 10px 4px 10px;
   }
-
-  .game-screen-left .player .score {
-    font-size: 4.2em;
-    font-weight: 900;
-    margin: 6px 0;
-    text-shadow: 0 2px 16px rgba(0, 0, 0, 0.6);
+  .match-top-header {
+    padding: 2px 8px;
+    margin-bottom: 3px;
   }
-
+  .game-screen-body {
+    gap: 8px;
+  }
+  .game-screen-left .player-card {
+    padding: 4px 8px;
+    border-radius: 10px;
+  }
+  .game-screen-left .player-name {
+    font-size: 0.88rem !important;
+  }
+  .game-screen-left .score-display {
+    font-size: clamp(1.8rem, 6vw, 2.8rem) !important;
+    margin: auto 0;
+  }
+  .game-screen-left .checkout-pill {
+    font-size: 0.76rem !important;
+    padding: 2px 6px !important;
+  }
+  .game-screen-left .compact-stats {
+    display: none !important;
+  }
   .game-screen-right .keypad {
-    max-width: 100%;
-    margin: 0;
-    background: rgba(28, 28, 30, 0.7);
+    padding: 0;
+    background: transparent;
+    border: none;
+    gap: 3px;
+  }
+  .game-screen-right .dart-display {
+    margin-bottom: 1px;
+    gap: 4px;
+  }
+  .game-screen-right .dart-box {
+    width: 32px;
+    height: 32px;
+    font-size: 0.9em;
+    border-radius: 8px;
+  }
+  .game-screen-right .round-total {
+    font-size: 1.2em;
+    min-width: 40px;
+  }
+  .game-screen-right .modifier-grid {
+    gap: 4px;
+    margin-bottom: 2px;
+  }
+  .game-screen-right .mod-btn {
+    min-height: 28px;
+    font-size: 0.82em;
+    padding: 2px;
+    border-radius: 8px;
+  }
+  .game-screen-right .numpad-grid {
+    gap: 3px;
+  }
+  .game-screen-right .num-btn {
+    min-height: 26px;
+    font-size: 1.05em;
+    border-radius: 8px;
+  }
+}
+
+/* ── iPad & Desktop Landscape (Height > 520px) ── */
+@media (min-width: 768px) and (orientation: landscape) and (min-height: 521px), (min-width: 960px) and (min-height: 521px) {
+  .game-screen-layout {
+    padding: 12px 24px 16px;
+  }
+  .game-screen-body {
+    gap: 20px;
+  }
+  .game-screen-left .player-card {
+    padding: 14px 18px;
+    border-radius: var(--radius);
+  }
+  .game-screen-left .score-display {
+    font-size: clamp(3.2rem, 7vw, 5.2rem);
+  }
+  .game-screen-right .keypad {
     padding: 16px;
+    background: rgba(28, 28, 30, 0.7);
     border-radius: var(--radius);
     border: 1px solid var(--card-border);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
   }
-
-  .game-screen-right .numpad-grid {
-    gap: 8px;
-  }
-
   .game-screen-right .num-btn {
-    min-height: 56px;
-    font-size: 1.45em;
+    min-height: 48px;
+    font-size: 1.35em;
     border-radius: 12px;
   }
-
   .game-screen-right .mod-btn {
-    min-height: 50px;
-    font-size: 1.1em;
-    border-radius: 12px;
+    min-height: 44px;
+    font-size: 1.05em;
   }
 }
 
