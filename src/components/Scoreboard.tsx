@@ -112,16 +112,19 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
           .scoreboard {
             gap: 12px;
             margin-bottom: 12px;
+            min-width: 0;
           }
           .player-card {
             padding: 14px 16px;
+            min-width: 0;
           }
           .score-display {
             margin: 10px 0;
           }
           .compact-stats {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
             gap: 6px;
             font-size: 0.85rem;
             color: var(--text-dim, #aaa);
@@ -129,6 +132,10 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
             padding-top: 10px;
             border-top: 1px solid rgba(255,255,255,0.08);
             text-align: center;
+          }
+          .compact-stats span {
+            flex: 1 1 auto;
+            min-width: 60px;
           }
         }
         .compact-stats span {

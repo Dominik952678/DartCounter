@@ -749,13 +749,16 @@ button:active, .btn:active {
 /* ── iPad Landscape & Desktop 2-Column Split Screen (Zero Scroll) ── */
 @media (min-width: 768px) and (orientation: landscape), (min-width: 960px) {
   .game-screen-layout {
+    height: 100dvh;
+    max-height: 100dvh;
     height: 100vh;
-    max-height: 100vh;
     overflow: hidden;
+    overflow-x: hidden;
     display: flex;
     flex-direction: column;
-    padding: 12px 24px 16px;
+    padding: max(calc(env(safe-area-inset-top) + 8px), 10px) 20px max(calc(env(safe-area-inset-bottom) + 8px), 12px);
     max-width: 1200px;
+    width: 100%;
     margin: 0 auto;
     box-sizing: border-box;
   }
@@ -763,36 +766,45 @@ button:active, .btn:active {
   .game-screen-body {
     display: flex;
     flex-direction: row;
-    gap: 24px;
+    gap: 16px;
     flex: 1;
     min-height: 0;
+    min-width: 0;
     align-items: stretch;
+    overflow: hidden;
+    overflow-x: hidden;
+    width: 100%;
   }
 
   .game-screen-left {
     flex: 1.25;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     justify-content: center;
     min-height: 0;
     overflow-y: auto;
+    overflow-x: hidden;
     padding-right: 4px;
   }
 
   .game-screen-right {
     flex: 1;
-    max-width: 480px;
+    min-width: 0;
+    max-width: 440px;
     display: flex;
     flex-direction: column;
     justify-content: center;
     min-height: 0;
+    overflow-x: hidden;
   }
 
   .game-screen-left .scoreboard {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 14px;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
     margin-bottom: 0;
+    min-width: 0;
   }
 
   .game-screen-left .player {
