@@ -302,33 +302,54 @@ export const MainMenu: React.FC = () => {
           margin-top: 2px;
         }
 
-        /* ── Landscape / Wide Mode (Compact, perfectly proportioned, tight gaps) ── */
+        /* ── Landscape / Wide Mode (Fluid dynamic scaling & zero scroll) ── */
         @media (orientation: landscape) and (min-width: 540px), (min-width: 860px) {
+          .main-menu-screen {
+            height: 100% !important;
+            max-height: 100% !important;
+            overflow: hidden !important;
+            overscroll-behavior: none !important;
+            touch-action: manipulation !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: flex-start !important;
+            align-items: center !important;
+          }
+
           .main-menu-card {
-            max-width: min(940px, 94vw);
+            height: 100% !important;
+            max-height: 100% !important;
+            min-height: 0 !important;
+            max-width: min(1060px, 94vw) !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: flex-start !important;
+            gap: 0 !important;
           }
 
           .menu-header-area {
+            flex-shrink: 0 !important;
+            width: 100% !important;
             text-align: center;
             margin-top: 0 !important;
-            margin-bottom: 4px !important;
+            margin-bottom: clamp(2px, 0.8vh, 8px) !important;
           }
 
           .menu-header-icon {
-            width: 36px !important;
-            height: 36px !important;
-            font-size: 1.25rem !important;
+            width: clamp(34px, 5.5vh, 52px) !important;
+            height: clamp(34px, 5.5vh, 52px) !important;
+            font-size: clamp(1.2rem, 2.2vh, 1.8rem) !important;
             margin-bottom: 0 !important;
-            border-radius: 10px !important;
+            border-radius: clamp(8px, 1.2vh, 14px) !important;
           }
 
           .menu-header-title {
-            font-size: 1.55rem !important;
+            font-size: clamp(1.4rem, 3.2vh, 2.2rem) !important;
             line-height: 1.1 !important;
           }
 
           .menu-header-subtitle {
-            font-size: 0.75em !important;
+            font-size: clamp(0.72em, 1.2vh, 0.88em) !important;
             margin-top: 1px !important;
           }
 
@@ -337,32 +358,33 @@ export const MainMenu: React.FC = () => {
             flex-direction: row;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: clamp(8px, 1.5vw, 14px);
           }
 
           .menu-middle-wrapper {
-            flex: 1;
-            min-height: 0;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            flex: 1 !important;
+            min-height: 0 !important;
+            width: 100% !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            align-items: center !important;
           }
 
           .menu-content-grid {
             display: grid !important;
             grid-template-columns: 1fr 1fr !important;
-            gap: 14px !important;
+            gap: clamp(10px, 2vw, 22px) !important;
             align-items: stretch !important;
-            width: 100%;
+            width: 100% !important;
           }
 
           .menu-left-box {
             display: flex !important;
             flex-direction: column !important;
-            justify-content: flex-start !important;
-            gap: 8px !important;
+            justify-content: space-between !important;
+            height: 100% !important;
+            gap: clamp(6px, 1.2vh, 12px) !important;
           }
 
           .menu-status-container {
@@ -370,17 +392,17 @@ export const MainMenu: React.FC = () => {
           }
 
           .menu-status-bar {
-            padding: 7px 12px !important;
-            border-radius: 12px !important;
+            padding: clamp(6px, 1.2vh, 12px) clamp(10px, 1.6vw, 16px) !important;
+            border-radius: clamp(10px, 1.4vh, 14px) !important;
           }
 
           .menu-status-text {
-            font-size: 0.82em !important;
+            font-size: clamp(0.8em, 1.3vh, 0.95em) !important;
           }
 
           .menu-status-btn {
-            font-size: 0.78em !important;
-            padding: 3px 8px !important;
+            font-size: clamp(0.76em, 1.2vh, 0.86em) !important;
+            padding: clamp(3px, 0.5vh, 5px) clamp(6px, 1vw, 12px) !important;
           }
 
           .menu-training-container {
@@ -389,160 +411,59 @@ export const MainMenu: React.FC = () => {
           }
 
           .training-section-label {
-            font-size: 0.75em !important;
-            margin-bottom: 4px !important;
+            font-size: clamp(0.72em, 1.1vh, 0.82em) !important;
+            margin-bottom: clamp(2px, 0.5vh, 6px) !important;
           }
 
           .training-chips-grid {
-            gap: 6px !important;
+            gap: clamp(6px, 1vw, 10px) !important;
           }
 
           .training-chip {
             aspect-ratio: 1 / 1 !important;
-            padding: 6px 4px !important;
-            border-radius: 12px !important;
+            padding: clamp(6px, 1.2vh, 14px) clamp(4px, 0.8vw, 10px) !important;
+            border-radius: clamp(10px, 1.5vh, 16px) !important;
           }
 
           .training-chip-icon {
-            font-size: 1.35rem !important;
+            font-size: clamp(1.3rem, 2.4vh, 2rem) !important;
           }
 
           .training-chip-title {
-            font-size: 0.76em !important;
+            font-size: clamp(0.75em, 1.3vh, 0.88em) !important;
           }
 
           .menu-right-box {
             order: unset !important;
             display: flex !important;
             flex-direction: column !important;
-            justify-content: flex-start !important;
-            gap: 7px !important;
+            justify-content: space-between !important;
+            gap: clamp(6px, 1.2vh, 12px) !important;
+            height: 100% !important;
           }
 
           .menu-action-tile {
-            padding: 9px 13px !important;
-            border-radius: 13px !important;
+            padding: clamp(8px, 1.6vh, 18px) clamp(12px, 1.8vw, 22px) !important;
+            border-radius: clamp(10px, 1.6vh, 16px) !important;
           }
 
           .tile-icon {
-            width: 36px !important;
-            height: 36px !important;
-            font-size: 1.5rem !important;
-            border-radius: 10px !important;
+            width: clamp(34px, 5vh, 48px) !important;
+            height: clamp(34px, 5vh, 48px) !important;
+            font-size: clamp(1.3rem, 2.2vh, 1.9rem) !important;
+            border-radius: clamp(8px, 1.2vh, 12px) !important;
           }
 
           .tile-title {
-            font-size: 1.05em !important;
+            font-size: clamp(0.98em, 1.7vh, 1.22em) !important;
           }
 
           .tile-desc {
-            font-size: 0.74em !important;
+            font-size: clamp(0.72em, 1.2vh, 0.82em) !important;
           }
 
           .tile-arrow {
-            font-size: 1.2em !important;
-          }
-        }
-
-        /* ── iPad & Large Displays in Landscape (min-width: 768px, min-height: 500px) ── */
-        @media (min-width: 768px) and (orientation: landscape) and (min-height: 500px) {
-          .main-menu-card {
-            max-width: 920px !important;
-          }
-
-          .menu-header-area {
-            margin-bottom: 6px !important;
-          }
-
-          .menu-header-icon {
-            width: 44px !important;
-            height: 44px !important;
-            font-size: 1.5rem !important;
-            border-radius: 12px !important;
-          }
-
-          .menu-header-title {
-            font-size: 1.85rem !important;
-          }
-
-          .menu-header-subtitle {
-            font-size: 0.84em !important;
-          }
-
-          .menu-header-flex {
-            gap: 12px !important;
-          }
-
-          .menu-content-grid {
-            gap: 18px !important;
-          }
-
-          .menu-left-box {
-            gap: 10px !important;
-          }
-
-          .menu-status-bar {
-            padding: 9px 14px !important;
-            border-radius: 12px !important;
-          }
-
-          .menu-status-text {
-            font-size: 0.88em !important;
-          }
-
-          .menu-status-btn {
-            padding: 4px 10px !important;
-            font-size: 0.82em !important;
-          }
-
-          .training-section-label {
-            font-size: 0.8em !important;
-            margin-bottom: 6px !important;
-          }
-
-          .training-chips-grid {
-            gap: 8px !important;
-          }
-
-          .training-chip {
-            padding: 8px 6px !important;
-            border-radius: 14px !important;
-          }
-
-          .training-chip-icon {
-            font-size: 1.55rem !important;
-          }
-
-          .training-chip-title {
-            font-size: 0.82em !important;
-          }
-
-          .menu-right-box {
-            gap: 9px !important;
-          }
-
-          .menu-action-tile {
-            padding: 11px 15px !important;
-            border-radius: 14px !important;
-          }
-
-          .tile-icon {
-            width: 40px !important;
-            height: 40px !important;
-            font-size: 1.7rem !important;
-            border-radius: 11px !important;
-          }
-
-          .tile-title {
-            font-size: 1.1em !important;
-          }
-
-          .tile-desc {
-            font-size: 0.76em !important;
-          }
-
-          .tile-arrow {
-            font-size: 1.25em !important;
+            font-size: clamp(1.15em, 1.8vh, 1.35em) !important;
           }
         }
       `}</style>
