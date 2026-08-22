@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Scoreboard } from './Scoreboard';
 import { Keypad } from './Keypad';
 import type { Player, GameConfig, Dart } from '../types';
+import { isSoundEnabled, setSoundEnabled } from '../utils/audio';
 
 interface GameScreenProps {
   players: Player[];
@@ -24,45 +25,55 @@ interface GameScreenProps {
 
 export const GameScreen: React.FC<GameScreenProps> = (props) => {
   const [showAbortConfirm, setShowAbortConfirm] = useState(false);
+  const [soundOn, setSoundOn] = useState(isSoundEnabled());
 
   return (
     <div className="screen active-screen game-screen-layout" style={{ position: 'relative' }}>
       {/* Top Match Header */}
-      <div className="match-top-header" style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: '8px 12px',
-        marginBottom: '8px',
-        background: 'rgba(22, 22, 26, 0.6)',
-        backdropFilter: 'blur(12px)',
-        borderRadius: '12px',
-        border: '1px solid var(--card-border)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontWeight: 800, fontSize: '1.05em', color: 'var(--text)' }}>
+      <div className="match-top-header">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden', minWidth: 0 }}>
+          <span style={{ fontWeight: 800, fontSize: '1.05em', color: 'var(--text)', whiteSpace: 'nowrap' }}>
             🎯 {props.config.startScore} {props.config.outMode}
           </span>
-          <span style={{ fontSize: '0.78em', color: 'var(--text-dim)', background: 'rgba(255,255,255,0.06)', padding: '2px 8px', borderRadius: '6px' }}>
+          <span style={{ fontSize: '0.78em', color: 'var(--text-dim)', background: 'rgba(255,255,255,0.06)', padding: '2px 8px', borderRadius: '6px', whiteSpace: 'nowrap' }}>
             First to {props.config.legsToWin} Legs {props.config.setsToWin > 1 ? `· ${props.config.setsToWin} Sets` : ''}
           </span>
         </div>
 
-        <button 
-          className="btn-ghost" 
-          onClick={() => setShowAbortConfirm(true)}
-          style={{ 
-            fontSize: '0.85em', 
-            color: 'var(--red)', 
-            padding: '6px 12px', 
-            borderRadius: '8px', 
-            border: '1px solid rgba(255, 69, 58, 0.25)',
-            background: 'rgba(255, 69, 58, 0.08)',
-            minHeight: '36px'
-          }}
-        >
-          ✕ Beenden
-        </button>
+        <div className="match-header-actions">
+          <button 
+            onClick={() => {
+              const next = !soundOn;
+              setSoundEnabled(next);
+              setSoundOn(next);
+            }}
+            className={`btn-sound-toggle ${soundOn ? 'btn-sound-on' : 'btn-sound-off'}`}
+            title={soundOn ? 'Caller An (klicken zum Stummschalten)' : 'Caller Aus (klicken zum Einschalten)'}
+            aria-label={soundOn ? 'Caller stummschalten' : 'Caller aktivieren'}
+          >
+            {soundOn ? '🔊' : '🔇'}
+          </button>
+
+          <button 
+            className="btn-ghost" 
+            onClick={() => setShowAbortConfirm(true)}
+            style={{ 
+              fontSize: '0.85em', 
+              color: 'var(--red)', 
+              padding: '6px 12px', 
+              borderRadius: '8px', 
+              border: '1px solid rgba(255, 69, 58, 0.25)',
+              background: 'rgba(255, 69, 58, 0.08)',
+              minHeight: '36px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              cursor: 'pointer'
+            }}
+          >
+            ✕ <span className="btn-abort-text">Beenden</span>
+          </button>
+        </div>
       </div>
 
       <div className="game-screen-body">

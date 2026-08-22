@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import type { Player, GameConfig } from '../types';
 import { getCheckoutSuggestion } from '../utils/checkouts';
-import { isSoundEnabled, setSoundEnabled } from '../utils/audio';
 
 interface ScoreboardProps {
   players: Player[];
@@ -20,36 +19,8 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
   currentRoundDarts,
   celebration
 }) => {
-  const [soundOn, setSoundOn] = useState(isSoundEnabled());
-
   return (
     <div className="scoreboard" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '-4px' }}>
-        <button 
-          onClick={() => {
-            const next = !soundOn;
-            setSoundEnabled(next);
-            setSoundOn(next);
-          }}
-          className="btn-ghost"
-          style={{ 
-            padding: '6px 12px', 
-            fontSize: '0.85em', 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '6px', 
-            borderRadius: '20px',
-            background: soundOn ? 'rgba(0, 210, 106, 0.15)' : 'var(--surface)',
-            border: soundOn ? '1px solid rgba(0, 210, 106, 0.3)' : '1px solid var(--card-border)',
-            color: soundOn ? 'var(--green)' : 'var(--text-dim)',
-            cursor: 'pointer'
-          }}
-          title={soundOn ? 'Sound stummschalten' : 'Sound aktivieren'}
-        >
-          <span>{soundOn ? '🔊' : '🔇'}</span>
-          <span>{soundOn ? 'Caller An' : 'Caller Aus'}</span>
-        </button>
-      </div>
       <style>{`
         @keyframes scorePulse {
           0% { transform: scale(1); }
