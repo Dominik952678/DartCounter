@@ -447,6 +447,109 @@ export const MainMenu: React.FC = () => {
             padding: 16px 8px !important;
           }
         }
+
+        /* ── iPad & Large Displays in Landscape (min-width: 768px, min-height: 500px) ── */
+        @media (min-width: 768px) and (orientation: landscape) and (min-height: 500px) {
+          .main-menu-card {
+            max-width: 1040px !important;
+            gap: 18px !important;
+          }
+
+          .menu-header-area {
+            margin-bottom: 6px !important;
+          }
+
+          .menu-header-icon {
+            width: 54px !important;
+            height: 54px !important;
+            font-size: 1.8rem !important;
+            border-radius: 16px !important;
+          }
+
+          .menu-header-title {
+            font-size: 2.2rem !important;
+          }
+
+          .menu-header-subtitle {
+            font-size: 0.9em !important;
+          }
+
+          .menu-header-flex {
+            gap: 16px !important;
+          }
+
+          .menu-content-grid {
+            gap: 28px !important;
+          }
+
+          .menu-left-box {
+            gap: 16px !important;
+          }
+
+          .menu-status-bar {
+            padding: 12px 18px !important;
+            border-radius: 14px !important;
+          }
+
+          .menu-status-text {
+            font-size: 0.95em !important;
+          }
+
+          .menu-status-btn {
+            padding: 6px 12px !important;
+            font-size: 0.88em !important;
+          }
+
+          .training-section-label {
+            font-size: 0.85em !important;
+            margin-bottom: 8px !important;
+          }
+
+          .training-chips-grid {
+            gap: 12px !important;
+          }
+
+          .training-chip {
+            padding: 12px 8px !important;
+            border-radius: 16px !important;
+          }
+
+          .training-chip-icon {
+            font-size: 2rem !important;
+          }
+
+          .training-chip-title {
+            font-size: 0.92em !important;
+          }
+
+          .menu-right-box {
+            gap: 12px !important;
+          }
+
+          .menu-action-tile {
+            padding: 16px 22px !important;
+            border-radius: 16px !important;
+          }
+
+          .tile-icon {
+            width: 48px !important;
+            height: 48px !important;
+            font-size: 2.1rem !important;
+            border-radius: 14px !important;
+          }
+
+          .tile-title {
+            font-size: 1.22em !important;
+          }
+
+          .tile-desc {
+            font-size: 0.85em !important;
+          }
+
+          .tile-arrow {
+            font-size: 1.35em !important;
+          }
+        }
       `}</style>
 
       <div className="hero-glow-bg" />
