@@ -16,7 +16,6 @@ import { CheckoutTraining } from './components/CheckoutTraining';
 import { StatsModal, HistoryModal } from './components/Modals';
 import type { Player, MatchHistory } from './types';
 import { startSync, saveProfiles, saveMatch, getMatches } from './db/database';
-import { isSoundEnabled, setSoundEnabled } from './utils/audio';
 
 import { useProfiles } from './hooks/useProfiles';
 import { useGameEngine } from './hooks/useGameEngine';
@@ -32,7 +31,6 @@ export default function App() {
   const [savedMatches, setSavedMatches] = useState<MatchHistory[]>([]);
   const [miniGameConfig, setMiniGameConfig] = useState<{players: string[], settings: Record<string, any>}>({players: [], settings: {}});
   const [showHistory, setShowHistory] = useState(false);
-  const [soundOn, setSoundOn] = useState(isSoundEnabled());
 
   const hideBottomNavRoutes = ['/game', '/powerscoring', '/splitscore', '/checkout', '/online-game'];
   const isMatchActive = hideBottomNavRoutes.some(route => location.pathname.startsWith(route)) || location.pathname.startsWith('/lobby/');
@@ -74,27 +72,6 @@ export default function App() {
 
   return (
     <div className={`app-container ${isMatchActive ? 'app-container-match' : ''}`}>
-      {!isMatchActive && (
-        <button 
-          className="sound-toggle-btn"
-          onClick={() => {
-            const newState = !soundOn;
-            setSoundEnabled(newState);
-            setSoundOn(newState);
-          }}
-          style={{
-            position: 'absolute', top: '15px', right: '15px', zIndex: 1000, 
-            background: 'rgba(0,0,0,0.5)', border: '1px solid var(--card-border)', 
-            borderRadius: '50%', width: '40px', height: '40px', 
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '1.2em', cursor: 'pointer', padding: 0
-          }}
-          title={soundOn ? "Sound ausschalten" : "Sound einschalten"}
-        >
-          {soundOn ? '🔊' : '🔇'}
-        </button>
-      )}
-
       <Routes>
         <Route path="/" element={<MainMenu />} />
         <Route path="/auth" element={<AuthScreen />} />
