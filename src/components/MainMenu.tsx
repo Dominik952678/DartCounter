@@ -148,10 +148,69 @@ export const MainMenu: React.FC = () => {
           transform: scale(0.97);
         }
 
+        /* ── Compact iPhone Scaling (<= 500px: Zero-Scroll Guarantee) ── */
+        @media (max-width: 500px) {
+          .main-menu-card {
+            gap: 8px;
+          }
+          .menu-header-area {
+            margin-top: 0;
+          }
+          .menu-header-icon {
+            width: 44px !important;
+            height: 44px !important;
+            font-size: 1.45rem !important;
+            margin-bottom: 2px !important;
+          }
+          .menu-header-title {
+            font-size: 1.75rem !important;
+            line-height: 1.1 !important;
+          }
+          .menu-header-subtitle {
+            font-size: 0.8em !important;
+            margin-top: 1px !important;
+          }
+          .menu-status-area {
+            padding: 6px 12px !important;
+            border-radius: 10px !important;
+          }
+          .menu-status-area span {
+            font-size: 0.82em !important;
+          }
+          .menu-modes-area {
+            gap: 8px !important;
+          }
+          .menu-action-tile {
+            padding: 10px 14px !important;
+            border-radius: 12px !important;
+          }
+          .tile-icon {
+            width: 38px !important;
+            height: 38px !important;
+            font-size: 1.6rem !important;
+            border-radius: 10px !important;
+          }
+          .tile-title {
+            font-size: 1.05em !important;
+          }
+          .tile-desc {
+            font-size: 0.76em !important;
+          }
+          .training-chips-grid {
+            gap: 6px !important;
+          }
+          .training-chip {
+            padding: 8px 4px !important;
+            border-radius: 10px !important;
+            font-size: 0.8em !important;
+            gap: 4px !important;
+          }
+        }
+
         /* ── Landscape Widescreen Mode (Left: Training & Header, Right: Modes) ── */
         @media (orientation: landscape) and (min-width: 540px), (min-width: 860px) {
           .main-menu-card {
-            max-width: 840px;
+            max-width: 880px;
             grid-template-columns: 1fr 1.2fr;
             grid-template-areas:
               "header modes"
@@ -196,6 +255,68 @@ export const MainMenu: React.FC = () => {
           }
           .menu-action-tile {
             padding: 12px 16px;
+          }
+        }
+
+        /* ── iPad & Tablet Enhancements (>= 768px: Fill space luxuriously) ── */
+        @media (min-width: 768px) {
+          .main-menu-card {
+            max-width: 680px;
+            gap: 16px;
+          }
+          .menu-header-icon {
+            width: 64px !important;
+            height: 64px !important;
+            font-size: 2.1rem !important;
+            margin-bottom: 6px !important;
+          }
+          .menu-header-title {
+            font-size: 2.5rem !important;
+          }
+          .menu-header-subtitle {
+            font-size: 0.95em !important;
+          }
+          .menu-status-area {
+            padding: 10px 16px !important;
+            border-radius: 14px !important;
+          }
+          .menu-status-area span {
+            font-size: 0.92em !important;
+          }
+          .menu-modes-area {
+            gap: 12px !important;
+          }
+          .menu-action-tile {
+            padding: 18px 22px !important;
+            border-radius: 16px !important;
+          }
+          .tile-icon {
+            width: 48px !important;
+            height: 48px !important;
+            font-size: 2.2rem !important;
+            border-radius: 12px !important;
+          }
+          .tile-title {
+            font-size: 1.25em !important;
+          }
+          .tile-desc {
+            font-size: 0.85em !important;
+          }
+          .training-chips-grid {
+            gap: 10px !important;
+          }
+          .training-chip {
+            padding: 12px 14px !important;
+            border-radius: 12px !important;
+            font-size: 0.9em !important;
+          }
+        }
+
+        @media (min-width: 768px) and (orientation: landscape) {
+          .main-menu-card {
+            max-width: 980px !important;
+            grid-template-columns: 1fr 1.25fr !important;
+            gap: 14px 24px !important;
           }
         }
       `}</style>
@@ -282,14 +403,14 @@ export const MainMenu: React.FC = () => {
           {/* Offline Match */}
           <div className="menu-action-tile tile-offline" onClick={() => navigate('/offline')}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-              <div style={{ fontSize: '2rem', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0, 210, 106, 0.15)', borderRadius: '12px', flexShrink: 0 }}>
+              <div className="tile-icon" style={{ fontSize: '2rem', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0, 210, 106, 0.15)', borderRadius: '12px', flexShrink: 0 }}>
                 🎯
               </div>
               <div>
-                <div style={{ fontSize: '1.2em', fontWeight: 800, color: 'var(--text)' }}>
+                <div className="tile-title" style={{ fontSize: '1.2em', fontWeight: 800, color: 'var(--text)' }}>
                   {user ? 'Offline Match' : 'Als Gast spielen'}
                 </div>
-                <div style={{ fontSize: '0.82em', color: 'var(--text-dim)', marginTop: '2px' }}>
+                <div className="tile-desc" style={{ fontSize: '0.82em', color: 'var(--text-dim)', marginTop: '2px' }}>
                   X01, Sets/Legs, Training & Bots
                 </div>
               </div>
@@ -302,16 +423,16 @@ export const MainMenu: React.FC = () => {
           {/* Online Multiplayer */}
           <div className="menu-action-tile tile-online" onClick={handleOnlineClick}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-              <div style={{ fontSize: '2rem', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(10, 132, 255, 0.15)', borderRadius: '12px', flexShrink: 0 }}>
+              <div className="tile-icon" style={{ fontSize: '2rem', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(10, 132, 255, 0.15)', borderRadius: '12px', flexShrink: 0 }}>
                 🌍
               </div>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '1.2em', fontWeight: 800, color: 'var(--text)' }}>
+                  <span className="tile-title" style={{ fontSize: '1.2em', fontWeight: 800, color: 'var(--text)' }}>
                     Online Multiplayer
                   </span>
                 </div>
-                <div style={{ fontSize: '0.82em', color: 'var(--text-dim)', marginTop: '2px' }}>
+                <div className="tile-desc" style={{ fontSize: '0.82em', color: 'var(--text-dim)', marginTop: '2px' }}>
                   Räume erstellen & global gegeneinander spielen
                 </div>
               </div>
@@ -325,14 +446,14 @@ export const MainMenu: React.FC = () => {
           {user ? (
             <div className="menu-action-tile tile-stats" onClick={() => navigate('/stats')}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                <div style={{ fontSize: '2rem', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255, 159, 10, 0.15)', borderRadius: '12px', flexShrink: 0 }}>
+                <div className="tile-icon" style={{ fontSize: '2rem', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255, 159, 10, 0.15)', borderRadius: '12px', flexShrink: 0 }}>
                   📊
                 </div>
                 <div>
-                  <div style={{ fontSize: '1.2em', fontWeight: 800, color: 'var(--text)' }}>
+                  <div className="tile-title" style={{ fontSize: '1.2em', fontWeight: 800, color: 'var(--text)' }}>
                     Statistiken & Profile
                   </div>
-                  <div style={{ fontSize: '0.82em', color: 'var(--text-dim)', marginTop: '2px' }}>
+                  <div className="tile-desc" style={{ fontSize: '0.82em', color: 'var(--text-dim)', marginTop: '2px' }}>
                     Averages, Triple-Quoten, Radar & Historie
                   </div>
                 </div>
@@ -344,14 +465,14 @@ export const MainMenu: React.FC = () => {
           ) : (
             <div className="menu-action-tile tile-auth" onClick={() => navigate('/auth')}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                <div style={{ fontSize: '2rem', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(94, 92, 230, 0.15)', borderRadius: '12px', flexShrink: 0 }}>
+                <div className="tile-icon" style={{ fontSize: '2rem', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(94, 92, 230, 0.15)', borderRadius: '12px', flexShrink: 0 }}>
                   🔑
                 </div>
                 <div>
-                  <div style={{ fontSize: '1.2em', fontWeight: 800, color: 'var(--text)' }}>
+                  <div className="tile-title" style={{ fontSize: '1.2em', fontWeight: 800, color: 'var(--text)' }}>
                     Account erstellen / Login
                   </div>
-                  <div style={{ fontSize: '0.82em', color: 'var(--text-dim)', marginTop: '2px' }}>
+                  <div className="tile-desc" style={{ fontSize: '0.82em', color: 'var(--text-dim)', marginTop: '2px' }}>
                     Profile anlegen & Statistiken dauerhaft sichern
                   </div>
                 </div>

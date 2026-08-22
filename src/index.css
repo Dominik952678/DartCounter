@@ -65,10 +65,23 @@ h3 { font-size: 1.05em; color: var(--text-dim); }
   position: relative;
 }
 
+@media (max-width: 500px) {
+  .app-container {
+    padding: max(calc(env(safe-area-inset-top) + 6px), 8px) 14px max(calc(env(safe-area-inset-bottom) + 72px), 78px) 14px;
+  }
+}
+
+@media (min-width: 768px) {
+  .app-container {
+    max-width: 1040px;
+    padding: max(calc(env(safe-area-inset-top) + 16px), 20px) 32px max(calc(env(safe-area-inset-bottom) + 80px), 90px) 32px;
+  }
+}
+
 @media (orientation: landscape) {
   .app-container {
-    max-width: 900px;
-    padding: max(calc(env(safe-area-inset-top) + 6px), 10px) max(calc(env(safe-area-inset-right) + 16px), 20px) max(calc(env(safe-area-inset-bottom) + 60px), 72px) max(calc(env(safe-area-inset-left) + 16px), 20px);
+    max-width: 1040px;
+    padding: max(calc(env(safe-area-inset-top) + 6px), 10px) max(calc(env(safe-area-inset-right) + 16px), 24px) max(calc(env(safe-area-inset-bottom) + 60px), 72px) max(calc(env(safe-area-inset-left) + 16px), 24px);
   }
 }
 
