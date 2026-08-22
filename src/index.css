@@ -65,20 +65,22 @@ h3 { font-size: 1.05em; color: var(--text-dim); }
   position: relative;
 }
 
-@media (orientation: landscape) {
-  .app-container {
-    max-width: 960px;
-    padding: max(calc(env(safe-area-inset-top) + 6px), 10px) max(calc(env(safe-area-inset-right) + 16px), 16px) max(calc(env(safe-area-inset-bottom) + 6px), 10px) max(calc(env(safe-area-inset-left) + 16px), 16px);
-  }
-}
-
 .app-container-match {
-  padding: 0 !important;
-  max-width: 100% !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
   height: 100dvh !important;
   max-height: 100dvh !important;
   min-height: 100dvh !important;
+  padding: 0 !important;
+  margin: 0 !important;
   overflow: hidden !important;
+  overscroll-behavior: none !important;
+  touch-action: manipulation !important;
+  z-index: 10;
 }
 
 /* ── Cards & Glassmorphism ──────────────────────────────── */
