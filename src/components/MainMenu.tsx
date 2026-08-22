@@ -288,17 +288,36 @@ export const MainMenu: React.FC = () => {
           margin-top: 2px;
         }
 
-        /* ── Landscape / Wide Responsive Mode (Logo Top Center | Left Box == Right Box Exactly Aligned) ── */
+        /* ── Landscape / Wide Responsive Mode (Logo Top Fixed | Left Box == Right Box Exactly Aligned) ── */
         @media (orientation: landscape) and (min-width: 540px), (min-width: 860px) {
+          .main-menu-screen {
+            height: 100% !important;
+            max-height: 100% !important;
+            overflow: hidden !important;
+            overscroll-behavior: none !important;
+            touch-action: manipulation !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: flex-start !important;
+            align-items: center !important;
+          }
+
           .main-menu-card {
+            height: 100% !important;
+            max-height: 100% !important;
             max-width: min(960px, 94vw);
-            gap: clamp(8px, 1.5vh, 14px);
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: flex-start !important;
+            gap: clamp(6px, 1.2vh, 12px);
           }
 
           .menu-header-area {
+            flex-shrink: 0 !important;
+            width: 100% !important;
             text-align: center;
-            margin-top: 0;
-            margin-bottom: clamp(0px, 0.5vh, 4px);
+            margin-top: 0 !important;
+            margin-bottom: clamp(2px, 0.5vh, 4px) !important;
           }
 
           .menu-header-icon {
@@ -328,9 +347,11 @@ export const MainMenu: React.FC = () => {
           }
 
           .menu-content-grid {
+            flex: 1 !important;
+            min-height: 0 !important;
             display: grid !important;
             grid-template-columns: 1fr 1fr !important;
-            gap: clamp(12px, 2vw, 22px) !important;
+            gap: clamp(10px, 2vw, 20px) !important;
             align-items: stretch !important;
           }
 
@@ -338,7 +359,7 @@ export const MainMenu: React.FC = () => {
             display: flex !important;
             flex-direction: column !important;
             justify-content: space-between !important;
-            gap: clamp(8px, 1.2vh, 12px) !important;
+            gap: clamp(6px, 1vh, 10px) !important;
             height: 100% !important;
           }
 
@@ -361,7 +382,7 @@ export const MainMenu: React.FC = () => {
 
           .training-chip {
             aspect-ratio: 1 / 1 !important;
-            padding: clamp(6px, 1vh, 10px) clamp(4px, 0.8vw, 8px) !important;
+            padding: clamp(4px, 0.8vh, 8px) clamp(4px, 0.8vw, 8px) !important;
             border-radius: clamp(10px, 1.5vh, 14px) !important;
           }
 
@@ -398,29 +419,32 @@ export const MainMenu: React.FC = () => {
         /* ── Ultra-Compact Height Guard (for small landscape screens <= 440px height) ── */
         @media (max-height: 440px) and (orientation: landscape) {
           .main-menu-card {
-            gap: 6px !important;
+            gap: 4px !important;
           }
           .menu-content-grid {
-            gap: 10px !important;
+            gap: 8px !important;
           }
           .menu-action-tile {
-            padding: 6px 10px !important;
-          }
-          .menu-status-bar {
             padding: 5px 8px !important;
           }
+          .menu-status-bar {
+            padding: 4px 6px !important;
+          }
           .training-chip {
-            padding: 4px 2px !important;
+            padding: 3px 2px !important;
           }
           .training-section-label {
-            margin-bottom: 3px !important;
+            margin-bottom: 2px !important;
           }
         }
 
         /* ── iPad & Large Displays (min-width: 768px in portrait) ── */
         @media (min-width: 768px) and (orientation: portrait) {
           .main-menu-screen {
-            min-height: calc(100dvh - max(calc(env(safe-area-inset-top) + 16px), 20px) - max(calc(env(safe-area-inset-bottom) + 80px), 90px)) !important;
+            height: 100% !important;
+            max-height: 100% !important;
+            overflow: hidden !important;
+            overscroll-behavior: none !important;
             display: flex !important;
             flex-direction: column !important;
             justify-content: center !important;
@@ -431,6 +455,7 @@ export const MainMenu: React.FC = () => {
             gap: 18px;
           }
           .menu-header-area {
+            flex-shrink: 0 !important;
             margin-top: 0 !important;
             margin-bottom: 10px !important;
           }
@@ -462,18 +487,29 @@ export const MainMenu: React.FC = () => {
         /* ── iPad & Large Displays in Landscape (min-width: 768px, min-height: 500px) ── */
         @media (min-width: 768px) and (orientation: landscape) and (min-height: 500px) {
           .main-menu-screen {
-            min-height: calc(100dvh - max(calc(env(safe-area-inset-top) + 16px), 20px) - max(calc(env(safe-area-inset-bottom) + 64px), 76px)) !important;
+            height: 100% !important;
+            max-height: 100% !important;
+            overflow: hidden !important;
+            overscroll-behavior: none !important;
             display: flex !important;
             flex-direction: column !important;
-            justify-content: center !important;
+            justify-content: flex-start !important;
             align-items: center !important;
           }
+
           .main-menu-card {
+            height: 100% !important;
+            max-height: 100% !important;
             max-width: 1040px !important;
-            gap: 18px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: flex-start !important;
+            gap: 14px !important;
           }
 
           .menu-header-area {
+            flex-shrink: 0 !important;
+            width: 100% !important;
             margin-top: 0 !important;
             margin-bottom: 6px !important;
           }
@@ -498,11 +534,14 @@ export const MainMenu: React.FC = () => {
           }
 
           .menu-content-grid {
+            flex: 1 !important;
+            min-height: 0 !important;
             gap: 28px !important;
           }
 
           .menu-left-box {
-            gap: 16px !important;
+            gap: 14px !important;
+            height: 100% !important;
           }
 
           .menu-status-bar {
@@ -543,6 +582,7 @@ export const MainMenu: React.FC = () => {
 
           .menu-right-box {
             gap: 12px !important;
+            height: 100% !important;
           }
 
           .menu-action-tile {
