@@ -24,60 +24,59 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
       <style>{`
         @keyframes scorePulse {
           0% { transform: scale(1); }
-          50% { transform: scale(1.1); text-shadow: 0 0 20px var(--player-color, rgba(255,255,255,0.5)); }
+          50% { transform: scale(1.08); text-shadow: 0 0 16px var(--player-color, rgba(255,255,255,0.5)); }
           100% { transform: scale(1); }
         }
         @keyframes fadeIn {
-          from { opacity: 0; transform: translateX(-10px); }
+          from { opacity: 0; transform: translateX(-6px); }
           to { opacity: 1; transform: translateX(0); }
         }
         .score-anim-pulse {
-          animation: scorePulse 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+          animation: scorePulse 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
           display: inline-block;
           will-change: transform;
         }
+        .scoreboard {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+          gap: 6px;
+          margin-bottom: 4px;
+        }
         .player-card {
           position: relative;
-          background: var(--card, #1e1e1e);
-          border-radius: var(--radius, 12px);
-          padding: 16px;
-          transition: all 0.3s ease;
+          background: rgba(26, 26, 30, 0.85);
+          border-radius: 12px;
+          padding: 8px 10px;
+          transition: all 0.2s ease;
           overflow: hidden;
           border: 1px solid var(--card-border, #333);
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
         }
         .player-card.is-inactive {
-          opacity: 0.7;
-          transform: scale(0.98);
-          filter: grayscale(20%);
+          opacity: 0.65;
+          filter: grayscale(15%);
         }
         .player-card.is-active {
-          box-shadow: 0 0 15px rgba(255, 255, 255, 0.05);
-          border-left: 6px solid var(--player-color, var(--blue));
-          border-color: var(--card-border, #444);
-          transform: scale(1);
+          box-shadow: 0 0 16px rgba(10, 132, 255, 0.15);
+          border-left: 4px solid var(--player-color, var(--blue));
+          border-color: rgba(255, 255, 255, 0.2);
           opacity: 1;
           filter: grayscale(0%);
-        }
-        .player-card.is-active::before {
-          content: '';
-          position: absolute;
-          top: 0; left: 0; bottom: 0;
-          width: 30px;
-          background: linear-gradient(90deg, var(--player-color, var(--blue)), transparent);
-          opacity: 0.15;
-          pointer-events: none;
+          background: rgba(30, 30, 36, 0.95);
         }
         .player-card.checkout-range {
-          background: linear-gradient(145deg, rgba(76, 175, 80, 0.08), var(--card, #1e1e1e));
+          background: linear-gradient(145deg, rgba(76, 175, 80, 0.1), rgba(26, 26, 30, 0.9));
         }
         .score-display {
-          font-size: clamp(3.5rem, 15vw, 6rem);
+          font-size: clamp(2.2rem, 7.5vw, 4.5rem);
           font-weight: 900;
           line-height: 1;
           text-align: center;
-          margin: 16px 0;
+          margin: 4px 0;
           color: var(--text, #fff);
-          text-shadow: 0 4px 12px rgba(0,0,0,0.3);
+          text-shadow: 0 2px 8px rgba(0,0,0,0.4);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -88,37 +87,44 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
         .checkout-pill {
           background: var(--player-color, var(--blue, #2196f3));
           color: #fff;
-          border-radius: 9999px;
-          padding: 8px 20px;
+          border-radius: 6px;
+          padding: 3px 8px;
           font-weight: 800;
-          font-size: 1.25rem;
+          font-size: 0.82rem;
           display: inline-block;
           margin: 0 auto;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-          text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-          letter-spacing: 0.5px;
-          transform: translateY(0);
-          animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+          box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+          letter-spacing: 0.3px;
+          animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
         @keyframes popIn {
           from { transform: scale(0.9); opacity: 0; }
           to { transform: scale(1); opacity: 1; }
         }
         .compact-stats {
-          display: grid;
-          grid-template-columns: repeat(5, 1fr);
-          gap: 6px;
-          font-size: 0.85rem;
-          color: var(--text-dim, #aaa);
-          margin-top: 16px;
-          padding-top: 12px;
-          border-top: 1px solid rgba(255,255,255,0.08);
-          text-align: center;
+          display: none;
         }
-        @media (max-width: 420px) {
+        @media (min-width: 768px) {
+          .scoreboard {
+            gap: 12px;
+            margin-bottom: 12px;
+          }
+          .player-card {
+            padding: 14px 16px;
+          }
+          .score-display {
+            margin: 10px 0;
+          }
           .compact-stats {
-            grid-template-columns: repeat(3, 1fr);
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
             gap: 6px;
+            font-size: 0.85rem;
+            color: var(--text-dim, #aaa);
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            text-align: center;
           }
         }
         .compact-stats span {
@@ -136,11 +142,11 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
           font-weight: 700;
         }
         .live-preview-darts {
-          font-size: clamp(1.2rem, 5vw, 2rem);
+          font-size: clamp(1rem, 4vw, 1.8rem);
           color: var(--text-dim, #777);
-          margin-left: 12px;
+          margin-left: 8px;
           font-weight: 600;
-          animation: fadeIn 0.3s ease-out forwards;
+          animation: fadeIn 0.2s ease-out forwards;
         }
       `}</style>
       
@@ -166,6 +172,7 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
           : "–";
 
         const playerColor = p.color || 'var(--blue, #2196f3)';
+        const checkoutSuggestion = isActive && isCheckoutRange ? getCheckoutSuggestion(liveScore, config.outMode, currentRoundDarts.length) : null;
 
         return (
           <div 
@@ -177,29 +184,27 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
             } as React.CSSProperties}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, overflow: 'hidden' }}>
                 <span className="starter-dot" style={{ 
                   backgroundColor: isStarter ? playerColor : 'transparent', 
                   border: `2px solid ${playerColor}`, 
-                  width: '12px', 
-                  height: '12px', 
+                  width: '8px', 
+                  height: '8px', 
                   borderRadius: '50%', 
                   display: 'inline-block',
+                  flexShrink: 0,
                   opacity: isStarter ? 1 : 0.2
                 }}></span>
-                <h3 className="player-name" style={{ margin: 0, fontSize: '1.4rem', color: isActive ? playerColor : 'inherit', fontWeight: isActive ? 800 : 600 }}>
+                <h3 className="player-name" style={{ margin: 0, fontSize: '0.95rem', color: isActive ? playerColor : 'inherit', fontWeight: isActive ? 800 : 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {p.isBot ? '🤖 ' : ''}{p.name}
                 </h3>
               </div>
-              <div className="badge-container" style={{ display: 'flex', gap: '8px' }}>
-                <span className="badge" style={{ background: 'rgba(0,0,0,0.4)', padding: '4px 10px', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 600 }}>S: <strong style={{color: '#fff'}}>{p.sets}</strong></span>
-                <span className="badge badge-legs" style={{ background: 'rgba(0,0,0,0.4)', padding: '4px 10px', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 600 }}>L: <strong style={{color: '#fff'}}>{p.legs}</strong></span>
+              <div className="badge-container" style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+                {config.setsToWin > 1 && (
+                  <span className="badge" style={{ background: 'rgba(0,0,0,0.4)', padding: '2px 5px', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 600 }}>S: <strong style={{color: '#fff'}}>{p.sets}</strong></span>
+                )}
+                <span className="badge badge-legs" style={{ background: 'rgba(0,0,0,0.4)', padding: '2px 5px', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 600 }}>L: <strong style={{color: '#fff'}}>{p.legs}</strong></span>
               </div>
-            </div>
-            
-            <div className="score-details" style={{ display: 'flex', justifyContent: 'space-between', marginTop: '12px', fontSize: '0.95rem', color: 'var(--text-dim, #999)', fontWeight: 500 }}>
-              <span>Darts: <strong style={{color: 'var(--text, #fff)'}}>{p.legDarts + (isActive ? currentRoundDarts.length : 0)}</strong></span>
-              <span>Runde: <strong style={{color: 'var(--text, #fff)'}}>{Math.floor(p.legDarts / 3) + 1}</strong></span>
             </div>
 
             <div className="score-display">
@@ -213,11 +218,15 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
               )}
             </div>
             
-            <div style={{ minHeight: '44px', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {isActive && isCheckoutRange && getCheckoutSuggestion(liveScore, config.outMode, currentRoundDarts.length) && (
+            <div style={{ minHeight: '22px', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {checkoutSuggestion ? (
                 <div className="checkout-pill">
-                  {getCheckoutSuggestion(liveScore, config.outMode, currentRoundDarts.length)}
+                  {checkoutSuggestion}
                 </div>
+              ) : (
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-dim, #888)' }}>
+                  Darts: {p.legDarts + (isActive ? currentRoundDarts.length : 0)} · Ø {matchAvg}
+                </span>
               )}
             </div>
 

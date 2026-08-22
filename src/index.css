@@ -559,28 +559,63 @@ button:active, .btn:active {
   }
 }
 
+/* ── Game Screen Layout (Zero-Scroll Mobile & Responsive) ── */
+.game-screen-layout {
+  height: 100dvh;
+  max-height: 100dvh;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: max(calc(env(safe-area-inset-top) + 2px), 4px) 8px max(calc(env(safe-area-inset-bottom) + 2px), 6px) 8px;
+  box-sizing: border-box;
+  justify-content: space-between;
+}
+
+.game-screen-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.game-screen-left {
+  flex-shrink: 0;
+}
+
+.game-screen-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 0;
+}
+
 /* ── Keypad (Thumb Optimized) ──────────── */
 .keypad { 
-  max-width: 540px; 
+  max-width: 500px; 
+  width: 100%;
   margin: 0 auto; 
 }
 .dart-display { 
   display: flex; 
-  gap: 10px; 
-  margin-bottom: 14px; 
+  gap: 8px; 
+  margin-bottom: 4px; 
   align-items: center; 
   justify-content: center; 
 }
 .dart-box {
-  width: 58px; 
-  height: 58px;
+  width: 44px; 
+  height: 44px;
   display: flex; 
   align-items: center; 
-  justify-content: center;
+  justify-content: center; 
   background: rgba(255, 255, 255, 0.03); 
   border: 2px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px; 
-  font-size: 1.2em; 
+  border-radius: 10px; 
+  font-size: 1.05em; 
   font-weight: 800;
   transition: all 0.15s ease;
 }
@@ -599,30 +634,30 @@ button:active, .btn:active {
   box-shadow: 0 0 10px var(--red-glow);
 }
 .round-total { 
-  font-size: 1.7em; 
+  font-size: 1.5em; 
   font-weight: 900; 
   color: var(--green); 
-  margin-left: 8px; 
-  min-width: 60px; 
+  margin-left: 6px; 
+  min-width: 50px; 
   text-align: center; 
 }
 .round-total.bust { color: var(--red); }
 
 .modifier-grid { 
   display: grid; 
-  grid-template-columns: repeat(4, 1fr); 
+  grid-template-columns: 1fr 1fr; 
   gap: 6px; 
-  margin-bottom: 10px; 
+  margin-bottom: 4px; 
 }
 .mod-btn { 
   background: rgba(255, 255, 255, 0.05); 
   color: var(--text-dim); 
-  border-radius: 12px; 
-  padding: 14px 4px; 
+  border-radius: 10px; 
+  padding: 8px 4px; 
   font-weight: 700; 
-  font-size: 0.92em; 
+  font-size: 0.9em; 
   border: 1px solid var(--card-border); 
-  min-height: 48px;
+  min-height: 38px;
 }
 .mod-active-double { 
   background: var(--orange) !important; 
@@ -639,17 +674,18 @@ button:active, .btn:active {
 .numpad-grid { 
   display: grid; 
   grid-template-columns: repeat(5, 1fr); 
-  gap: 6px; 
-  margin-bottom: 10px; 
+  gap: 4px; 
+  margin-bottom: 2px; 
 }
 .num-btn { 
   background: rgba(255, 255, 255, 0.06); 
   border: 1px solid var(--card-border);
-  border-radius: 14px; 
-  min-height: 52px; 
-  font-size: 1.35em; 
+  border-radius: 10px; 
+  min-height: 40px; 
+  font-size: 1.25em; 
   font-weight: 700; 
   color: var(--text); 
+  padding: 0;
 }
 .num-btn:active { 
   background: rgba(255, 255, 255, 0.16); 

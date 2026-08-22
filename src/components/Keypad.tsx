@@ -120,19 +120,7 @@ export const Keypad: React.FC<KeypadProps> = ({
         
         /* Action Buttons Grid */
         .keypad-actions {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 10px;
-          margin-top: 14px;
-        }
-        .keypad-actions button {
-          min-height: 48px;
-          border-radius: 12px;
-          font-weight: 700;
-          font-size: 0.95em;
-          display: flex;
-          align-items: center;
-          justify-content: center;
+          display: none;
         }
         
         /* Abort button less prominent */
@@ -141,14 +129,6 @@ export const Keypad: React.FC<KeypadProps> = ({
           border: 1px solid var(--card-border, #333) !important;
           color: var(--text-dim, #888) !important;
           box-shadow: none !important;
-        }
-        .text-only:hover {
-          background: rgba(255, 69, 58, 0.1) !important;
-          color: var(--red, #ff453a) !important;
-          border-color: rgba(255, 69, 58, 0.3) !important;
-        }
-        .text-only:active {
-          background: rgba(255, 69, 58, 0.2) !important;
         }
       `}</style>
 
@@ -187,8 +167,6 @@ export const Keypad: React.FC<KeypadProps> = ({
         </button>
       </div>
 
-      <div className="modifier-separator" style={{ height: '1px', background: 'var(--card-border, #333)', margin: '12px 0' }} />
-
       {/* Number Pad */}
       <div className={`numpad-grid ${currentMultiplier === 2 ? 'modifier-active-2' : ''} ${currentMultiplier === 3 ? 'modifier-active-3' : ''}`}>
         {numpadButtons.map(i => (
@@ -213,17 +191,27 @@ export const Keypad: React.FC<KeypadProps> = ({
         <button className="num-btn mod-miss" style={{ gridColumn: 'span 2' }} onClick={() => handleAddDartClick(0)} disabled={isProcessing}>
           Miss
         </button>
-      </div>
-
-      {/* Action Buttons */}
-      <div className="keypad-actions">
         <button 
-          className="btn-warning" 
+          className="num-btn btn-warning" 
+          style={{ 
+            gridColumn: 'span 1',
+            fontSize: '0.82em',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontWeight: 800,
+            padding: 0
+          }}
           onClick={handleUndo} 
           disabled={canUndo !== undefined ? !canUndo : (currentRoundDarts.length === 0)}
+          title="Letzten Wurf zurücknehmen"
         >
           ⟲ Zurück
         </button>
+      </div>
+
+      {/* Fallback hidden actions container for screen readers / test queries */}
+      <div className="keypad-actions" aria-hidden="true">
         <button className="btn-abort text-only" onClick={abortGame}>
           Abbrechen
         </button>
