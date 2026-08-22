@@ -67,8 +67,8 @@ h3 { font-size: 1.05em; color: var(--text-dim); }
 
 @media (orientation: landscape) {
   .app-container {
-    max-width: 640px;
-    padding: max(calc(env(safe-area-inset-top) + 8px), 12px) 20px max(calc(env(safe-area-inset-bottom) + 70px), 80px) 20px;
+    max-width: 900px;
+    padding: max(calc(env(safe-area-inset-top) + 6px), 10px) max(calc(env(safe-area-inset-right) + 16px), 20px) max(calc(env(safe-area-inset-bottom) + 60px), 72px) max(calc(env(safe-area-inset-left) + 16px), 20px);
   }
 }
 

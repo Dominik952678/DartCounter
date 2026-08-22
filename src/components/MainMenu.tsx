@@ -15,7 +15,7 @@ export const MainMenu: React.FC = () => {
   };
 
   return (
-    <div className="screen active-screen" style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', overflowX: 'hidden', boxSizing: 'border-box' }}>
+    <div className="screen active-screen main-menu-screen" style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', overflowX: 'hidden', boxSizing: 'border-box' }}>
       <style>{`
         .hero-glow-bg {
           position: absolute;
@@ -33,15 +33,47 @@ export const MainMenu: React.FC = () => {
           z-index: 1;
           width: 100%;
           max-width: 480px;
+          display: grid;
+          grid-template-columns: 1fr;
+          grid-template-areas:
+            "header"
+            "status"
+            "modes"
+            "training";
+          gap: 12px;
+          transition: all 0.2s ease;
+        }
+        .menu-header-area {
+          grid-area: header;
+          text-align: center;
+          margin-top: 4px;
+        }
+        .menu-header-flex {
+          display: block;
+        }
+        .menu-status-area {
+          grid-area: status;
+        }
+        .menu-modes-area {
+          grid-area: modes;
           display: flex;
           flex-direction: column;
-          gap: 16px;
+          gap: 10px;
+        }
+        .menu-training-area {
+          grid-area: training;
+          margin-top: 2px;
+        }
+        .training-chips-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 8px;
         }
         .menu-action-tile {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 18px 20px;
+          padding: 16px 18px;
           border-radius: 16px;
           background: var(--card);
           border: 1px solid var(--card-border);
@@ -50,6 +82,7 @@ export const MainMenu: React.FC = () => {
           text-align: left;
           width: 100%;
           color: var(--text);
+          box-sizing: border-box;
         }
         .menu-action-tile:hover {
           transform: translateY(-2px);
@@ -95,15 +128,17 @@ export const MainMenu: React.FC = () => {
           flex: 1;
           display: flex;
           align-items: center;
-          gap: 10px;
-          padding: 14px 16px;
+          justify-content: center;
+          gap: 8px;
+          padding: 10px 8px;
           background: var(--surface);
           border: 1px solid var(--card-border);
           border-radius: 12px;
           cursor: pointer;
           transition: all 0.15s ease;
           color: var(--text);
-          font-size: 0.95em;
+          font-size: 0.88em;
+          box-sizing: border-box;
         }
         .training-chip:hover {
           background: rgba(255, 255, 255, 0.08);
@@ -112,56 +147,112 @@ export const MainMenu: React.FC = () => {
         .training-chip:active {
           transform: scale(0.97);
         }
+
+        /* ── Landscape Widescreen Mode (Left: Training & Header, Right: Modes) ── */
+        @media (orientation: landscape) and (min-width: 540px), (min-width: 860px) {
+          .main-menu-card {
+            max-width: 840px;
+            grid-template-columns: 1fr 1.2fr;
+            grid-template-areas:
+              "header modes"
+              "status modes"
+              "training modes";
+            gap: 10px 18px;
+            align-items: start;
+          }
+          .menu-header-area {
+            text-align: left;
+            margin-top: 0;
+          }
+          .menu-header-flex {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+          }
+          .menu-header-icon {
+            width: 44px !important;
+            height: 44px !important;
+            font-size: 1.5rem !important;
+            margin-bottom: 0 !important;
+          }
+          .menu-header-title {
+            font-size: 1.8rem !important;
+            line-height: 1.1 !important;
+          }
+          .training-chips-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+          }
+          .training-chip {
+            flex-direction: row !important;
+            justify-content: flex-start !important;
+            padding: 8px 12px !important;
+            gap: 10px !important;
+            text-align: left !important;
+          }
+          .training-chip span:first-child {
+            font-size: 1.3rem !important;
+          }
+          .menu-action-tile {
+            padding: 12px 16px;
+          }
+        }
       `}</style>
 
       <div className="hero-glow-bg" />
 
       <div className="main-menu-card">
-        {/* Brand Header */}
-        <div style={{ textAlign: 'center', marginTop: '10px', marginBottom: '8px' }}>
-          <div style={{ 
-            display: 'inline-flex', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            width: '64px', 
-            height: '64px', 
-            borderRadius: '20px', 
-            background: 'linear-gradient(135deg, rgba(0, 210, 106, 0.2), rgba(10, 132, 255, 0.2))', 
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            boxShadow: '0 8px 20px rgba(0,0,0,0.3)',
-            marginBottom: '12px',
-            fontSize: '2rem'
-          }}>
-            🎯
+        {/* Brand Header Area */}
+        <div className="menu-header-area">
+          <div className="menu-header-flex">
+            <div className="menu-header-icon" style={{ 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              width: '56px', 
+              height: '56px', 
+              borderRadius: '18px', 
+              background: 'linear-gradient(135deg, rgba(0, 210, 106, 0.2), rgba(10, 132, 255, 0.2))', 
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              boxShadow: '0 8px 20px rgba(0,0,0,0.3)',
+              marginBottom: '8px',
+              fontSize: '1.8rem'
+            }}>
+              🎯
+            </div>
+            <div>
+              <h1 className="menu-header-title" style={{ fontSize: '2.2rem', fontWeight: 900, letterSpacing: '-0.03em', background: 'linear-gradient(135deg, var(--green), var(--blue))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: 0, lineHeight: 1.15 }}>
+                DARTCOUNTER
+              </h1>
+              <p style={{ color: 'var(--text-dim)', fontSize: '0.88em', marginTop: '2px', fontWeight: 500 }}>
+                Scoring, Statistiken & Multiplayer
+              </p>
+            </div>
           </div>
-          <h1 style={{ fontSize: '2.4rem', fontWeight: 900, letterSpacing: '-0.03em', background: 'linear-gradient(135deg, var(--green), var(--blue))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: 0 }}>
-            DARTCOUNTER
-          </h1>
-          <p style={{ color: 'var(--text-dim)', fontSize: '0.95em', marginTop: '4px', fontWeight: 500 }}>
-            Scoring, Statistiken & Multiplayer
-          </p>
         </div>
 
-        {/* User Account / Guest Status Bar */}
-        <div style={{ 
+        {/* User Account / Guest Status Bar Area */}
+        <div className="menu-status-area" style={{ 
           display: 'flex', 
           alignItems: 'center', 
           justifyContent: 'space-between', 
-          padding: '10px 16px', 
+          padding: '8px 14px', 
           background: 'rgba(255, 255, 255, 0.03)', 
           backdropFilter: 'blur(12px)',
-          borderRadius: '14px', 
+          borderRadius: '12px', 
           border: '1px solid var(--card-border)' 
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, overflow: 'hidden' }}>
             <span style={{ 
               width: '8px', 
               height: '8px', 
               borderRadius: '50%', 
               backgroundColor: user ? 'var(--green)' : 'var(--orange)',
-              boxShadow: user ? '0 0 8px var(--green)' : '0 0 8px var(--orange)'
+              boxShadow: user ? '0 0 8px var(--green)' : '0 0 8px var(--orange)',
+              flexShrink: 0
             }} />
-            <span style={{ fontSize: '0.88em', color: 'var(--text)' }}>
+            <span style={{ fontSize: '0.86em', color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {user ? (
                 <>Eingeloggt als <strong style={{ color: 'var(--blue)' }}>{user.user_metadata?.username || user.email}</strong></>
               ) : (
@@ -172,60 +263,60 @@ export const MainMenu: React.FC = () => {
           {user ? (
             <button 
               onClick={() => { signOut(); navigate('/'); }}
-              style={{ background: 'transparent', border: 'none', color: 'var(--red)', fontSize: '0.82em', fontWeight: 600, cursor: 'pointer', padding: '4px 8px' }}
+              style={{ background: 'transparent', border: 'none', color: 'var(--red)', fontSize: '0.8em', fontWeight: 600, cursor: 'pointer', padding: '3px 6px', flexShrink: 0 }}
             >
               Abmelden
             </button>
           ) : (
             <button 
               onClick={() => navigate('/auth')}
-              style={{ background: 'rgba(10, 132, 255, 0.15)', border: '1px solid rgba(10, 132, 255, 0.3)', color: 'var(--blue)', fontSize: '0.82em', fontWeight: 700, borderRadius: '8px', cursor: 'pointer', padding: '4px 10px' }}
+              style={{ background: 'rgba(10, 132, 255, 0.15)', border: '1px solid rgba(10, 132, 255, 0.3)', color: 'var(--blue)', fontSize: '0.8em', fontWeight: 700, borderRadius: '8px', cursor: 'pointer', padding: '3px 8px', flexShrink: 0 }}
             >
-              Login / Registrieren
+              Login
             </button>
           )}
         </div>
 
-        {/* Primary Game Modes Grid */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '6px' }}>
+        {/* Primary Game Modes Grid Area (Right Column on Landscape) */}
+        <div className="menu-modes-area">
           {/* Offline Match */}
           <div className="menu-action-tile tile-offline" onClick={() => navigate('/offline')}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <div style={{ fontSize: '2.2rem', width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0, 210, 106, 0.15)', borderRadius: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div style={{ fontSize: '2rem', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0, 210, 106, 0.15)', borderRadius: '12px', flexShrink: 0 }}>
                 🎯
               </div>
               <div>
-                <div style={{ fontSize: '1.25em', fontWeight: 800, color: 'var(--text)' }}>
+                <div style={{ fontSize: '1.2em', fontWeight: 800, color: 'var(--text)' }}>
                   {user ? 'Offline Match' : 'Als Gast spielen'}
                 </div>
-                <div style={{ fontSize: '0.85em', color: 'var(--text-dim)', marginTop: '2px' }}>
+                <div style={{ fontSize: '0.82em', color: 'var(--text-dim)', marginTop: '2px' }}>
                   X01, Sets/Legs, Training & Bots
                 </div>
               </div>
             </div>
-            <div style={{ fontSize: '1.4em', color: 'var(--green)', fontWeight: 700 }}>
+            <div style={{ fontSize: '1.3em', color: 'var(--green)', fontWeight: 700 }}>
               ➔
             </div>
           </div>
 
           {/* Online Multiplayer */}
           <div className="menu-action-tile tile-online" onClick={handleOnlineClick}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-              <div style={{ fontSize: '2.2rem', width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(10, 132, 255, 0.15)', borderRadius: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <div style={{ fontSize: '2rem', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(10, 132, 255, 0.15)', borderRadius: '12px', flexShrink: 0 }}>
                 🌍
               </div>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '1.25em', fontWeight: 800, color: 'var(--text)' }}>
+                  <span style={{ fontSize: '1.2em', fontWeight: 800, color: 'var(--text)' }}>
                     Online Multiplayer
                   </span>
                 </div>
-                <div style={{ fontSize: '0.85em', color: 'var(--text-dim)', marginTop: '2px' }}>
+                <div style={{ fontSize: '0.82em', color: 'var(--text-dim)', marginTop: '2px' }}>
                   Räume erstellen & global gegeneinander spielen
                 </div>
               </div>
             </div>
-            <div style={{ fontSize: '1.4em', color: 'var(--blue)', fontWeight: 700 }}>
+            <div style={{ fontSize: '1.3em', color: 'var(--blue)', fontWeight: 700 }}>
               ➔
             </div>
           </div>
@@ -233,73 +324,70 @@ export const MainMenu: React.FC = () => {
           {/* Stats or Auth */}
           {user ? (
             <div className="menu-action-tile tile-stats" onClick={() => navigate('/stats')}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div style={{ fontSize: '2.2rem', width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255, 159, 10, 0.15)', borderRadius: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div style={{ fontSize: '2rem', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255, 159, 10, 0.15)', borderRadius: '12px', flexShrink: 0 }}>
                   📊
                 </div>
                 <div>
-                  <div style={{ fontSize: '1.25em', fontWeight: 800, color: 'var(--text)' }}>
+                  <div style={{ fontSize: '1.2em', fontWeight: 800, color: 'var(--text)' }}>
                     Statistiken & Profile
                   </div>
-                  <div style={{ fontSize: '0.85em', color: 'var(--text-dim)', marginTop: '2px' }}>
+                  <div style={{ fontSize: '0.82em', color: 'var(--text-dim)', marginTop: '2px' }}>
                     Averages, Triple-Quoten, Radar & Historie
                   </div>
                 </div>
               </div>
-              <div style={{ fontSize: '1.4em', color: 'var(--orange)', fontWeight: 700 }}>
+              <div style={{ fontSize: '1.3em', color: 'var(--orange)', fontWeight: 700 }}>
                 ➔
               </div>
             </div>
           ) : (
             <div className="menu-action-tile tile-auth" onClick={() => navigate('/auth')}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <div style={{ fontSize: '2.2rem', width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(94, 92, 230, 0.15)', borderRadius: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div style={{ fontSize: '2rem', width: '44px', height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(94, 92, 230, 0.15)', borderRadius: '12px', flexShrink: 0 }}>
                   🔑
                 </div>
                 <div>
-                  <div style={{ fontSize: '1.25em', fontWeight: 800, color: 'var(--text)' }}>
+                  <div style={{ fontSize: '1.2em', fontWeight: 800, color: 'var(--text)' }}>
                     Account erstellen / Login
                   </div>
-                  <div style={{ fontSize: '0.85em', color: 'var(--text-dim)', marginTop: '2px' }}>
+                  <div style={{ fontSize: '0.82em', color: 'var(--text-dim)', marginTop: '2px' }}>
                     Profile anlegen & Statistiken dauerhaft sichern
                   </div>
                 </div>
               </div>
-              <div style={{ fontSize: '1.4em', color: 'var(--purple)', fontWeight: 700 }}>
+              <div style={{ fontSize: '1.3em', color: 'var(--purple)', fontWeight: 700 }}>
                 ➔
               </div>
             </div>
           )}
         </div>
 
-        {/* Quick Training Shortcuts */}
-        <div style={{ marginTop: '12px' }}>
-          <div style={{ fontSize: '0.8em', textTransform: 'uppercase', letterSpacing: '1px', color: 'var(--text-dim)', marginBottom: '10px', fontWeight: 700, paddingLeft: '4px' }}>
+        {/* Quick Training Shortcuts Area (Left Column under Status on Landscape) */}
+        <div className="menu-training-area">
+          <div style={{ fontSize: '0.78em', textTransform: 'uppercase', letterSpacing: '0.8px', color: 'var(--text-dim)', marginBottom: '6px', fontWeight: 700, paddingLeft: '2px' }}>
             Schnellstart Training
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+          <div className="training-chips-grid">
             <div 
               className="training-chip" 
               onClick={() => navigate('/offline?tab=training&mode=checkout')}
-              style={{ flexDirection: 'column', textAlign: 'center', padding: '12px 6px' }}
             >
-              <span style={{ fontSize: '1.5rem' }}>🎯</span>
-              <span style={{ fontWeight: 700, fontSize: '0.85em' }}>Checkout</span>
+              <span style={{ fontSize: '1.3rem' }}>🎯</span>
+              <span style={{ fontWeight: 700, fontSize: '0.85em' }}>Checkout Training</span>
             </div>
             <div 
               className="training-chip" 
               onClick={() => navigate('/offline?tab=training&mode=powerscoring')}
-              style={{ flexDirection: 'column', textAlign: 'center', padding: '12px 6px' }}
             >
-              <span style={{ fontSize: '1.5rem' }}>🔥</span>
-              <span style={{ fontWeight: 700, fontSize: '0.85em' }}>Scoring</span>
+              <span style={{ fontSize: '1.3rem' }}>🔥</span>
+              <span style={{ fontWeight: 700, fontSize: '0.85em' }}>Power Scoring</span>
             </div>
             <div 
               className="training-chip" 
               onClick={() => navigate('/offline?tab=training&mode=splitscore')}
-              style={{ flexDirection: 'column', textAlign: 'center', padding: '12px 6px' }}
             >
-              <span style={{ fontSize: '1.5rem' }}>➗</span>
+              <span style={{ fontSize: '1.3rem' }}>➗</span>
               <span style={{ fontWeight: 700, fontSize: '0.85em' }}>Split Score</span>
             </div>
           </div>
