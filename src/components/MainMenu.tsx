@@ -124,38 +124,36 @@ export const MainMenu: React.FC = () => {
           border-color: var(--purple);
           box-shadow: 0 8px 24px rgba(94, 92, 230, 0.15);
         }
+        .training-chips-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 8px;
+        }
         .training-chip {
-          flex: 1;
+          aspect-ratio: 1 / 1;
           display: flex;
+          flex-direction: column;
           align-items: center;
           justify-content: center;
-          gap: 8px;
-          padding: 10px 8px;
+          gap: 6px;
+          padding: 8px 4px;
           background: var(--surface);
           border: 1px solid var(--card-border);
-          border-radius: 12px;
+          border-radius: 14px;
           cursor: pointer;
-          transition: all 0.15s ease;
+          transition: all 0.18s cubic-bezier(0.2, 0, 0, 1);
           color: var(--text);
-          font-size: 0.88em;
           box-sizing: border-box;
+          text-align: center;
         }
         .training-chip:hover {
           background: rgba(255, 255, 255, 0.08);
+          border-color: rgba(255, 255, 255, 0.22);
           transform: translateY(-2px);
+          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
         }
         .training-chip:active {
-          transform: scale(0.97);
-        }
-
-        .modes-section-label {
-          display: none;
-        }
-        .training-chip-desc {
-          display: none;
-        }
-        .training-chip-arrow {
-          display: none;
+          transform: scale(0.95);
         }
 
         /* ── Compact iPhone Scaling (<= 500px: Zero-Scroll Guarantee) ── */
@@ -210,32 +208,29 @@ export const MainMenu: React.FC = () => {
             gap: 6px !important;
           }
           .training-chip {
-            padding: 8px 4px !important;
-            border-radius: 10px !important;
-            font-size: 0.8em !important;
-            gap: 4px !important;
+            padding: 6px 2px !important;
+            border-radius: 12px !important;
+            gap: 3px !important;
+          }
+          .training-chip span:first-child {
+            font-size: 1.4rem !important;
+          }
+          .training-chip span:last-child {
+            font-size: 0.76em !important;
           }
         }
 
-        /* ── Landscape Widescreen Mode (Symmetrical Top: Header + Status | Bottom: Training + Modes) ── */
+        /* ── Landscape Widescreen Mode (Left: Logo + Status + 3 Square Training Buttons | Right: 3 Modes) ── */
         @media (orientation: landscape) and (min-width: 540px), (min-width: 860px) {
           .main-menu-card {
-            max-width: 920px;
-            grid-template-columns: 1fr 1fr;
+            max-width: 880px;
+            grid-template-columns: 1fr 1.18fr;
             grid-template-areas:
-              "header   status"
+              "header   modes"
+              "status   modes"
               "training modes";
-            gap: 8px 16px;
-            align-items: stretch;
-          }
-          .modes-section-label {
-            display: block;
-          }
-          .training-chip-desc {
-            display: block;
-          }
-          .training-chip-arrow {
-            display: block;
+            gap: 8px 18px;
+            align-items: start;
           }
           .menu-header-area {
             text-align: left;
@@ -260,7 +255,8 @@ export const MainMenu: React.FC = () => {
             line-height: 1.1 !important;
           }
           .menu-header-subtitle {
-            display: none !important;
+            font-size: 0.76em !important;
+            margin-top: 1px !important;
           }
           .menu-status-area {
             margin-top: 0 !important;
@@ -269,20 +265,25 @@ export const MainMenu: React.FC = () => {
             align-items: center !important;
           }
           .training-chips-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+            display: grid !important;
+            grid-template-columns: repeat(3, 1fr) !important;
+            gap: 6px !important;
           }
           .training-chip {
-            flex-direction: row !important;
-            justify-content: space-between !important;
-            padding: 10px 14px !important;
-            gap: 10px !important;
-            text-align: left !important;
-            border-radius: 14px !important;
+            aspect-ratio: 1 / 1 !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 6px 2px !important;
+            gap: 4px !important;
+            text-align: center !important;
+            border-radius: 12px !important;
           }
           .training-chip span:first-child {
             font-size: 1.4rem !important;
+          }
+          .training-chip span:last-child {
+            font-size: 0.76em !important;
           }
           .menu-modes-area {
             gap: 8px !important;
@@ -344,21 +345,28 @@ export const MainMenu: React.FC = () => {
             font-size: 0.85em !important;
           }
           .training-chips-grid {
-            gap: 10px !important;
+            gap: 12px !important;
           }
           .training-chip {
-            padding: 12px 14px !important;
-            border-radius: 12px !important;
-            font-size: 0.9em !important;
+            padding: 14px 8px !important;
+            border-radius: 16px !important;
+            gap: 6px !important;
+          }
+          .training-chip span:first-child {
+            font-size: 2rem !important;
+          }
+          .training-chip span:last-child {
+            font-size: 0.92em !important;
           }
         }
 
         @media (min-width: 768px) and (orientation: landscape) {
           .main-menu-card {
             max-width: 1000px !important;
-            grid-template-columns: 1fr 1fr !important;
+            grid-template-columns: 1fr 1.2fr !important;
             grid-template-areas:
-              "header   status"
+              "header   modes"
+              "status   modes"
               "training modes" !important;
             gap: 12px 24px !important;
           }
@@ -374,7 +382,7 @@ export const MainMenu: React.FC = () => {
             display: block !important;
           }
           .training-chip {
-            padding: 14px 18px !important;
+            padding: 12px 8px !important;
           }
           .menu-action-tile {
             padding: 14px 18px !important;
@@ -407,7 +415,7 @@ export const MainMenu: React.FC = () => {
               <h1 className="menu-header-title" style={{ fontSize: '2.2rem', fontWeight: 900, letterSpacing: '-0.03em', background: 'linear-gradient(135deg, var(--green), var(--blue))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: 0, lineHeight: 1.15 }}>
                 DARTCOUNTER
               </h1>
-              <p style={{ color: 'var(--text-dim)', fontSize: '0.88em', marginTop: '2px', fontWeight: 500 }}>
+              <p className="menu-header-subtitle" style={{ color: 'var(--text-dim)', fontSize: '0.88em', marginTop: '2px', fontWeight: 500 }}>
                 Scoring, Statistiken & Multiplayer
               </p>
             </div>
@@ -461,9 +469,6 @@ export const MainMenu: React.FC = () => {
 
         {/* Primary Game Modes Grid Area (Right Column on Landscape) */}
         <div className="menu-modes-area">
-          <div className="modes-section-label" style={{ fontSize: '0.78em', textTransform: 'uppercase', letterSpacing: '0.8px', color: 'var(--text-dim)', marginBottom: '6px', fontWeight: 700, paddingLeft: '2px' }}>
-            Spielmodi
-          </div>
           {/* Offline Match */}
           <div className="menu-action-tile tile-offline" onClick={() => navigate('/offline')}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
@@ -548,7 +553,7 @@ export const MainMenu: React.FC = () => {
           )}
         </div>
 
-        {/* Quick Training Shortcuts Area (Left Column under Status on Landscape) */}
+        {/* Quick Training Shortcuts Area (Square Tiles in a 3-column row) */}
         <div className="menu-training-area">
           <div style={{ fontSize: '0.78em', textTransform: 'uppercase', letterSpacing: '0.8px', color: 'var(--text-dim)', marginBottom: '6px', fontWeight: 700, paddingLeft: '2px' }}>
             Schnellstart Training
@@ -558,40 +563,22 @@ export const MainMenu: React.FC = () => {
               className="training-chip" 
               onClick={() => navigate('/offline?tab=training&mode=checkout')}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
-                <span style={{ fontSize: '1.3rem' }}>🎯</span>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: '0.85em', color: 'var(--text)' }}>Checkout Training</div>
-                  <div className="training-chip-desc" style={{ fontSize: '0.74em', color: 'var(--text-dim)', marginTop: '1px' }}>Doppel & Finish trainieren</div>
-                </div>
-              </div>
-              <span className="training-chip-arrow" style={{ fontSize: '1.1em', color: 'var(--text-dim)', fontWeight: 700 }}>➔</span>
+              <span style={{ fontSize: '1.5rem' }}>🎯</span>
+              <span style={{ fontWeight: 700, fontSize: '0.82em' }}>Checkout</span>
             </div>
             <div 
               className="training-chip" 
               onClick={() => navigate('/offline?tab=training&mode=powerscoring')}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
-                <span style={{ fontSize: '1.3rem' }}>🔥</span>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: '0.85em', color: 'var(--text)' }}>Power Scoring</div>
-                  <div className="training-chip-desc" style={{ fontSize: '0.74em', color: 'var(--text-dim)', marginTop: '1px' }}>Highscore & Konstanz</div>
-                </div>
-              </div>
-              <span className="training-chip-arrow" style={{ fontSize: '1.1em', color: 'var(--text-dim)', fontWeight: 700 }}>➔</span>
+              <span style={{ fontSize: '1.5rem' }}>🔥</span>
+              <span style={{ fontWeight: 700, fontSize: '0.82em' }}>Scoring</span>
             </div>
             <div 
               className="training-chip" 
               onClick={() => navigate('/offline?tab=training&mode=splitscore')}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
-                <span style={{ fontSize: '1.3rem' }}>➗</span>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: '0.85em', color: 'var(--text)' }}>Split Score</div>
-                  <div className="training-chip-desc" style={{ fontSize: '0.74em', color: 'var(--text-dim)', marginTop: '1px' }}>Druck & Halving-Modus</div>
-                </div>
-              </div>
-              <span className="training-chip-arrow" style={{ fontSize: '1.1em', color: 'var(--text-dim)', fontWeight: 700 }}>➔</span>
+              <span style={{ fontSize: '1.5rem' }}>➗</span>
+              <span style={{ fontWeight: 700, fontSize: '0.82em' }}>Split</span>
             </div>
           </div>
         </div>
