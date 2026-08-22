@@ -288,53 +288,45 @@ export const MainMenu: React.FC = () => {
           margin-top: 2px;
         }
 
-        /* ── Landscape / Wide Responsive Mode (Logo Top Fixed | Left Box == Right Box Exactly Aligned) ── */
+        /* ── Landscape / Wide Mode (Compact, perfectly proportioned, tight gaps) ── */
         @media (orientation: landscape) and (min-width: 540px), (min-width: 860px) {
           .main-menu-screen {
-            height: 100% !important;
-            max-height: 100% !important;
-            overflow: hidden !important;
-            overscroll-behavior: none !important;
-            touch-action: manipulation !important;
+            height: auto !important;
+            min-height: 0 !important;
             display: flex !important;
             flex-direction: column !important;
-            justify-content: flex-start !important;
             align-items: center !important;
+            justify-content: center !important;
           }
 
           .main-menu-card {
-            height: 100% !important;
-            max-height: 100% !important;
-            max-width: min(960px, 94vw);
+            max-width: 840px !important;
             display: flex !important;
             flex-direction: column !important;
-            justify-content: flex-start !important;
-            gap: clamp(6px, 1.2vh, 12px);
+            gap: 10px !important;
           }
 
           .menu-header-area {
-            flex-shrink: 0 !important;
-            width: 100% !important;
             text-align: center;
             margin-top: 0 !important;
-            margin-bottom: clamp(2px, 0.5vh, 4px) !important;
+            margin-bottom: 2px !important;
           }
 
           .menu-header-icon {
-            width: clamp(34px, 5vh, 44px) !important;
-            height: clamp(34px, 5vh, 44px) !important;
-            font-size: clamp(1.2rem, 2vh, 1.5rem) !important;
+            width: 38px !important;
+            height: 38px !important;
+            font-size: 1.3rem !important;
             margin-bottom: 0 !important;
-            border-radius: clamp(8px, 1.2vh, 12px) !important;
+            border-radius: 10px !important;
           }
 
           .menu-header-title {
-            font-size: clamp(1.4rem, 2.5vh, 1.8rem) !important;
+            font-size: 1.6rem !important;
             line-height: 1.1 !important;
           }
 
           .menu-header-subtitle {
-            font-size: clamp(0.72em, 1.2vh, 0.82em) !important;
+            font-size: 0.76em !important;
             margin-top: 1px !important;
           }
 
@@ -343,24 +335,21 @@ export const MainMenu: React.FC = () => {
             flex-direction: row;
             align-items: center;
             justify-content: center;
-            gap: clamp(8px, 1.5vw, 14px);
+            gap: 10px;
           }
 
           .menu-content-grid {
-            flex: 1 !important;
-            min-height: 0 !important;
             display: grid !important;
             grid-template-columns: 1fr 1fr !important;
-            gap: clamp(10px, 2vw, 20px) !important;
+            gap: 14px !important;
             align-items: stretch !important;
           }
 
           .menu-left-box {
             display: flex !important;
             flex-direction: column !important;
-            justify-content: space-between !important;
-            gap: clamp(6px, 1vh, 10px) !important;
-            height: 100% !important;
+            justify-content: flex-start !important;
+            gap: 8px !important;
           }
 
           .menu-status-container {
@@ -368,7 +357,17 @@ export const MainMenu: React.FC = () => {
           }
 
           .menu-status-bar {
-            padding: clamp(6px, 1vh, 10px) clamp(10px, 1.5vw, 14px) !important;
+            padding: 8px 12px !important;
+            border-radius: 12px !important;
+          }
+
+          .menu-status-text {
+            font-size: 0.82em !important;
+          }
+
+          .menu-status-btn {
+            font-size: 0.78em !important;
+            padding: 3px 8px !important;
           }
 
           .menu-training-container {
@@ -376,237 +375,162 @@ export const MainMenu: React.FC = () => {
             margin-top: 0 !important;
           }
 
+          .training-section-label {
+            font-size: 0.76em !important;
+            margin-bottom: 4px !important;
+          }
+
           .training-chips-grid {
-            gap: clamp(6px, 1vw, 10px) !important;
+            gap: 6px !important;
           }
 
           .training-chip {
             aspect-ratio: 1 / 1 !important;
-            padding: clamp(4px, 0.8vh, 8px) clamp(4px, 0.8vw, 8px) !important;
-            border-radius: clamp(10px, 1.5vh, 14px) !important;
+            padding: 6px 4px !important;
+            border-radius: 12px !important;
+          }
+
+          .training-chip-icon {
+            font-size: 1.4rem !important;
+          }
+
+          .training-chip-title {
+            font-size: 0.78em !important;
           }
 
           .menu-right-box {
             order: unset !important;
             display: flex !important;
             flex-direction: column !important;
-            justify-content: space-between !important;
-            gap: clamp(6px, 1vh, 10px) !important;
-            height: 100% !important;
+            justify-content: flex-start !important;
+            gap: 8px !important;
           }
 
           .menu-action-tile {
-            padding: clamp(8px, 1.4vh, 14px) clamp(12px, 1.6vw, 18px) !important;
-            border-radius: clamp(10px, 1.5vh, 14px) !important;
+            padding: 10px 14px !important;
+            border-radius: 14px !important;
           }
 
           .tile-icon {
-            width: clamp(34px, 5vh, 42px) !important;
-            height: clamp(34px, 5vh, 42px) !important;
-            font-size: clamp(1.4rem, 2.2vh, 1.8rem) !important;
-            border-radius: clamp(8px, 1.2vh, 12px) !important;
+            width: 38px !important;
+            height: 38px !important;
+            font-size: 1.6rem !important;
+            border-radius: 10px !important;
           }
 
           .tile-title {
-            font-size: clamp(1em, 1.6vh, 1.18em) !important;
+            font-size: 1.05em !important;
           }
 
           .tile-desc {
-            font-size: clamp(0.74em, 1.2vh, 0.8em) !important;
+            font-size: 0.75em !important;
           }
-        }
 
-        /* ── Ultra-Compact Height Guard (for small landscape screens <= 440px height) ── */
-        @media (max-height: 440px) and (orientation: landscape) {
-          .main-menu-card {
-            gap: 4px !important;
-          }
-          .menu-content-grid {
-            gap: 8px !important;
-          }
-          .menu-action-tile {
-            padding: 5px 8px !important;
-          }
-          .menu-status-bar {
-            padding: 4px 6px !important;
-          }
-          .training-chip {
-            padding: 3px 2px !important;
-          }
-          .training-section-label {
-            margin-bottom: 2px !important;
-          }
-        }
-
-        /* ── iPad & Large Displays (min-width: 768px in portrait) ── */
-        @media (min-width: 768px) and (orientation: portrait) {
-          .main-menu-screen {
-            height: 100% !important;
-            max-height: 100% !important;
-            overflow: hidden !important;
-            overscroll-behavior: none !important;
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: center !important;
-            align-items: center !important;
-          }
-          .main-menu-card {
-            max-width: 640px;
-            gap: 18px;
-          }
-          .menu-header-area {
-            flex-shrink: 0 !important;
-            margin-top: 0 !important;
-            margin-bottom: 10px !important;
-          }
-          .menu-header-icon {
-            width: 70px !important;
-            height: 70px !important;
-            font-size: 2.3rem !important;
-            margin-bottom: 14px !important;
-          }
-          .menu-header-title {
-            font-size: 2.6rem !important;
-          }
-          .menu-header-subtitle {
-            font-size: 1rem !important;
-          }
-          .menu-action-tile {
-            padding: 20px 24px !important;
-          }
-          .tile-icon {
-            width: 52px !important;
-            height: 52px !important;
-            font-size: 2.4rem !important;
-          }
-          .training-chip {
-            padding: 16px 8px !important;
+          .tile-arrow {
+            font-size: 1.2em !important;
           }
         }
 
         /* ── iPad & Large Displays in Landscape (min-width: 768px, min-height: 500px) ── */
         @media (min-width: 768px) and (orientation: landscape) and (min-height: 500px) {
-          .main-menu-screen {
-            height: 100% !important;
-            max-height: 100% !important;
-            overflow: hidden !important;
-            overscroll-behavior: none !important;
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: flex-start !important;
-            align-items: center !important;
-          }
-
           .main-menu-card {
-            height: 100% !important;
-            max-height: 100% !important;
-            max-width: 1040px !important;
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: flex-start !important;
-            gap: 14px !important;
+            max-width: 900px !important;
+            gap: 12px !important;
           }
 
           .menu-header-area {
-            flex-shrink: 0 !important;
-            width: 100% !important;
-            margin-top: 0 !important;
-            margin-bottom: 6px !important;
+            margin-bottom: 4px !important;
           }
 
           .menu-header-icon {
-            width: 54px !important;
-            height: 54px !important;
-            font-size: 1.8rem !important;
-            border-radius: 16px !important;
+            width: 44px !important;
+            height: 44px !important;
+            font-size: 1.5rem !important;
+            border-radius: 12px !important;
           }
 
           .menu-header-title {
-            font-size: 2.2rem !important;
+            font-size: 1.9rem !important;
           }
 
           .menu-header-subtitle {
-            font-size: 0.9em !important;
+            font-size: 0.84em !important;
           }
 
           .menu-header-flex {
-            gap: 16px !important;
+            gap: 12px !important;
           }
 
           .menu-content-grid {
-            flex: 1 !important;
-            min-height: 0 !important;
-            gap: 28px !important;
+            gap: 18px !important;
           }
 
           .menu-left-box {
-            gap: 14px !important;
-            height: 100% !important;
+            gap: 10px !important;
           }
 
           .menu-status-bar {
-            padding: 12px 18px !important;
-            border-radius: 14px !important;
+            padding: 10px 14px !important;
+            border-radius: 12px !important;
           }
 
           .menu-status-text {
-            font-size: 0.95em !important;
-          }
-
-          .menu-status-btn {
-            padding: 6px 12px !important;
             font-size: 0.88em !important;
           }
 
+          .menu-status-btn {
+            padding: 4px 10px !important;
+            font-size: 0.82em !important;
+          }
+
           .training-section-label {
-            font-size: 0.85em !important;
-            margin-bottom: 8px !important;
+            font-size: 0.8em !important;
+            margin-bottom: 6px !important;
           }
 
           .training-chips-grid {
-            gap: 12px !important;
+            gap: 8px !important;
           }
 
           .training-chip {
-            padding: 12px 8px !important;
-            border-radius: 16px !important;
-          }
-
-          .training-chip-icon {
-            font-size: 2rem !important;
-          }
-
-          .training-chip-title {
-            font-size: 0.92em !important;
-          }
-
-          .menu-right-box {
-            gap: 12px !important;
-            height: 100% !important;
-          }
-
-          .menu-action-tile {
-            padding: 16px 22px !important;
-            border-radius: 16px !important;
-          }
-
-          .tile-icon {
-            width: 48px !important;
-            height: 48px !important;
-            font-size: 2.1rem !important;
+            padding: 8px 6px !important;
             border-radius: 14px !important;
           }
 
+          .training-chip-icon {
+            font-size: 1.6rem !important;
+          }
+
+          .training-chip-title {
+            font-size: 0.84em !important;
+          }
+
+          .menu-right-box {
+            gap: 10px !important;
+          }
+
+          .menu-action-tile {
+            padding: 12px 16px !important;
+            border-radius: 14px !important;
+          }
+
+          .tile-icon {
+            width: 42px !important;
+            height: 42px !important;
+            font-size: 1.8rem !important;
+            border-radius: 12px !important;
+          }
+
           .tile-title {
-            font-size: 1.22em !important;
+            font-size: 1.12em !important;
           }
 
           .tile-desc {
-            font-size: 0.85em !important;
+            font-size: 0.78em !important;
           }
 
           .tile-arrow {
-            font-size: 1.35em !important;
+            font-size: 1.25em !important;
           }
         }
       `}</style>

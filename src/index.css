@@ -79,29 +79,16 @@ h3 { font-size: 1.05em; color: var(--text-dim); }
 }
 
 @media (orientation: landscape) {
-  html, body {
-    overflow: hidden;
-    height: 100%;
-    overscroll-behavior: none;
-  }
   .app-container {
-    max-width: 1040px;
-    height: 100dvh;
-    max-height: 100dvh;
-    overflow: hidden;
-    overscroll-behavior: none;
-    padding: max(calc(env(safe-area-inset-top) + 4px), 6px) max(calc(env(safe-area-inset-right) + 12px), 16px) max(calc(env(safe-area-inset-bottom) + 54px), 62px) max(calc(env(safe-area-inset-left) + 12px), 16px);
+    max-width: 900px;
+    padding: max(calc(env(safe-area-inset-top) + 6px), 8px) max(calc(env(safe-area-inset-right) + 12px), 16px) max(calc(env(safe-area-inset-bottom) + 54px), 64px) max(calc(env(safe-area-inset-left) + 12px), 16px);
   }
 }
 
 @media (min-width: 768px) and (orientation: landscape) {
   .app-container {
-    max-width: 1100px;
-    height: 100dvh;
-    max-height: 100dvh;
-    overflow: hidden;
-    overscroll-behavior: none;
-    padding: max(calc(env(safe-area-inset-top) + 14px), 18px) 32px max(calc(env(safe-area-inset-bottom) + 64px), 76px) 32px;
+    max-width: 940px;
+    padding: max(calc(env(safe-area-inset-top) + 14px), 16px) 28px max(calc(env(safe-area-inset-bottom) + 60px), 72px) 28px;
   }
 }
 
