@@ -65,6 +65,13 @@ h3 { font-size: 1.05em; color: var(--text-dim); }
   position: relative;
 }
 
+@media (orientation: landscape) {
+  .app-container {
+    max-width: 1000px;
+    padding: max(calc(env(safe-area-inset-top) + 4px), 6px) max(calc(env(safe-area-inset-right) + 12px), 16px) max(calc(env(safe-area-inset-bottom) + 54px), 60px) max(calc(env(safe-area-inset-left) + 12px), 16px);
+  }
+}
+
 .app-container-match {
   position: fixed !important;
   top: 0 !important;
@@ -968,6 +975,23 @@ button:active, .btn:active {
     border: 1px solid var(--card-border);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
     padding: 8px 12px;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+  .bottom-nav {
+    bottom: 0 !important;
+    border-radius: 0 !important;
+    padding: 3px 8px calc(3px + env(safe-area-inset-bottom)) 8px !important;
+    max-width: 100% !important;
+  }
+  .nav-item {
+    padding: 2px 10px !important;
+    font-size: 0.68em !important;
+    gap: 1px !important;
+  }
+  .nav-icon {
+    font-size: 1.1rem !important;
   }
 }
 
