@@ -55,7 +55,7 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
          roomChannel.send({ type: 'broadcast', event: 'ps_state', payload: stateRef.current });
          const sub = roomChannel.on('broadcast', { event: 'ps_throw' }, (p: any) => {
             const data = p?.payload ?? p;
-            handleDart(data.base);
+            handleDart(data.base, data.overrideMult);
          });
          return () => { sub.unsubscribe(); };
       } else {
@@ -83,21 +83,21 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
     if (activeP.isBot && !isProcessing && currentRound <= rounds && (!isOnline || isHost)) {
       const timer = setTimeout(() => {
         const botThrow = getBotDart(activeP.targetAverage, 501); 
-        handleDart(botThrow.base);
+        handleDart(botThrow.base, botThrow.mult);
       }, 800);
       return () => clearTimeout(timer);
     }
   }, [activePlayer, currentRoundDarts, isProcessing, currentRound, isOnline, isHost]);
 
-  const handleDart = (base: number) => {
+  const handleDart = (base: number, overrideMult?: number) => {
     if (stateRef.current.isProcessing) return;
 
     if (isOnline && !isHost) {
-       roomChannel?.send({ type: 'broadcast', event: 'ps_throw', payload: { base } });
+       roomChannel?.send({ type: 'broadcast', event: 'ps_throw', payload: { base, overrideMult } });
        return;
     }
 
-    let mult = stateRef.current.currentMultiplier;
+    let mult = overrideMult ?? stateRef.current.currentMultiplier;
     if (base === 25 && mult === 3) mult = 1;
     
     const value = base * mult;
@@ -247,10 +247,11 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
               currentMultiplier={currentMultiplier}
               isProcessing={isProcessing}
               roundBust={false}
-              addDart={handleDart}
+              addDart={(base) => handleDart(base)}
               toggleMultiplier={(m) => setCurrentMultiplier(m)}
               undoSingleDart={undoSingleDart}
               abortGame={() => setShowAbortConfirm(true)}
+              canUndo={currentRoundDarts.length > 0 && !isProcessing}
             />
           </div>
         </div>
