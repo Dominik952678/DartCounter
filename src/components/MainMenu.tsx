@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
+import { APP_VERSION, BUILD_TIME } from '../version';
 
 export const MainMenu: React.FC = () => {
   const navigate = useNavigate();
@@ -664,6 +665,43 @@ export const MainMenu: React.FC = () => {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* ── Version & Update Badge ── */}
+          <div 
+            style={{ 
+              marginTop: 'clamp(6px, 1vh, 12px)', 
+              padding: '4px 10px', 
+              borderRadius: '12px', 
+              background: 'rgba(255,255,255,0.03)', 
+              border: '1px solid rgba(255,255,255,0.05)',
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              gap: '6px', 
+              fontSize: '0.72rem', 
+              color: 'var(--text-dim)',
+              userSelect: 'none',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+            onClick={() => {
+              if (window.confirm(`DartCounter ${APP_VERSION}\nBuild: ${BUILD_TIME}\n\nMöchtest du die App neu laden und den Zwischenspeicher (Cache) aktualisieren?`)) {
+                window.location.reload();
+              }
+            }}
+            title="Klicken zum Neuladen / Cache leeren"
+          >
+            <span style={{ 
+              width: '6px', 
+              height: '6px', 
+              borderRadius: '50%', 
+              backgroundColor: 'var(--green)', 
+              boxShadow: '0 0 6px var(--green)' 
+            }} />
+            <span>DartCounter {APP_VERSION}</span>
+            <span style={{ opacity: 0.4 }}>•</span>
+            <span style={{ opacity: 0.7 }}>Build {BUILD_TIME}</span>
           </div>
         </div>
       </div>

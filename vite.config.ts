@@ -8,6 +8,8 @@ export default defineConfig({
   },
   define: {
     global: 'window',
+    __APP_VERSION__: JSON.stringify('v1.3.0'),
+    __BUILD_TIME__: JSON.stringify(new Date().toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })),
   },
   plugins: [
     react(),
