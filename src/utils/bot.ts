@@ -37,23 +37,58 @@ function getClosestValidScore(target: number): number {
     return closest;
 }
 
-export function getBotDart(targetAverage: number, currentScore: number): { base: number, mult: number } {
-    // 1. Checkout Phase (on a double)
-    const isDouble = (currentScore <= 40 && currentScore % 2 === 0) || currentScore === 50;
+export function getBotDart(targetAverage: number, currentScore: number, outMode: 'DO' | 'SO' | 'MO' = 'DO'): { base: number, mult: number } {
+    // 1. Checkout Phase
+    let isCheckout = false;
+    if (outMode === 'SO') {
+        isCheckout = currentScore <= 60;
+    } else if (outMode === 'MO') {
+        isCheckout = (currentScore <= 40 && currentScore % 2 === 0) || currentScore === 50 || (currentScore <= 60 && currentScore % 3 === 0);
+    } else {
+        isCheckout = (currentScore <= 40 && currentScore % 2 === 0) || currentScore === 50;
+    }
     
-    if (isDouble) {
+    if (isCheckout) {
         // Hit chance scales from 5% (bad bots) to 60% (pro bots)
         const hitChance = Math.max(0.05, Math.min(0.60, targetAverage / 150));
         
+        let aimedBase = 1;
+        if (outMode === 'SO') {
+            if (currentScore <= 20) aimedBase = currentScore;
+            else if (currentScore === 25) aimedBase = 25;
+            else if (currentScore === 50) aimedBase = 25;
+            else if (currentScore <= 40 && currentScore % 2 === 0) aimedBase = currentScore / 2;
+            else if (currentScore <= 60 && currentScore % 3 === 0) aimedBase = currentScore / 3;
+        } else if (outMode === 'MO') {
+            if (currentScore === 50) aimedBase = 25;
+            else if (currentScore <= 40 && currentScore % 2 === 0) aimedBase = currentScore / 2;
+            else if (currentScore <= 60 && currentScore % 3 === 0) aimedBase = currentScore / 3;
+        } else {
+            if (currentScore === 50) aimedBase = 25;
+            else aimedBase = currentScore / 2;
+        }
+
         if (Math.random() < hitChance) {
-            if (currentScore === 50) return { base: 25, mult: 2 };
-            return { base: currentScore / 2, mult: 2 }; // Hit!
+            if (outMode === 'SO') {
+                if (currentScore <= 20) return { base: currentScore, mult: 1 };
+                if (currentScore === 25) return { base: 25, mult: 1 };
+                if (currentScore === 50) return { base: 25, mult: 2 };
+                if (currentScore <= 40 && currentScore % 2 === 0) return { base: currentScore / 2, mult: 2 };
+                if (currentScore <= 60 && currentScore % 3 === 0) return { base: currentScore / 3, mult: 3 };
+            } else if (outMode === 'MO') {
+                if (currentScore === 50) return { base: 25, mult: 2 };
+                if (currentScore <= 40 && currentScore % 2 === 0) return { base: currentScore / 2, mult: 2 };
+                if (currentScore <= 60 && currentScore % 3 === 0) return { base: currentScore / 3, mult: 3 };
+            } else {
+                if (currentScore === 50) return { base: 25, mult: 2 };
+                return { base: currentScore / 2, mult: 2 };
+            }
         } else {
             // Missed checkout.
             const missScenario = Math.random();
             if (currentScore !== 50 && missScenario < 0.4) {
                 // Missed inside -> hit the single
-                return { base: currentScore / 2, mult: 1 };
+                return { base: aimedBase, mult: 1 };
             } else if (missScenario < 0.8) {
                 // Missed outside -> 0 Punkte
                 return { base: 0, mult: 1 };
@@ -64,10 +99,15 @@ export function getBotDart(targetAverage: number, currentScore: number): { base:
         }
     }
 
-    // 2. Setup Phase (Stellen auf ein Doppel, wenn currentScore <= 120)
+    // 2. Setup Phase (Stellen auf ein Finish, wenn currentScore <= 120)
     if (currentScore <= 120) {
         let requiredScore = 0;
-        const preferredLeaves = [40, 32, 24, 16, 8, 4];
+        let preferredLeaves = [40, 32, 24, 16, 8, 4];
+        if (outMode === 'SO') {
+            preferredLeaves = [20, 18, 16, 10, 5, 40, 32, 24, 8, 4];
+        } else if (outMode === 'MO') {
+            preferredLeaves = [40, 32, 24, 16, 8, 4, 60, 57, 54, 51];
+        }
         
         for (const leave of preferredLeaves) {
             if (currentScore - leave > 0) {
@@ -76,47 +116,57 @@ export function getBotDart(targetAverage: number, currentScore: number): { base:
             }
         }
         
-        // If we are on an odd number and couldn't cleanly leave a preferred double
-        if (requiredScore === 0 && currentScore % 2 !== 0) {
+        // If we couldn't cleanly leave a preferred finish
+        if (requiredScore === 0 && currentScore % 2 !== 0 && outMode !== 'SO') {
              // Find a single odd number that leaves a double
              requiredScore = [19, 17, 15, 13, 11, 9, 7, 5, 3, 1].find(n => (currentScore - n) > 0 && (currentScore - n) % 2 === 0) || 1;
         } else if (requiredScore === 0) {
              requiredScore = 2; // Fallback
         }
 
-        // Try to hit the required setup score
+        // Try to hit the required setup score with the best segment
         if (requiredScore <= 20) {
-             // Es ist ein Single
-             if (Math.random() < 0.5 + (targetAverage/200)) {
-                 return { base: requiredScore, mult: 1 };
-             } else {
-                 return { base: 1, mult: 1 }; // Missed
-             }
-        }
-        
-        if (requiredScore > 20 && requiredScore <= 60 && requiredScore % 3 === 0) {
-             // Es ist ein Triple
-             if (Math.random() < (targetAverage/250)) {
-                 return { base: requiredScore / 3, mult: 3 };
-             } else {
-                 // Missed triple -> hit the single
-                 return { base: requiredScore / 3, mult: 1 };
-             }
-        }
-        
-        if (requiredScore > 20 && requiredScore <= 40 && requiredScore % 2 === 0) {
-             // Es ist ein Doppel
-             if (Math.random() < (targetAverage/250)) {
-                 return { base: requiredScore / 2, mult: 2 };
-             } else {
-                 return { base: requiredScore / 2, mult: 1 };
-             }
+            // Single
+            if (Math.random() < 0.5 + (targetAverage/200)) {
+                return { base: requiredScore, mult: 1 };
+            } else {
+                return { base: 1, mult: 1 };
+            }
         }
         
         if (requiredScore === 25) return { base: 25, mult: 1 };
+        if (requiredScore === 50) return { base: 25, mult: 2 };
         
-        // Fallback: throw a 20 or 19 to reduce score
-        return { base: currentScore > 60 ? 20 : 10, mult: 1 };
+        // For scores > 20, find best segment (triple preferred, then double)
+        let bestBase = 20;
+        let bestMult = 1;
+        
+        // Check if it's an exact triple
+        if (requiredScore <= 60 && requiredScore % 3 === 0) {
+            bestBase = requiredScore / 3;
+            bestMult = 3;
+        } 
+        // Check if it's an exact double
+        else if (requiredScore <= 40 && requiredScore % 2 === 0) {
+            bestBase = requiredScore / 2;
+            bestMult = 2;
+        }
+        // For other scores > 20, aim for the nearest helpful triple
+        else {
+            // Find the best triple to throw
+            const targetTriple = Math.min(20, Math.round(requiredScore / 3));
+            bestBase = targetTriple;
+            bestMult = 3;
+        }
+        
+        // Apply accuracy based on targetAverage
+        const hitChance = bestMult === 3 ? (targetAverage / 250) : (bestMult === 2 ? (targetAverage / 250) : (0.5 + targetAverage / 200));
+        if (Math.random() < hitChance) {
+            return { base: bestBase, mult: bestMult };
+        } else {
+            // Miss: hit the single of the intended segment
+            return { base: bestBase, mult: 1 };
+        }
     }
 
     // 3. Normal Scoring Phase (> 120)

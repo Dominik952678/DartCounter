@@ -45,6 +45,8 @@ export default function App() {
     winnerIndex: number | null;
     players: Player[];
     matchData: MatchHistory | null;
+    pendingProfiles?: Record<string, Profile>;
+    pendingMatchData?: MatchHistory;
   }>({ isOpen: false, winnerIndex: null, players: [], matchData: null });
 
   // Map 'screen' string to actual routes for backwards compatibility in hooks
@@ -128,24 +130,29 @@ export default function App() {
             rounds={miniGameConfig.settings.rounds || 10}
             onAbort={() => setScreen('start')}
             onFinish={async (results) => {
-               const newProfiles = { ...profiles };
-               for (const r of results) {
-                  if (newProfiles[r.name]) {
-                     const p = newProfiles[r.name];
-                     if (!p.powerScoring) p.powerScoring = { bestScore: 0, matchesPlayed: 0, wins: 0, totalScore: 0 };
-                     p.powerScoring.bestScore = Math.max(p.powerScoring.bestScore, r.score);
-                     p.powerScoring.matchesPlayed += 1;
-                     p.powerScoring.totalScore = (p.powerScoring.totalScore || 0) + r.score;
-                  }
-               }
-               const maxScore = Math.max(...results.map(r => r.score));
-               for (const r of results) {
-                  if (r.score === maxScore && newProfiles[r.name]) {
-                     newProfiles[r.name].powerScoring!.wins += 1;
-                  }
-               }
-               setProfiles(newProfiles);
-               await saveProfiles(newProfiles, user?.id);
+               let updatedProfiles: Record<string, Profile> = {};
+               setProfiles(prev => {
+                   updatedProfiles = { ...prev };
+                   for (const r of results) {
+                      if (updatedProfiles[r.name]) {
+                         const p = { ...updatedProfiles[r.name] };
+                         if (!p.powerScoring) p.powerScoring = { bestScore: 0, matchesPlayed: 0, wins: 0, totalScore: 0 };
+                         p.powerScoring = { ...p.powerScoring };
+                         p.powerScoring.bestScore = Math.max(p.powerScoring.bestScore, r.score);
+                         p.powerScoring.matchesPlayed += 1;
+                         p.powerScoring.totalScore = (p.powerScoring.totalScore || 0) + r.score;
+                         updatedProfiles[r.name] = p;
+                      }
+                   }
+                   const maxScore = Math.max(...results.map(r => r.score));
+                   for (const r of results) {
+                      if (r.score === maxScore && updatedProfiles[r.name]) {
+                         updatedProfiles[r.name].powerScoring!.wins += 1;
+                      }
+                   }
+                   return updatedProfiles;
+               });
+               await saveProfiles(updatedProfiles!, user?.id);
                
                const matchData: MatchHistory = {
                    date: new Date().toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' }),
@@ -182,24 +189,29 @@ export default function App() {
             profiles={profiles}
             onAbort={() => setScreen('start')}
             onFinish={async (results) => {
-               const newProfiles = { ...profiles };
-               for (const r of results) {
-                  if (newProfiles[r.name]) {
-                     const p = newProfiles[r.name];
-                     if (!p.splitScore) p.splitScore = { bestScore: 0, matchesPlayed: 0, wins: 0, totalScore: 0 };
-                     p.splitScore.bestScore = Math.max(p.splitScore.bestScore, r.score);
-                     p.splitScore.matchesPlayed += 1;
-                     p.splitScore.totalScore = (p.splitScore.totalScore || 0) + r.score;
-                  }
-               }
-               const maxScore = Math.max(...results.map(r => r.score));
-               for (const r of results) {
-                  if (r.score === maxScore && newProfiles[r.name]) {
-                     newProfiles[r.name].splitScore!.wins += 1;
-                  }
-               }
-               setProfiles(newProfiles);
-               await saveProfiles(newProfiles, user?.id);
+               let updatedProfiles: Record<string, Profile> = {};
+               setProfiles(prev => {
+                   updatedProfiles = { ...prev };
+                   for (const r of results) {
+                      if (updatedProfiles[r.name]) {
+                         const p = { ...updatedProfiles[r.name] };
+                         if (!p.splitScore) p.splitScore = { bestScore: 0, matchesPlayed: 0, wins: 0, totalScore: 0 };
+                         p.splitScore = { ...p.splitScore };
+                         p.splitScore.bestScore = Math.max(p.splitScore.bestScore, r.score);
+                         p.splitScore.matchesPlayed += 1;
+                         p.splitScore.totalScore = (p.splitScore.totalScore || 0) + r.score;
+                         updatedProfiles[r.name] = p;
+                      }
+                   }
+                   const maxScore = Math.max(...results.map(r => r.score));
+                   for (const r of results) {
+                      if (r.score === maxScore && updatedProfiles[r.name]) {
+                         updatedProfiles[r.name].splitScore!.wins += 1;
+                      }
+                   }
+                   return updatedProfiles;
+               });
+               await saveProfiles(updatedProfiles!, user?.id);
                
                const matchData: MatchHistory = {
                    date: new Date().toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' }),
@@ -238,20 +250,25 @@ export default function App() {
             checkoutTargets={miniGameConfig.settings.checkoutTargets || 10}
             onAbort={() => setScreen('start')}
             onFinish={async (results) => {
-               const newProfiles = { ...profiles };
-               for (const r of results) {
-                  if (newProfiles[r.name]) {
-                     const p = newProfiles[r.name];
-                     if (!p.checkoutTraining) p.checkoutTraining = { bestCheckout: 0, roundsCompleted: 0, matchesPlayed: 0, wins: 0, totalAttempts: 0, totalDartsUsed: 0 };
-                     p.checkoutTraining.bestCheckout = Math.max(p.checkoutTraining.bestCheckout, r.score);
-                     p.checkoutTraining.roundsCompleted += r.roundsCompleted;
-                     p.checkoutTraining.matchesPlayed += 1;
-                     p.checkoutTraining.totalAttempts = (p.checkoutTraining.totalAttempts || 0) + r.attempts;
-                     p.checkoutTraining.totalDartsUsed = (p.checkoutTraining.totalDartsUsed || 0) + r.dartsUsed;
-                  }
-               }
-               setProfiles(newProfiles);
-               await saveProfiles(newProfiles, user?.id);
+               let updatedProfiles: Record<string, Profile> = {};
+               setProfiles(prev => {
+                   updatedProfiles = { ...prev };
+                   for (const r of results) {
+                      if (updatedProfiles[r.name]) {
+                         const p = { ...updatedProfiles[r.name] };
+                         if (!p.checkoutTraining) p.checkoutTraining = { bestCheckout: 0, roundsCompleted: 0, matchesPlayed: 0, wins: 0, totalAttempts: 0, totalDartsUsed: 0 };
+                         p.checkoutTraining = { ...p.checkoutTraining };
+                         p.checkoutTraining.bestCheckout = Math.max(p.checkoutTraining.bestCheckout, r.score);
+                         p.checkoutTraining.roundsCompleted += r.roundsCompleted;
+                         p.checkoutTraining.matchesPlayed += 1;
+                         p.checkoutTraining.totalAttempts = (p.checkoutTraining.totalAttempts || 0) + r.attempts;
+                         p.checkoutTraining.totalDartsUsed = (p.checkoutTraining.totalDartsUsed || 0) + r.dartsUsed;
+                         updatedProfiles[r.name] = p;
+                      }
+                   }
+                   return updatedProfiles;
+               });
+               await saveProfiles(updatedProfiles!, user?.id);
                
                const matchData: MatchHistory = {
                    date: new Date().toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' }),
@@ -301,12 +318,24 @@ export default function App() {
         winnerIndex={statsModalData.winnerIndex}
         players={statsModalData.players}
         matchData={statsModalData.matchData}
-        onClose={() => {
+        onClose={async () => {
+          if (statsModalData.pendingProfiles && statsModalData.pendingMatchData) {
+            setProfiles(statsModalData.pendingProfiles);
+            await saveProfiles(statsModalData.pendingProfiles, user?.id);
+            await saveMatch(statsModalData.pendingMatchData, user?.id);
+            getMatches(user?.id).then(setSavedMatches);
+          }
           setStatsModalData({ isOpen: false, winnerIndex: null, players: [], matchData: null });
           gameEngine.abortGame();
           navigate('/');
         }}
-        onRematch={() => {
+        onRematch={async () => {
+          if (statsModalData.pendingProfiles && statsModalData.pendingMatchData) {
+            setProfiles(statsModalData.pendingProfiles);
+            await saveProfiles(statsModalData.pendingProfiles, user?.id);
+            await saveMatch(statsModalData.pendingMatchData, user?.id);
+            getMatches(user?.id).then(setSavedMatches);
+          }
           const mData = statsModalData.matchData;
           setStatsModalData({ isOpen: false, winnerIndex: null, players: [], matchData: null });
           setMatchSessionId(prev => prev + 1);

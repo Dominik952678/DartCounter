@@ -161,13 +161,13 @@ export const StatsModal: React.FC<{
   return (
     <>
       <style>{bottomSheetStyles}</style>
-      <div className="bottom-sheet-overlay" onClick={onClose}>
+      <div className="bottom-sheet-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="stats-modal-title" onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }} tabIndex={-1}>
         <div className="bottom-sheet-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '540px' }}>
           <div className="drag-handle" />
           
           <div style={{ textAlign: 'center', marginBottom: '20px' }}>
             <div className="confetti">🏆</div>
-            <h2 style={{ color: 'var(--green)', margin: '8px 0', fontSize: '1.8em' }}>{winnerName} gewinnt!</h2>
+            <h2 id="stats-modal-title" style={{ color: 'var(--green)', margin: '8px 0', fontSize: '1.8em' }}>{winnerName} gewinnt!</h2>
             <p style={{ color: 'var(--text-dim)', margin: 0, fontSize: '0.95em' }}>Match-Statistik & Analyse</p>
           </div>
           
@@ -381,12 +381,12 @@ export const HistoryModal: React.FC<{
   return (
     <>
       <style>{bottomSheetStyles}</style>
-      <div className="bottom-sheet-overlay" onClick={onClose}>
+      <div className="bottom-sheet-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="history-modal-title" onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }} tabIndex={-1}>
         <div className="bottom-sheet-content" onClick={(e) => e.stopPropagation()}>
           <div className="drag-handle" />
           
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h2 style={{ margin: 0 }}>Match Historie</h2>
+            <h2 id="history-modal-title" style={{ margin: 0 }}>Match Historie</h2>
             <button className="btn-secondary" onClick={onClose} style={{ padding: '8px 16px', borderRadius: '20px', border: '1px solid var(--card-border, #333)', background: 'var(--surface, #2a2a2a)', color: 'var(--text, #fff)', cursor: 'pointer' }}>✕</button>
           </div>
           

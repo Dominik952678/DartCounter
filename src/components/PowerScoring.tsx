@@ -92,7 +92,7 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
   useEffect(() => {
     if (activeP.isBot && !isProcessing && currentRound <= rounds && (!isOnline || isHost)) {
       const timer = setTimeout(() => {
-        const botThrow = getBotDart(activeP.targetAverage, 501); 
+        const botThrow = getBotDart(activeP.targetAverage, 501, 'DO'); 
         handleDart(botThrow.base, botThrow.mult);
       }, 800);
       return () => clearTimeout(timer);
@@ -159,11 +159,12 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
     if (st.activePlayer === players.length - 1) {
       if (st.currentRound === rounds) {
         setCurrentRoundDarts([]);
+        setIsProcessing(true);
         const finalResults = st.gameState.map((p, i) => ({
            name: p.name,
            score: p.score + (i === st.activePlayer ? roundScore : 0)
         }));
-        onFinish(finalResults);
+        setTimeout(() => onFinish(finalResults), 500);
         return;
       } else {
         setCurrentRound(prev => prev + 1);
@@ -211,7 +212,7 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
          </div>
       )}
       
-      <div style={{ opacity: (!isOnline || isMyTurn) ? 1 : 0.6, pointerEvents: (!isOnline || isMyTurn) ? 'auto' : 'none', height: '100%', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+      <div style={{ opacity: (!isOnline || isMyTurn) ? 1 : 0.6, height: '100%', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
         <div className="match-top-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden', minWidth: 0 }}>
             <span style={{ fontWeight: 800, fontSize: '1.05em', color: 'var(--text)', whiteSpace: 'nowrap' }}>
@@ -281,7 +282,7 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
             </div>
           </div>
 
-          <div className="game-screen-right">
+          <div className="game-screen-right" style={{ pointerEvents: (!isOnline || isMyTurn) ? 'auto' : 'none' }}>
             <Keypad 
               currentRoundDarts={currentRoundDarts}
               currentMultiplier={currentMultiplier}

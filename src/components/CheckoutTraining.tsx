@@ -112,7 +112,7 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
   useEffect(() => {
     if (activeP && activeP.isBot && !isProcessing && (!isOnline || isHost)) {
       const timer = setTimeout(() => {
-        const botThrow = getBotDart(activeP.targetAverage, activeP.currentScore); 
+        const botThrow = getBotDart(activeP.targetAverage, activeP.currentScore, 'DO'); 
         handleDart(botThrow.base, botThrow.mult);
       }, 800);
       return () => clearTimeout(timer);
@@ -355,17 +355,19 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
     setHistory(prevHistory => {
       if (prevHistory.length === 0) {
         if (stateRef.current.currentRoundDarts.length > 0) {
-          const lastDart = stateRef.current.currentRoundDarts[stateRef.current.currentRoundDarts.length - 1];
           const st = stateRef.current;
+          const remainingDarts = st.currentRoundDarts.slice(0, -1);
+          // Recalculate score from scoreAtStartOfRound minus remaining darts
+          const remainingScore = remainingDarts.reduce((s, d) => s - d.value, st.gameState[st.activePlayer].scoreAtStartOfRound);
           setGameState(prev => {
             const next = [...prev];
             next[st.activePlayer] = {
               ...next[st.activePlayer],
-              currentScore: next[st.activePlayer].currentScore + lastDart.value
+              currentScore: Math.max(0, remainingScore)
             };
             return next;
           });
-          setCurrentRoundDarts(prev => prev.slice(0, -1));
+          setCurrentRoundDarts(remainingDarts);
         }
         return prevHistory;
       }
@@ -389,7 +391,7 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
             Warte auf {activeP.name}...
          </div>
       )}
-      <div style={{ opacity: (!isOnline || isMyTurn) ? 1 : 0.6, pointerEvents: (!isOnline || isMyTurn) ? 'auto' : 'none', height: '100%', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+      <div style={{ opacity: (!isOnline || isMyTurn) ? 1 : 0.6, height: '100%', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
         <div className="match-top-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden', minWidth: 0 }}>
             <span style={{ fontWeight: 800, fontSize: '1.05em', color: 'var(--text)', whiteSpace: 'nowrap' }}>
@@ -483,7 +485,7 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
             </div>
           </div>
 
-          <div className="game-screen-right">
+          <div className="game-screen-right" style={{ pointerEvents: (!isOnline || isMyTurn) ? 'auto' : 'none' }}>
             <Keypad 
               currentRoundDarts={currentRoundDarts}
               currentMultiplier={currentMultiplier}

@@ -279,7 +279,7 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
             Warte auf {activeP.name}...
          </div>
       )}
-      <div style={{ opacity: (!isOnline || isMyTurn) ? 1 : 0.6, pointerEvents: (!isOnline || isMyTurn) ? 'auto' : 'none', height: '100%', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+      <div style={{ opacity: (!isOnline || isMyTurn) ? 1 : 0.6, height: '100%', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
         <div className="match-top-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden', minWidth: 0 }}>
             <span style={{ fontWeight: 800, fontSize: '1.05em', color: 'var(--text)', whiteSpace: 'nowrap' }}>
@@ -373,7 +373,7 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
             </div>
           </div>
 
-          <div className="game-screen-right">
+          <div className="game-screen-right" style={{ pointerEvents: (!isOnline || isMyTurn) ? 'auto' : 'none' }}>
             <div className="keypad" style={{ padding: '10px 0' }}>
               {currentTarget?.type === 'number' && currentTarget?.val !== 25 && (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>

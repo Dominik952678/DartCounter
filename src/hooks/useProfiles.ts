@@ -16,25 +16,31 @@ export function useProfiles(user?: { id: string; user_metadata?: { username?: st
   }, [loadProfiles]);
 
   const handleCreateProfile = async (name: string, isBot?: boolean, targetAverage?: number) => {
-    const newProfiles = { 
-      ...profiles, 
-      [name]: { wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0, isBot, targetAverage } 
-    };
-    setProfiles(newProfiles);
-    await saveProfiles(newProfiles, user?.id);
+    let newProfiles: Record<string, Profile>;
+    setProfiles(prev => {
+        newProfiles = { ...prev, [name]: { wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0, isBot, targetAverage } };
+        return newProfiles;
+    });
+    await saveProfiles(newProfiles!, user?.id);
   };
 
   const handleUpdateProfile = async (name: string, updates: Partial<Profile>) => {
-    const newProfiles = { ...profiles, [name]: { ...profiles[name], ...updates } };
-    setProfiles(newProfiles);
-    await saveProfiles(newProfiles, user?.id);
+    let newProfiles: Record<string, Profile>;
+    setProfiles(prev => {
+        newProfiles = { ...prev, [name]: { ...prev[name], ...updates } };
+        return newProfiles;
+    });
+    await saveProfiles(newProfiles!, user?.id);
   };
 
   const handleDeleteProfile = async (name: string) => {
-    const newProfiles = { ...profiles };
-    delete newProfiles[name];
-    setProfiles(newProfiles);
-    await saveProfiles(newProfiles, user?.id);
+    let newProfiles: Record<string, Profile>;
+    setProfiles(prev => {
+        newProfiles = { ...prev };
+        delete newProfiles[name];
+        return newProfiles;
+    });
+    await saveProfiles(newProfiles!, user?.id);
   };
 
   return {

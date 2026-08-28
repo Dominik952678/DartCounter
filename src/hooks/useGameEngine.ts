@@ -44,6 +44,12 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches, setScree
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
     const saved = localStorage.getItem('dartcounter_saved_game');
     if (saved) setHasSavedGame(true);
   }, []);
@@ -227,20 +233,28 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches, setScree
     }
   };
 
+  const isOnCheckout = (score: number, outMode: 'DO' | 'SO' | 'MO'): boolean => {
+      if (score <= 0) return false;
+      if (outMode === 'SO') return score <= 60; // Can finish with any single/double/triple
+      if (outMode === 'MO') return (score <= 40 && score % 2 === 0) || score === 50 || (score <= 60 && score % 3 === 0);
+      // DO
+      return (score <= 40 && score % 2 === 0) || score === 50;
+  };
+
   const processRoundEnd = (_stateSnapshotBeforeTimeout: GameState, bust: boolean, isWin: boolean, roundTotal: number) => {
     setGameState(prevState => {
       let p = prevState.players[prevState.activePlayer];
       let dartsThrown = prevState.currentRoundDarts.length;
       
       let tempScore = p.score;
-      let wasOnDouble = false;
-      if ((tempScore <= 40 && tempScore % 2 === 0) || tempScore === 50) wasOnDouble = true;
+      let wasOnDouble = isOnCheckout(tempScore, prevState.config.outMode);
       for (let dart of prevState.currentRoundDarts) {
           tempScore -= dart.value;
-          if (tempScore > 0 && ((tempScore <= 40 && tempScore % 2 === 0) || tempScore === 50)) {
+          if (tempScore > 0 && isOnCheckout(tempScore, prevState.config.outMode)) {
               wasOnDouble = true;
           }
       }
+      if (bust) wasOnDouble = false;
       
       const newPlayers = [...prevState.players];
       const currentPlayerIndex = prevState.activePlayer;
@@ -305,14 +319,18 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches, setScree
         players: newPlayers
       };
 
-      if (p.isBot && (isWin || wasOnDouble)) {
+      if (p.isBot && !bust && (isWin || wasOnDouble)) {
           let botAttempts = 0;
           let botSuccesses = 0;
           let tScore = p.score;
           for (let dart of prevState.currentRoundDarts) {
-              if ((tScore <= 40 && tScore % 2 === 0) || tScore === 50) {
+              if (isOnCheckout(tScore, prevState.config.outMode)) {
                   botAttempts++;
-                  if (tScore - dart.value === 0 && dart.mult === 2) {
+                  if (tScore - dart.value === 0 && (
+                      (prevState.config.outMode === 'DO' && dart.mult === 2) ||
+                      (prevState.config.outMode === 'MO' && (dart.mult === 2 || dart.mult === 3)) ||
+                      (prevState.config.outMode === 'SO')
+                  )) {
                       botSuccesses++;
                   }
               }
@@ -323,26 +341,41 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches, setScree
           if (botSuccesses > 0 && p.score > updatedPlayer.highestCheckout) {
               updatedPlayer.highestCheckout = p.score;
           }
-      } else if (!p.isBot && (isWin || wasOnDouble)) {
+      } else if (!p.isBot && !bust && (isWin || wasOnDouble)) {
          let autoCheckoutDarts = 0;
          let tScore = p.score;
+         let needsPrompt = false;
+         
          for (let dart of prevState.currentRoundDarts) {
-             if ((tScore <= 40 && tScore % 2 === 0) || tScore === 50) {
+             if (isOnCheckout(tScore, prevState.config.outMode)) {
                  autoCheckoutDarts++;
+                 // At 50, it's ambiguous (D25 vs going for setup)
+                 if (tScore === 50 && prevState.config.outMode !== 'SO') needsPrompt = true;
              }
              tScore -= dart.value;
          }
 
-         setCheckoutPrompt({
-             isOpen: true,
-             maxDarts: dartsThrown,
-             autoDarts: autoCheckoutDarts,
-             playerIndex: currentPlayerIndex,
-             isWin,
-             highestThrow,
-             stateAfterDart
-         });
-         return prevState;
+         if (needsPrompt) {
+             setCheckoutPrompt({
+                 isOpen: true,
+                 maxDarts: dartsThrown,
+                 autoDarts: autoCheckoutDarts,
+                 playerIndex: currentPlayerIndex,
+                 isWin,
+                 highestThrow,
+                 stateAfterDart
+             });
+             return prevState;
+         } else {
+             // Auto-submit checkout darts
+             updatedPlayer.checkoutAttempts += autoCheckoutDarts;
+             if (isWin) {
+                 updatedPlayer.checkoutSuccesses += 1;
+                 if (p.score > updatedPlayer.highestCheckout) {
+                     updatedPlayer.highestCheckout = p.score;
+                 }
+             }
+         }
       }
 
       return continueProcessRoundEnd(stateAfterDart, isWin, currentPlayerIndex, highestThrow);
@@ -540,9 +573,6 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches, setScree
         newProfiles[p.name] = prof;
     });
 
-    setProfiles(newProfiles);
-    await saveProfiles(newProfiles, user?.id);
-
     let matchData: MatchHistory = {
         date: new Date().toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' }),
         winner: winnerName,
@@ -569,15 +599,14 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches, setScree
             triplesHit: p.triplesHit || 0
         }))
     };
-    
-    await saveMatch(matchData, user?.id);
-    getMatches(user?.id).then(setSavedMatches);
 
     setStatsModalData({
       isOpen: true,
       winnerIndex,
       players: finalPlayers,
-      matchData
+      matchData,
+      pendingProfiles: newProfiles,
+      pendingMatchData: matchData
     });
   };
 
@@ -603,10 +632,17 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches, setScree
       }
       
       const previousState = prev.history[prev.history.length - 1];
-      const newHistory = prev.history.slice(0, -1);
+      let newHistory = prev.history.slice(0, -1);
+
+      // If the restored state has 3 darts (mid-processing snapshot), keep popping
+      let restoredState = previousState;
+      while (restoredState.currentRoundDarts && restoredState.currentRoundDarts.length >= 3 && newHistory.length > 0) {
+          restoredState = newHistory[newHistory.length - 1];
+          newHistory = newHistory.slice(0, -1);
+      }
 
       return {
-        ...previousState,
+        ...restoredState,
         history: newHistory,
         isProcessing: false
       };
@@ -632,7 +668,7 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches, setScree
 
     const timer = setTimeout(() => {
         const currentTurnScore = gameState.currentRoundDarts.reduce((s, d) => s + d.value, 0);
-        const dart = getBotDart(p.targetAverage || 40, p.score - currentTurnScore);
+        const dart = getBotDart(p.targetAverage || 40, p.score - currentTurnScore, gameState.config.outMode);
         addDart(dart.base, dart.mult);
     }, 1200);
 
