@@ -151,7 +151,9 @@ export const StatsModal: React.FC<{
   players: Player[];
   matchData: MatchHistory | null;
   onClose: () => void;
-}> = ({ isOpen, winnerIndex, players, matchData, onClose }) => {
+  onRematch?: () => void;
+  onUndoLastDart?: () => void;
+}> = ({ isOpen, winnerIndex, players, matchData, onClose, onRematch, onUndoLastDart }) => {
   if (!isOpen || winnerIndex === null || !matchData) return null;
   
   const winnerName = players[winnerIndex]?.name || matchData.winner;
@@ -287,9 +289,82 @@ export const StatsModal: React.FC<{
             })}
           </div>
           
-          <button className="btn-success" onClick={onClose} style={{ width: '100%', padding: '16px', fontSize: '1.1em', borderRadius: 'var(--radius, 8px)', border: 'none', background: 'var(--green, #00C851)', color: '#fff', fontWeight: 'bold', cursor: 'pointer' }}>
-            Weiter zum Menü
-          </button>
+          {/* Action Buttons: Start Again, Undo last throw, Back to Menu */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '12px' }}>
+            {onRematch && (
+              <button 
+                className="btn-success" 
+                onClick={onRematch} 
+                style={{ 
+                  width: '100%', 
+                  padding: '15px 20px', 
+                  fontSize: '1.08em', 
+                  borderRadius: 'var(--radius, 12px)', 
+                  border: 'none', 
+                  background: 'linear-gradient(135deg, var(--green, #00C851), #007E33)', 
+                  color: '#fff', 
+                  fontWeight: 800, 
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  boxShadow: '0 4px 15px rgba(0, 200, 81, 0.35)',
+                  transition: 'transform 0.1s ease'
+                }}
+              >
+                <span>🔄</span> <span>Nochmal spielen (Start again)</span>
+              </button>
+            )}
+
+            <div style={{ display: 'grid', gridTemplateColumns: onUndoLastDart ? '1fr 1fr' : '1fr', gap: '10px' }}>
+              {onUndoLastDart && (
+                <button 
+                  className="btn-secondary" 
+                  onClick={onUndoLastDart} 
+                  style={{ 
+                    padding: '13px 12px', 
+                    fontSize: '0.95em', 
+                    borderRadius: 'var(--radius, 10px)', 
+                    border: '1px solid rgba(255, 159, 10, 0.4)', 
+                    background: 'rgba(255, 159, 10, 0.14)', 
+                    color: 'var(--orange, #ff9f0a)', 
+                    fontWeight: 700, 
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    transition: 'all 0.15s ease'
+                  }}
+                  title="Letzten Wurf rückgängig machen (falls verklickt)"
+                >
+                  <span>↩</span> <span>Wurf revidieren</span>
+                </button>
+              )}
+
+              <button 
+                className="btn-ghost" 
+                onClick={onClose} 
+                style={{ 
+                  padding: '13px 12px', 
+                  fontSize: '0.95em', 
+                  borderRadius: 'var(--radius, 10px)', 
+                  border: '1px solid rgba(255, 255, 255, 0.14)', 
+                  background: 'rgba(255, 255, 255, 0.06)', 
+                  color: 'var(--text, #fff)', 
+                  fontWeight: 700, 
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px'
+                }}
+              >
+                <span>🏠</span> <span>Zurück zum Menü</span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </>

@@ -31,6 +31,7 @@ export default function App() {
   const [savedMatches, setSavedMatches] = useState<MatchHistory[]>([]);
   const [miniGameConfig, setMiniGameConfig] = useState<{players: string[], settings: Record<string, any>}>({players: [], settings: {}});
   const [showHistory, setShowHistory] = useState(false);
+  const [matchSessionId, setMatchSessionId] = useState<number>(1);
 
   const hideBottomNavRoutes = ['/game', '/powerscoring', '/splitscore', '/checkout', '/online-game'];
   const isMatchActive = hideBottomNavRoutes.some(route => location.pathname.startsWith(route)) || location.pathname.startsWith('/lobby/');
@@ -121,6 +122,7 @@ export default function App() {
 
         <Route path="/powerscoring" element={
           <PowerScoring 
+            key={matchSessionId}
             players={effectiveMiniGamePlayers}
             profiles={profiles}
             rounds={miniGameConfig.settings.rounds || 10}
@@ -175,6 +177,7 @@ export default function App() {
 
         <Route path="/splitscore" element={
           <SplitScore 
+            key={matchSessionId}
             players={effectiveMiniGamePlayers}
             profiles={profiles}
             onAbort={() => setScreen('start')}
@@ -228,6 +231,7 @@ export default function App() {
 
         <Route path="/checkout" element={
           <CheckoutTraining 
+            key={matchSessionId}
             players={effectiveMiniGamePlayers}
             profiles={profiles}
             checkoutRounds={miniGameConfig.settings.checkoutRounds || 1}
@@ -300,7 +304,33 @@ export default function App() {
         onClose={() => {
           setStatsModalData({ isOpen: false, winnerIndex: null, players: [], matchData: null });
           gameEngine.abortGame();
-          navigate('/offline');
+          navigate('/');
+        }}
+        onRematch={() => {
+          const mData = statsModalData.matchData;
+          setStatsModalData({ isOpen: false, winnerIndex: null, players: [], matchData: null });
+          setMatchSessionId(prev => prev + 1);
+          if (mData?.gameType === 'powerScoring') {
+            navigate('/powerscoring');
+          } else if (mData?.gameType === 'splitScore') {
+            navigate('/splitscore');
+          } else if (mData?.gameType === 'checkoutTraining') {
+            navigate('/checkout');
+          } else {
+            // Standard X01 Match rematch
+            const playerNames = statsModalData.players.map(p => p.name);
+            const config = mData?.config || gameEngine.gameState.config;
+            gameEngine.startGame(playerNames, config);
+            navigate('/game');
+          }
+        }}
+        onUndoLastDart={() => {
+          const mData = statsModalData.matchData;
+          setStatsModalData({ isOpen: false, winnerIndex: null, players: [], matchData: null });
+          gameEngine.undoSingleDart();
+          if (!mData?.gameType || mData?.gameType === 'standard') {
+            navigate('/game');
+          }
         }}
       />
 
