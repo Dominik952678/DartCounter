@@ -14,15 +14,52 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({ profiles, onStartGame, h
   const { user } = useAuthStore();
   const isGuest = !user;
 
-  const [playerCount, setPlayerCount] = useState<number>(2);
+  const [setsToWin, setSetsToWin] = useState<number | ''>(() => {
+    const saved = localStorage.getItem('dart_x01_sets');
+    if (saved !== null) {
+      const parsed = parseInt(saved, 10);
+      if (!isNaN(parsed) && parsed >= 1) return parsed;
+    }
+    return 1;
+  });
+
+  const [legsToWin, setLegsToWin] = useState<number | ''>(() => {
+    const saved = localStorage.getItem('dart_x01_legs');
+    if (saved !== null) {
+      const parsed = parseInt(saved, 10);
+      if (!isNaN(parsed) && parsed >= 1) return parsed;
+    }
+    return 1;
+  });
+
+  const [startScore, setStartScore] = useState<number>(() => {
+    const saved = localStorage.getItem('dart_x01_startScore');
+    if (saved !== null) {
+      const parsed = parseInt(saved, 10);
+      if (!isNaN(parsed) && [301, 501, 701].includes(parsed)) return parsed;
+    }
+    return 501;
+  });
+
+  const [outMode, setOutMode] = useState<'SO' | 'DO' | 'MO'>(() => {
+    const saved = localStorage.getItem('dart_x01_outMode');
+    if (saved && ['SO', 'DO', 'MO'].includes(saved)) return saved as 'SO' | 'DO' | 'MO';
+    return 'DO';
+  });
+
+  const [playerCount, setPlayerCount] = useState<number>(() => {
+    const saved = localStorage.getItem('dart_x01_playerCount');
+    if (saved !== null) {
+      const parsed = parseInt(saved, 10);
+      if (!isNaN(parsed) && parsed >= 1 && parsed <= 4) return parsed;
+    }
+    return 2;
+  });
+
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>(
     isGuest ? ['Gast 1', 'Gast 2'] : []
   );
   const [guestBots, setGuestBots] = useState<Record<string, boolean>>({});
-  const [setsToWin, setSetsToWin] = useState<number | ''>(1);
-  const [legsToWin, setLegsToWin] = useState<number | ''>(3);
-  const [startScore, setStartScore] = useState(501);
-  const [outMode, setOutMode] = useState<'SO' | 'DO' | 'MO'>('DO');
   
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isShuffling, setIsShuffling] = useState(false);
@@ -30,6 +67,30 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({ profiles, onStartGame, h
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
   const profileNames = Object.keys(profiles);
+
+  useEffect(() => {
+    if (typeof setsToWin === 'number' && setsToWin >= 1) {
+      localStorage.setItem('dart_x01_sets', setsToWin.toString());
+    }
+  }, [setsToWin]);
+
+  useEffect(() => {
+    if (typeof legsToWin === 'number' && legsToWin >= 1) {
+      localStorage.setItem('dart_x01_legs', legsToWin.toString());
+    }
+  }, [legsToWin]);
+
+  useEffect(() => {
+    localStorage.setItem('dart_x01_startScore', startScore.toString());
+  }, [startScore]);
+
+  useEffect(() => {
+    localStorage.setItem('dart_x01_outMode', outMode);
+  }, [outMode]);
+
+  useEffect(() => {
+    localStorage.setItem('dart_x01_playerCount', playerCount.toString());
+  }, [playerCount]);
 
   useEffect(() => {
     if (!isGuest && profileNames.length > 0 && selectedPlayers.length === 0) {

@@ -15,14 +15,55 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
   const { user } = useAuthStore();
   const isGuest = !user;
 
-  const [selectedMode, setSelectedMode] = useState<MiniGameMode>(initialMode);
+  const [selectedMode, setSelectedMode] = useState<MiniGameMode>(() => {
+    if (initialMode && ['checkout', 'powerscoring', 'splitscore'].includes(initialMode)) return initialMode;
+    const saved = localStorage.getItem('dart_training_mode');
+    if (saved && ['checkout', 'powerscoring', 'splitscore'].includes(saved)) return saved as MiniGameMode;
+    return 'checkout';
+  });
 
   useEffect(() => {
     if (initialMode) {
       setSelectedMode(initialMode);
     }
   }, [initialMode]);
-  const [playerCount, setPlayerCount] = useState<number>(1);
+
+  const [playerCount, setPlayerCount] = useState<number>(() => {
+    const saved = localStorage.getItem('dart_training_playerCount');
+    if (saved !== null) {
+      const parsed = parseInt(saved, 10);
+      if (!isNaN(parsed) && parsed >= 1 && parsed <= 4) return parsed;
+    }
+    return 1;
+  });
+
+  const [powerScoringRounds, setPowerScoringRounds] = useState<number>(() => {
+    const saved = localStorage.getItem('dart_powerscoring_rounds');
+    if (saved !== null) {
+      const parsed = parseInt(saved, 10);
+      if (!isNaN(parsed) && parsed >= 1) return parsed;
+    }
+    return 10;
+  });
+
+  const [checkoutRounds, setCheckoutRounds] = useState<number>(() => {
+    const saved = localStorage.getItem('dart_checkout_rounds');
+    if (saved !== null) {
+      const parsed = parseInt(saved, 10);
+      if (!isNaN(parsed) && parsed >= 1) return parsed;
+    }
+    return 1;
+  });
+
+  const [checkoutTargets, setCheckoutTargets] = useState<number>(() => {
+    const saved = localStorage.getItem('dart_checkout_targets');
+    if (saved !== null) {
+      const parsed = parseInt(saved, 10);
+      if (!isNaN(parsed) && parsed >= 1) return parsed;
+    }
+    return 10;
+  });
+
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>(
     isGuest ? ['Gast 1'] : []
   );
@@ -30,11 +71,27 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
   const [randomOrderOnStart, setRandomOrderOnStart] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const [powerScoringRounds, setPowerScoringRounds] = useState<number>(10);
-  const [checkoutRounds, setCheckoutRounds] = useState<number>(1);
-  const [checkoutTargets, setCheckoutTargets] = useState<number>(10);
-
   const profileNames = Object.keys(profiles);
+
+  useEffect(() => {
+    localStorage.setItem('dart_training_mode', selectedMode);
+  }, [selectedMode]);
+
+  useEffect(() => {
+    localStorage.setItem('dart_training_playerCount', playerCount.toString());
+  }, [playerCount]);
+
+  useEffect(() => {
+    localStorage.setItem('dart_powerscoring_rounds', powerScoringRounds.toString());
+  }, [powerScoringRounds]);
+
+  useEffect(() => {
+    localStorage.setItem('dart_checkout_rounds', checkoutRounds.toString());
+  }, [checkoutRounds]);
+
+  useEffect(() => {
+    localStorage.setItem('dart_checkout_targets', checkoutTargets.toString());
+  }, [checkoutTargets]);
 
   useEffect(() => {
     if (!isGuest && profileNames.length > 0 && selectedPlayers.length === 0) {

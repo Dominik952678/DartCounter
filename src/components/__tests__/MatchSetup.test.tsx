@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MatchSetup } from '../MatchSetup';
 import type { Profile } from '../../types';
@@ -14,6 +14,10 @@ describe('MatchSetup Component', () => {
     onStartGame: vi.fn()
   };
 
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
   it('renders distance section with sets and legs stepper controls', () => {
     render(<MatchSetup {...defaultProps} />);
 
@@ -24,19 +28,32 @@ describe('MatchSetup Component', () => {
     expect(screen.getByText('pro Satz')).toBeInTheDocument();
   });
 
-  it('increments and decrements sets and legs via stepper buttons', () => {
+  it('increments and decrements sets and legs via stepper buttons with default 1', () => {
     render(<MatchSetup {...defaultProps} />);
 
     const increaseLegsBtn = screen.getByRole('button', { name: /Legs erhöhen/i });
     const decreaseLegsBtn = screen.getByRole('button', { name: /Legs verringern/i });
 
-    // Click to increase legs from default (3) to 4
-    fireEvent.click(increaseLegsBtn);
-    expect(screen.getByText('First to 4')).toBeInTheDocument();
+    // Starts at default 1 for both sets and legs
+    expect(screen.getAllByText('First to 1')).toHaveLength(2);
 
-    // Click to decrease back to 3
+    // Click to increase legs from default (1) to 2
+    fireEvent.click(increaseLegsBtn);
+    expect(screen.getByText('First to 2')).toBeInTheDocument();
+
+    // Click to decrease back to 1
     fireEvent.click(decreaseLegsBtn);
+    expect(screen.getAllByText('First to 1')).toHaveLength(2);
+  });
+
+  it('loads previously saved sets and legs from localStorage', () => {
+    localStorage.setItem('dart_x01_sets', '3');
+    localStorage.setItem('dart_x01_legs', '5');
+
+    render(<MatchSetup {...defaultProps} />);
+
     expect(screen.getByText('First to 3')).toBeInTheDocument();
+    expect(screen.getByText('First to 5')).toBeInTheDocument();
   });
 
   it('allows changing start score (301, 501, 701, 1001)', () => {

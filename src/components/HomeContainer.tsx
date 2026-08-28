@@ -31,15 +31,22 @@ export const HomeContainer: React.FC<HomeContainerProps> = ({
   const tabParam = searchParams.get('tab');
   const modeParam = searchParams.get('mode') as MiniGameMode | null;
 
-  const [activeSubTab, setActiveSubTab] = useState<'match' | 'training'>(
-    tabParam === 'training' ? 'training' : defaultTab
-  );
+  const [activeSubTab, setActiveSubTab] = useState<'match' | 'training'>(() => {
+    if (tabParam === 'training' || tabParam === 'match') return tabParam;
+    const saved = localStorage.getItem('dart_offline_subtab');
+    if (saved === 'training' || saved === 'match') return saved;
+    return defaultTab;
+  });
 
   useEffect(() => {
     if (tabParam === 'training' || tabParam === 'match') {
       setActiveSubTab(tabParam);
     }
   }, [tabParam]);
+
+  useEffect(() => {
+    localStorage.setItem('dart_offline_subtab', activeSubTab);
+  }, [activeSubTab]);
 
   return (
     <div className="home-container" style={{ paddingBottom: '20px' }}>
