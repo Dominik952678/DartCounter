@@ -1,192 +1,260 @@
 // src/utils/bot.ts
 
 /**
- * Standard Normal variate using Box-Muller transform.
+ * Standard clockwise order of dartboard numbers:
+ * 20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5
  */
-function gaussianRandom(mean: number, stdev: number): number {
-    const u = 1 - Math.random(); 
-    const v = Math.random();
-    const z = Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
-    return z * stdev + mean;
-}
+export const BOARD_NEIGHBORS: Record<number, [number, number]> = {
+    20: [5, 1],
+    1: [20, 18],
+    18: [1, 4],
+    4: [18, 13],
+    13: [4, 6],
+    6: [13, 10],
+    10: [6, 15],
+    15: [10, 2],
+    2: [15, 17],
+    17: [2, 3],
+    3: [17, 19],
+    19: [3, 7],
+    7: [19, 16],
+    16: [7, 8],
+    8: [16, 11],
+    11: [8, 14],
+    14: [11, 9],
+    9: [14, 12],
+    12: [9, 5],
+    5: [12, 20]
+};
 
-const POSSIBLE_SCORES = [
-    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 25, 50,
-    // Doubles
-    2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40,
-    // Triples
-    3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36, 39, 42, 45, 48, 51, 54, 57, 60
-];
+/**
+ * Simulates a single dart throw at an intended target with realistic board geometry and miss dispersion.
+ */
+export function throwAtTarget(
+    aimBase: number, 
+    aimMult: number, 
+    targetAverage: number
+): { base: number, mult: number } {
+    // Normalized skill factor x between 0 (novice, avg ~20) and 1 (elite pro, avg ~110+)
+    const x = Math.max(0, Math.min(1, (targetAverage - 20) / 95));
 
-const VALID_SCORES = Array.from(new Set(POSSIBLE_SCORES)).sort((a, b) => a - b);
-
-function getClosestValidScore(target: number): number {
-    if (target <= 0) return 0;
-    if (target >= 60) return 60;
-    
-    let closest = VALID_SCORES[0];
-    let minDiff = Math.abs(target - closest);
-    
-    for (const score of VALID_SCORES) {
-        const diff = Math.abs(target - score);
-        if (diff < minDiff) {
-            minDiff = diff;
-            closest = score;
-        }
-    }
-    return closest;
-}
-
-export function getBotDart(targetAverage: number, currentScore: number, outMode: 'DO' | 'SO' | 'MO' = 'DO'): { base: number, mult: number } {
-    // 1. Checkout Phase
-    let isCheckout = false;
-    if (outMode === 'SO') {
-        isCheckout = currentScore <= 60;
-    } else if (outMode === 'MO') {
-        isCheckout = (currentScore <= 40 && currentScore % 2 === 0) || currentScore === 50 || (currentScore <= 60 && currentScore % 3 === 0);
-    } else {
-        isCheckout = (currentScore <= 40 && currentScore % 2 === 0) || currentScore === 50;
-    }
-    
-    if (isCheckout) {
-        // Hit chance scales from 5% (bad bots) to 60% (pro bots)
-        const hitChance = Math.max(0.05, Math.min(0.60, targetAverage / 150));
-        
-        let aimedBase = 1;
-        if (outMode === 'SO') {
-            if (currentScore <= 20) aimedBase = currentScore;
-            else if (currentScore === 25) aimedBase = 25;
-            else if (currentScore === 50) aimedBase = 25;
-            else if (currentScore <= 40 && currentScore % 2 === 0) aimedBase = currentScore / 2;
-            else if (currentScore <= 60 && currentScore % 3 === 0) aimedBase = currentScore / 3;
-        } else if (outMode === 'MO') {
-            if (currentScore === 50) aimedBase = 25;
-            else if (currentScore <= 40 && currentScore % 2 === 0) aimedBase = currentScore / 2;
-            else if (currentScore <= 60 && currentScore % 3 === 0) aimedBase = currentScore / 3;
-        } else {
-            if (currentScore === 50) aimedBase = 25;
-            else aimedBase = currentScore / 2;
-        }
-
-        if (Math.random() < hitChance) {
-            if (outMode === 'SO') {
-                if (currentScore <= 20) return { base: currentScore, mult: 1 };
-                if (currentScore === 25) return { base: 25, mult: 1 };
-                if (currentScore === 50) return { base: 25, mult: 2 };
-                if (currentScore <= 40 && currentScore % 2 === 0) return { base: currentScore / 2, mult: 2 };
-                if (currentScore <= 60 && currentScore % 3 === 0) return { base: currentScore / 3, mult: 3 };
-            } else if (outMode === 'MO') {
-                if (currentScore === 50) return { base: 25, mult: 2 };
-                if (currentScore <= 40 && currentScore % 2 === 0) return { base: currentScore / 2, mult: 2 };
-                if (currentScore <= 60 && currentScore % 3 === 0) return { base: currentScore / 3, mult: 3 };
-            } else {
-                if (currentScore === 50) return { base: 25, mult: 2 };
-                return { base: currentScore / 2, mult: 2 };
+    // Handle Bullseye target
+    if (aimBase === 25) {
+        if (aimMult === 2) {
+            // Aiming for Double Bull (50)
+            const dbHitRate = Math.max(0.02, Math.min(0.42, 0.02 + 0.40 * Math.pow(x, 1.3)));
+            if (Math.random() < dbHitRate) {
+                return { base: 25, mult: 2 };
             }
-        } else {
-            // Missed checkout.
-            const missScenario = Math.random();
-            if (currentScore !== 50 && missScenario < 0.4) {
-                // Missed inside -> hit the single
-                return { base: aimedBase, mult: 1 };
-            } else if (missScenario < 0.8) {
-                // Missed outside -> 0 Punkte
+            const roll = Math.random();
+            if (roll < 0.72) {
+                // Land in Single Bull
+                return { base: 25, mult: 1 };
+            } else if (roll < 0.95) {
+                // Scatter into a nearby random single segment (e.g. 1-20)
+                const randomBase = Math.floor(Math.random() * 20) + 1;
+                return { base: randomBase, mult: 1 };
+            } else {
                 return { base: 0, mult: 1 };
-            } else {
-                // Missed wildly into the 1 segment to simulate a random safe miss
-                return { base: 1, mult: 1 }; 
             }
-        }
-    }
-
-    // 2. Setup Phase (Stellen auf ein Finish, wenn currentScore <= 120)
-    if (currentScore <= 120) {
-        let requiredScore = 0;
-        let preferredLeaves = [40, 32, 24, 16, 8, 4];
-        if (outMode === 'SO') {
-            preferredLeaves = [20, 18, 16, 10, 5, 40, 32, 24, 8, 4];
-        } else if (outMode === 'MO') {
-            preferredLeaves = [40, 32, 24, 16, 8, 4, 60, 57, 54, 51];
-        }
-        
-        for (const leave of preferredLeaves) {
-            if (currentScore - leave > 0) {
-                requiredScore = currentScore - leave;
-                break;
-            }
-        }
-        
-        // If we couldn't cleanly leave a preferred finish
-        if (requiredScore === 0 && currentScore % 2 !== 0 && outMode !== 'SO') {
-             // Find a single odd number that leaves a double
-             requiredScore = [19, 17, 15, 13, 11, 9, 7, 5, 3, 1].find(n => (currentScore - n) > 0 && (currentScore - n) % 2 === 0) || 1;
-        } else if (requiredScore === 0) {
-             requiredScore = 2; // Fallback
-        }
-
-        // Try to hit the required setup score with the best segment
-        if (requiredScore <= 20) {
-            // Single
-            if (Math.random() < 0.5 + (targetAverage/200)) {
-                return { base: requiredScore, mult: 1 };
-            } else {
-                return { base: 1, mult: 1 };
-            }
-        }
-        
-        if (requiredScore === 25) return { base: 25, mult: 1 };
-        if (requiredScore === 50) return { base: 25, mult: 2 };
-        
-        // For scores > 20, find best segment (triple preferred, then double)
-        let bestBase = 20;
-        let bestMult = 1;
-        
-        // Check if it's an exact triple
-        if (requiredScore <= 60 && requiredScore % 3 === 0) {
-            bestBase = requiredScore / 3;
-            bestMult = 3;
-        } 
-        // Check if it's an exact double
-        else if (requiredScore <= 40 && requiredScore % 2 === 0) {
-            bestBase = requiredScore / 2;
-            bestMult = 2;
-        }
-        // For other scores > 20, aim for the nearest helpful triple
-        else {
-            // Find the best triple to throw
-            const targetTriple = Math.min(20, Math.round(requiredScore / 3));
-            bestBase = targetTriple;
-            bestMult = 3;
-        }
-        
-        // Apply accuracy based on targetAverage
-        const hitChance = bestMult === 3 ? (targetAverage / 250) : (bestMult === 2 ? (targetAverage / 250) : (0.5 + targetAverage / 200));
-        if (Math.random() < hitChance) {
-            return { base: bestBase, mult: bestMult };
         } else {
-            // Miss: hit the single of the intended segment
-            return { base: bestBase, mult: 1 };
+            // Aiming for Single Bull (25)
+            const sbHitRate = Math.max(0.10, Math.min(0.72, 0.10 + 0.62 * x));
+            const dbAccidentalRate = Math.max(0.01, Math.min(0.12, 0.01 + 0.11 * x));
+            const r = Math.random();
+            if (r < sbHitRate) {
+                return { base: 25, mult: 1 };
+            } else if (r < sbHitRate + dbAccidentalRate) {
+                return { base: 25, mult: 2 };
+            } else if (r < 0.96) {
+                const randomBase = Math.floor(Math.random() * 20) + 1;
+                return { base: randomBase, mult: 1 };
+            } else {
+                return { base: 0, mult: 1 };
+            }
         }
     }
 
-    // 3. Normal Scoring Phase (> 120)
-    const avgDart = targetAverage / 3;
-    const targetDartScore = gaussianRandom(avgDart, 10);
-    const finalScore = getClosestValidScore(targetDartScore);
-    
-    if (finalScore === 0) return { base: 0, mult: 1 };
-    if (finalScore === 50) return { base: 25, mult: 2 };
-    if (finalScore === 25) return { base: 25, mult: 1 };
-    
-    if (finalScore % 3 === 0 && finalScore > 20 && finalScore / 3 <= 20) {
-        return { base: finalScore / 3, mult: 3 };
+    const neighbors = BOARD_NEIGHBORS[aimBase] || [1, 5];
+    const leftNeighbor = neighbors[0];
+    const rightNeighbor = neighbors[1];
+
+    // Case 1: Aiming for a Triple (mult === 3)
+    if (aimMult === 3) {
+        const tripleHitRate = Math.max(0.02, Math.min(0.55, 0.02 + 0.53 * Math.pow(x, 1.35)));
+        const singleHitRate = Math.max(0.32, Math.min(0.68, 0.32 + 0.34 * x));
+        const roll = Math.random();
+
+        if (roll < tripleHitRate) {
+            return { base: aimBase, mult: 3 };
+        } else if (roll < tripleHitRate + singleHitRate) {
+            // Missed triple but stayed in the single section of the intended number
+            return { base: aimBase, mult: 1 };
+        } else {
+            // Drifted into neighbor
+            const neighborBase = Math.random() < 0.5 ? leftNeighbor : rightNeighbor;
+            const neighborRoll = Math.random();
+            if (neighborRoll < 0.88) {
+                return { base: neighborBase, mult: 1 };
+            } else if (neighborRoll < 0.94) {
+                return { base: neighborBase, mult: 3 }; // accidental neighbor triple
+            } else if (neighborRoll < 0.98) {
+                return { base: neighborBase, mult: 2 };
+            } else {
+                return { base: 0, mult: 1 }; // wire/bouncer
+            }
+        }
     }
-    if (finalScore % 2 === 0 && finalScore > 20 && finalScore / 2 <= 20) {
-        return { base: finalScore / 2, mult: 2 };
+
+    // Case 2: Aiming for a Double (mult === 2)
+    if (aimMult === 2) {
+        const doubleHitRate = Math.max(0.04, Math.min(0.52, 0.04 + 0.48 * Math.pow(x, 1.25)));
+        if (Math.random() < doubleHitRate) {
+            return { base: aimBase, mult: 2 };
+        }
+
+        const missRoll = Math.random();
+        if (missRoll < 0.55) {
+            // Miss inside into the single
+            return { base: aimBase, mult: 1 };
+        } else if (missRoll < 0.86) {
+            // Miss outside the board / wire
+            return { base: 0, mult: 1 };
+        } else {
+            // Drift into neighbor double or single
+            const neighborBase = Math.random() < 0.5 ? leftNeighbor : rightNeighbor;
+            return { base: neighborBase, mult: Math.random() < 0.25 ? 2 : 1 };
+        }
     }
-    if (finalScore <= 20) {
-        return { base: finalScore, mult: 1 };
+
+    // Case 3: Aiming for a Single (mult === 1)
+    const singleHitRate = Math.max(0.42, Math.min(0.96, 0.42 + 0.54 * Math.pow(x, 0.9)));
+    const accidentalTriple = Math.max(0.005, Math.min(0.06, 0.005 + 0.055 * x));
+    const accidentalDouble = Math.max(0.005, Math.min(0.04, 0.005 + 0.035 * x));
+    const roll = Math.random();
+
+    if (roll < singleHitRate) {
+        return { base: aimBase, mult: 1 };
+    } else if (roll < singleHitRate + accidentalTriple) {
+        return { base: aimBase, mult: 3 };
+    } else if (roll < singleHitRate + accidentalTriple + accidentalDouble) {
+        return { base: aimBase, mult: 2 };
+    } else {
+        // Drift into neighbor
+        const neighborBase = Math.random() < 0.5 ? leftNeighbor : rightNeighbor;
+        return { base: neighborBase, mult: Math.random() < 0.08 ? 3 : (Math.random() < 0.12 ? 2 : 1) };
     }
-    
-    return { base: 20, mult: 1 };
+}
+
+/**
+ * Returns a single dart throw for a bot, dynamically adapting based on target average and game outMode.
+ */
+export function getBotDart(
+    targetAverage: number, 
+    currentScore: number, 
+    outMode: 'DO' | 'SO' | 'MO' = 'DO'
+): { base: number, mult: number } {
+    // 1. Checkout Phase
+    if (outMode === 'DO') {
+        if (currentScore === 50) {
+            return throwAtTarget(25, 2, targetAverage);
+        } else if (currentScore <= 40 && currentScore % 2 === 0 && currentScore >= 2) {
+            return throwAtTarget(currentScore / 2, 2, targetAverage);
+        }
+    } else if (outMode === 'MO') {
+        if (currentScore === 50) {
+            return throwAtTarget(25, 2, targetAverage);
+        } else if (currentScore <= 40 && currentScore % 2 === 0 && currentScore >= 2) {
+            return throwAtTarget(currentScore / 2, 2, targetAverage);
+        } else if (currentScore <= 60 && currentScore % 3 === 0 && currentScore >= 3) {
+            return throwAtTarget(currentScore / 3, 3, targetAverage);
+        }
+    } else if (outMode === 'SO') {
+        if (currentScore === 50) {
+            return throwAtTarget(25, 2, targetAverage);
+        } else if (currentScore === 25) {
+            return throwAtTarget(25, 1, targetAverage);
+        } else if (currentScore <= 20 && currentScore >= 1) {
+            return throwAtTarget(currentScore, 1, targetAverage);
+        } else if (currentScore <= 40 && currentScore % 2 === 0) {
+            return throwAtTarget(currentScore / 2, 2, targetAverage);
+        } else if (currentScore <= 60 && currentScore % 3 === 0) {
+            return throwAtTarget(currentScore / 3, 3, targetAverage);
+        } else if (currentScore <= 60) {
+            // Odd number between 21 and 59: aim for the biggest single to finish
+            const aimSingle = Math.min(20, currentScore - 1);
+            return throwAtTarget(aimSingle, 1, targetAverage);
+        }
+    }
+
+    // 2. Setup Phase (currentScore <= 120 or odd finishes)
+    if (currentScore <= 120) {
+        // Preferred clean leaves for Double Out
+        const preferredLeaves = outMode === 'SO'
+            ? [20, 18, 16, 10, 5, 40, 32, 24, 8, 4]
+            : (outMode === 'MO' ? [40, 32, 24, 16, 60, 57, 54, 8, 4] : [40, 32, 24, 16, 8, 4]);
+
+        // If score is odd and <= 40 in DO/MO, find odd single that leaves a top double
+        if (outMode !== 'SO' && currentScore <= 40 && currentScore % 2 !== 0) {
+            const candidateSingles = [19, 17, 15, 13, 11, 9, 7, 5, 3, 1];
+            // Look for a single that leaves 32, 16, 8, 4, 2
+            let chosenSingle = 1;
+            for (const s of candidateSingles) {
+                const remainder = currentScore - s;
+                if (remainder > 0 && remainder % 2 === 0) {
+                    chosenSingle = s;
+                    if ([32, 16, 8, 4].includes(remainder)) break;
+                }
+            }
+            return throwAtTarget(chosenSingle, 1, targetAverage);
+        }
+
+        // Check if we can aim directly to leave a preferred finish
+        for (const leave of preferredLeaves) {
+            const needed = currentScore - leave;
+            if (needed <= 0) continue;
+
+            // Single hit leaves the target
+            if (needed <= 20) {
+                return throwAtTarget(needed, 1, targetAverage);
+            }
+            if (needed === 25) {
+                return throwAtTarget(25, 1, targetAverage);
+            }
+
+            // Triple hit leaves the target (for bots with targetAverage >= 55)
+            if (needed <= 60 && needed % 3 === 0 && targetAverage >= 55) {
+                return throwAtTarget(needed / 3, 3, targetAverage);
+            }
+
+            // Double hit leaves the target (for bots with targetAverage >= 55)
+            if (needed <= 40 && needed % 2 === 0 && targetAverage >= 55) {
+                return throwAtTarget(needed / 2, 2, targetAverage);
+            }
+        }
+
+        // Lower-skilled bots (< 55 avg) prefer safe single reductions over risky triples
+        if (targetAverage < 55) {
+            if (currentScore > 60) {
+                return throwAtTarget(20, 1, targetAverage);
+            } else if (currentScore > 40) {
+                const targetSingle = Math.min(20, currentScore - 32);
+                return throwAtTarget(targetSingle > 0 ? targetSingle : 16, 1, targetAverage);
+            }
+        } else {
+            // Higher skill setup: aim for best triple to set up a finish
+            const targetTriple = Math.min(20, Math.round((currentScore - 40) / 3));
+            if (targetTriple >= 10 && targetTriple <= 20) {
+                return throwAtTarget(targetTriple, 3, targetAverage);
+            }
+        }
+    }
+
+    // 3. Normal Scoring Phase (currentScore > 120)
+    // Standard professional and recreational scoring target is T20 (or T19 when strategic)
+    if (currentScore === 128 || currentScore === 125 || currentScore === 122) {
+        return throwAtTarget(18, 3, targetAverage);
+    }
+
+    return throwAtTarget(20, 3, targetAverage);
 }
