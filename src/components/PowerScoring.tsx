@@ -24,6 +24,13 @@ interface PlayerState {
   color?: string;
 }
 
+interface HistorySnapshot {
+  gameState: PlayerState[];
+  activePlayer: number;
+  currentRound: number;
+  currentRoundDarts: Dart[];
+}
+
 export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, rounds, onFinish, onAbort, isOnline, isHost, roomChannel, myUsername }) => {
   const [showAbortConfirm, setShowAbortConfirm] = useState(false);
   const [soundOn, setSoundOn] = useState(isSoundEnabled());
@@ -42,6 +49,9 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
   const [currentRoundDarts, setCurrentRoundDarts] = useState<Dart[]>([]);
   const [currentMultiplier, setCurrentMultiplier] = useState<number>(1);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [history, setHistory] = useState<HistorySnapshot[]>([]);
+
+  const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const activeP = gameState[activePlayer];
   const isMyTurn = isOnline ? (activeP.name === myUsername) : true;
@@ -97,6 +107,14 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
        return;
     }
 
+    // Save snapshot before dart
+    setHistory(prev => [...prev, {
+      gameState: stateRef.current.gameState.map(p => ({ ...p })),
+      activePlayer: stateRef.current.activePlayer,
+      currentRound: stateRef.current.currentRound,
+      currentRoundDarts: [...stateRef.current.currentRoundDarts]
+    }]);
+
     let mult = overrideMult ?? stateRef.current.currentMultiplier;
     if (base === 25 && mult === 3) mult = 1;
     
@@ -119,7 +137,7 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
 
     if (newDarts.length === 3) {
       setIsProcessing(true);
-      setTimeout(() => {
+      timeoutRef.current = setTimeout(() => {
         processRoundEnd(newDarts);
       }, 1000);
     }
@@ -158,9 +176,31 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
   };
 
   const undoSingleDart = () => {
-    if (stateRef.current.currentRoundDarts.length > 0 && !stateRef.current.isProcessing && (!isOnline || isHost)) {
-      setCurrentRoundDarts(prev => prev.slice(0, -1));
+    if (isOnline && !isHost) return;
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
     }
+    setIsProcessing(false);
+
+    setHistory(prevHistory => {
+      if (prevHistory.length === 0) {
+        if (stateRef.current.currentRoundDarts.length > 0) {
+          setCurrentRoundDarts(prev => prev.slice(0, -1));
+        }
+        return prevHistory;
+      }
+
+      const lastSnapshot = prevHistory[prevHistory.length - 1];
+      const newHistory = prevHistory.slice(0, -1);
+
+      setGameState(lastSnapshot.gameState);
+      setActivePlayer(lastSnapshot.activePlayer);
+      setCurrentRound(lastSnapshot.currentRound);
+      setCurrentRoundDarts(lastSnapshot.currentRoundDarts);
+
+      return newHistory;
+    });
   };
 
   return (
@@ -251,7 +291,7 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
               toggleMultiplier={(m) => setCurrentMultiplier(m)}
               undoSingleDart={undoSingleDart}
               abortGame={() => setShowAbortConfirm(true)}
-              canUndo={currentRoundDarts.length > 0 && !isProcessing}
+              canUndo={(history.length > 0 || currentRoundDarts.length > 0) && !isProcessing}
             />
           </div>
         </div>

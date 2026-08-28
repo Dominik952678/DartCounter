@@ -33,6 +33,13 @@ interface PlayerState {
   bestCheckout: number;
 }
 
+interface HistorySnapshot {
+  gameState: PlayerState[];
+  activePlayer: number;
+  currentRoundDarts: Dart[];
+  roundBust: boolean;
+}
+
 const generateRandomScore = () => Math.floor(Math.random() * (120 - 2 + 1)) + 2;
 
 export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, profiles, checkoutRounds, checkoutTargets, onFinish, onAbort, isOnline, isHost, roomChannel, myUsername }) => {
@@ -63,12 +70,15 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
   const [currentMultiplier, setCurrentMultiplier] = useState<number>(1);
   const [isProcessing, setIsProcessing] = useState(false);
   const [roundBust, setRoundBust] = useState(false);
+  const [history, setHistory] = useState<HistorySnapshot[]>([]);
+
+  const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const activeP = gameState[activePlayer] || gameState[0];
   const isMyTurn = isOnline ? (activeP.name === myUsername) : true;
 
-  const stateRef = React.useRef({ gameState, activePlayer, currentRoundDarts, isProcessing, currentMultiplier });
-  stateRef.current = { gameState, activePlayer, currentRoundDarts, isProcessing, currentMultiplier };
+  const stateRef = React.useRef({ gameState, activePlayer, currentRoundDarts, isProcessing, currentMultiplier, roundBust });
+  stateRef.current = { gameState, activePlayer, currentRoundDarts, isProcessing, currentMultiplier, roundBust };
 
   useEffect(() => {
     if (isOnline && roomChannel) {
@@ -117,6 +127,14 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
        return;
     }
 
+    // Save snapshot before dart
+    setHistory(prev => [...prev, {
+      gameState: stateRef.current.gameState.map(p => ({ ...p })),
+      activePlayer: stateRef.current.activePlayer,
+      currentRoundDarts: [...stateRef.current.currentRoundDarts],
+      roundBust: stateRef.current.roundBust
+    }]);
+
     let mult = overrideMult ?? stateRef.current.currentMultiplier;
     if (base === 25 && mult === 3) mult = 1;
     
@@ -154,16 +172,16 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
     if (newScore === 0 && mult === 2) {
       // Successful Checkout!
       setIsProcessing(true);
-      setTimeout(() => processCheckout(newDarts.length), 700);
+      timeoutRef.current = setTimeout(() => processCheckout(newDarts.length), 700);
     } else if (newScore <= 1) {
       // Bust!
       setRoundBust(true);
       setIsProcessing(true);
-      setTimeout(() => processBust(newDarts.length), 800);
+      timeoutRef.current = setTimeout(() => processBust(newDarts.length), 800);
     } else if (newDarts.length === 3) {
       // Completed 3 darts turn
       setIsProcessing(true);
-      setTimeout(() => processEndTurn(newDarts), 700);
+      timeoutRef.current = setTimeout(() => processEndTurn(newDarts), 700);
     }
   };
 
@@ -326,19 +344,42 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
   };
 
   const undoSingleDart = () => {
-    if (stateRef.current.currentRoundDarts.length > 0 && !stateRef.current.isProcessing && (!isOnline || isHost)) {
-      const lastDart = stateRef.current.currentRoundDarts[stateRef.current.currentRoundDarts.length - 1];
-      const st = stateRef.current;
-      setGameState(prev => {
-        const next = [...prev];
-        next[st.activePlayer] = {
-          ...next[st.activePlayer],
-          currentScore: next[st.activePlayer].currentScore + lastDart.value
-        };
-        return next;
-      });
-      setCurrentRoundDarts(prev => prev.slice(0, -1));
+    if (isOnline && !isHost) return;
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
     }
+    setRoundBust(false);
+    setIsProcessing(false);
+
+    setHistory(prevHistory => {
+      if (prevHistory.length === 0) {
+        if (stateRef.current.currentRoundDarts.length > 0) {
+          const lastDart = stateRef.current.currentRoundDarts[stateRef.current.currentRoundDarts.length - 1];
+          const st = stateRef.current;
+          setGameState(prev => {
+            const next = [...prev];
+            next[st.activePlayer] = {
+              ...next[st.activePlayer],
+              currentScore: next[st.activePlayer].currentScore + lastDart.value
+            };
+            return next;
+          });
+          setCurrentRoundDarts(prev => prev.slice(0, -1));
+        }
+        return prevHistory;
+      }
+
+      const lastSnapshot = prevHistory[prevHistory.length - 1];
+      const newHistory = prevHistory.slice(0, -1);
+
+      setGameState(lastSnapshot.gameState);
+      setActivePlayer(lastSnapshot.activePlayer);
+      setCurrentRoundDarts(lastSnapshot.currentRoundDarts);
+      setRoundBust(lastSnapshot.roundBust || false);
+
+      return newHistory;
+    });
   };
 
   return (
@@ -452,7 +493,7 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
               toggleMultiplier={(m) => setCurrentMultiplier(m)}
               undoSingleDart={undoSingleDart}
               abortGame={() => setShowAbortConfirm(true)}
-              canUndo={currentRoundDarts.length > 0 && !isProcessing}
+              canUndo={(history.length > 0 || currentRoundDarts.length > 0) && !isProcessing}
             />
           </div>
         </div>
