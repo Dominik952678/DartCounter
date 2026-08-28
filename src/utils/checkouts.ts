@@ -173,8 +173,30 @@ export const BOGEY_SETUPS: Record<number, string> = {
   159: 'Setup: T20',
 };
 
+export const MASTER_OUT_EXTRAS: Record<number, string> = {
+  180: 'T20 T20 T20',
+  177: 'T20 T20 T19',
+  174: 'T20 T20 T18',
+  171: 'T20 T20 T17',
+  168: 'T20 T20 T16',
+  165: 'T20 T19 T16',
+  162: 'T20 T20 T14',
+  159: 'T20 T19 T14',
+  120: 'T20 T20',
+  117: 'T20 T19',
+  114: 'T20 T18',
+  111: 'T20 T17',
+  108: 'T20 T16',
+  105: 'T20 T15',
+  102: 'T20 T14',
+  99: 'T20 T13',
+  96: 'T20 T12',
+  93: 'T19 T12',
+  90: 'T20 T10',
+};
+
 export function getCheckoutSuggestion(score: number, outMode: 'SO' | 'DO' | 'MO', dartsThrown: number = 0): string | null {
-  if (score < 1 || score > 170) {
+  if (score < 1 || (outMode === 'MO' ? score > 180 : score > 170)) {
     return null;
   }
 
@@ -188,13 +210,11 @@ export function getCheckoutSuggestion(score: number, outMode: 'SO' | 'DO' | 'MO'
     if (score <= 60 && score % 3 === 0) return `T${score / 3}`;
     // Odd scores > 20: find a single + single combination
     if (score <= 40) {
-        // e.g. 23 = S3 S20, 27 = S7 S20, 33 = S13 S20, 37 = S17 S20
         const remainder = score - 20;
         if (remainder > 0 && remainder <= 20) return `S${remainder} S20`;
         return `S${score - 1} S1`;
     }
     if (score <= 60) {
-        // e.g. 41 = S1 D20, 43 = S3 D20, etc
         const remainder = score - 40;
         if (remainder > 0 && remainder <= 20) return `S${remainder} D20`;
     }
@@ -203,13 +223,15 @@ export function getCheckoutSuggestion(score: number, outMode: 'SO' | 'DO' | 'MO'
 
   if (outMode === 'MO') {
     if (score === 1) return null; // Can't finish on 1 in MO
-    // MO can finish on any double or triple
     if (score <= 40 && score % 2 === 0) return `D${score / 2}`;
     if (score === 50) return 'DB';
     if (score <= 60 && score % 3 === 0) return `T${score / 3}`;
-    // For higher scores, fall through to the CHECKOUTS table (which uses doubles)
-    // But also add triple finishes not in the DO table
-    // e.g. 162 = T20 T20 T14 (valid in MO but not DO)
+    if (MASTER_OUT_EXTRAS[score]) {
+      const parts = MASTER_OUT_EXTRAS[score].split(' ');
+      if (parts.length <= 3 - dartsThrown) {
+        return MASTER_OUT_EXTRAS[score];
+      }
+    }
   }
 
   // For DO or MO, 1 is impossible

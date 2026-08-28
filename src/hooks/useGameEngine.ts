@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import type { GameState, Profile, MatchHistory, GameConfig, Player } from '../types';
-import { saveMatch, getMatches, saveProfiles } from '../db/database';
+import { saveProfiles } from '../db/database';
 import { getBotDart } from '../utils/bot';
 import { playSciFiHitSound, play180Sound, playBustSound, playHighFinishSound, speak, playDartHitSound, announceScore, announceGameShot } from '../utils/audio';
 import { triggerHaptic } from '../utils/haptics';
@@ -8,14 +8,14 @@ import { triggerHaptic } from '../utils/haptics';
 interface UseGameEngineProps {
   profiles: Record<string, Profile>;
   setProfiles: (profiles: Record<string, Profile>) => void;
-  setSavedMatches: (matches: MatchHistory[]) => void;
+  setSavedMatches?: (matches: MatchHistory[]) => void;
   setScreen: (screen: 'start' | 'game' | 'powerscoring' | 'splitscore' | 'checkout') => void;
   setStatsModalData: (data: any) => void;
   isOnline?: boolean;
   user?: { id: string } | null;
 }
 
-export function useGameEngine({ profiles, setProfiles, setSavedMatches, setScreen, setStatsModalData, isOnline = false, user }: UseGameEngineProps) {
+export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSavedMatches, setScreen, setStatsModalData, isOnline = false, user }: UseGameEngineProps) {
   const [gameState, setGameState] = useState<GameState>({
     players: [],
     activePlayer: 0,
@@ -463,6 +463,11 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches, setScree
         newPlayers[i] = p;
     }
 
+    const legDartsTaken = currentState.players[winnerIndex].legDarts;
+    if (legDartsTaken > 0) {
+        newPlayers[winnerIndex].bestMatchLeg = (!newPlayers[winnerIndex].bestMatchLeg || legDartsTaken < newPlayers[winnerIndex].bestMatchLeg!) ? legDartsTaken : newPlayers[winnerIndex].bestMatchLeg;
+    }
+
     winner = newPlayers[winnerIndex];
 
     if (winner.legs >= currentState.config.legsToWin) {
@@ -493,8 +498,6 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches, setScree
         }, 1500);
     }
 
-    const legDartsTaken = currentState.players[winnerIndex].legDarts;
-    
     let updatedProfiles = { ...profiles };
     let profilesChanged = false;
     

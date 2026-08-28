@@ -8,7 +8,7 @@ import { useOnlineStore } from '../store/useOnlineStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { useProfiles } from '../hooks/useProfiles';
 import { useGameEngine } from '../hooks/useGameEngine';
-import type { GameState, MatchHistory } from '../types';
+import type { GameState, MatchHistory, Profile } from '../types';
 import { StatsModal } from './Modals';
 import { DisconnectOverlay } from './DisconnectOverlay';
 import { saveProfiles, saveMatch } from '../db/database';
@@ -38,58 +38,61 @@ export const OnlineGameWrapper: React.FC = () => {
   });
 
   const handleMinigameFinish = async (results: any, gameType: string) => {
-    // Save local profile stats on both host and guest
-    const newProfiles = { ...profiles };
-    
-    if (gameType === 'powerScoring') {
-        for (const r of results) {
-           if (newProfiles[r.name]) {
-              const p = newProfiles[r.name];
-              if (!p.powerScoring) p.powerScoring = { bestScore: 0, matchesPlayed: 0, wins: 0, totalScore: 0 };
-              p.powerScoring.bestScore = Math.max(p.powerScoring.bestScore, r.score);
-              p.powerScoring.matchesPlayed += 1;
-              p.powerScoring.totalScore = (p.powerScoring.totalScore || 0) + r.score;
-           }
-        }
-        const maxScore = Math.max(...results.map((r:any) => r.score));
-        for (const r of results) {
-           if (r.score === maxScore && newProfiles[r.name]) {
-              newProfiles[r.name].powerScoring!.wins += 1;
-           }
-        }
-    } else if (gameType === 'splitScore') {
-        for (const r of results) {
-           if (newProfiles[r.name]) {
-              const p = newProfiles[r.name];
-              if (!p.splitScore) p.splitScore = { bestScore: 0, matchesPlayed: 0, wins: 0, totalScore: 0 };
-              p.splitScore.bestScore = Math.max(p.splitScore.bestScore, r.score);
-              p.splitScore.matchesPlayed += 1;
-              p.splitScore.totalScore = (p.splitScore.totalScore || 0) + r.score;
-           }
-        }
-        const maxScore = Math.max(...results.map((r:any) => r.score));
-        for (const r of results) {
-           if (r.score === maxScore && newProfiles[r.name]) {
-              newProfiles[r.name].splitScore!.wins += 1;
-           }
-        }
-    } else if (gameType === 'checkoutTraining') {
-        for (const r of results) {
-           if (newProfiles[r.name]) {
-              const p = newProfiles[r.name];
-              if (!p.checkoutTraining) p.checkoutTraining = { bestCheckout: 0, roundsCompleted: 0, matchesPlayed: 0, wins: 0, totalAttempts: 0, totalDartsUsed: 0 };
-              p.checkoutTraining.bestCheckout = Math.max(p.checkoutTraining.bestCheckout, r.score);
-              p.checkoutTraining.roundsCompleted += r.roundsCompleted;
-              p.checkoutTraining.matchesPlayed += 1;
-              p.checkoutTraining.totalAttempts = (p.checkoutTraining.totalAttempts || 0) + r.attempts;
-              p.checkoutTraining.totalDartsUsed = (p.checkoutTraining.totalDartsUsed || 0) + r.dartsUsed;
-           }
-        }
-    }
+    let newProfiles: Record<string, Profile>;
+    setProfiles(prev => {
+      newProfiles = { ...prev };
+      
+      if (gameType === 'powerScoring') {
+          for (const r of results) {
+             if (newProfiles[r.name]) {
+                const p = newProfiles[r.name];
+                if (!p.powerScoring) p.powerScoring = { bestScore: 0, matchesPlayed: 0, wins: 0, totalScore: 0 };
+                p.powerScoring.bestScore = Math.max(p.powerScoring.bestScore, r.score);
+                p.powerScoring.matchesPlayed += 1;
+                p.powerScoring.totalScore = (p.powerScoring.totalScore || 0) + r.score;
+             }
+          }
+          const maxScore = Math.max(...results.map((r:any) => r.score));
+          for (const r of results) {
+             if (r.score === maxScore && newProfiles[r.name]) {
+                newProfiles[r.name].powerScoring!.wins += 1;
+             }
+          }
+      } else if (gameType === 'splitScore') {
+          for (const r of results) {
+             if (newProfiles[r.name]) {
+                const p = newProfiles[r.name];
+                if (!p.splitScore) p.splitScore = { bestScore: 0, matchesPlayed: 0, wins: 0, totalScore: 0 };
+                p.splitScore.bestScore = Math.max(p.splitScore.bestScore, r.score);
+                p.splitScore.matchesPlayed += 1;
+                p.splitScore.totalScore = (p.splitScore.totalScore || 0) + r.score;
+             }
+          }
+          const maxScore = Math.max(...results.map((r:any) => r.score));
+          for (const r of results) {
+             if (r.score === maxScore && newProfiles[r.name]) {
+                newProfiles[r.name].splitScore!.wins += 1;
+             }
+          }
+      } else if (gameType === 'checkoutTraining') {
+          for (const r of results) {
+             if (newProfiles[r.name]) {
+                const p = newProfiles[r.name];
+                if (!p.checkoutTraining) p.checkoutTraining = { bestCheckout: 0, roundsCompleted: 0, matchesPlayed: 0, wins: 0, totalAttempts: 0, totalDartsUsed: 0 };
+                p.checkoutTraining.bestCheckout = Math.max(p.checkoutTraining.bestCheckout, r.score);
+                p.checkoutTraining.roundsCompleted += r.roundsCompleted;
+                p.checkoutTraining.matchesPlayed += 1;
+                p.checkoutTraining.totalAttempts = (p.checkoutTraining.totalAttempts || 0) + r.attempts;
+                p.checkoutTraining.totalDartsUsed = (p.checkoutTraining.totalDartsUsed || 0) + r.dartsUsed;
+             }
+          }
+      }
 
-    setProfiles(newProfiles);
+      return newProfiles;
+    });
+
     if (user?.id) {
-      await saveProfiles(newProfiles, user.id);
+      await saveProfiles(newProfiles!, user.id);
     }
     
     let matchData: MatchHistory = {
@@ -245,7 +248,7 @@ export const OnlineGameWrapper: React.FC = () => {
          </div>
       )}
       
-      <div style={{ opacity: isMyTurn ? 1 : 0.6, pointerEvents: isMyTurn ? 'auto' : 'none', height: '100%' }}>
+      <div style={{ opacity: isMyTurn ? 1 : 0.75, height: '100%' }}>
         <GameScreen 
           players={syncedState.players}
           activePlayer={syncedState.activePlayer}

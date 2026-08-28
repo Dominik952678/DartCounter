@@ -40,8 +40,7 @@ export const StatsWidget: React.FC<StatsWidgetProps> = ({ title, mode, isOnline,
              return (!m.gameType || m.gameType === 'standard') && m.config && `Standard: ${m.config.startScore} ${m.config.outMode}` === mode;
          }
          return false;
-      })
-      .reverse();
+      });
 
     const isMinigame = mode !== 'Alle (Standard)' && !mode.startsWith('Standard:');
 

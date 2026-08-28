@@ -45,6 +45,19 @@ describe('Checkout suggestions logic', () => {
     expect(getCheckoutSuggestion(501, 'DO', 0)).toBeNull();
   });
 
+  it('handles Master Out high checkouts up to 180', () => {
+    expect(getCheckoutSuggestion(180, 'MO', 0)).toBe('T20 T20 T20');
+    expect(getCheckoutSuggestion(168, 'MO', 0)).toBe('T20 T20 T16');
+    expect(getCheckoutSuggestion(162, 'MO', 0)).toBe('T20 T20 T14');
+    expect(getCheckoutSuggestion(120, 'MO', 1)).toBe('T20 T20');
+    expect(getCheckoutSuggestion(180, 'DO', 0)).toBeNull();
+  });
+
+  it('handles Single Out odd scores above 20', () => {
+    expect(getCheckoutSuggestion(23, 'SO', 0)).toBe('S3 S20');
+    expect(getCheckoutSuggestion(43, 'SO', 0)).toBe('S3 D20');
+  });
+
   it('contains valid checkouts map entries for common targets', () => {
     expect(CHECKOUTS[50]).toBe('DB');
     expect(CHECKOUTS[32]).toBe('D16');

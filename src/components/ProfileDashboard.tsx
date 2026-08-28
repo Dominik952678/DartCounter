@@ -60,8 +60,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
              return `Standard: ${m.config.startScore} ${m.config.outMode}` === selectedMode;
          }
          return false;
-      })
-      .reverse();
+      });
 
     const isMinigame = selectedMode !== 'Alle (Standard)' && !selectedMode.startsWith('Standard:');
     const checkoutQuote = (profile && profile.checkoutAttempts && profile.checkoutAttempts > 0)

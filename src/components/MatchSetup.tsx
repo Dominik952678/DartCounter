@@ -65,6 +65,13 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({ profiles, onStartGame, h
   const [isShuffling, setIsShuffling] = useState(false);
   const [randomOrderOnStart, setRandomOrderOnStart] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const shuffleIntervalRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (shuffleIntervalRef.current) clearInterval(shuffleIntervalRef.current);
+    };
+  }, []);
 
   const profileNames = Object.keys(profiles);
 
@@ -197,7 +204,8 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({ profiles, onStartGame, h
     const maxIterations = 10;
     const currentChosen = selectedPlayers.slice(0, playerCount);
     
-    const interval = setInterval(() => {
+    if (shuffleIntervalRef.current) clearInterval(shuffleIntervalRef.current);
+    shuffleIntervalRef.current = setInterval(() => {
       const shuffled = [...currentChosen].sort(() => Math.random() - 0.5);
       const newSelected = [...selectedPlayers];
       for (let i = 0; i < playerCount; i++) {
@@ -207,7 +215,10 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({ profiles, onStartGame, h
       
       iterations++;
       if (iterations >= maxIterations) {
-        clearInterval(interval);
+        if (shuffleIntervalRef.current) {
+          clearInterval(shuffleIntervalRef.current);
+          shuffleIntervalRef.current = null;
+        }
         setIsShuffling(false);
       }
     }, 50);

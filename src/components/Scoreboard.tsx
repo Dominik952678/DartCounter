@@ -169,7 +169,7 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
         
         const currentRoundTotal = isActive ? currentRoundDarts.reduce((sum, d) => sum + d.value, 0) : 0;
         const liveScore = p.score - currentRoundTotal;
-        const isCheckoutRange = liveScore <= 170 && liveScore >= 2;
+        const isCheckoutRange = liveScore <= 170 && (config.outMode === 'SO' ? liveScore >= 1 : liveScore >= 2);
         
         let celebrationClass = '';
         if (celebration && celebration.playerIndex === i) {

@@ -14,7 +14,7 @@ import { PowerScoring } from './components/PowerScoring';
 import { SplitScore } from './components/SplitScore';
 import { CheckoutTraining } from './components/CheckoutTraining';
 import { StatsModal, HistoryModal } from './components/Modals';
-import type { Player, MatchHistory } from './types';
+import type { Player, MatchHistory, Profile } from './types';
 import { startSync, saveProfiles, saveMatch, getMatches } from './db/database';
 
 import { useProfiles } from './hooks/useProfiles';
