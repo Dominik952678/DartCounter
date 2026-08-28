@@ -23,10 +23,12 @@ describe('Checkout suggestions logic', () => {
     expect(getCheckoutSuggestion(40, 'DO', 2)).toBe('D20');
   });
 
-  it('returns null for impossible bogie finishes in DO (169, 168, 166, 165, 163, 162, 159)', () => {
+  it('returns setup suggestion for bogie scores with 3 darts and null with fewer darts in DO', () => {
     const bogieScores = [169, 168, 166, 165, 163, 162, 159];
     bogieScores.forEach(score => {
-      expect(getCheckoutSuggestion(score, 'DO', 0)).toBeNull();
+      expect(getCheckoutSuggestion(score, 'DO', 0)).toBe('Setup: T20');
+      expect(getCheckoutSuggestion(score, 'DO', 1)).toBeNull();
+      expect(getCheckoutSuggestion(score, 'DO', 2)).toBeNull();
     });
   });
 

@@ -179,6 +179,16 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({ profiles, onStartGame, h
     setDraggedIndex(null);
   };
 
+  const movePlayer = (index: number, direction: 'up' | 'down') => {
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= playerCount) return;
+    const newSelected = [...selectedPlayers];
+    const temp = newSelected[index];
+    newSelected[index] = newSelected[targetIndex];
+    newSelected[targetIndex] = temp;
+    setSelectedPlayers(newSelected);
+  };
+
   const randomizeOrder = () => {
     if (isShuffling) return;
     setIsShuffling(true);
@@ -411,10 +421,52 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({ profiles, onStartGame, h
                     border: '1px solid var(--card-border)'
                   }}
                 >
-                  <div className="drag-handle" title="Zum Verschieben ziehen">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                      <path d="M2 4h12v2H2V4zm0 6h12v2H2v-2z" />
-                    </svg>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <div className="drag-handle" title="Zum Verschieben ziehen">
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M2 4h12v2H2V4zm0 6h12v2H2v-2z" />
+                      </svg>
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <button 
+                        type="button" 
+                        onClick={() => movePlayer(i, 'up')} 
+                        disabled={i === 0} 
+                        style={{ 
+                          background: 'transparent', 
+                          border: 'none', 
+                          color: i === 0 ? 'rgba(255,255,255,0.15)' : 'var(--text-dim)', 
+                          padding: '2px 4px', 
+                          cursor: i === 0 ? 'default' : 'pointer', 
+                          fontSize: '0.75rem',
+                          lineHeight: 1,
+                          minHeight: 'auto'
+                        }}
+                        aria-label="Spieler nach oben"
+                        title="Nach oben"
+                      >
+                        ▲
+                      </button>
+                      <button 
+                        type="button" 
+                        onClick={() => movePlayer(i, 'down')} 
+                        disabled={i >= playerCount - 1} 
+                        style={{ 
+                          background: 'transparent', 
+                          border: 'none', 
+                          color: i >= playerCount - 1 ? 'rgba(255,255,255,0.15)' : 'var(--text-dim)', 
+                          padding: '2px 4px', 
+                          cursor: i >= playerCount - 1 ? 'default' : 'pointer', 
+                          fontSize: '0.75rem',
+                          lineHeight: 1,
+                          minHeight: 'auto'
+                        }}
+                        aria-label="Spieler nach unten"
+                        title="Nach unten"
+                      >
+                        ▼
+                      </button>
+                    </div>
                   </div>
                   
                   <div className="avatar-circle" style={{ backgroundColor: getAvatarColor(playerName || `Gast ${i+1}`) }}>

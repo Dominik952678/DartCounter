@@ -200,6 +200,16 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
     });
   };
 
+  const movePlayer = (index: number, direction: 'up' | 'down') => {
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= playerCount) return;
+    const newSelected = [...selectedPlayers];
+    const temp = newSelected[index];
+    newSelected[index] = newSelected[targetIndex];
+    newSelected[targetIndex] = temp;
+    setSelectedPlayers(newSelected);
+  };
+
   return (
     <div className="training-hub screen active-screen" style={{ position: 'relative', overflowX: 'hidden' }}>
       <style>{`
@@ -353,6 +363,47 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
                       border: '1px solid var(--card-border)'
                     }}
                   >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <button 
+                        type="button" 
+                        onClick={() => movePlayer(i, 'up')} 
+                        disabled={i === 0} 
+                        style={{ 
+                          background: 'transparent', 
+                          border: 'none', 
+                          color: i === 0 ? 'rgba(255,255,255,0.15)' : 'var(--text-dim)', 
+                          padding: '2px 4px', 
+                          cursor: i === 0 ? 'default' : 'pointer', 
+                          fontSize: '0.75rem',
+                          lineHeight: 1,
+                          minHeight: 'auto'
+                        }}
+                        aria-label="Spieler nach oben"
+                        title="Nach oben"
+                      >
+                        ▲
+                      </button>
+                      <button 
+                        type="button" 
+                        onClick={() => movePlayer(i, 'down')} 
+                        disabled={i >= playerCount - 1} 
+                        style={{ 
+                          background: 'transparent', 
+                          border: 'none', 
+                          color: i >= playerCount - 1 ? 'rgba(255,255,255,0.15)' : 'var(--text-dim)', 
+                          padding: '2px 4px', 
+                          cursor: i >= playerCount - 1 ? 'default' : 'pointer', 
+                          fontSize: '0.75rem',
+                          lineHeight: 1,
+                          minHeight: 'auto'
+                        }}
+                        aria-label="Spieler nach unten"
+                        title="Nach unten"
+                      >
+                        ▼
+                      </button>
+                    </div>
+
                     <div className="avatar-circle" style={{ 
                       width: '32px', 
                       height: '32px', 

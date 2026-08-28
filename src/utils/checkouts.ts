@@ -163,14 +163,29 @@ export const CHECKOUTS: Record<number, string> = {
   2: 'D1'
 };
 
+export const BOGEY_SETUPS: Record<number, string> = {
+  169: 'Setup: T20',
+  168: 'Setup: T20',
+  166: 'Setup: T20',
+  165: 'Setup: T20',
+  163: 'Setup: T20',
+  162: 'Setup: T20',
+  159: 'Setup: T20',
+};
+
 export function getCheckoutSuggestion(score: number, outMode: 'SO' | 'DO' | 'MO', dartsThrown: number = 0): string | null {
   if (score < 1 || score > 170) {
     return null;
   }
 
   // Handle score 1 specifically for Single Out mode
-  if (outMode === 'SO' && score === 1) {
-    return 'S1';
+  if (outMode === 'SO') {
+    if (score === 1) return 'S1';
+    if (score <= 20) return `S${score}`;
+    if (score === 25) return 'BULL';
+    if (score === 50) return 'DB';
+    if (score <= 40 && score % 2 === 0) return `D${score / 2}`;
+    if (score <= 60 && score % 3 === 0) return `T${score / 3}`;
   }
 
   // For DO or MO, 1 is impossible
@@ -179,13 +194,15 @@ export function getCheckoutSuggestion(score: number, outMode: 'SO' | 'DO' | 'MO'
   }
 
   const suggestion = CHECKOUTS[score];
-  if (!suggestion) return null;
+  if (!suggestion) {
+    if (dartsThrown === 0 && BOGEY_SETUPS[score]) {
+      return BOGEY_SETUPS[score];
+    }
+    return null;
+  }
 
   // Filter based on how many darts are remaining (3 - dartsThrown)
   const parts = suggestion.split(' ');
-  // If we have 2 darts left (dartsThrown = 1), and the suggestion needs 3 darts, return null
-  // Wait, the suggestion is always the optimal path from that score. 
-  // If score=100 and dartsThrown=1 (meaning we are on the 2nd dart), the path is "T20 D20". It has 2 parts. 2 darts left. It fits.
   if (parts.length > 3 - dartsThrown) {
     return null;
   }

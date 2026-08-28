@@ -471,7 +471,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
               <span className="dash-stat-detail">{selectedMode}</span>
             </div>
             <div className="dash-stat-card">
-              <span className="dash-stat-label">Average Score</span>
+                <span className="dash-stat-label">Average Score</span>
               <span className="dash-stat-value">{minigameAvgScore}</span>
               <span className="dash-stat-detail">Ø pro Spiel</span>
             </div>
@@ -479,9 +479,9 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
         )}
 
         {/* Average / Score Chart */}
-        {chartData.length > 0 && (
+        {chartData.length > 0 ? (
           <div className="dash-section">
-            <h3>{isMinigame ? 'Score-Verlauf' : 'Average-Verlauf'}</h3>
+            <h3>{isMinigame ? 'Punkte-Verlauf' : 'Average-Verlauf'}</h3>
             <div className="chart-container">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>
@@ -505,6 +505,12 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                 </LineChart>
               </ResponsiveContainer>
             </div>
+          </div>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '24px 16px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px dashed var(--card-border)', color: 'var(--text-dim)', margin: '15px 0' }}>
+            <div style={{ fontSize: '1.8rem', marginBottom: '6px' }}>🎯</div>
+            <div style={{ fontWeight: 700, color: 'var(--text)', fontSize: '0.95rem' }}>Noch keine Matches in diesem Modus</div>
+            <div style={{ fontSize: '0.82rem', marginTop: '4px' }}>Starte dein erstes Spiel, um deine Formkurve und Treffer aufzuzeichnen!</div>
           </div>
         )}
 

@@ -27,6 +27,26 @@ export const setSoundEnabled = (enabled: boolean) => {
   }
 };
 
+let cachedVoice: SpeechSynthesisVoice | null = null;
+
+const loadVoices = () => {
+  if (typeof window === 'undefined' || !window.speechSynthesis) return;
+  const voices = window.speechSynthesis.getVoices();
+  if (voices.length > 0) {
+    cachedVoice = voices.find(v => (v.lang === 'en-GB' || v.lang.startsWith('en')) && v.name.toLowerCase().includes('male')) 
+      || voices.find(v => v.lang === 'en-GB') 
+      || voices.find(v => v.lang.startsWith('en'))
+      || voices[0];
+  }
+};
+
+if (typeof window !== 'undefined' && window.speechSynthesis) {
+  loadVoices();
+  if (window.speechSynthesis.onvoiceschanged !== undefined) {
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+  }
+}
+
 export const getAudioCtx = () => {
   if (!soundEnabled) return null;
   if (!audioCtx) {
@@ -36,17 +56,15 @@ export const getAudioCtx = () => {
     }
   }
   if (audioCtx && audioCtx.state === 'suspended') {
-    // Versuche den Context aufzuwecken (Browser Policy)
-    audioCtx.resume();
+    audioCtx.resume().catch(() => {});
   }
   return audioCtx;
 };
 
 export const initAudio = () => {
   getAudioCtx();
+  loadVoices();
 };
-
-// --- Web Speech API (TTS) ---
 
 // --- Web Speech API (TTS Darts Caller) ---
 
@@ -54,22 +72,17 @@ export const speak = (text: string, isExcited = false) => {
   if (!soundEnabled || typeof window === 'undefined' || !window.speechSynthesis) return;
 
   try {
-    // Wir brechen laufende Ansagen ab, damit es sich nicht überschneidet
     window.speechSynthesis.cancel();
 
+    if (!cachedVoice) loadVoices();
+
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'en-GB'; // Britischer Darts Caller
-    utterance.rate = isExcited ? 1.15 : 1.05;
-    utterance.pitch = isExcited ? 1.25 : 1.05;
+    utterance.lang = 'en-GB';
+    utterance.rate = isExcited ? 1.12 : 1.02;
+    utterance.pitch = isExcited ? 1.2 : 1.0;
     
-    const voices = window.speechSynthesis.getVoices();
-    // Versuchen eine tiefe oder britische Stimme zu finden
-    const enVoice = voices.find(v => (v.lang === 'en-GB' || v.lang.startsWith('en')) && v.name.toLowerCase().includes('male')) 
-      || voices.find(v => v.lang === 'en-GB') 
-      || voices.find(v => v.lang.startsWith('en'));
-    
-    if (enVoice) {
-      utterance.voice = enVoice;
+    if (cachedVoice) {
+      utterance.voice = cachedVoice;
     }
 
     window.speechSynthesis.speak(utterance);
