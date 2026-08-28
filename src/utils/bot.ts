@@ -33,42 +33,41 @@ export const BOARD_NEIGHBORS: Record<number, [number, number]> = {
 export function throwAtTarget(
     aimBase: number, 
     aimMult: number, 
-    targetAverage: number
+    targetAverage: number,
+    currentScore?: number
 ): { base: number, mult: number } {
     // Normalized skill factor x between 0 (novice, avg ~20) and 1 (elite pro, avg ~110+)
     const x = Math.max(0, Math.min(1, (targetAverage - 20) / 95));
 
-    // Handle Bullseye target
+    // ── 1. Bullseye Target ──
     if (aimBase === 25) {
         if (aimMult === 2) {
             // Aiming for Double Bull (50)
-            const dbHitRate = Math.max(0.02, Math.min(0.42, 0.02 + 0.40 * Math.pow(x, 1.3)));
+            const dbHitRate = Math.max(0.06, Math.min(0.45, 0.06 + 0.39 * Math.pow(x, 1.2)));
             if (Math.random() < dbHitRate) {
                 return { base: 25, mult: 2 };
             }
             const roll = Math.random();
-            if (roll < 0.72) {
+            if (roll < 0.75) {
                 // Land in Single Bull
                 return { base: 25, mult: 1 };
-            } else if (roll < 0.95) {
-                // Scatter into a nearby random single segment (e.g. 1-20)
-                const randomBase = Math.floor(Math.random() * 20) + 1;
-                return { base: randomBase, mult: 1 };
+            } else if (roll < 0.92) {
+                // Low scatter single
+                return { base: Math.floor(Math.random() * 20) + 1, mult: 1 };
             } else {
                 return { base: 0, mult: 1 };
             }
         } else {
             // Aiming for Single Bull (25)
-            const sbHitRate = Math.max(0.10, Math.min(0.72, 0.10 + 0.62 * x));
-            const dbAccidentalRate = Math.max(0.01, Math.min(0.12, 0.01 + 0.11 * x));
+            const sbHitRate = Math.max(0.20, Math.min(0.78, 0.20 + 0.58 * x));
+            const dbAccidentalRate = Math.max(0.02, Math.min(0.12, 0.02 + 0.10 * x));
             const r = Math.random();
             if (r < sbHitRate) {
                 return { base: 25, mult: 1 };
             } else if (r < sbHitRate + dbAccidentalRate) {
                 return { base: 25, mult: 2 };
-            } else if (r < 0.96) {
-                const randomBase = Math.floor(Math.random() * 20) + 1;
-                return { base: randomBase, mult: 1 };
+            } else if (r < 0.94) {
+                return { base: Math.floor(Math.random() * 20) + 1, mult: 1 };
             } else {
                 return { base: 0, mult: 1 };
             }
@@ -79,58 +78,64 @@ export function throwAtTarget(
     const leftNeighbor = neighbors[0];
     const rightNeighbor = neighbors[1];
 
-    // Case 1: Aiming for a Triple (mult === 3)
-    if (aimMult === 3) {
-        const tripleHitRate = Math.max(0.02, Math.min(0.55, 0.02 + 0.53 * Math.pow(x, 1.35)));
-        const singleHitRate = Math.max(0.32, Math.min(0.68, 0.32 + 0.34 * x));
-        const roll = Math.random();
-
-        if (roll < tripleHitRate) {
-            return { base: aimBase, mult: 3 };
-        } else if (roll < tripleHitRate + singleHitRate) {
-            // Missed triple but stayed in the single section of the intended number
-            return { base: aimBase, mult: 1 };
-        } else {
-            // Drifted into neighbor
-            const neighborBase = Math.random() < 0.5 ? leftNeighbor : rightNeighbor;
-            const neighborRoll = Math.random();
-            if (neighborRoll < 0.88) {
-                return { base: neighborBase, mult: 1 };
-            } else if (neighborRoll < 0.94) {
-                return { base: neighborBase, mult: 3 }; // accidental neighbor triple
-            } else if (neighborRoll < 0.98) {
-                return { base: neighborBase, mult: 2 };
-            } else {
-                return { base: 0, mult: 1 }; // wire/bouncer
-            }
-        }
-    }
-
-    // Case 2: Aiming for a Double (mult === 2)
+    // ── 2. Aiming for a Double (Checkout) ──
     if (aimMult === 2) {
-        const doubleHitRate = Math.max(0.04, Math.min(0.52, 0.04 + 0.48 * Math.pow(x, 1.25)));
+        // Double hit rate: scales smoothly from 14% (beginner) to 52% (pro)
+        const doubleHitRate = Math.max(0.14, Math.min(0.52, 0.14 + 0.38 * Math.pow(x, 1.15)));
         if (Math.random() < doubleHitRate) {
             return { base: aimBase, mult: 2 };
         }
 
         const missRoll = Math.random();
-        if (missRoll < 0.55) {
-            // Miss inside into the single
+        // In real darts, most missed double attempts go outside (0) so the player stays on the double
+        if (missRoll < 0.72) {
+            return { base: 0, mult: 1 }; // Missed high/outside the wire -> 0 points, keeps the double alive
+        } else if (missRoll < 0.94) {
+            // Missed inside into the single bed
             return { base: aimBase, mult: 1 };
-        } else if (missRoll < 0.86) {
-            // Miss outside the board / wire
-            return { base: 0, mult: 1 };
         } else {
-            // Drift into neighbor double or single
+            // Glanced off into neighbor single
             const neighborBase = Math.random() < 0.5 ? leftNeighbor : rightNeighbor;
-            return { base: neighborBase, mult: Math.random() < 0.25 ? 2 : 1 };
+            return { base: neighborBase, mult: 1 };
         }
     }
 
-    // Case 3: Aiming for a Single (mult === 1)
-    const singleHitRate = Math.max(0.42, Math.min(0.96, 0.42 + 0.54 * Math.pow(x, 0.9)));
-    const accidentalTriple = Math.max(0.005, Math.min(0.06, 0.005 + 0.055 * x));
-    const accidentalDouble = Math.max(0.005, Math.min(0.04, 0.005 + 0.035 * x));
+    // ── 3. Aiming for a Triple ──
+    if (aimMult === 3) {
+        // Triple hit rate: scales with skill (low bots hit very few triples)
+        const tripleHitRate = Math.max(0.015, Math.min(0.52, 0.015 + 0.505 * Math.pow(x, 1.4)));
+        const singleHitRate = Math.max(0.40, Math.min(0.70, 0.40 + 0.30 * x));
+        const roll = Math.random();
+
+        if (roll < tripleHitRate) {
+            return { base: aimBase, mult: 3 };
+        } else if (roll < tripleHitRate + singleHitRate) {
+            // Staid in the large single bed of the number
+            return { base: aimBase, mult: 1 };
+        } else {
+            // Drifted into neighbor
+            const neighborBase = Math.random() < 0.5 ? leftNeighbor : rightNeighbor;
+            const neighborRoll = Math.random();
+            if (neighborRoll < 0.90) {
+                return { base: neighborBase, mult: 1 };
+            } else if (neighborRoll < 0.96) {
+                return { base: neighborBase, mult: 3 };
+            } else {
+                return { base: 0, mult: 1 };
+            }
+        }
+    }
+
+    // ── 4. Aiming for a Single (Scoring or Setup) ──
+    // If the remaining score is very low (e.g. <= 20) and we aim for a small single (e.g. S1 for score 5),
+    // we must avoid hitting large neighbor numbers like 20/18 which would cause an instant bust.
+    const isCriticalLowScore = (currentScore !== undefined && currentScore <= 20) || aimBase <= 5;
+    const singleHitRate = isCriticalLowScore
+        ? Math.max(0.65, Math.min(0.96, 0.65 + 0.31 * x))
+        : Math.max(0.45, Math.min(0.92, 0.45 + 0.47 * Math.pow(x, 0.85)));
+
+    const accidentalTriple = isCriticalLowScore ? 0.005 : Math.max(0.01, Math.min(0.05, 0.01 + 0.04 * x));
+    const accidentalDouble = isCriticalLowScore ? 0.01 : Math.max(0.01, Math.min(0.04, 0.01 + 0.03 * x));
     const roll = Math.random();
 
     if (roll < singleHitRate) {
@@ -140,9 +145,13 @@ export function throwAtTarget(
     } else if (roll < singleHitRate + accidentalTriple + accidentalDouble) {
         return { base: aimBase, mult: 2 };
     } else {
-        // Drift into neighbor
+        if (isCriticalLowScore) {
+            // Miss outside the wire safely to prevent infinite bust loops on scores like 3, 5, 7
+            return { base: 0, mult: 1 };
+        }
+        // Normal drift into neighbor single
         const neighborBase = Math.random() < 0.5 ? leftNeighbor : rightNeighbor;
-        return { base: neighborBase, mult: Math.random() < 0.08 ? 3 : (Math.random() < 0.12 ? 2 : 1) };
+        return { base: neighborBase, mult: 1 };
     }
 }
 
@@ -154,50 +163,43 @@ export function getBotDart(
     currentScore: number, 
     outMode: 'DO' | 'SO' | 'MO' = 'DO'
 ): { base: number, mult: number } {
-    // 1. Checkout Phase
+    // ── 1. Checkout Phase ──
     if (outMode === 'DO') {
         if (currentScore === 50) {
-            return throwAtTarget(25, 2, targetAverage);
+            return throwAtTarget(25, 2, targetAverage, currentScore);
         } else if (currentScore <= 40 && currentScore % 2 === 0 && currentScore >= 2) {
-            return throwAtTarget(currentScore / 2, 2, targetAverage);
+            return throwAtTarget(currentScore / 2, 2, targetAverage, currentScore);
         }
     } else if (outMode === 'MO') {
         if (currentScore === 50) {
-            return throwAtTarget(25, 2, targetAverage);
+            return throwAtTarget(25, 2, targetAverage, currentScore);
         } else if (currentScore <= 40 && currentScore % 2 === 0 && currentScore >= 2) {
-            return throwAtTarget(currentScore / 2, 2, targetAverage);
+            return throwAtTarget(currentScore / 2, 2, targetAverage, currentScore);
         } else if (currentScore <= 60 && currentScore % 3 === 0 && currentScore >= 3) {
-            return throwAtTarget(currentScore / 3, 3, targetAverage);
+            return throwAtTarget(currentScore / 3, 3, targetAverage, currentScore);
         }
     } else if (outMode === 'SO') {
         if (currentScore === 50) {
-            return throwAtTarget(25, 2, targetAverage);
+            return throwAtTarget(25, 2, targetAverage, currentScore);
         } else if (currentScore === 25) {
-            return throwAtTarget(25, 1, targetAverage);
+            return throwAtTarget(25, 1, targetAverage, currentScore);
         } else if (currentScore <= 20 && currentScore >= 1) {
-            return throwAtTarget(currentScore, 1, targetAverage);
+            return throwAtTarget(currentScore, 1, targetAverage, currentScore);
         } else if (currentScore <= 40 && currentScore % 2 === 0) {
-            return throwAtTarget(currentScore / 2, 2, targetAverage);
+            return throwAtTarget(currentScore / 2, 2, targetAverage, currentScore);
         } else if (currentScore <= 60 && currentScore % 3 === 0) {
-            return throwAtTarget(currentScore / 3, 3, targetAverage);
+            return throwAtTarget(currentScore / 3, 3, targetAverage, currentScore);
         } else if (currentScore <= 60) {
-            // Odd number between 21 and 59: aim for the biggest single to finish
             const aimSingle = Math.min(20, currentScore - 1);
-            return throwAtTarget(aimSingle, 1, targetAverage);
+            return throwAtTarget(aimSingle, 1, targetAverage, currentScore);
         }
     }
 
-    // 2. Setup Phase (currentScore <= 120 or odd finishes)
+    // ── 2. Setup Phase (currentScore <= 120 or odd finishes) ──
     if (currentScore <= 120) {
-        // Preferred clean leaves for Double Out
-        const preferredLeaves = outMode === 'SO'
-            ? [20, 18, 16, 10, 5, 40, 32, 24, 8, 4]
-            : (outMode === 'MO' ? [40, 32, 24, 16, 60, 57, 54, 8, 4] : [40, 32, 24, 16, 8, 4]);
-
-        // If score is odd and <= 40 in DO/MO, find odd single that leaves a top double
+        // If score is odd and <= 40 in DO/MO, find odd single that leaves a top double (D16, D8, D4, D2, D1)
         if (outMode !== 'SO' && currentScore <= 40 && currentScore % 2 !== 0) {
             const candidateSingles = [19, 17, 15, 13, 11, 9, 7, 5, 3, 1];
-            // Look for a single that leaves 32, 16, 8, 4, 2
             let chosenSingle = 1;
             for (const s of candidateSingles) {
                 const remainder = currentScore - s;
@@ -206,55 +208,63 @@ export function getBotDart(
                     if ([32, 16, 8, 4].includes(remainder)) break;
                 }
             }
-            return throwAtTarget(chosenSingle, 1, targetAverage);
+            return throwAtTarget(chosenSingle, 1, targetAverage, currentScore);
         }
 
-        // Check if we can aim directly to leave a preferred finish
+        // Preferred clean leaves for Double Out
+        const preferredLeaves = outMode === 'SO'
+            ? [20, 18, 16, 10, 5, 40, 32, 24, 8, 4]
+            : (outMode === 'MO' ? [40, 32, 24, 16, 60, 57, 54, 8, 4] : [40, 32, 24, 16, 8, 4]);
+
         for (const leave of preferredLeaves) {
             const needed = currentScore - leave;
             if (needed <= 0) continue;
 
-            // Single hit leaves the target
             if (needed <= 20) {
-                return throwAtTarget(needed, 1, targetAverage);
+                return throwAtTarget(needed, 1, targetAverage, currentScore);
             }
             if (needed === 25) {
-                return throwAtTarget(25, 1, targetAverage);
+                return throwAtTarget(25, 1, targetAverage, currentScore);
             }
 
-            // Triple hit leaves the target (for bots with targetAverage >= 55)
-            if (needed <= 60 && needed % 3 === 0 && targetAverage >= 55) {
-                return throwAtTarget(needed / 3, 3, targetAverage);
+            // Triple hit setup (only for bots with targetAverage >= 60)
+            if (needed <= 60 && needed % 3 === 0 && targetAverage >= 60) {
+                return throwAtTarget(needed / 3, 3, targetAverage, currentScore);
             }
 
-            // Double hit leaves the target (for bots with targetAverage >= 55)
-            if (needed <= 40 && needed % 2 === 0 && targetAverage >= 55) {
-                return throwAtTarget(needed / 2, 2, targetAverage);
+            // Double hit setup (only for bots with targetAverage >= 60)
+            if (needed <= 40 && needed % 2 === 0 && targetAverage >= 60) {
+                return throwAtTarget(needed / 2, 2, targetAverage, currentScore);
             }
         }
 
-        // Lower-skilled bots (< 55 avg) prefer safe single reductions over risky triples
+        // Lower-skilled bots (< 55 avg) aim for Single 20 or safe single reductions
         if (targetAverage < 55) {
             if (currentScore > 60) {
-                return throwAtTarget(20, 1, targetAverage);
+                return throwAtTarget(20, 1, targetAverage, currentScore);
             } else if (currentScore > 40) {
                 const targetSingle = Math.min(20, currentScore - 32);
-                return throwAtTarget(targetSingle > 0 ? targetSingle : 16, 1, targetAverage);
+                return throwAtTarget(targetSingle > 0 ? targetSingle : 16, 1, targetAverage, currentScore);
             }
         } else {
             // Higher skill setup: aim for best triple to set up a finish
             const targetTriple = Math.min(20, Math.round((currentScore - 40) / 3));
             if (targetTriple >= 10 && targetTriple <= 20) {
-                return throwAtTarget(targetTriple, 3, targetAverage);
+                return throwAtTarget(targetTriple, 3, targetAverage, currentScore);
             }
         }
     }
 
-    // 3. Normal Scoring Phase (currentScore > 120)
-    // Standard professional and recreational scoring target is T20 (or T19 when strategic)
-    if (currentScore === 128 || currentScore === 125 || currentScore === 122) {
-        return throwAtTarget(18, 3, targetAverage);
+    // ── 3. Normal Scoring Phase (currentScore > 120) ──
+    // Bots under 55 average aim at the BIG 20 (Single 20) bed, producing realistic 26, 41, 45, 60 scores
+    // Higher-skilled bots (>= 55) aim specifically at Triple 20.
+    if (targetAverage < 55) {
+        return throwAtTarget(20, 1, targetAverage, currentScore);
     }
 
-    return throwAtTarget(20, 3, targetAverage);
+    if (currentScore === 128 || currentScore === 125 || currentScore === 122) {
+        return throwAtTarget(18, 3, targetAverage, currentScore);
+    }
+
+    return throwAtTarget(20, 3, targetAverage, currentScore);
 }

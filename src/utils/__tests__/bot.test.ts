@@ -82,4 +82,54 @@ describe('Bot AI Dart Generation', () => {
       expect(BOARD_NEIGHBORS[i][1]).toBeLessThanOrEqual(20);
     }
   });
+
+  it('simulates complete 501 legs smoothly without getting stuck', () => {
+    const simulateLeg = (targetAvg: number) => {
+      let score = 501;
+      let darts = 0;
+      let turnDarts: { base: number, mult: number }[] = [];
+      let turnScore = 0;
+
+      while (score > 0 && darts < 150) {
+        darts++;
+        const dart = getBotDart(targetAvg, score - turnScore, 'DO');
+        const dartVal = dart.base * dart.mult;
+
+        if (score - turnScore - dartVal === 0 && dart.mult === 2) {
+          // Checked out!
+          score = 0;
+          break;
+        } else if (score - turnScore - dartVal < 2) {
+          // Bust!
+          turnDarts = [];
+          turnScore = 0;
+        } else {
+          turnScore += dartVal;
+          turnDarts.push(dart);
+          if (turnDarts.length === 3) {
+            score -= turnScore;
+            turnScore = 0;
+            turnDarts = [];
+          }
+        }
+      }
+      return { darts, finished: score === 0, avg: (501 / darts) * 3 };
+    };
+
+    // Simulate 20 legs for Avg 40 bot
+    const legs40 = Array.from({ length: 20 }, () => simulateLeg(40));
+    const finishedCount40 = legs40.filter(l => l.finished).length;
+    expect(finishedCount40).toBe(20); // All 20 legs must successfully finish
+
+    const avgDarts40 = legs40.reduce((acc, l) => acc + l.darts, 0) / 20;
+    // An avg 40 bot should finish legs in ~30-45 darts
+    expect(avgDarts40).toBeGreaterThanOrEqual(25);
+    expect(avgDarts40).toBeLessThanOrEqual(55);
+
+    // Simulate 20 legs for Avg 75 bot
+    const legs75 = Array.from({ length: 20 }, () => simulateLeg(75));
+    const avgDarts75 = legs75.reduce((acc, l) => acc + l.darts, 0) / 20;
+    // An avg 75 bot should finish legs faster (around 18-24 darts)
+    expect(avgDarts75).toBeLessThan(avgDarts40);
+  });
 });
