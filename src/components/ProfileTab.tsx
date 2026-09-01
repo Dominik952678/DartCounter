@@ -366,7 +366,16 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                 checked={theme === 'vaporwave'} 
                 onChange={() => setTheme('vaporwave')} 
               />
-              <span>🌆 Vaporwave Neon</span>
+              <span>🌆 Vaporwave</span>
+            </label>
+            <label className={theme === 'cyberpunk' ? 'active' : ''}>
+              <input 
+                type="radio" 
+                name="themeSelect" 
+                checked={theme === 'cyberpunk'} 
+                onChange={() => setTheme('cyberpunk')} 
+              />
+              <span>⚡ Cyberpunk</span>
             </label>
           </div>
         </div>
@@ -400,6 +409,47 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
               <div>
                 <strong style={{ display: 'block', fontSize: '0.9rem', color: 'var(--magenta, #FF00FF)' }}>🏎️ 3D Outrun Perspektiv-Grid</strong>
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>Animierter Neon-Gitter-Horizont</span>
+              </div>
+              <button 
+                type="button" 
+                onClick={toggleGridAnimation}
+                className={gridAnimation ? 'btn-primary' : 'btn-secondary'}
+                style={{ padding: '6px 14px', fontSize: '0.8rem', minHeight: '34px' }}
+              >
+                {gridAnimation ? 'Aktiviert' : 'Deaktiviert'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {theme === 'cyberpunk' && (
+          <div style={{ 
+            background: 'rgba(10, 10, 15, 0.6)', 
+            padding: '14px', 
+            border: '1px solid rgba(0, 255, 136, 0.3)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <strong style={{ display: 'block', fontSize: '0.9rem', color: '#00ff88' }}>📺 Terminal CRT Scanlines</strong>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>Subtiler Retro-Terminal-Overlay</span>
+              </div>
+              <button 
+                type="button" 
+                onClick={toggleScanlines}
+                className={scanlines ? 'btn-primary' : 'btn-secondary'}
+                style={{ padding: '6px 14px', fontSize: '0.8rem', minHeight: '34px' }}
+              >
+                {scanlines ? 'Aktiviert' : 'Deaktiviert'}
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <strong style={{ display: 'block', fontSize: '0.9rem', color: '#00d4ff' }}>⚡ Circuit Matrix Grid</strong>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>Tech-Hintergrund-Raster</span>
               </div>
               <button 
                 type="button" 

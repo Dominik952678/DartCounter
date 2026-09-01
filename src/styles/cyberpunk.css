@@ -1,0 +1,346 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   ⚡ CYBERPUNK / GLITCH DESIGN SYSTEM
+   "High-Tech, Low-Life — Digital dystopia colliding with high-tech noir."
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-theme="cyberpunk"] {
+  /* ── Backgrounds & Surfaces ── */
+  --bg: #0a0a0f;
+  --bg-surface: #12121a;
+  --card: rgba(18, 18, 26, 0.92);
+  --card-hover: rgba(28, 28, 46, 0.96);
+  --card-border: #2a2a3a;
+  --card-border-glow: rgba(0, 255, 136, 0.4);
+  --surface: rgba(0, 255, 136, 0.05);
+  --surface-hover: rgba(0, 255, 136, 0.12);
+
+  /* ── Typography & Text ── */
+  --text: #e0e0e0;
+  --text-dim: #9ca3af;
+  --text-muted: #6b7280;
+
+  /* ── Primary Neon (Matrix Electric Green) ── */
+  --primary: #00ff88;
+  --primary-glow: rgba(0, 255, 136, 0.45);
+  --primary-dark: #00cc6a;
+
+  /* ── Neon Accents ── */
+  --blue: #00d4ff;           /* Electric Cyan */
+  --blue-glow: rgba(0, 212, 255, 0.4);
+  --green: #00ff88;          /* Matrix Green */
+  --green-glow: rgba(0, 255, 136, 0.4);
+  --orange: #ff9900;         /* Sunset Hazard */
+  --orange-glow: rgba(255, 153, 0, 0.4);
+  --red: #ff3366;            /* Laser Red / Destructive */
+  --red-glow: rgba(255, 51, 102, 0.45);
+  --purple: #ff00ff;         /* Hot Magenta */
+  --purple-glow: rgba(255, 0, 255, 0.45);
+
+  /* ── Sharp Angular Geometry ── */
+  --radius-xs: 0px;
+  --radius-sm: 0px;
+  --radius: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+
+  /* ── Shadows & Glow Stacking ── */
+  --shadow-sm: 0 0 5px rgba(0, 255, 136, 0.2);
+  --shadow: 0 0 10px rgba(0, 255, 136, 0.35);
+  --shadow-md: 0 0 20px rgba(0, 255, 136, 0.3), 0 0 40px rgba(0, 255, 136, 0.15);
+  --shadow-lg: 0 0 25px rgba(0, 255, 136, 0.5), 0 0 50px rgba(255, 0, 255, 0.25);
+  --shadow-glow: 0 0 20px var(--primary-glow);
+
+  /* ── Authentic Typography ── */
+  --font: 'JetBrains Mono', 'Share Tech Mono', monospace, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-heading: 'Orbitron', 'Share Tech Mono', monospace, sans-serif;
+}
+
+/* ── Typography & Glitch Headers ── */
+[data-theme="cyberpunk"] h1,
+[data-theme="cyberpunk"] h2,
+[data-theme="cyberpunk"] h3,
+[data-theme="cyberpunk"] h4,
+[data-theme="cyberpunk"] .app-header h1,
+[data-theme="cyberpunk"] .card-header h2,
+[data-theme="cyberpunk"] .menu-header-title {
+  font-family: var(--font-heading);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-shadow: -1px 0 #ff00ff, 1px 0 #00d4ff;
+}
+
+[data-theme="cyberpunk"] .menu-header-title {
+  background: linear-gradient(135deg, #00ff88 0%, #00d4ff 50%, #ff00ff 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  filter: drop-shadow(0 0 8px rgba(0, 255, 136, 0.4));
+}
+
+/* ── Chamfered Corner Cuts (Industrial Cyber Geometry) ── */
+[data-theme="cyberpunk"] .card,
+[data-theme="cyberpunk"] .dash-section,
+[data-theme="cyberpunk"] .player-card,
+[data-theme="cyberpunk"] .modal-content,
+[data-theme="cyberpunk"] .distance-card,
+[data-theme="cyberpunk"] .hero-cta-tile,
+[data-theme="cyberpunk"] .secondary-tile,
+[data-theme="cyberpunk"] .training-chip,
+[data-theme="cyberpunk"] .menu-action-tile {
+  clip-path: polygon(
+    0 10px, 10px 0,
+    calc(100% - 10px) 0, 100% 10px,
+    100% calc(100% - 10px), calc(100% - 10px) 100%,
+    10px 100%, 0 calc(100% - 10px)
+  ) !important;
+  border-radius: 0 !important;
+  border: 1px solid var(--card-border) !important;
+}
+
+/* ── Cyber Buttons ── */
+[data-theme="cyberpunk"] button,
+[data-theme="cyberpunk"] .btn {
+  font-family: var(--font-mono) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.1em !important;
+  border-radius: 0 !important;
+  clip-path: polygon(
+    0 6px, 6px 0,
+    calc(100% - 6px) 0, 100% 6px,
+    100% calc(100% - 6px), calc(100% - 6px) 100%,
+    6px 100%, 0 calc(100% - 6px)
+  ) !important;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+[data-theme="cyberpunk"] .btn-primary,
+[data-theme="cyberpunk"] .btn-success {
+  background: #00ff88 !important;
+  color: #0a0a0f !important;
+  font-weight: 900 !important;
+  box-shadow: 0 0 15px rgba(0, 255, 136, 0.5), inset 0 0 8px rgba(255, 255, 255, 0.4) !important;
+  border: 1px solid #00ff88 !important;
+}
+
+[data-theme="cyberpunk"] .btn-primary:hover,
+[data-theme="cyberpunk"] .btn-success:hover {
+  background: #00ffaa !important;
+  box-shadow: 0 0 25px rgba(0, 255, 136, 0.8), inset 0 0 12px rgba(255, 255, 255, 0.6) !important;
+  transform: translateY(-2px) scale(1.02) !important;
+}
+
+[data-theme="cyberpunk"] .btn-secondary {
+  background: rgba(18, 18, 26, 0.9) !important;
+  border: 1px solid #ff00ff !important;
+  color: #ff00ff !important;
+  box-shadow: 0 0 10px rgba(255, 0, 255, 0.3) !important;
+}
+
+[data-theme="cyberpunk"] .btn-secondary:hover {
+  background: rgba(255, 0, 255, 0.15) !important;
+  box-shadow: 0 0 18px rgba(255, 0, 255, 0.6) !important;
+}
+
+[data-theme="cyberpunk"] .btn-danger {
+  background: #ff3366 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 15px rgba(255, 51, 102, 0.5) !important;
+  border: 1px solid #ff3366 !important;
+}
+
+/* ── Hero CTA (Cyber Command Center) ── */
+[data-theme="cyberpunk"] .hero-cta-tile {
+  background: linear-gradient(135deg, #00ff88 0%, #00cc6a 100%) !important;
+  color: #0a0a0f !important;
+  border: 1px solid #00ff88 !important;
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.3) !important;
+}
+
+[data-theme="cyberpunk"] .hero-cta-tile .hero-cta-title,
+[data-theme="cyberpunk"] .hero-cta-tile .hero-cta-desc,
+[data-theme="cyberpunk"] .hero-cta-tile .hero-cta-arrow {
+  color: #0a0a0f !important;
+  font-family: var(--font-heading) !important;
+}
+
+/* ── Keypad Buttons (Cyber Matrix Grid) ── */
+[data-theme="cyberpunk"] .num-btn {
+  border-radius: 0 !important;
+  clip-path: polygon(
+    0 4px, 4px 0,
+    calc(100% - 4px) 0, 100% 4px,
+    100% calc(100% - 4px), calc(100% - 4px) 100%,
+    4px 100%, 0 calc(100% - 4px)
+  ) !important;
+  background: rgba(18, 18, 26, 0.9) !important;
+  border: 1px solid rgba(0, 255, 136, 0.25) !important;
+  color: #00ff88 !important;
+  font-family: var(--font-mono) !important;
+}
+
+[data-theme="cyberpunk"] .num-btn:active {
+  background: #00ff88 !important;
+  color: #0a0a0f !important;
+  box-shadow: 0 0 16px #00ff88 !important;
+}
+
+[data-theme="cyberpunk"] .mod-active-double {
+  background: #ff9900 !important;
+  color: #0a0a0f !important;
+  box-shadow: 0 0 16px rgba(255, 153, 0, 0.7) !important;
+  border-color: #ff9900 !important;
+}
+
+[data-theme="cyberpunk"] .mod-active-triple {
+  background: #ff00ff !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 16px rgba(255, 0, 255, 0.8) !important;
+  border-color: #ff00ff !important;
+}
+
+/* ── Dart Round Display ── */
+[data-theme="cyberpunk"] .dart-box {
+  border-radius: 0 !important;
+  border: 1px dashed rgba(0, 255, 136, 0.3) !important;
+  font-family: var(--font-mono) !important;
+}
+
+[data-theme="cyberpunk"] .dart-filled {
+  border-style: solid !important;
+  border-color: #00ff88 !important;
+  background: rgba(0, 255, 136, 0.15) !important;
+  color: #00ff88 !important;
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.4) !important;
+}
+
+[data-theme="cyberpunk"] .round-total {
+  font-family: var(--font-heading) !important;
+  color: #00ff88 !important;
+  text-shadow: 0 0 10px rgba(0, 255, 136, 0.6) !important;
+}
+
+/* ── Scoreboard Active Player & Scores ── */
+[data-theme="cyberpunk"] .player-card.is-active {
+  border-left: 4px solid #00ff88 !important;
+  box-shadow: 0 0 25px rgba(0, 255, 136, 0.35), inset 0 0 15px rgba(0, 255, 136, 0.1) !important;
+  border-color: rgba(0, 255, 136, 0.4) !important;
+}
+
+[data-theme="cyberpunk"] .score-display {
+  font-family: var(--font-heading) !important;
+  letter-spacing: -0.04em !important;
+  text-shadow: -2px 0 rgba(255, 0, 255, 0.7), 2px 0 rgba(0, 212, 255, 0.7) !important;
+}
+
+[data-theme="cyberpunk"] .checkout-pill {
+  border-radius: 0 !important;
+  background: #00ff88 !important;
+  color: #0a0a0f !important;
+  font-family: var(--font-mono) !important;
+  font-weight: 900 !important;
+  box-shadow: 0 0 12px rgba(0, 255, 136, 0.6) !important;
+}
+
+/* ── Segment Controls ── */
+[data-theme="cyberpunk"] .segment-control,
+[data-theme="cyberpunk"] .radio-group {
+  border-radius: 0 !important;
+  border: 1px solid var(--card-border) !important;
+}
+
+[data-theme="cyberpunk"] .segment-control label,
+[data-theme="cyberpunk"] .radio-group label {
+  border-radius: 0 !important;
+  font-family: var(--font-mono) !important;
+}
+
+[data-theme="cyberpunk"] .segment-control label.active,
+[data-theme="cyberpunk"] .radio-group label:has(input:checked),
+[data-theme="cyberpunk"] .segment-control label:has(input:checked) {
+  background: #00ff88 !important;
+  color: #0a0a0f !important;
+  font-weight: 900 !important;
+  box-shadow: 0 0 12px rgba(0, 255, 136, 0.5) !important;
+}
+
+/* ── Bottom Navigation ── */
+[data-theme="cyberpunk"] .bottom-nav {
+  background: rgba(10, 10, 15, 0.95) !important;
+  border-top: 1px solid #00ff88 !important;
+  box-shadow: 0 -4px 20px rgba(0, 255, 136, 0.2) !important;
+  border-radius: 0 !important;
+}
+
+[data-theme="cyberpunk"] .nav-item.active {
+  background: rgba(0, 255, 136, 0.12) !important;
+  border: 1px solid rgba(0, 255, 136, 0.4) !important;
+  color: #00ff88 !important;
+}
+
+[data-theme="cyberpunk"] .nav-item.active .nav-icon {
+  filter: drop-shadow(0 0 6px #00ff88) !important;
+}
+
+/* ── Inputs: Terminal Styling ── */
+[data-theme="cyberpunk"] select,
+[data-theme="cyberpunk"] input[type='text'],
+[data-theme="cyberpunk"] input[type='number'],
+[data-theme="cyberpunk"] input[type='password'],
+[data-theme="cyberpunk"] input[type='email'] {
+  border-radius: 0 !important;
+  font-family: var(--font-mono) !important;
+  background: #12121a !important;
+  border: 1px solid var(--card-border) !important;
+  color: #00ff88 !important;
+}
+
+[data-theme="cyberpunk"] select:focus,
+[data-theme="cyberpunk"] input:focus {
+  border-color: #00ff88 !important;
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.4) !important;
+}
+
+/* ── Modals & Overlays ── */
+[data-theme="cyberpunk"] .modal-content {
+  border-top: 3px solid #00ff88 !important;
+  box-shadow: 0 0 30px rgba(0, 255, 136, 0.35), 0 0 60px rgba(255, 0, 255, 0.2) !important;
+}
+
+/* ── Background Overlays: Circuit Grid & CRT Scanlines ── */
+.cyberpunk-circuit-grid {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    linear-gradient(rgba(0, 255, 136, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 136, 0.035) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.cyberpunk-scanlines {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.28) 2px,
+    rgba(0, 0, 0, 0.28) 4px
+  );
+}
+
+/* ── Glitch Keyframes ── */
+@keyframes cyberGlitch {
+  0%, 100% { transform: translate(0); }
+  20% { transform: translate(-2px, 2px); }
+  40% { transform: translate(2px, -2px); }
+  60% { transform: translate(-1px, 1px); }
+  80% { transform: translate(1px, -1px); }
+}
+
+[data-theme="cyberpunk"] .animate-glitch {
+  animation: cyberGlitch 0.4s infinite;
+}

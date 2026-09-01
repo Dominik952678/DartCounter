@@ -19,6 +19,13 @@ describe('useThemeStore Theme System', () => {
     expect(document.documentElement.getAttribute('data-theme')).toBe('vaporwave');
   });
 
+  it('switches to cyberpunk theme and updates data-theme attribute', () => {
+    useThemeStore.getState().setTheme('cyberpunk');
+    expect(useThemeStore.getState().theme).toBe('cyberpunk');
+    expect(localStorage.getItem('dartcounter_theme')).toBe('cyberpunk');
+    expect(document.documentElement.getAttribute('data-theme')).toBe('cyberpunk');
+  });
+
   it('toggles scanlines and gridAnimation', () => {
     const initialScanlines = useThemeStore.getState().scanlines;
     useThemeStore.getState().toggleScanlines();

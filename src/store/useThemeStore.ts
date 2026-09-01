@@ -1,19 +1,21 @@
 import { create } from 'zustand';
 
-export type AppTheme = 'classic' | 'vaporwave';
+export type AppTheme = 'classic' | 'vaporwave' | 'cyberpunk';
 
 interface ThemeState {
   theme: AppTheme;
   scanlines: boolean;
   gridAnimation: boolean;
+  glitchEffects: boolean;
   setTheme: (theme: AppTheme) => void;
   toggleScanlines: () => void;
   toggleGridAnimation: () => void;
+  toggleGlitchEffects: () => void;
 }
 
 const getInitialTheme = (): AppTheme => {
   const saved = localStorage.getItem('dartcounter_theme');
-  if (saved === 'vaporwave' || saved === 'classic') return saved;
+  if (saved === 'vaporwave' || saved === 'cyberpunk' || saved === 'classic') return saved as AppTheme;
   return 'classic';
 };
 
@@ -27,6 +29,11 @@ const getInitialGrid = (): boolean => {
   return saved !== null ? saved === 'true' : true;
 };
 
+const getInitialGlitch = (): boolean => {
+  const saved = localStorage.getItem('dartcounter_glitch');
+  return saved !== null ? saved === 'true' : true;
+};
+
 // Initial sync with DOM
 if (typeof document !== 'undefined') {
   const initTheme = getInitialTheme();
@@ -37,6 +44,7 @@ export const useThemeStore = create<ThemeState>((set) => ({
   theme: getInitialTheme(),
   scanlines: getInitialScanlines(),
   gridAnimation: getInitialGrid(),
+  glitchEffects: getInitialGlitch(),
 
   setTheme: (theme: AppTheme) => {
     localStorage.setItem('dartcounter_theme', theme);
@@ -59,6 +67,14 @@ export const useThemeStore = create<ThemeState>((set) => ({
       const next = !state.gridAnimation;
       localStorage.setItem('dartcounter_grid', String(next));
       return { gridAnimation: next };
+    });
+  },
+
+  toggleGlitchEffects: () => {
+    set((state) => {
+      const next = !state.glitchEffects;
+      localStorage.setItem('dartcounter_glitch', String(next));
+      return { glitchEffects: next };
     });
   }
 }));

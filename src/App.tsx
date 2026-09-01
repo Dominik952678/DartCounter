@@ -379,6 +379,13 @@ export default function App() {
           {scanlines && <div className="crt-scanlines" />}
         </>
       )}
+
+      {theme === 'cyberpunk' && (
+        <>
+          {gridAnimation && <div className="cyberpunk-circuit-grid" />}
+          {scanlines && <div className="cyberpunk-scanlines" />}
+        </>
+      )}
     </div>
   );
 }
