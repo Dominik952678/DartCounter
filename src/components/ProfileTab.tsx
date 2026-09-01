@@ -445,7 +445,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
           }}
           title="Klicken zum Neuladen / Cache leeren"
         >
-          <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--green)', boxShadow: '0 0 8px var(--green)' }} />
+          <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--primary)', boxShadow: '0 0 8px var(--primary-glow)' }} />
           <span><strong>DartCounter Pro</strong> {APP_VERSION}</span>
           <span style={{ opacity: 0.4 }}>•</span>
           <span style={{ opacity: 0.75 }}>Build: {BUILD_TIME}</span>

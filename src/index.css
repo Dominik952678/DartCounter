@@ -1,31 +1,55 @@
 @import './styles/vaporwave.css';
 
 :root {
-  --bg: #09090b;
-  --bg-surface: #121215;
-  --card: rgba(22, 22, 26, 0.75);
-  --card-hover: rgba(28, 28, 34, 0.88);
-  --card-border: rgba(255, 255, 255, 0.08);
-  --card-border-glow: rgba(255, 255, 255, 0.18);
-  --surface: rgba(255, 255, 255, 0.04);
-  --surface-hover: rgba(255, 255, 255, 0.08);
-  --text: #ffffff;
-  --text-dim: rgba(255, 255, 255, 0.58);
-  --text-muted: rgba(255, 255, 255, 0.35);
-  --green: #00d26a;
-  --green-glow: rgba(0, 210, 106, 0.25);
-  --blue: #0a84ff;
-  --blue-glow: rgba(10, 132, 255, 0.25);
-  --orange: #ff9f0a;
-  --orange-glow: rgba(255, 159, 10, 0.25);
-  --red: #ff453a;
-  --red-glow: rgba(255, 69, 58, 0.25);
-  --purple: #5e5ce6;
-  --purple-glow: rgba(94, 92, 230, 0.25);
+  /* ── Tungsten Precision: Backgrounds & Surfaces ── */
+  --bg: #0B1120;
+  --bg-surface: #111827;
+  --card: rgba(15, 23, 42, 0.82);
+  --card-hover: rgba(30, 41, 59, 0.92);
+  --card-border: rgba(148, 163, 184, 0.12);
+  --card-border-glow: rgba(251, 191, 36, 0.3);
+  --surface: rgba(148, 163, 184, 0.06);
+  --surface-hover: rgba(148, 163, 184, 0.12);
+
+  /* ── Text Hierarchy ── */
+  --text: #F1F5F9;
+  --text-dim: #94A3B8;
+  --text-muted: #64748B;
+
+  /* ── Primary Accent (Amber/Gold) ── */
+  --primary: #F59E0B;
+  --primary-glow: rgba(245, 158, 11, 0.3);
+  --primary-dark: #D97706;
+
+  /* ── Semantic Colors ── */
+  --green: #10B981;
+  --green-glow: rgba(16, 185, 129, 0.25);
+  --blue: #3B82F6;
+  --blue-glow: rgba(59, 130, 246, 0.25);
+  --orange: #F97316;
+  --orange-glow: rgba(249, 115, 22, 0.25);
+  --red: #EF4444;
+  --red-glow: rgba(239, 68, 68, 0.25);
+  --purple: #8B5CF6;
+  --purple-glow: rgba(139, 92, 246, 0.25);
+
+  /* ── Border Radius System ── */
+  --radius-xs: 6px;
   --radius-sm: 10px;
-  --radius: 16px;
-  --radius-lg: 22px;
-  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Inter', system-ui, sans-serif;
+  --radius: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+
+  /* ── Elevation / Shadow System ── */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.6);
+  --shadow-glow: 0 0 20px var(--primary-glow);
+
+  /* ── Typography ── */
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
 }
 
 *, *::before, *::after { 
@@ -50,13 +74,13 @@ body {
 }
 
 h1, h2, h3, h4 { 
-  font-weight: 700; 
-  letter-spacing: -0.025em; 
+  font-weight: 800; 
+  letter-spacing: -0.03em; 
   margin: 0; 
 }
 h1 { font-size: 1.85em; }
 h2 { font-size: 1.35em; }
-h3 { font-size: 1.05em; color: var(--text-dim); }
+h3 { font-size: 1.05em; color: var(--text-dim); font-weight: 600; }
 
 /* ── App Container & Device Scalability ─────────────────────── */
 .app-container { 
@@ -122,7 +146,7 @@ h3 { font-size: 1.05em; color: var(--text-dim); }
   border-radius: var(--radius);
   padding: 20px;
   margin-bottom: 16px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  box-shadow: var(--shadow-md);
   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
 }
 
@@ -278,9 +302,9 @@ select:focus, input:focus {
 }
 
 .stepper-btn:hover:not(:disabled) {
-  background: var(--blue);
-  color: #fff;
-  border-color: var(--blue);
+  background: var(--primary);
+  color: #000;
+  border-color: var(--primary);
 }
 
 .stepper-btn:active:not(:disabled) {
@@ -361,11 +385,11 @@ select:focus, input:focus {
 .segment-control label.active,
 .radio-group label:has(input:checked),
 .segment-control label:has(input:checked) {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.06));
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.06));
   color: var(--text);
   font-weight: 700;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  box-shadow: var(--shadow);
 }
 .segment-control span { pointer-events: none; }
 
@@ -375,13 +399,13 @@ button, .btn {
   align-items: center;
   justify-content: center;
   padding: 14px 20px;
-  border-radius: 14px;
+  border-radius: var(--radius-sm);
   font-weight: 700;
   font-size: 1em;
   font-family: inherit;
   border: none;
   cursor: pointer;
-  transition: transform 0.15s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.15s ease, background-color 0.15s, opacity 0.15s;
+  transition: transform 0.1s ease-out, box-shadow 0.15s ease, background-color 0.15s, opacity 0.15s;
   color: white;
   background: var(--surface);
   min-height: 48px;
@@ -392,43 +416,45 @@ button:active, .btn:active {
   opacity: 0.9; 
 }
 .btn-primary { 
-  background: linear-gradient(135deg, #0a84ff, #0066cc); 
-  box-shadow: 0 4px 16px rgba(10, 132, 255, 0.3);
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark)); 
+  color: #000;
+  font-weight: 800;
+  box-shadow: 0 4px 16px var(--primary-glow);
 }
 .btn-primary:hover {
-  box-shadow: 0 6px 20px rgba(10, 132, 255, 0.4);
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
 }
 .btn-secondary { 
-  background: rgba(255, 255, 255, 0.06); 
+  background: var(--surface); 
   border: 1px solid var(--card-border);
   color: var(--text); 
 }
 .btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.09);
-  border-color: rgba(255, 255, 255, 0.14);
+  background: var(--surface-hover);
+  border-color: rgba(148, 163, 184, 0.2);
 }
 .btn-success { 
-  background: linear-gradient(135deg, #00d26a, #00a854); 
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark)); 
   color: #000; 
   width: 100%; 
   font-weight: 800; 
-  box-shadow: 0 4px 16px rgba(0, 210, 106, 0.3);
+  box-shadow: 0 4px 16px var(--primary-glow);
 }
 .btn-success:hover {
-  box-shadow: 0 6px 20px rgba(0, 210, 106, 0.4);
+  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
 }
 .btn-danger { 
-  background: linear-gradient(135deg, #ff453a, #d62d22); 
-  box-shadow: 0 4px 16px rgba(255, 69, 58, 0.3);
+  background: linear-gradient(135deg, var(--red), #DC2626); 
+  box-shadow: 0 4px 16px var(--red-glow);
 }
 .btn-warning { 
-  background: linear-gradient(135deg, #ff9f0a, #d48204); 
+  background: linear-gradient(135deg, var(--orange), #EA580C); 
   color: #000; 
   width: 100%; 
-  box-shadow: 0 4px 16px rgba(255, 159, 10, 0.3);
+  box-shadow: 0 4px 16px var(--orange-glow);
 }
 .btn-abort { 
-  background: rgba(255, 255, 255, 0.05); 
+  background: var(--surface); 
   color: var(--text-dim); 
   border: 1px solid var(--card-border);
 }
@@ -440,17 +466,17 @@ button:active, .btn:active {
 }
 .btn-ghost:hover {
   color: var(--text);
-  border-color: rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(148, 163, 184, 0.2);
+  background: var(--surface);
 }
 .btn-large { 
   padding: 16px 20px; 
   font-size: 1.15em; 
-  border-radius: 16px; 
+  border-radius: var(--radius); 
   min-height: 54px;
 }
 .btn-close { 
-  background: rgba(255, 255, 255, 0.08); 
+  background: var(--surface); 
   width: 38px; 
   height: 38px; 
   border-radius: 50%; 
@@ -464,7 +490,7 @@ button:active, .btn:active {
   color: var(--red); 
   width: 100%; 
   margin-top: 24px; 
-  border: 1px solid rgba(255, 69, 58, 0.25); 
+  border: 1px solid var(--red-glow); 
   font-size: 0.9em; 
 }
 
@@ -508,9 +534,9 @@ button:active, .btn:active {
 }
 .player.active {
   opacity: 1;
-  border-color: rgba(0, 210, 106, 0.5);
-  box-shadow: 0 8px 24px rgba(0, 210, 106, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  background: rgba(26, 26, 32, 0.95);
+  border-color: rgba(245, 158, 11, 0.5);
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  background: rgba(15, 23, 42, 0.95);
 }
 .player-name { 
   font-size: 1.1em; 
@@ -550,9 +576,9 @@ button:active, .btn:active {
   font-weight: 700; 
 }
 .badge-legs { 
-  background: rgba(94, 92, 230, 0.25); 
-  border-color: rgba(94, 92, 230, 0.4);
-  color: #c7c5ff;
+  background: rgba(139, 92, 246, 0.2); 
+  border-color: rgba(139, 92, 246, 0.35);
+  color: #c4b5fd;
 }
 
 /* ── Match Top Header & Navigation Actions ── */
@@ -562,10 +588,10 @@ button:active, .btn:active {
   align-items: center;
   padding: 6px 12px;
   margin-bottom: 8px;
-  background: rgba(22, 22, 26, 0.75);
+  background: var(--card);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border-radius: 12px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--card-border);
   gap: 8px;
 }
@@ -589,9 +615,9 @@ button:active, .btn:active {
   user-select: none;
 }
 .btn-sound-on {
-  background: rgba(0, 210, 106, 0.15);
-  border: 1px solid rgba(0, 210, 106, 0.3);
-  color: var(--green);
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: var(--primary);
 }
 .btn-sound-off {
   background: rgba(255, 255, 255, 0.06);
@@ -672,31 +698,35 @@ button:active, .btn:active {
   display: flex; 
   align-items: center; 
   justify-content: center; 
-  background: rgba(255, 255, 255, 0.04); 
-  border: 2px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px; 
+  background: transparent; 
+  border: 2px dashed rgba(148, 163, 184, 0.15);
+  border-radius: var(--radius-sm); 
   font-size: 1.1em; 
   font-weight: 800;
   transition: all 0.15s ease;
 }
 .dart-filled { 
-  border-color: rgba(255, 255, 255, 0.3); 
-  background: rgba(255, 255, 255, 0.08); 
+  border-color: rgba(241, 245, 249, 0.3); 
+  border-style: solid;
+  background: rgba(241, 245, 249, 0.08); 
 }
 .dart-double { 
   border-color: var(--orange) !important; 
+  border-style: solid !important;
   color: var(--orange); 
   box-shadow: 0 0 10px var(--orange-glow);
 }
 .dart-triple { 
   border-color: var(--red) !important; 
+  border-style: solid !important;
   color: var(--red); 
   box-shadow: 0 0 10px var(--red-glow);
 }
 .round-total { 
   font-size: 1.6em; 
   font-weight: 900; 
-  color: var(--green); 
+  font-family: var(--font-mono);
+  color: var(--text); 
   margin-left: 8px; 
   min-width: 52px; 
   text-align: center; 
@@ -710,9 +740,9 @@ button:active, .btn:active {
   flex-shrink: 0;
 }
 .mod-btn { 
-  background: rgba(255, 255, 255, 0.06); 
+  background: var(--surface); 
   color: var(--text-dim); 
-  border-radius: 12px; 
+  border-radius: var(--radius-sm); 
   padding: 10px 4px; 
   font-weight: 800; 
   font-size: 0.95em; 
@@ -723,13 +753,15 @@ button:active, .btn:active {
   background: var(--orange) !important; 
   color: #000 !important; 
   box-shadow: 0 0 14px var(--orange-glow);
+  border-color: var(--orange) !important;
 }
 .mod-active-triple { 
   background: var(--red) !important; 
   color: #fff !important; 
   box-shadow: 0 0 14px var(--red-glow);
+  border-color: var(--red) !important;
 }
-.mod-special { background: rgba(255, 255, 255, 0.08); color: var(--text); }
+.mod-special { background: var(--surface-hover); color: var(--text); }
 .mod-miss { color: var(--red); }
 
 .numpad-grid { 
@@ -741,9 +773,9 @@ button:active, .btn:active {
   min-height: 0;
 }
 .num-btn { 
-  background: rgba(255, 255, 255, 0.06); 
+  background: var(--surface); 
   border: 1px solid var(--card-border);
-  border-radius: 12px; 
+  border-radius: var(--radius-sm); 
   height: 100%;
   min-height: 0;
   font-size: clamp(1.2rem, 5.5vw, 1.55rem); 
@@ -755,7 +787,8 @@ button:active, .btn:active {
   justify-content: center;
 }
 .num-btn:active { 
-  background: rgba(255, 255, 255, 0.2); 
+  background: rgba(245, 158, 11, 0.2); 
+  border-color: rgba(245, 158, 11, 0.4);
   transform: scale(0.94);
 }
 
@@ -763,9 +796,9 @@ button:active, .btn:active {
 .modal-overlay, .modal {
   position: fixed; 
   inset: 0;
-  background: rgba(0, 0, 0, 0.88);
-  backdrop-filter: blur(24px); 
-  -webkit-backdrop-filter: blur(24px);
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(20px); 
+  -webkit-backdrop-filter: blur(20px);
   z-index: 1000;
   display: flex; 
   align-items: center; 
@@ -773,16 +806,17 @@ button:active, .btn:active {
   padding: 16px;
 }
 .modal-content {
-  background: #141418;
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: var(--bg-surface);
+  border: 1px solid var(--card-border);
+  border-top: 3px solid var(--primary);
   border-radius: var(--radius-lg);
   padding: 26px 22px;
   width: 100%; 
   max-width: 480px;
   max-height: 90vh; 
   overflow-y: auto;
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.95);
-  color: #ffffff;
+  box-shadow: var(--shadow-lg);
+  color: var(--text);
 }
 
 /* ── Universal Landscape & Desktop 2-Column Split Screen ── */
@@ -966,7 +1000,7 @@ button:active, .btn:active {
   }
   .game-screen-right .keypad {
     padding: 16px;
-    background: rgba(28, 28, 30, 0.7);
+    background: var(--card);
     border-radius: var(--radius);
     border: 1px solid var(--card-border);
     backdrop-filter: blur(20px);
@@ -1001,7 +1035,7 @@ button:active, .btn:active {
   }
 }
 
-/* ── Bottom Navigation (Floating on iPad / Edge-to-Edge on iPhone) ── */
+/* ── Bottom Navigation (Floating Dock) ── */
 .bottom-nav {
   position: fixed;
   bottom: 0;
@@ -1010,12 +1044,12 @@ button:active, .btn:active {
   width: 100%;
   max-width: 600px;
   margin: 0 auto;
-  background: rgba(18, 18, 22, 0.88);
+  background: rgba(11, 17, 32, 0.92);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   display: flex;
   justify-content: space-around;
-  padding: 10px 12px calc(10px + env(safe-area-inset-bottom)) 12px;
+  padding: 8px 16px calc(8px + env(safe-area-inset-bottom)) 16px;
   border-top: 1px solid var(--card-border);
   z-index: 1000;
 }
@@ -1023,9 +1057,9 @@ button:active, .btn:active {
 @media (min-width: 601px) {
   .bottom-nav {
     bottom: 12px;
-    border-radius: 20px;
+    border-radius: var(--radius-lg);
     border: 1px solid var(--card-border);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    box-shadow: var(--shadow-md);
     padding: 8px 12px;
   }
 }
@@ -1033,7 +1067,7 @@ button:active, .btn:active {
 .nav-item {
   background: transparent;
   border: none;
-  color: var(--text-dim);
+  color: var(--text-muted);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1041,23 +1075,23 @@ button:active, .btn:active {
   font-size: 0.75em;
   font-weight: 700;
   padding: 8px 18px;
-  border-radius: 12px;
+  border-radius: var(--radius-sm);
   transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
   cursor: pointer;
   min-height: auto;
+  position: relative;
 }
 
 .nav-item .nav-icon {
   font-size: 1.45em;
-  filter: grayscale(100%) opacity(0.65);
+  filter: grayscale(100%) opacity(0.5);
   transition: all 0.2s ease;
 }
 
 .nav-item.active {
   color: var(--text);
-  background: linear-gradient(135deg, rgba(10, 132, 255, 0.18), rgba(0, 210, 106, 0.12));
-  border: 1px solid rgba(10, 132, 255, 0.3);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.25);
 }
 
 .nav-item.active .nav-icon {
@@ -1318,9 +1352,9 @@ button:active, .btn:active {
   .bottom-nav {
     max-width: 480px;
     bottom: 20px;
-    border-radius: 24px;
+    border-radius: var(--radius-lg);
     border: 1px solid var(--card-border-glow);
-    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.5);
+    box-shadow: var(--shadow-md);
     padding: 8px 16px;
   }
   .scoreboard { 

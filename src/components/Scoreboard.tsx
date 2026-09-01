@@ -86,7 +86,7 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          background: 'rgba(20, 20, 26, 0.95)',
+          background: 'rgba(15, 23, 42, 0.95)',
           padding: '8px 12px',
           borderRadius: '10px',
           border: '1px solid rgba(255, 255, 255, 0.12)',
@@ -100,9 +100,9 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
               width: '10px',
               height: '10px',
               borderRadius: '50%',
-              background: 'var(--blue, #0a84ff)'
+              background: 'var(--blue, #3B82F6)'
             }} />
-            <strong style={{ color: 'var(--blue, #0a84ff)' }}>Team 1:</strong>
+            <strong style={{ color: 'var(--blue, #3B82F6)' }}>Team 1:</strong>
             <span style={{ fontWeight: 800, color: '#fff' }}>{t1Total} Pkt</span>
             {t1JustUnlocked ? (
               <span className="lock-badge-bar unlocking" style={{ padding: '2px 8px', fontSize: '0.72rem', margin: 0 }}>
@@ -182,9 +182,9 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
               width: '10px',
               height: '10px',
               borderRadius: '50%',
-              background: 'var(--orange, #ff9f0a)'
+              background: 'var(--orange, #F97316)'
             }} />
-            <strong style={{ color: 'var(--orange, #ff9f0a)' }}>Team 2:</strong>
+            <strong style={{ color: 'var(--orange, #F97316)' }}>Team 2:</strong>
             <span style={{ fontWeight: 800, color: '#fff' }}>{t2Total} Pkt</span>
             {t2JustUnlocked ? (
               <span className="lock-badge-bar unlocking" style={{ padding: '2px 8px', fontSize: '0.72rem', margin: 0 }}>

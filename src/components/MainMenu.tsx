@@ -25,7 +25,7 @@ export const MainMenu: React.FC = () => {
           transform: translateX(-50%);
           width: min(500px, 90vw);
           height: 350px;
-          background: radial-gradient(circle, rgba(0, 210, 106, 0.12) 0%, rgba(10, 132, 255, 0.08) 50%, transparent 70%);
+          background: radial-gradient(circle, rgba(245, 158, 11, 0.1) 0%, rgba(59, 130, 246, 0.06) 50%, transparent 70%);
           pointer-events: none;
           z-index: 0;
         }
@@ -66,8 +66,8 @@ export const MainMenu: React.FC = () => {
           width: clamp(44px, 6vh, 60px);
           height: clamp(44px, 6vh, 60px);
           border-radius: clamp(12px, 1.8vh, 18px);
-          background: linear-gradient(135deg, rgba(0, 210, 106, 0.2), rgba(10, 132, 255, 0.2));
-          border: 1px solid rgba(255, 255, 255, 0.1);
+          background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(59, 130, 246, 0.15));
+          border: 1px solid rgba(245, 158, 11, 0.2);
           box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
           margin-bottom: clamp(4px, 0.8vh, 10px);
           font-size: clamp(1.4rem, 2.4vh, 1.9rem);
@@ -77,7 +77,7 @@ export const MainMenu: React.FC = () => {
           font-size: clamp(1.7rem, 3vh, 2.3rem);
           font-weight: 900;
           letter-spacing: -0.03em;
-          background: linear-gradient(135deg, var(--green), var(--blue));
+          background: linear-gradient(135deg, var(--primary), #FBBF24);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           margin: 0;
@@ -211,39 +211,39 @@ export const MainMenu: React.FC = () => {
         }
 
         .tile-offline {
-          background: linear-gradient(135deg, rgba(0, 210, 106, 0.12), rgba(0, 210, 106, 0.02)), var(--card);
-          border-color: rgba(0, 210, 106, 0.35);
+          background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(245, 158, 11, 0.02)), var(--card);
+          border-color: rgba(245, 158, 11, 0.35);
         }
         .tile-offline:hover {
-          border-color: var(--green);
-          box-shadow: 0 8px 24px rgba(0, 210, 106, 0.15);
+          border-color: var(--primary);
+          box-shadow: 0 8px 24px rgba(245, 158, 11, 0.15);
         }
 
         .tile-online {
-          background: linear-gradient(135deg, rgba(10, 132, 255, 0.12), rgba(10, 132, 255, 0.02)), var(--card);
-          border-color: rgba(10, 132, 255, 0.35);
+          background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(59, 130, 246, 0.02)), var(--card);
+          border-color: rgba(59, 130, 246, 0.35);
         }
         .tile-online:hover {
           border-color: var(--blue);
-          box-shadow: 0 8px 24px rgba(10, 132, 255, 0.15);
+          box-shadow: 0 8px 24px rgba(59, 130, 246, 0.15);
         }
 
         .tile-stats {
-          background: linear-gradient(135deg, rgba(255, 159, 10, 0.12), rgba(255, 159, 10, 0.02)), var(--card);
-          border-color: rgba(255, 159, 10, 0.35);
+          background: linear-gradient(135deg, rgba(249, 115, 22, 0.12), rgba(249, 115, 22, 0.02)), var(--card);
+          border-color: rgba(249, 115, 22, 0.35);
         }
         .tile-stats:hover {
           border-color: var(--orange);
-          box-shadow: 0 8px 24px rgba(255, 159, 10, 0.15);
+          box-shadow: 0 8px 24px rgba(249, 115, 22, 0.15);
         }
 
         .tile-auth {
-          background: linear-gradient(135deg, rgba(94, 92, 230, 0.12), rgba(94, 92, 230, 0.02)), var(--card);
-          border-color: rgba(94, 92, 230, 0.35);
+          background: linear-gradient(135deg, rgba(139, 92, 246, 0.12), rgba(139, 92, 246, 0.02)), var(--card);
+          border-color: rgba(139, 92, 246, 0.35);
         }
         .tile-auth:hover {
           border-color: var(--purple);
-          box-shadow: 0 8px 24px rgba(94, 92, 230, 0.15);
+          box-shadow: 0 8px 24px rgba(139, 92, 246, 0.15);
         }
 
         .menu-training-container {
@@ -519,13 +519,13 @@ export const MainMenu: React.FC = () => {
                       width: '8px', 
                       height: '8px', 
                       borderRadius: '50%', 
-                      backgroundColor: user ? 'var(--green)' : 'var(--orange)',
-                      boxShadow: user ? '0 0 8px var(--green)' : '0 0 8px var(--orange)',
+                      backgroundColor: user ? 'var(--primary)' : 'var(--text-muted)',
+                      boxShadow: user ? '0 0 8px var(--primary-glow)' : 'none',
                       flexShrink: 0
                     }} />
                     <span className="menu-status-text">
                       {user ? (
-                        <>Eingeloggt als <strong style={{ color: 'var(--blue)' }}>{user.user_metadata?.username || user.email}</strong></>
+                        <>Eingeloggt als <strong style={{ color: 'var(--primary)' }}>{user.user_metadata?.username || user.email}</strong></>
                       ) : (
                         <span style={{ color: 'var(--text-dim)' }}>Modus: <strong style={{ color: 'var(--text)' }}>Gast</strong></span>
                       )}
@@ -543,7 +543,7 @@ export const MainMenu: React.FC = () => {
                     <button 
                       onClick={() => navigate('/auth')}
                       className="menu-status-btn"
-                      style={{ background: 'rgba(10, 132, 255, 0.15)', border: '1px solid rgba(10, 132, 255, 0.3)', color: 'var(--blue)' }}
+                      style={{ background: 'rgba(59, 130, 246, 0.15)', border: '1px solid rgba(59, 130, 246, 0.3)', color: 'var(--blue)' }}
                     >
                       Login / Registrieren
                     </button>
@@ -587,7 +587,7 @@ export const MainMenu: React.FC = () => {
               {/* Offline Match */}
               <div className="menu-action-tile tile-offline" onClick={() => navigate('/offline')}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(10px, 1.8vw, 16px)', minWidth: 0 }}>
-                  <div className="tile-icon" style={{ background: 'rgba(0, 210, 106, 0.15)' }}>
+                  <div className="tile-icon" style={{ background: 'rgba(245, 158, 11, 0.15)' }}>
                     🎯
                   </div>
                   <div style={{ minWidth: 0 }}>
@@ -599,7 +599,7 @@ export const MainMenu: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                <div className="tile-arrow" style={{ color: 'var(--green)' }}>
+                <div className="tile-arrow" style={{ color: 'var(--primary)' }}>
                   ➔
                 </div>
               </div>
@@ -607,7 +607,7 @@ export const MainMenu: React.FC = () => {
               {/* Online Multiplayer */}
               <div className="menu-action-tile tile-online" onClick={handleOnlineClick}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(10px, 1.8vw, 16px)', minWidth: 0 }}>
-                  <div className="tile-icon" style={{ background: 'rgba(10, 132, 255, 0.15)' }}>
+                  <div className="tile-icon" style={{ background: 'rgba(59, 130, 246, 0.15)' }}>
                     🌍
                   </div>
                   <div style={{ minWidth: 0 }}>
@@ -628,7 +628,7 @@ export const MainMenu: React.FC = () => {
               {user ? (
                 <div className="menu-action-tile tile-stats" onClick={() => navigate('/stats')}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(10px, 1.8vw, 16px)', minWidth: 0 }}>
-                    <div className="tile-icon" style={{ background: 'rgba(255, 159, 10, 0.15)' }}>
+                    <div className="tile-icon" style={{ background: 'rgba(249, 115, 22, 0.15)' }}>
                       📊
                     </div>
                     <div style={{ minWidth: 0 }}>
@@ -647,7 +647,7 @@ export const MainMenu: React.FC = () => {
               ) : (
                 <div className="menu-action-tile tile-auth" onClick={() => navigate('/auth')}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(10px, 1.8vw, 16px)', minWidth: 0 }}>
-                    <div className="tile-icon" style={{ background: 'rgba(94, 92, 230, 0.15)' }}>
+                    <div className="tile-icon" style={{ background: 'rgba(139, 92, 246, 0.15)' }}>
                       🔑
                     </div>
                     <div style={{ minWidth: 0 }}>
@@ -696,8 +696,8 @@ export const MainMenu: React.FC = () => {
               width: '6px', 
               height: '6px', 
               borderRadius: '50%', 
-              backgroundColor: 'var(--green)', 
-              boxShadow: '0 0 6px var(--green)' 
+              backgroundColor: 'var(--primary)', 
+              boxShadow: '0 0 6px var(--primary-glow)' 
             }} />
             <span>DartCounter {APP_VERSION}</span>
             <span style={{ opacity: 0.4 }}>•</span>
