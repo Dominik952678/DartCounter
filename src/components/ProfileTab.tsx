@@ -70,7 +70,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
           transform: 'translateX(-50%)',
           width: '500px',
           height: '300px',
-          background: 'radial-gradient(circle, rgba(94, 92, 230, 0.12) 0%, rgba(10, 132, 255, 0.06) 50%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, rgba(59, 130, 246, 0.06) 50%, transparent 70%)',
           pointerEvents: 'none',
           zIndex: 0
         }} />
@@ -146,7 +146,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
           transform: 'translateX(-50%)',
           width: '500px',
           height: '300px',
-          background: 'radial-gradient(circle, rgba(10, 132, 255, 0.12) 0%, rgba(94, 92, 230, 0.06) 50%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(245, 158, 11, 0.1) 0%, rgba(59, 130, 246, 0.06) 50%, transparent 70%)',
           pointerEvents: 'none',
           zIndex: 0
         }} />
@@ -179,7 +179,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
           transform: translateX(-50%);
           width: 500px;
           height: 300px;
-          background: radial-gradient(circle, rgba(94, 92, 230, 0.12) 0%, rgba(10, 132, 255, 0.06) 50%, transparent 70%);
+          background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, rgba(59, 130, 246, 0.06) 50%, transparent 70%);
           pointer-events: none;
           z-index: 0;
         }
@@ -201,8 +201,8 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
 
       {!user && (
         <div style={{
-          background: 'rgba(10, 132, 255, 0.1)',
-          border: '1px solid rgba(10, 132, 255, 0.3)',
+          background: 'rgba(59, 130, 246, 0.1)',
+          border: '1px solid rgba(59, 130, 246, 0.3)',
           borderRadius: '12px',
           padding: '10px 14px',
           marginBottom: '16px',
@@ -250,7 +250,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
           </div>
 
           {profileError && (
-            <div style={{ background: 'rgba(255, 69, 58, 0.15)', border: '1px solid rgba(255, 69, 58, 0.3)', color: 'var(--red)', padding: '8px 12px', borderRadius: '8px', fontSize: '0.85em', marginBottom: '12px' }}>
+            <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: 'var(--red)', padding: '8px 12px', borderRadius: '8px', fontSize: '0.85em', marginBottom: '12px' }}>
               ⚠️ {profileError}
             </div>
           )}

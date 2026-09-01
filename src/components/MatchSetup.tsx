@@ -354,7 +354,7 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
           transform: translateX(-50%);
           width: 500px;
           height: 300px;
-          background: radial-gradient(circle, rgba(0, 210, 106, 0.12) 0%, rgba(10, 132, 255, 0.06) 50%, transparent 70%);
+          background: radial-gradient(circle, rgba(245, 158, 11, 0.1) 0%, rgba(59, 130, 246, 0.06) 50%, transparent 70%);
           pointer-events: none;
           z-index: 0;
         }
@@ -371,9 +371,9 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
           }
         }
         @keyframes pulse-soft {
-          0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(10, 132, 255, 0.4); }
-          50% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(10, 132, 255, 0); }
-          100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(10, 132, 255, 0); }
+          0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+          50% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+          100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
         }
         @keyframes slide-down {
           from { opacity: 0; transform: translateY(-10px); }
@@ -425,12 +425,12 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
 
       {hasSavedGame && !isSavedBannerDismissed && savedMatch && (
         <div className="card saved-game-card" style={{ 
-          background: 'linear-gradient(135deg, rgba(10, 132, 255, 0.18) 0%, rgba(20, 20, 32, 0.98) 100%)', 
-          border: '1.5px solid rgba(10, 132, 255, 0.65)', 
+          background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.18) 0%, rgba(15, 23, 42, 0.98) 100%)', 
+          border: '1.5px solid rgba(59, 130, 246, 0.65)', 
           borderRadius: '16px',
           padding: '16px 18px',
           marginBottom: '22px',
-          boxShadow: '0 8px 30px rgba(0, 0, 0, 0.4), 0 0 20px rgba(10, 132, 255, 0.2)',
+          boxShadow: '0 8px 30px rgba(0, 0, 0, 0.4), 0 0 20px rgba(59, 130, 246, 0.2)',
           position: 'relative'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
@@ -446,7 +446,7 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
             <button 
               onClick={() => setIsSavedBannerDismissed(true)}
               style={{
-                background: 'rgba(255, 255, 255, 0.08)',
+                background: 'rgba(148, 163, 184, 0.12)',
                 border: 'none',
                 color: 'var(--text-dim, #aaa)',
                 fontSize: '1rem',
@@ -474,7 +474,7 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
                 <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text, #fff)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {p.isBot ? '🤖 ' : ''}{p.name}
                 </div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--blue, #0a84ff)' }}>
+                <div style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--blue, #3B82F6)' }}>
                   {p.score}
                 </div>
                 <div style={{ fontSize: '0.72rem', color: 'var(--text-dim, #888)' }}>
@@ -606,7 +606,7 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
             const playerName = selectedPlayers[i] || '';
             const isBot = isGuest ? guestBots[playerName] : profiles[playerName]?.isBot;
             const slotTeam = (i % 2 === 0 ? 1 : 2);
-            const teamColor = slotTeam === 1 ? 'var(--blue, #0a84ff)' : 'var(--orange, #ff9f0a)';
+            const teamColor = slotTeam === 1 ? 'var(--blue, #3B82F6)' : 'var(--orange, #F97316)';
             
             return (
               <div 

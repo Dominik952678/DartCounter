@@ -46,7 +46,7 @@ export const AuthScreen: React.FC = () => {
         transform: 'translateX(-50%)',
         width: '450px',
         height: '320px',
-        background: 'radial-gradient(circle, rgba(10, 132, 255, 0.12) 0%, rgba(94, 92, 230, 0.08) 50%, transparent 70%)',
+        background: 'radial-gradient(circle, rgba(245, 158, 11, 0.1) 0%, rgba(59, 130, 246, 0.06) 50%, transparent 70%)',
         pointerEvents: 'none',
         zIndex: 0
       }} />
@@ -59,7 +59,7 @@ export const AuthScreen: React.FC = () => {
           width: '56px',
           height: '56px',
           borderRadius: '18px',
-          background: 'linear-gradient(135deg, rgba(10, 132, 255, 0.2), rgba(94, 92, 230, 0.2))',
+          background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(59, 130, 246, 0.15))',
           border: '1px solid rgba(255, 255, 255, 0.1)',
           boxShadow: '0 8px 20px rgba(0,0,0,0.3)',
           marginBottom: '12px',
@@ -76,13 +76,13 @@ export const AuthScreen: React.FC = () => {
         </p>
         
         {displayError && (
-          <div style={{ background: 'rgba(255, 69, 58, 0.12)', color: 'var(--red)', padding: '12px', borderRadius: '12px', marginBottom: '20px', textAlign: 'center', fontSize: '0.9em', border: '1px solid rgba(255, 69, 58, 0.25)' }}>
+          <div style={{ background: 'rgba(239, 68, 68, 0.12)', color: 'var(--red)', padding: '12px', borderRadius: '12px', marginBottom: '20px', textAlign: 'center', fontSize: '0.9em', border: '1px solid rgba(239, 68, 68, 0.25)' }}>
             ⚠️ {displayError}
           </div>
         )}
 
         {successMsg && (
-          <div style={{ background: 'rgba(0, 210, 106, 0.12)', color: 'var(--green)', padding: '12px', borderRadius: '12px', marginBottom: '20px', textAlign: 'center', fontSize: '0.9em', border: '1px solid rgba(0, 210, 106, 0.25)' }}>
+          <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: 'var(--green)', padding: '12px', borderRadius: '12px', marginBottom: '20px', textAlign: 'center', fontSize: '0.9em', border: '1px solid rgba(16, 185, 129, 0.25)' }}>
             ✅ {successMsg}
           </div>
         )}

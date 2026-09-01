@@ -35,7 +35,7 @@ export const LobbyRoom: React.FC = () => {
         transform: 'translateX(-50%);',
         width: '500px',
         height: '300px',
-        background: 'radial-gradient(circle, rgba(10, 132, 255, 0.12) 0%, rgba(0, 210, 106, 0.06) 50%, transparent 70%)',
+        background: 'radial-gradient(circle, rgba(245, 158, 11, 0.1) 0%, rgba(59, 130, 246, 0.06) 50%, transparent 70%)',
         pointerEvents: 'none',
         zIndex: 0
       }} />
@@ -57,7 +57,7 @@ export const LobbyRoom: React.FC = () => {
           {players.map((p, i) => (
              <li key={i} style={{ padding: '12px 16px', background: 'var(--surface)', marginBottom: '8px', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', border: '1px solid var(--card-border)' }}>
                 <span style={{ fontWeight: 700, fontSize: '1.05em' }}>👤 {p.username}</span>
-                {p.isHost && <span style={{ color: 'var(--green)', fontSize: '0.85em', fontWeight: 700, padding: '4px 10px', background: 'rgba(0, 210, 106, 0.12)', borderRadius: '20px', border: '1px solid rgba(0, 210, 106, 0.25)' }}>Host</span>}
+                {p.isHost && <span style={{ color: 'var(--green)', fontSize: '0.85em', fontWeight: 700, padding: '4px 10px', background: 'rgba(16, 185, 129, 0.12)', borderRadius: '20px', border: '1px solid rgba(16, 185, 129, 0.25)' }}>Host</span>}
              </li>
           ))}
         </ul>

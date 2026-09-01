@@ -220,7 +220,7 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
           transform: translateX(-50%);
           width: 500px;
           height: 300px;
-          background: radial-gradient(circle, rgba(10, 132, 255, 0.12) 0%, rgba(255, 69, 58, 0.08) 50%, transparent 70%);
+          background: radial-gradient(circle, rgba(245, 158, 11, 0.1) 0%, rgba(59, 130, 246, 0.06) 50%, transparent 70%);
           pointer-events: none;
           z-index: 0;
         }
@@ -254,17 +254,17 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
           border-color: rgba(255, 255, 255, 0.18);
         }
         .training-mode-btn.active-checkout {
-          background: linear-gradient(135deg, rgba(10, 132, 255, 0.22), rgba(10, 132, 255, 0.05));
+          background: linear-gradient(135deg, rgba(59, 130, 246, 0.22), rgba(59, 130, 246, 0.05));
           border-color: var(--blue);
           box-shadow: 0 4px 16px var(--blue-glow);
         }
         .training-mode-btn.active-powerscoring {
-          background: linear-gradient(135deg, rgba(255, 69, 58, 0.22), rgba(255, 69, 58, 0.05));
+          background: linear-gradient(135deg, rgba(239, 68, 68, 0.22), rgba(239, 68, 68, 0.05));
           border-color: var(--red);
           box-shadow: 0 4px 16px var(--red-glow);
         }
         .training-mode-btn.active-splitscore {
-          background: linear-gradient(135deg, rgba(255, 159, 10, 0.22), rgba(255, 159, 10, 0.05));
+          background: linear-gradient(135deg, rgba(249, 115, 22, 0.22), rgba(249, 115, 22, 0.05));
           border-color: var(--orange);
           box-shadow: 0 4px 16px var(--orange-glow);
         }
@@ -292,7 +292,7 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
               className={`training-mode-btn ${selectedMode === 'checkout' ? 'active-checkout' : 'inactive'}`}
               onClick={() => setSelectedMode('checkout')}
             >
-              <span style={{ fontSize: '1.8rem', background: 'rgba(10, 132, 255, 0.15)', padding: '10px', borderRadius: '12px' }}>🎯</span>
+              <span style={{ fontSize: '1.8rem', background: 'rgba(59, 130, 246, 0.15)', padding: '10px', borderRadius: '12px' }}>🎯</span>
               <div>
                 <div style={{ fontWeight: 800 }}>Checkout Training</div>
                 <div style={{ fontSize: '0.82em', color: 'var(--text-dim)', fontWeight: 400, marginTop: '2px' }}>Zufällige Checkouts unter Druck treffen</div>
@@ -303,7 +303,7 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
               className={`training-mode-btn ${selectedMode === 'powerscoring' ? 'active-powerscoring' : 'inactive'}`}
               onClick={() => setSelectedMode('powerscoring')}
             >
-              <span style={{ fontSize: '1.8rem', background: 'rgba(255, 69, 58, 0.15)', padding: '10px', borderRadius: '12px' }}>🔥</span>
+              <span style={{ fontSize: '1.8rem', background: 'rgba(239, 68, 68, 0.15)', padding: '10px', borderRadius: '12px' }}>🔥</span>
               <div>
                 <div style={{ fontWeight: 800 }}>Power Scoring</div>
                 <div style={{ fontSize: '0.82em', color: 'var(--text-dim)', fontWeight: 400, marginTop: '2px' }}>Maximale Punkte in festen Runden sammeln</div>
@@ -314,7 +314,7 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
               className={`training-mode-btn ${selectedMode === 'splitscore' ? 'active-splitscore' : 'inactive'}`}
               onClick={() => setSelectedMode('splitscore')}
             >
-              <span style={{ fontSize: '1.8rem', background: 'rgba(255, 159, 10, 0.15)', padding: '10px', borderRadius: '12px' }}>➗</span>
+              <span style={{ fontSize: '1.8rem', background: 'rgba(249, 115, 22, 0.15)', padding: '10px', borderRadius: '12px' }}>➗</span>
               <div>
                 <div style={{ fontWeight: 800 }}>Split Score (Halve-It)</div>
                 <div style={{ fontSize: '0.82em', color: 'var(--text-dim)', fontWeight: 400, marginTop: '2px' }}>Vorgegebene Segmente treffen oder Punkte halbieren</div>
@@ -484,7 +484,7 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
                   alignItems: 'center', 
                   gap: '12px', 
                   padding: '12px 14px', 
-                  background: randomOrderOnStart ? 'rgba(10, 132, 255, 0.12)' : 'var(--surface)', 
+                  background: randomOrderOnStart ? 'rgba(59, 130, 246, 0.12)' : 'var(--surface)', 
                   border: randomOrderOnStart ? '1px solid var(--blue)' : '1px solid var(--card-border)', 
                   borderRadius: 'var(--radius)', 
                   cursor: 'pointer', 

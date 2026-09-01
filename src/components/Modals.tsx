@@ -125,7 +125,7 @@ const bottomSheetStyles = `
     padding: 12px 16px;
     border-radius: var(--radius, 8px);
     border: 1px solid rgba(255, 255, 255, 0.15);
-    background: #1c1c22;
+    background: #111827;
     color: #fff;
     margin-bottom: 16px;
     font-size: 16px;
@@ -137,7 +137,7 @@ const bottomSheetStyles = `
   }
     
   .history-item-modern {
-    background: #1c1c22;
+    background: #111827;
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--radius, 12px);
     padding: 16px;
@@ -184,7 +184,7 @@ export const StatsModal: React.FC<{
 
               return (
                 <div key={i} style={{ 
-                  background: isWinner ? 'rgba(0, 210, 106, 0.12)' : '#1c1c22',
+                  background: isWinner ? 'rgba(245, 158, 11, 0.12)' : '#111827',
                   border: `1.5px solid ${isWinner ? 'var(--green)' : 'rgba(255, 255, 255, 0.1)'}`,
                   borderRadius: 'var(--radius, 12px)',
                   padding: '16px'
@@ -196,7 +196,7 @@ export const StatsModal: React.FC<{
                         {pData.name} {isWinner ? '👑' : ''}
                       </strong>
                     </div>
-                    <span style={{ fontSize: '1.1em', fontWeight: 800, background: '#121216', border: '1px solid rgba(255, 255, 255, 0.08)', padding: '4px 12px', borderRadius: '8px' }}>
+                    <span style={{ fontSize: '1.1em', fontWeight: 800, background: '#111827', border: '1px solid rgba(148, 163, 184, 0.12)', padding: '4px 12px', borderRadius: '8px' }}>
                       {matchData.gameType && matchData.gameType !== 'standard'
                         ? (pData.score !== undefined ? `${pData.score} Pkt` : '')
                         : (pData.sets !== undefined ? `${pData.sets}S : ${pData.legs}L` : `${pData.legs} Legs`)}
@@ -205,7 +205,7 @@ export const StatsModal: React.FC<{
                   
                   {matchData.gameType && matchData.gameType !== 'standard' ? (
                     <div style={{ display: 'grid', gridTemplateColumns: matchData.gameType === 'checkoutTraining' ? '1fr 1fr 1fr' : '1fr', gap: '8px', marginBottom: '6px' }}>
-                      <div style={{ background: '#24242c', border: '1px solid rgba(255, 255, 255, 0.08)', padding: '12px 8px', borderRadius: '8px', textAlign: 'center' }}>
+                      <div style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(148, 163, 184, 0.12)', padding: '12px 8px', borderRadius: '8px', textAlign: 'center' }}>
                         <div style={{ fontSize: '0.75em', color: 'var(--text-dim)', marginBottom: '2px' }}>
                           {matchData.gameType === 'checkoutTraining' ? 'Bestes Checkout' : 'Punkte (Score)'}
                         </div>
@@ -213,11 +213,11 @@ export const StatsModal: React.FC<{
                       </div>
                       {matchData.gameType === 'checkoutTraining' && (
                         <>
-                          <div style={{ background: '#24242c', border: '1px solid rgba(255, 255, 255, 0.08)', padding: '12px 8px', borderRadius: '8px', textAlign: 'center' }}>
+                          <div style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(148, 163, 184, 0.12)', padding: '12px 8px', borderRadius: '8px', textAlign: 'center' }}>
                             <div style={{ fontSize: '0.75em', color: 'var(--text-dim)', marginBottom: '2px' }}>Versuche</div>
                             <div style={{ color: 'var(--orange)', fontWeight: 800, fontSize: '1.4em' }}>{pData.attempts || 0}</div>
                           </div>
-                          <div style={{ background: '#24242c', border: '1px solid rgba(255, 255, 255, 0.08)', padding: '12px 8px', borderRadius: '8px', textAlign: 'center' }}>
+                          <div style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(148, 163, 184, 0.12)', padding: '12px 8px', borderRadius: '8px', textAlign: 'center' }}>
                             <div style={{ fontSize: '0.75em', color: 'var(--text-dim)', marginBottom: '2px' }}>Darts</div>
                             <div style={{ color: 'var(--blue)', fontWeight: 800, fontSize: '1.4em' }}>{pData.dartsUsed || 0}</div>
                           </div>
@@ -228,15 +228,15 @@ export const StatsModal: React.FC<{
                     <>
                       {/* Primary Stats Grid */}
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '10px' }}>
-                        <div style={{ background: '#24242c', border: '1px solid rgba(255, 255, 255, 0.08)', padding: '10px 8px', borderRadius: '8px', textAlign: 'center' }}>
+                        <div style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(148, 163, 184, 0.12)', padding: '10px 8px', borderRadius: '8px', textAlign: 'center' }}>
                           <div style={{ fontSize: '0.75em', color: 'var(--text-dim)', marginBottom: '2px' }}>Average</div>
                           <div style={{ color: 'var(--green)', fontWeight: 800, fontSize: '1.1em' }}>{pData.avg}</div>
                         </div>
-                        <div style={{ background: '#24242c', border: '1px solid rgba(255, 255, 255, 0.08)', padding: '10px 8px', borderRadius: '8px', textAlign: 'center' }}>
+                        <div style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(148, 163, 184, 0.12)', padding: '10px 8px', borderRadius: '8px', textAlign: 'center' }}>
                           <div style={{ fontSize: '0.75em', color: 'var(--text-dim)', marginBottom: '2px' }}>First 9</div>
                           <div style={{ color: 'var(--orange)', fontWeight: 800, fontSize: '1.1em' }}>{pData.first9}</div>
                         </div>
-                        <div style={{ background: '#24242c', border: '1px solid rgba(255, 255, 255, 0.08)', padding: '10px 8px', borderRadius: '8px', textAlign: 'center' }}>
+                        <div style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(148, 163, 184, 0.12)', padding: '10px 8px', borderRadius: '8px', textAlign: 'center' }}>
                           <div style={{ fontSize: '0.75em', color: 'var(--text-dim)', marginBottom: '2px' }}>Best Leg</div>
                           <div style={{ color: 'var(--blue)', fontWeight: 800, fontSize: '1.1em' }}>
                             {pData.bestMatchLeg ? `${pData.bestMatchLeg} Darts` : '–'}
@@ -246,18 +246,18 @@ export const StatsModal: React.FC<{
 
                       {/* Secondary Quotas */}
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '10px' }}>
-                        <div style={{ background: '#24242c', border: '1px solid rgba(255, 255, 255, 0.08)', padding: '8px 10px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(148, 163, 184, 0.12)', padding: '8px 10px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span style={{ fontSize: '0.8em', color: 'var(--text-dim)' }}>Checkout-Quote:</span>
                           <strong style={{ color: 'var(--text)' }}>{coQuote}</strong>
                         </div>
-                        <div style={{ background: '#24242c', border: '1px solid rgba(255, 255, 255, 0.08)', padding: '8px 10px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(148, 163, 184, 0.12)', padding: '8px 10px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span style={{ fontSize: '0.8em', color: 'var(--text-dim)' }}>Triple-Quote:</span>
                           <strong style={{ color: 'var(--text)' }}>{tripleQuote}</strong>
                         </div>
                       </div>
 
                       {/* Highlights Grid */}
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', background: '#24242c', border: '1px solid rgba(255, 255, 255, 0.08)', padding: '10px 6px', borderRadius: '8px', fontSize: '0.82em', textAlign: 'center' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(148, 163, 184, 0.12)', padding: '10px 6px', borderRadius: '8px', fontSize: '0.82em', textAlign: 'center' }}>
                         <div><span style={{ color: 'var(--text-dim)' }}>180:</span> <strong style={{ color: 'var(--orange)' }}>{pData.oneEighty || 0}</strong></div>
                         <div><span style={{ color: 'var(--text-dim)' }}>140+:</span> <strong>{pData.oneFortyPlus || 0}</strong></div>
                         <div><span style={{ color: 'var(--text-dim)' }}>100+:</span> <strong>{pData.hundredPlus || 0}</strong></div>
@@ -269,7 +269,7 @@ export const StatsModal: React.FC<{
                         <div style={{ marginTop: '10px', display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
                           <span style={{ fontSize: '0.75em', color: 'var(--text-dim)' }}>Legs:</span>
                           {pData.legHistory.map((avg, li) => (
-                            <span key={li} style={{ fontSize: '0.75em', background: '#24242c', border: '1px solid rgba(255, 255, 255, 0.08)', padding: '2px 6px', borderRadius: '4px' }}>
+                            <span key={li} style={{ fontSize: '0.75em', background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(148, 163, 184, 0.12)', padding: '2px 6px', borderRadius: '4px' }}>
                               L{li + 1}: Ø{avg}
                             </span>
                           ))}
@@ -326,9 +326,9 @@ export const StatsModal: React.FC<{
                     padding: '13px 12px', 
                     fontSize: '0.95em', 
                     borderRadius: 'var(--radius, 10px)', 
-                    border: '1px solid rgba(255, 159, 10, 0.4)', 
-                    background: 'rgba(255, 159, 10, 0.14)', 
-                    color: 'var(--orange, #ff9f0a)', 
+                    border: '1px solid rgba(249, 115, 22, 0.4)', 
+                    background: 'rgba(249, 115, 22, 0.14)', 
+                    color: 'var(--orange, #F97316)', 
                     fontWeight: 700, 
                     cursor: 'pointer',
                     display: 'flex',

@@ -96,15 +96,15 @@ export const DartboardHeatmap: React.FC<DartboardHeatmapProps> = ({ profile, cus
   };
 
   const getHeatColor = (hits: number) => {
-    if (hits <= 0) return 'rgba(255, 255, 255, 0.04)';
+    if (hits <= 0) return 'rgba(148, 163, 184, 0.06)';
     const intensity = Math.min(1, hits / maxHits);
 
     if (intensity < 0.25) {
-      return `rgba(10, 132, 255, ${0.35 + intensity * 1.5})`; // Blue
+      return `rgba(59, 130, 246, ${0.35 + intensity * 1.5})`; // Blue
     } else if (intensity < 0.6) {
       return `rgba(255, 214, 10, ${0.5 + intensity * 0.7})`; // Yellow
     } else {
-      return `rgba(255, 69, 58, ${0.7 + intensity * 0.3})`; // Hot Red
+      return `rgba(239, 68, 68, ${0.7 + intensity * 0.3})`; // Hot Red
     }
   };
 
@@ -185,7 +185,7 @@ export const DartboardHeatmap: React.FC<DartboardHeatmapProps> = ({ profile, cus
             minHeight: '36px',
             marginBottom: '10px',
             textAlign: 'center',
-            background: hoveredSegment ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+            background: hoveredSegment ? 'rgba(148, 163, 184, 0.12)' : 'transparent',
             padding: '4px 14px',
             borderRadius: '16px',
             transition: 'all 0.15s ease',
