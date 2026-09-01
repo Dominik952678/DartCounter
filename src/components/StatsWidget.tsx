@@ -273,17 +273,17 @@ export const StatsWidget: React.FC<StatsWidgetProps> = ({ title, mode, isOnline,
                             <XAxis dataKey="name" hide />
                             <YAxis hide domain={['dataMin - 5', 'dataMax + 5']} />
                             <Tooltip 
-                              contentStyle={{ backgroundColor: '#1a1a1c', border: '1px solid var(--card-border)', borderRadius: '8px' }} 
-                              itemStyle={{ color: '#fff' }}
+                              contentStyle={{ backgroundColor: '#111827', border: '1px solid rgba(148, 163, 184, 0.15)', borderRadius: '10px' }} 
+                              itemStyle={{ color: 'var(--text)' }}
                               formatter={(value: any) => [value, isMinigame ? 'Punkte' : '3-Dart Average']}
                             />
                             <Line 
                               type="monotone" 
                               dataKey="val" 
                               name={isMinigame ? "Punkte" : "3-Dart Average"}
-                              stroke={isOnline ? "var(--blue)" : "var(--green)"} 
+                              stroke={isOnline ? "var(--blue)" : "var(--primary)"} 
                               strokeWidth={2.5} 
-                              dot={{ fill: isOnline ? "var(--blue)" : "var(--green)", r: 2.5, strokeWidth: 0 }} 
+                              dot={{ fill: isOnline ? "var(--blue)" : "var(--primary)", r: 2.5, strokeWidth: 0 }} 
                               activeDot={{ r: 5 }} 
                             />
                           </LineChart>
@@ -313,14 +313,14 @@ export const StatsWidget: React.FC<StatsWidgetProps> = ({ title, mode, isOnline,
                                     stroke="none"
                                   >
                                     {pieData.map((entry, index) => {
-                                       const colors = ['#00d26a', '#0a84ff', '#ff9f0a', '#ff375f', '#bf5af2', '#5e5ce6', '#32ade6', '#ffd60a', '#ff453a', '#8e8e93'];
-                                       const fill = entry.name === 'Rest' ? '#636366' : colors[index % colors.length];
+                                       const colors = ['#F59E0B', '#3B82F6', '#10B981', '#F97316', '#8B5CF6', '#EF4444', '#06B6D4', '#EC4899', '#64748B'];
+                                       const fill = entry.name === 'Rest' ? '#475569' : colors[index % colors.length];
                                        return <Cell key={`cell-${index}`} fill={fill} />;
                                     })}
                                   </Pie>
                                   <Tooltip 
-                                    contentStyle={{ backgroundColor: '#1a1a1c', border: '1px solid var(--card-border)', borderRadius: '8px' }} 
-                                    itemStyle={{ color: '#fff' }}
+                                    contentStyle={{ backgroundColor: '#111827', border: '1px solid rgba(148, 163, 184, 0.15)', borderRadius: '10px' }} 
+                                    itemStyle={{ color: 'var(--text)' }}
                                     formatter={(value: any, name: any) => {
                                       const total = pieData.reduce((s, e) => s + e.value, 0);
                                       const pct = total > 0 ? ((Number(value) / total) * 100).toFixed(1) : '0';
@@ -344,8 +344,8 @@ export const StatsWidget: React.FC<StatsWidgetProps> = ({ title, mode, isOnline,
                               {pieData.map((entry, idx) => {
                                 const total = pieData.reduce((s, e) => s + e.value, 0);
                                 const pct = total > 0 ? Math.round((entry.value / total) * 100) : 0;
-                                const colors = ['#00d26a', '#0a84ff', '#ff9f0a', '#ff375f', '#bf5af2', '#5e5ce6', '#32ade6', '#ffd60a', '#ff453a', '#8e8e93'];
-                                const color = entry.name === 'Rest' ? '#636366' : colors[idx % colors.length];
+                                const colors = ['#F59E0B', '#3B82F6', '#10B981', '#F97316', '#8B5CF6', '#EF4444', '#06B6D4', '#EC4899', '#64748B'];
+                                const color = entry.name === 'Rest' ? '#475569' : colors[idx % colors.length];
                                 return (
                                   <div key={entry.name} style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'rgba(255,255,255,0.06)', padding: '3px 7px', borderRadius: '6px', fontSize: '0.78em' }}>
                                     <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: color, display: 'inline-block' }} />

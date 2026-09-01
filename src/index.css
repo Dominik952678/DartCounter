@@ -82,6 +82,39 @@ h1 { font-size: 1.85em; }
 h2 { font-size: 1.35em; }
 h3 { font-size: 1.05em; color: var(--text-dim); font-weight: 600; }
 
+/* ── Tungsten Micro-Animations & Interactions ── */
+@keyframes ctaPulse {
+  0% {
+    box-shadow: 0 4px 16px var(--primary-glow);
+    transform: translateY(0);
+  }
+  50% {
+    box-shadow: 0 8px 28px rgba(245, 158, 11, 0.45);
+    transform: translateY(-2px);
+  }
+  100% {
+    box-shadow: 0 4px 16px var(--primary-glow);
+    transform: translateY(0);
+  }
+}
+
+@keyframes checkoutGlow {
+  0% { border-color: rgba(16, 185, 129, 0.2); }
+  50% { border-color: rgba(16, 185, 129, 0.6); box-shadow: 0 0 16px rgba(16, 185, 129, 0.3); }
+  100% { border-color: rgba(16, 185, 129, 0.2); }
+}
+
+.animate-cta-pulse {
+  animation: ctaPulse 3s infinite ease-in-out;
+}
+
+.interactive-card {
+  transition: transform 0.15s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.interactive-card:active {
+  transform: scale(0.98);
+}
+
 /* ── App Container & Device Scalability ─────────────────────── */
 .app-container { 
   max-width: 600px; 

@@ -58,15 +58,15 @@ export const StatsPage: React.FC = () => {
         transform: 'translateX(-50%)',
         width: '500px',
         height: '300px',
-        background: 'radial-gradient(circle, rgba(255, 159, 10, 0.12) 0%, rgba(10, 132, 255, 0.06) 50%, transparent 70%)',
+        background: 'radial-gradient(circle, rgba(245, 158, 11, 0.1) 0%, rgba(59, 130, 246, 0.06) 50%, transparent 70%)',
         pointerEvents: 'none',
         zIndex: 0
       }} />
       
       {!user && (
         <div style={{
-          background: 'rgba(10, 132, 255, 0.1)',
-          border: '1px solid rgba(10, 132, 255, 0.3)',
+          background: 'rgba(59, 130, 246, 0.1)',
+          border: '1px solid rgba(59, 130, 246, 0.3)',
           borderRadius: '12px',
           padding: '10px 14px',
           marginBottom: '16px',
@@ -104,7 +104,7 @@ export const StatsPage: React.FC = () => {
                <select 
                   value={selectedProfile} 
                   onChange={(e) => setSelectedProfile(e.target.value)}
-                  style={{ background: '#2a2a2c', color: '#fff', border: '1px solid var(--card-border)', padding: '8px', borderRadius: '8px' }}
+                  style={{ background: 'var(--bg-surface)', color: 'var(--text)', border: '1px solid var(--card-border)', padding: '8px 12px', borderRadius: '10px' }}
                >
                   {profileNames.map(name => (
                      <option key={name} value={name}>{name}</option>
@@ -116,7 +116,7 @@ export const StatsPage: React.FC = () => {
                <select 
                   value={selectedMode} 
                   onChange={(e) => setSelectedMode(e.target.value)}
-                  style={{ background: '#2a2a2c', color: '#fff', border: '1px solid var(--card-border)', padding: '8px', borderRadius: '8px' }}
+                  style={{ background: 'var(--bg-surface)', color: 'var(--text)', border: '1px solid var(--card-border)', padding: '8px 12px', borderRadius: '10px' }}
                >
                   {availableModes.map(m => (
                      <option key={m} value={m}>{m}</option>

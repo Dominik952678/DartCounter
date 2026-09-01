@@ -35,21 +35,22 @@ export const MainMenu: React.FC = () => {
           position: relative;
           z-index: 1;
           width: 100%;
-          max-width: min(500px, 100%);
+          max-width: min(520px, 100%);
           min-height: calc(100dvh - max(calc(env(safe-area-inset-top) + 8px), 12px) - max(calc(env(safe-area-inset-bottom) + 64px), 74px));
           display: flex;
           flex-direction: column;
-          justify-content: flex-start;
+          justify-content: space-between;
           transition: all 0.2s ease;
+          gap: clamp(8px, 1.4vh, 16px);
         }
 
-        /* ── Header Area (Ganz oben fest) ── */
+        /* ── Header Area ── */
         .menu-header-area {
           flex-shrink: 0;
           width: 100%;
           text-align: center;
           margin-top: clamp(2px, 0.8vh, 6px);
-          margin-bottom: clamp(4px, 1vh, 8px);
+          margin-bottom: clamp(2px, 0.6vh, 6px);
         }
 
         .menu-header-flex {
@@ -63,18 +64,18 @@ export const MainMenu: React.FC = () => {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          width: clamp(44px, 6vh, 60px);
-          height: clamp(44px, 6vh, 60px);
+          width: clamp(42px, 5.5vh, 56px);
+          height: clamp(42px, 5.5vh, 56px);
           border-radius: clamp(12px, 1.8vh, 18px);
           background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(59, 130, 246, 0.15));
           border: 1px solid rgba(245, 158, 11, 0.2);
           box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-          margin-bottom: clamp(4px, 0.8vh, 10px);
-          font-size: clamp(1.4rem, 2.4vh, 1.9rem);
+          margin-bottom: clamp(2px, 0.6vh, 8px);
+          font-size: clamp(1.3rem, 2.2vh, 1.8rem);
         }
 
         .menu-header-title {
-          font-size: clamp(1.7rem, 3vh, 2.3rem);
+          font-size: clamp(1.6rem, 2.8vh, 2.2rem);
           font-weight: 900;
           letter-spacing: -0.03em;
           background: linear-gradient(135deg, var(--primary), #FBBF24);
@@ -86,12 +87,12 @@ export const MainMenu: React.FC = () => {
 
         .menu-header-subtitle {
           color: var(--text-dim);
-          font-size: clamp(0.78em, 1.3vh, 0.92em);
+          font-size: clamp(0.76em, 1.2vh, 0.88em);
           margin-top: clamp(1px, 0.3vh, 3px);
           font-weight: 500;
         }
 
-        /* ── Vertically Centered Middle Wrapper ── */
+        /* ── Command Center Content Flow ── */
         .menu-middle-wrapper {
           flex: 1;
           min-height: 0;
@@ -99,124 +100,132 @@ export const MainMenu: React.FC = () => {
           display: flex;
           flex-direction: column;
           justify-content: center;
-          align-items: center;
+          gap: clamp(8px, 1.4vh, 14px);
         }
 
-        /* ── Content Grid Hierarchy ── */
-        .menu-content-grid {
-          display: flex;
-          flex-direction: column;
-          gap: clamp(8px, 1.4vh, 12px);
-          width: 100%;
-        }
-
-        .menu-left-box {
-          display: contents;
-        }
-
-        .menu-status-container {
-          order: 1;
-        }
-
-        .menu-status-bar {
+        /* ── 1. Hero CTA (Full width, dominant Amber gradient) ── */
+        .hero-cta-tile {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: clamp(8px, 1.2vh, 10px) clamp(12px, 1.8vw, 16px);
-          background: rgba(255, 255, 255, 0.03);
-          backdrop-filter: blur(12px);
-          -webkit-backdrop-filter: blur(12px);
-          border-radius: clamp(10px, 1.5vh, 14px);
-          border: 1px solid var(--card-border);
-        }
-
-        .menu-status-text {
-          font-size: clamp(0.8em, 1.4vh, 0.88em);
-          color: var(--text);
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        .menu-status-btn {
-          font-size: clamp(0.76em, 1.3vh, 0.82em);
-          font-weight: 700;
-          border-radius: 8px;
+          padding: clamp(14px, 2.2vh, 20px) clamp(16px, 2.2vw, 22px);
+          border-radius: var(--radius, 14px);
+          background: linear-gradient(135deg, var(--primary), #D97706);
+          color: #000;
           cursor: pointer;
-          padding: clamp(3px, 0.5vh, 4px) clamp(6px, 1vw, 10px);
-          flex-shrink: 0;
-          transition: all 0.15s ease;
-        }
-
-        .menu-right-box {
-          order: 2;
-          display: flex;
-          flex-direction: column;
-          gap: clamp(6px, 1.2vh, 10px);
-        }
-
-        .menu-action-tile {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: clamp(10px, 1.8vh, 16px) clamp(12px, 1.8vw, 18px);
-          border-radius: clamp(12px, 1.8vh, 16px);
-          background: var(--card);
-          border: 1px solid var(--card-border);
-          cursor: pointer;
-          transition: transform 0.15s ease, border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
-          text-align: left;
+          transition: transform 0.15s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.2s ease;
           width: 100%;
-          color: var(--text);
           box-sizing: border-box;
+          animation: ctaPulse 3s infinite ease-in-out;
         }
-
-        .menu-action-tile:hover {
+        .hero-cta-tile:hover {
           transform: translateY(-2px);
-          border-color: rgba(255, 255, 255, 0.18);
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+          box-shadow: 0 8px 30px rgba(245, 158, 11, 0.5);
         }
-
-        .menu-action-tile:active {
+        .hero-cta-tile:active {
           transform: scale(0.98);
         }
 
-        .tile-icon {
-          width: clamp(36px, 5vh, 44px);
-          height: clamp(36px, 5vh, 44px);
-          font-size: clamp(1.5rem, 2.4vh, 2rem);
-          border-radius: clamp(9px, 1.3vh, 12px);
+        .hero-cta-icon {
+          width: clamp(40px, 5.5vh, 48px);
+          height: clamp(40px, 5.5vh, 48px);
+          border-radius: 12px;
+          background: rgba(0, 0, 0, 0.15);
           display: flex;
           align-items: center;
           justify-content: center;
+          font-size: clamp(1.4rem, 2.4vh, 1.8rem);
           flex-shrink: 0;
         }
 
-        .tile-title {
-          font-size: clamp(1.02em, 1.7vh, 1.2em);
-          font-weight: 800;
-          color: var(--text);
+        .hero-cta-title {
+          font-size: clamp(1.15em, 2vh, 1.35em);
+          font-weight: 900;
+          letter-spacing: -0.02em;
+          color: #000;
         }
 
-        .tile-desc {
-          font-size: clamp(0.74em, 1.2vh, 0.82em);
-          color: var(--text-dim);
+        .hero-cta-desc {
+          font-size: clamp(0.76em, 1.2vh, 0.86em);
+          color: rgba(0, 0, 0, 0.7);
+          font-weight: 600;
           margin-top: 2px;
         }
 
-        .tile-arrow {
-          font-size: clamp(1.15em, 1.8vh, 1.35em);
-          font-weight: 700;
+        .hero-cta-arrow {
+          font-size: clamp(1.3em, 2.2vh, 1.6em);
+          font-weight: 900;
+          color: #000;
           flex-shrink: 0;
         }
 
-        .tile-offline {
-          background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(245, 158, 11, 0.02)), var(--card);
-          border-color: rgba(245, 158, 11, 0.35);
+        /* ── 2. Secondary Grid (2-Column: Online & Stats/Auth) ── */
+        .menu-secondary-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: clamp(8px, 1.4vw, 12px);
+          width: 100%;
         }
-        .tile-offline:hover {
-          border-color: var(--primary);
-          box-shadow: 0 8px 24px rgba(245, 158, 11, 0.15);
+
+        .secondary-tile {
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          padding: clamp(12px, 1.8vh, 16px) clamp(12px, 1.8vw, 16px);
+          border-radius: var(--radius, 14px);
+          background: var(--card);
+          border: 1px solid var(--card-border);
+          cursor: pointer;
+          transition: transform 0.15s ease, border-color 0.2s, box-shadow 0.2s;
+          color: var(--text);
+          box-sizing: border-box;
+          min-height: clamp(80px, 12vh, 105px);
+        }
+
+        .secondary-tile:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .secondary-tile:active {
+          transform: scale(0.98);
+        }
+
+        .secondary-tile-top {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        .secondary-tile-icon {
+          width: clamp(32px, 4.2vh, 38px);
+          height: clamp(32px, 4.2vh, 38px);
+          border-radius: 10px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: clamp(1.2rem, 1.8vh, 1.5rem);
+        }
+
+        .secondary-tile-arrow {
+          font-size: 1.1em;
+          font-weight: 700;
+        }
+
+        .secondary-tile-title {
+          font-size: clamp(0.92em, 1.5vh, 1.05em);
+          font-weight: 800;
+          color: var(--text);
+          margin-top: 6px;
+        }
+
+        .secondary-tile-desc {
+          font-size: clamp(0.68em, 1.1vh, 0.76em);
+          color: var(--text-dim);
+          margin-top: 1px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
         .tile-online {
@@ -225,7 +234,7 @@ export const MainMenu: React.FC = () => {
         }
         .tile-online:hover {
           border-color: var(--blue);
-          box-shadow: 0 8px 24px rgba(59, 130, 246, 0.15);
+          box-shadow: 0 6px 20px rgba(59, 130, 246, 0.2);
         }
 
         .tile-stats {
@@ -234,7 +243,7 @@ export const MainMenu: React.FC = () => {
         }
         .tile-stats:hover {
           border-color: var(--orange);
-          box-shadow: 0 8px 24px rgba(249, 115, 22, 0.15);
+          box-shadow: 0 6px 20px rgba(249, 115, 22, 0.2);
         }
 
         .tile-auth {
@@ -243,22 +252,22 @@ export const MainMenu: React.FC = () => {
         }
         .tile-auth:hover {
           border-color: var(--purple);
-          box-shadow: 0 8px 24px rgba(139, 92, 246, 0.15);
+          box-shadow: 0 6px 20px rgba(139, 92, 246, 0.2);
         }
 
+        /* ── 3. Training Quickstart Chips (3-Column) ── */
         .menu-training-container {
-          order: 3;
-          margin-top: clamp(0px, 0.4vh, 3px);
+          width: 100%;
         }
 
         .training-section-label {
-          font-size: clamp(0.72em, 1.2vh, 0.78em);
+          font-size: clamp(0.7em, 1.1vh, 0.76em);
           text-transform: uppercase;
-          letter-spacing: 1px;
+          letter-spacing: 0.8px;
           color: var(--text-dim);
-          margin-bottom: clamp(4px, 0.8vh, 8px);
+          margin-bottom: clamp(4px, 0.6vh, 6px);
           font-weight: 700;
-          padding-left: 4px;
+          padding-left: 2px;
         }
 
         .training-chips-grid {
@@ -272,10 +281,10 @@ export const MainMenu: React.FC = () => {
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          padding: clamp(8px, 1.3vh, 11px) clamp(4px, 1vw, 8px);
+          padding: clamp(8px, 1.2vh, 11px) clamp(4px, 1vw, 8px);
           background: var(--surface);
           border: 1px solid var(--card-border);
-          border-radius: clamp(10px, 1.5vh, 14px);
+          border-radius: var(--radius-sm, 10px);
           cursor: pointer;
           transition: all 0.15s ease;
           color: var(--text);
@@ -284,9 +293,9 @@ export const MainMenu: React.FC = () => {
         }
 
         .training-chip:hover {
-          background: rgba(255, 255, 255, 0.08);
+          background: var(--surface-hover);
           transform: translateY(-2px);
-          border-color: rgba(255, 255, 255, 0.22);
+          border-color: var(--primary);
         }
 
         .training-chip:active {
@@ -294,43 +303,73 @@ export const MainMenu: React.FC = () => {
         }
 
         .training-chip-icon {
-          font-size: clamp(1.3rem, 2.2vh, 1.55rem);
+          font-size: clamp(1.2rem, 2vh, 1.45rem);
         }
 
         .training-chip-title {
           font-weight: 700;
-          font-size: clamp(0.75em, 1.3vh, 0.84em);
+          font-size: clamp(0.74em, 1.2vh, 0.82em);
           margin-top: 2px;
         }
 
-        /* ── iPad in Portrait (Non-scrollable, perfectly fitted) ── */
-        @media (min-width: 768px) and (orientation: portrait) {
-          .main-menu-screen {
-            height: 100% !important;
-            max-height: 100% !important;
-            overflow: hidden !important;
-            overscroll-behavior: none !important;
-          }
+        /* ── 4. User Status Bar (Docked bottom) ── */
+        .menu-status-bar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: clamp(6px, 1vh, 8px) clamp(10px, 1.5vw, 14px);
+          background: rgba(15, 23, 42, 0.6);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border-radius: var(--radius-sm, 10px);
+          border: 1px solid var(--card-border);
+          width: 100%;
+          box-sizing: border-box;
+        }
 
+        .menu-status-text {
+          font-size: clamp(0.78em, 1.3vh, 0.85em);
+          color: var(--text);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .menu-status-btn {
+          font-size: clamp(0.74em, 1.2vh, 0.8em);
+          font-weight: 700;
+          border-radius: 6px;
+          cursor: pointer;
+          padding: 2px 8px;
+          flex-shrink: 0;
+          transition: all 0.15s ease;
+        }
+
+        /* ── iPad in Portrait ── */
+        @media (min-width: 768px) and (orientation: portrait) {
           .main-menu-card {
-            height: 100% !important;
-            max-height: 100% !important;
-            min-height: 0 !important;
-            overflow: hidden !important;
+            max-width: 600px !important;
+            gap: 18px !important;
+          }
+          .hero-cta-tile {
+            padding: 22px 26px !important;
+          }
+          .secondary-tile {
+            min-height: 120px !important;
+            padding: 18px !important;
           }
         }
 
-        /* ── Landscape / Wide Mode (Fluid dynamic scaling & zero scroll) ── */
+        /* ── Landscape / Wide Mode (iPad & Desktop: 3-Column Layout) ── */
         @media (orientation: landscape) {
           .main-menu-screen {
             height: 100% !important;
             max-height: 100% !important;
             overflow: hidden !important;
             overscroll-behavior: none !important;
-            touch-action: manipulation !important;
             display: flex !important;
             flex-direction: column !important;
-            justify-content: flex-start !important;
+            justify-content: center !important;
             align-items: center !important;
           }
 
@@ -338,37 +377,16 @@ export const MainMenu: React.FC = () => {
             height: 100% !important;
             max-height: 100% !important;
             min-height: 0 !important;
-            max-width: min(1060px, 94vw) !important;
+            max-width: min(1080px, 94vw) !important;
             display: flex !important;
             flex-direction: column !important;
-            justify-content: flex-start !important;
-            gap: 0 !important;
+            justify-content: center !important;
+            gap: clamp(6px, 1.2vh, 12px) !important;
           }
 
           .menu-header-area {
-            flex-shrink: 0 !important;
-            width: 100% !important;
-            text-align: center;
             margin-top: 0 !important;
-            margin-bottom: clamp(2px, 0.8vh, 8px) !important;
-          }
-
-          .menu-header-icon {
-            width: clamp(34px, 5.5vh, 52px) !important;
-            height: clamp(34px, 5.5vh, 52px) !important;
-            font-size: clamp(1.2rem, 2.2vh, 1.8rem) !important;
             margin-bottom: 0 !important;
-            border-radius: clamp(8px, 1.2vh, 14px) !important;
-          }
-
-          .menu-header-title {
-            font-size: clamp(1.4rem, 3.2vh, 2.2rem) !important;
-            line-height: 1.1 !important;
-          }
-
-          .menu-header-subtitle {
-            font-size: clamp(0.72em, 1.2vh, 0.88em) !important;
-            margin-top: 1px !important;
           }
 
           .menu-header-flex {
@@ -376,112 +394,76 @@ export const MainMenu: React.FC = () => {
             flex-direction: row;
             align-items: center;
             justify-content: center;
-            gap: clamp(8px, 1.5vw, 14px);
+            gap: 12px;
+          }
+
+          .menu-header-icon {
+            width: 38px !important;
+            height: 38px !important;
+            font-size: 1.3rem !important;
+            margin-bottom: 0 !important;
+          }
+
+          .menu-header-title {
+            font-size: clamp(1.4rem, 3vh, 1.9rem) !important;
           }
 
           .menu-middle-wrapper {
-            flex: 1 !important;
-            min-height: 0 !important;
-            width: 100% !important;
-            display: flex !important;
+            display: grid !important;
+            grid-template-columns: 1.2fr 1fr 1fr !important;
+            gap: clamp(10px, 1.8vw, 18px) !important;
+            align-items: stretch !important;
+          }
+
+          .hero-cta-tile {
+            height: 100% !important;
             flex-direction: column !important;
             justify-content: center !important;
-            align-items: center !important;
+            text-align: center !important;
+            padding: 16px !important;
+            gap: 8px !important;
           }
 
-          .menu-content-grid {
-            display: grid !important;
-            grid-template-columns: 1fr 1fr !important;
-            gap: clamp(10px, 2vw, 22px) !important;
-            align-items: stretch !important;
-            width: 100% !important;
+          .hero-cta-icon {
+            width: 52px !important;
+            height: 52px !important;
+            font-size: 2rem !important;
           }
 
-          .menu-left-box {
+          .menu-secondary-grid {
             display: flex !important;
             flex-direction: column !important;
             justify-content: space-between !important;
             height: 100% !important;
-            gap: clamp(6px, 1.2vh, 12px) !important;
+            gap: 10px !important;
           }
 
-          .menu-status-container {
-            order: unset !important;
+          .secondary-tile {
+            flex: 1 !important;
+            min-height: 0 !important;
           }
 
-          .menu-status-bar {
-            padding: clamp(6px, 1.2vh, 12px) clamp(10px, 1.6vw, 16px) !important;
-            border-radius: clamp(10px, 1.4vh, 14px) !important;
-          }
-
-          .menu-status-text {
-            font-size: clamp(0.8em, 1.3vh, 0.95em) !important;
-          }
-
-          .menu-status-btn {
-            font-size: clamp(0.76em, 1.2vh, 0.86em) !important;
-            padding: clamp(3px, 0.5vh, 5px) clamp(6px, 1vw, 12px) !important;
-          }
-
-          .menu-training-container {
-            order: unset !important;
-            margin-top: 0 !important;
-          }
-
-          .training-section-label {
-            font-size: clamp(0.72em, 1.1vh, 0.82em) !important;
-            margin-bottom: clamp(2px, 0.5vh, 6px) !important;
+          .menu-training-col {
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: space-between !important;
+            height: 100% !important;
+            gap: 8px !important;
           }
 
           .training-chips-grid {
-            gap: clamp(6px, 1vw, 10px) !important;
+            display: flex !important;
+            flex-direction: column !important;
+            flex: 1 !important;
+            gap: 6px !important;
           }
 
           .training-chip {
-            aspect-ratio: 1 / 1 !important;
-            padding: clamp(6px, 1.2vh, 14px) clamp(4px, 0.8vw, 10px) !important;
-            border-radius: clamp(10px, 1.5vh, 16px) !important;
-          }
-
-          .training-chip-icon {
-            font-size: clamp(1.3rem, 2.4vh, 2rem) !important;
-          }
-
-          .training-chip-title {
-            font-size: clamp(0.75em, 1.3vh, 0.88em) !important;
-          }
-
-          .menu-right-box {
-            order: unset !important;
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: space-between !important;
-            gap: clamp(6px, 1.2vh, 12px) !important;
-            height: 100% !important;
-          }
-
-          .menu-action-tile {
-            padding: clamp(8px, 1.6vh, 18px) clamp(12px, 1.8vw, 22px) !important;
-            border-radius: clamp(10px, 1.6vh, 16px) !important;
-          }
-
-          .tile-icon {
-            width: clamp(34px, 5vh, 48px) !important;
-            height: clamp(34px, 5vh, 48px) !important;
-            font-size: clamp(1.3rem, 2.2vh, 1.9rem) !important;
-            border-radius: clamp(8px, 1.2vh, 12px) !important;
-          }
-
-          .tile-title {
-            font-size: clamp(0.98em, 1.7vh, 1.22em) !important;
-          }
-
-          .tile-desc {
-            font-size: clamp(0.72em, 1.2vh, 0.82em) !important;
-          }
-
-          .tile-arrow {
-            font-size: clamp(1.15em, 1.8vh, 1.35em) !important;
+            flex: 1 !important;
+            flex-direction: row !important;
+            justify-content: flex-start !important;
+            gap: 10px !important;
+            padding: 8px 12px !important;
           }
         }
       `}</style>
@@ -489,7 +471,7 @@ export const MainMenu: React.FC = () => {
       <div className="hero-glow-bg" />
 
       <div className="main-menu-card">
-        {/* ── Brand Header (Fest oben arretiert) ── */}
+        {/* ── Brand Header ── */}
         <div className="menu-header-area">
           <div className="menu-header-flex">
             <div className="menu-header-icon">
@@ -506,202 +488,169 @@ export const MainMenu: React.FC = () => {
           </div>
         </div>
 
-        {/* ── Vertikal mittig zentrierter Bereich ── */}
+        {/* ── Command Center Body ── */}
         <div className="menu-middle-wrapper">
-          <div className="menu-content-grid">
-            {/* ── LINKE BOX: Oben Anmeldung, darunter Schnellstart Training ── */}
-            <div className="menu-left-box">
-              {/* Anmeldung / User-Status-Bar */}
-              <div className="menu-status-container">
-                <div className="menu-status-bar">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, overflow: 'hidden' }}>
-                    <span style={{ 
-                      width: '8px', 
-                      height: '8px', 
-                      borderRadius: '50%', 
-                      backgroundColor: user ? 'var(--primary)' : 'var(--text-muted)',
-                      boxShadow: user ? '0 0 8px var(--primary-glow)' : 'none',
-                      flexShrink: 0
-                    }} />
-                    <span className="menu-status-text">
-                      {user ? (
-                        <>Eingeloggt als <strong style={{ color: 'var(--primary)' }}>{user.user_metadata?.username || user.email}</strong></>
-                      ) : (
-                        <span style={{ color: 'var(--text-dim)' }}>Modus: <strong style={{ color: 'var(--text)' }}>Gast</strong></span>
-                      )}
-                    </span>
-                  </div>
-                  {user ? (
-                    <button 
-                      onClick={() => { signOut(); navigate('/'); }}
-                      className="menu-status-btn"
-                      style={{ background: 'transparent', border: 'none', color: 'var(--red)' }}
-                    >
-                      Abmelden
-                    </button>
-                  ) : (
-                    <button 
-                      onClick={() => navigate('/auth')}
-                      className="menu-status-btn"
-                      style={{ background: 'rgba(59, 130, 246, 0.15)', border: '1px solid rgba(59, 130, 246, 0.3)', color: 'var(--blue)' }}
-                    >
-                      Login / Registrieren
-                    </button>
-                  )}
-                </div>
+          {/* 1. Hero CTA Button (Full width in Portrait / Col 1 in Landscape) */}
+          <div className="hero-cta-tile" onClick={() => navigate('/offline')}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', minWidth: 0 }}>
+              <div className="hero-cta-icon">
+                🎯
               </div>
-
-              {/* Schnellstart Training */}
-              <div className="menu-training-container">
-                <div className="training-section-label">
-                  Schnellstart Training
+              <div style={{ minWidth: 0 }}>
+                <div className="hero-cta-title">
+                  {user ? 'NEUES SPIEL STARTEN' : 'SPIELEN ALS GAST'}
                 </div>
-                <div className="training-chips-grid">
-                  <div 
-                    className="training-chip" 
-                    onClick={() => navigate('/offline?tab=training&mode=checkout')}
-                  >
-                    <span className="training-chip-icon">🎯</span>
-                    <span className="training-chip-title">Checkout</span>
-                  </div>
-                  <div 
-                    className="training-chip" 
-                    onClick={() => navigate('/offline?tab=training&mode=powerscoring')}
-                  >
-                    <span className="training-chip-icon">🔥</span>
-                    <span className="training-chip-title">Scoring</span>
-                  </div>
-                  <div 
-                    className="training-chip" 
-                    onClick={() => navigate('/offline?tab=training&mode=splitscore')}
-                  >
-                    <span className="training-chip-icon">➗</span>
-                    <span className="training-chip-title">Split Score</span>
-                  </div>
+                <div className="hero-cta-desc">
+                  X01 · Sets/Legs · Training · Bots
                 </div>
               </div>
             </div>
-
-            {/* ── RECHTE BOX: Die 3 Haupt-Buttons ── */}
-            <div className="menu-right-box">
-              {/* Offline Match */}
-              <div className="menu-action-tile tile-offline" onClick={() => navigate('/offline')}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(10px, 1.8vw, 16px)', minWidth: 0 }}>
-                  <div className="tile-icon" style={{ background: 'rgba(245, 158, 11, 0.15)' }}>
-                    🎯
-                  </div>
-                  <div style={{ minWidth: 0 }}>
-                    <div className="tile-title">
-                      {user ? 'Offline Match' : 'Als Gast spielen'}
-                    </div>
-                    <div className="tile-desc">
-                      X01, Sets/Legs, Training & Bots
-                    </div>
-                  </div>
-                </div>
-                <div className="tile-arrow" style={{ color: 'var(--primary)' }}>
-                  ➔
-                </div>
-              </div>
-
-              {/* Online Multiplayer */}
-              <div className="menu-action-tile tile-online" onClick={handleOnlineClick}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(10px, 1.8vw, 16px)', minWidth: 0 }}>
-                  <div className="tile-icon" style={{ background: 'rgba(59, 130, 246, 0.15)' }}>
-                    🌍
-                  </div>
-                  <div style={{ minWidth: 0 }}>
-                    <div className="tile-title">
-                      Online Multiplayer
-                    </div>
-                    <div className="tile-desc">
-                      Räume erstellen & global gegeneinander spielen
-                    </div>
-                  </div>
-                </div>
-                <div className="tile-arrow" style={{ color: 'var(--blue)' }}>
-                  ➔
-                </div>
-              </div>
-
-              {/* Stats or Auth */}
-              {user ? (
-                <div className="menu-action-tile tile-stats" onClick={() => navigate('/stats')}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(10px, 1.8vw, 16px)', minWidth: 0 }}>
-                    <div className="tile-icon" style={{ background: 'rgba(249, 115, 22, 0.15)' }}>
-                      📊
-                    </div>
-                    <div style={{ minWidth: 0 }}>
-                      <div className="tile-title">
-                        Statistiken & Profile
-                      </div>
-                      <div className="tile-desc">
-                        Averages, Triple-Quoten, Radar & Historie
-                      </div>
-                    </div>
-                  </div>
-                  <div className="tile-arrow" style={{ color: 'var(--orange)' }}>
-                    ➔
-                  </div>
-                </div>
-              ) : (
-                <div className="menu-action-tile tile-auth" onClick={() => navigate('/auth')}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(10px, 1.8vw, 16px)', minWidth: 0 }}>
-                    <div className="tile-icon" style={{ background: 'rgba(139, 92, 246, 0.15)' }}>
-                      🔑
-                    </div>
-                    <div style={{ minWidth: 0 }}>
-                      <div className="tile-title">
-                        Account erstellen / Login
-                      </div>
-                      <div className="tile-desc">
-                        Profile anlegen & Statistiken dauerhaft sichern
-                      </div>
-                    </div>
-                  </div>
-                  <div className="tile-arrow" style={{ color: 'var(--purple)' }}>
-                    ➔
-                  </div>
-                </div>
-              )}
+            <div className="hero-cta-arrow">
+              ➔
             </div>
           </div>
 
-          {/* ── Version & Update Badge ── */}
+          {/* 2. Secondary Grid (Col 2 in Landscape) */}
+          <div className="menu-secondary-grid">
+            {/* Online Multiplayer */}
+            <div className="secondary-tile tile-online" onClick={handleOnlineClick}>
+              <div className="secondary-tile-top">
+                <div className="secondary-tile-icon" style={{ background: 'rgba(59, 130, 246, 0.15)' }}>
+                  🌍
+                </div>
+                <div className="secondary-tile-arrow" style={{ color: 'var(--blue)' }}>➔</div>
+              </div>
+              <div>
+                <div className="secondary-tile-title">Multiplayer</div>
+                <div className="secondary-tile-desc">Räume & Global</div>
+              </div>
+            </div>
+
+            {/* Stats or Auth */}
+            {user ? (
+              <div className="secondary-tile tile-stats" onClick={() => navigate('/stats')}>
+                <div className="secondary-tile-top">
+                  <div className="secondary-tile-icon" style={{ background: 'rgba(249, 115, 22, 0.15)' }}>
+                    📊
+                  </div>
+                  <div className="secondary-tile-arrow" style={{ color: 'var(--orange)' }}>➔</div>
+                </div>
+                <div>
+                  <div className="secondary-tile-title">Statistiken</div>
+                  <div className="secondary-tile-desc">Averages & Radar</div>
+                </div>
+              </div>
+            ) : (
+              <div className="secondary-tile tile-auth" onClick={() => navigate('/auth')}>
+                <div className="secondary-tile-top">
+                  <div className="secondary-tile-icon" style={{ background: 'rgba(139, 92, 246, 0.15)' }}>
+                    🔑
+                  </div>
+                  <div className="secondary-tile-arrow" style={{ color: 'var(--purple)' }}>➔</div>
+                </div>
+                <div>
+                  <div className="secondary-tile-title">Account</div>
+                  <div className="secondary-tile-desc">Login & Cloud</div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 3. Training Quickstart (Col 3 in Landscape) */}
+          <div className="menu-training-col">
+            <div className="menu-training-container">
+              <div className="training-section-label">
+                SCHNELLSTART TRAINING
+              </div>
+              <div className="training-chips-grid">
+                <div 
+                  className="training-chip" 
+                  onClick={() => navigate('/offline?tab=training&mode=checkout')}
+                >
+                  <span className="training-chip-icon">🎯</span>
+                  <span className="training-chip-title">Checkout</span>
+                </div>
+                <div 
+                  className="training-chip" 
+                  onClick={() => navigate('/offline?tab=training&mode=powerscoring')}
+                >
+                  <span className="training-chip-icon">🔥</span>
+                  <span className="training-chip-title">Scoring</span>
+                </div>
+                <div 
+                  className="training-chip" 
+                  onClick={() => navigate('/offline?tab=training&mode=splitscore')}
+                >
+                  <span className="training-chip-icon">➗</span>
+                  <span className="training-chip-title">Split</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Docked User Status Bar & Version ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%', alignItems: 'center' }}>
+          <div className="menu-status-bar">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, overflow: 'hidden' }}>
+              <span style={{ 
+                width: '7px', 
+                height: '7px', 
+                borderRadius: '50%', 
+                backgroundColor: user ? 'var(--primary)' : 'var(--text-muted)',
+                boxShadow: user ? '0 0 8px var(--primary-glow)' : 'none',
+                flexShrink: 0
+              }} />
+              <span className="menu-status-text">
+                {user ? (
+                  <>Eingeloggt als <strong style={{ color: 'var(--primary)' }}>{user.user_metadata?.username || user.email}</strong></>
+                ) : (
+                  <span style={{ color: 'var(--text-dim)' }}>Modus: <strong style={{ color: 'var(--text)' }}>Gast</strong></span>
+                )}
+              </span>
+            </div>
+            {user ? (
+              <button 
+                onClick={() => { signOut(); navigate('/'); }}
+                className="menu-status-btn"
+                style={{ background: 'transparent', border: 'none', color: 'var(--red)' }}
+              >
+                Abmelden
+              </button>
+            ) : (
+              <button 
+                onClick={() => navigate('/auth')}
+                className="menu-status-btn"
+                style={{ background: 'rgba(59, 130, 246, 0.15)', border: '1px solid rgba(59, 130, 246, 0.3)', color: 'var(--blue)' }}
+              >
+                Login
+              </button>
+            )}
+          </div>
+
           <div 
             style={{ 
-              marginTop: 'clamp(6px, 1vh, 12px)', 
-              padding: '4px 10px', 
-              borderRadius: '12px', 
-              background: 'rgba(255,255,255,0.03)', 
-              border: '1px solid rgba(255,255,255,0.05)',
+              padding: '2px 8px', 
+              borderRadius: '8px', 
               display: 'inline-flex', 
               alignItems: 'center', 
               justifyContent: 'center', 
               gap: '6px', 
-              fontSize: '0.72rem', 
-              color: 'var(--text-dim)',
+              fontSize: '0.68rem', 
+              color: 'var(--text-muted)',
               userSelect: 'none',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease'
+              cursor: 'pointer'
             }}
             onClick={() => {
-              if (window.confirm(`DartCounter ${APP_VERSION}\nBuild: ${BUILD_TIME}\n\nMöchtest du die App neu laden und den Zwischenspeicher (Cache) aktualisieren?`)) {
+              if (window.confirm(`DartCounter ${APP_VERSION}\nBuild: ${BUILD_TIME}\n\nMöchtest du die App neu laden und den Zwischenspeicher aktualisieren?`)) {
                 window.location.reload();
               }
             }}
             title="Klicken zum Neuladen / Cache leeren"
           >
-            <span style={{ 
-              width: '6px', 
-              height: '6px', 
-              borderRadius: '50%', 
-              backgroundColor: 'var(--primary)', 
-              boxShadow: '0 0 6px var(--primary-glow)' 
-            }} />
-            <span>DartCounter {APP_VERSION}</span>
-            <span style={{ opacity: 0.4 }}>•</span>
-            <span style={{ opacity: 0.7 }}>Build {BUILD_TIME}</span>
+            <span>v{APP_VERSION}</span>
+            <span>•</span>
+            <span>Build {BUILD_TIME}</span>
           </div>
         </div>
       </div>
