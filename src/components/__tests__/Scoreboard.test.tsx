@@ -95,6 +95,65 @@ describe('Scoreboard Component', () => {
     expect(screen.getByText('D20')).toBeInTheDocument();
   });
 
+  it('renders 2v2 team header and indicators when in 2v2 mode', () => {
+    const teamPlayers: Player[] = [
+      { ...dummyPlayers[0], name: 'Dominik', score: 300, team: 1 },
+      { ...dummyPlayers[1], name: 'Opponent 1', score: 100, team: 2 },
+      { ...dummyPlayers[0], name: 'Partner', score: 150, team: 1 },
+      { ...dummyPlayers[1], name: 'Opponent 2', score: 100, team: 2 }
+    ];
+
+    const teamConfig: GameConfig = {
+      ...dummyConfig,
+      is2v2: true
+    };
+
+    render(
+      <Scoreboard 
+        players={teamPlayers}
+        activePlayer={0}
+        startingPlayerOfLeg={0}
+        config={teamConfig}
+        currentRoundDarts={[]}
+      />
+    );
+
+    expect(screen.getByText('Team 1:')).toBeInTheDocument();
+    expect(screen.getByText('Team 2:')).toBeInTheDocument();
+    // Team 1 score = 300 + 150 = 450 Pkt
+    expect(screen.getByText('450 Pkt')).toBeInTheDocument();
+    // Team 2 score = 100 + 100 = 200 Pkt
+    expect(screen.getByText('200 Pkt')).toBeInTheDocument();
+  });
+
+  it('shows Frozen warning badge when active player team is behind in 2v2', () => {
+    const teamPlayers: Player[] = [
+      { ...dummyPlayers[0], name: 'Dominik', score: 40, team: 1 },
+      { ...dummyPlayers[1], name: 'Opponent 1', score: 50, team: 2 },
+      { ...dummyPlayers[0], name: 'Partner', score: 200, team: 1 },
+      { ...dummyPlayers[1], name: 'Opponent 2', score: 50, team: 2 }
+    ];
+
+    const teamConfig: GameConfig = {
+      ...dummyConfig,
+      is2v2: true
+    };
+
+    render(
+      <Scoreboard 
+        players={teamPlayers}
+        activePlayer={0}
+        startingPlayerOfLeg={0}
+        config={teamConfig}
+        currentRoundDarts={[]}
+      />
+    );
+
+    // Partner has 200, opponents have 100. Diff = +100 Pkt -> FROZEN
+    expect(screen.getByText(/Team 1 Frozen/i)).toBeInTheDocument();
+    expect(screen.getByText('❄️ Geblockt (Freeze)')).toBeInTheDocument();
+  });
+
   it('displays compact stats correctly (Leg, Match, CO, 100+, 180)', () => {
     render(
       <Scoreboard 

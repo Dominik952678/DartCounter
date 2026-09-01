@@ -1,9 +1,44 @@
 import { useState, useRef, useEffect } from 'react';
 import type { GameState, Profile, MatchHistory, GameConfig, Player } from '../types';
 import { saveProfiles } from '../db/database';
-import { getBotDart } from '../utils/bot';
+import { getBotDart, type TeamContext } from '../utils/bot';
 import { playSciFiHitSound, play180Sound, playBustSound, playHighFinishSound, speak, playDartHitSound, announceScore, announceGameShot } from '../utils/audio';
 import { triggerHaptic } from '../utils/haptics';
+
+export const get2v2FreezeStatus = (players: Player[], activePlayerIndex: number): {
+  is2v2: boolean;
+  isFrozen: boolean;
+  partnerIndex: number;
+  partnerScore: number;
+  opponentsTotal: number;
+  pointDifference: number;
+} => {
+  if (!players || players.length < 4) {
+    return { is2v2: false, isFrozen: false, partnerIndex: -1, partnerScore: 0, opponentsTotal: 0, pointDifference: 0 };
+  }
+  const activePlayer = players[activePlayerIndex];
+  if (!activePlayer) {
+    return { is2v2: false, isFrozen: false, partnerIndex: -1, partnerScore: 0, opponentsTotal: 0, pointDifference: 0 };
+  }
+  const partnerIndex = (activePlayerIndex + 2) % 4;
+  const opponentIndices = activePlayerIndex % 2 === 0 ? [1, 3] : [0, 2];
+
+  const partnerScore = players[partnerIndex]?.score ?? 0;
+  const opp1Score = players[opponentIndices[0]]?.score ?? 0;
+  const opp2Score = players[opponentIndices[1]]?.score ?? 0;
+  const opponentsTotal = opp1Score + opp2Score;
+  const pointDifference = partnerScore - opponentsTotal;
+  const isFrozen = pointDifference > 0;
+
+  return {
+    is2v2: true,
+    isFrozen,
+    partnerIndex,
+    partnerScore,
+    opponentsTotal,
+    pointDifference
+  };
+};
 
 interface UseGameEngineProps {
   profiles: Record<string, Profile>;
@@ -81,18 +116,38 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
       setHasSavedGame(false);
     }
 
-    const players: Player[] = chosenPlayers.map(name => ({
-      name, score: config.startScore, legs: 0, sets: 0,
-      legPts: 0, legDarts: 0, matchPts: 0, matchDarts: 0, legHistory: [],
-      matchFirst9Pts: 0, matchFirst9Darts: 0,
-      sixtyPlus: 0, hundredPlus: 0, oneFortyPlus: 0, oneEighty: 0, highestCheckout: 0,
-      checkoutAttempts: 0, checkoutSuccesses: 0,
-      isBot: profiles[name]?.isBot,
-      targetAverage: profiles[name]?.targetAverage,
-      color: profiles[name]?.color,
-      segmentHits: {},
-      triplesHit: 0
-    }));
+    const is2v2 = !!config.is2v2 && chosenPlayers.length === 4;
+
+    const players: Player[] = chosenPlayers.map((name, index) => {
+      const team: 1 | 2 = (index % 2 === 0 ? 1 : 2);
+      const teamColor = team === 1 ? 'var(--blue, #0a84ff)' : 'var(--orange, #ff9f0a)';
+      return {
+        name, 
+        score: config.startScore, 
+        legs: 0, 
+        sets: 0,
+        legPts: 0, 
+        legDarts: 0, 
+        matchPts: 0, 
+        matchDarts: 0, 
+        legHistory: [],
+        matchFirst9Pts: 0, 
+        matchFirst9Darts: 0,
+        sixtyPlus: 0, 
+        hundredPlus: 0, 
+        oneFortyPlus: 0, 
+        oneEighty: 0, 
+        highestCheckout: 0,
+        checkoutAttempts: 0, 
+        checkoutSuccesses: 0,
+        isBot: profiles[name]?.isBot,
+        targetAverage: profiles[name]?.targetAverage,
+        color: is2v2 ? teamColor : (profiles[name]?.color || teamColor),
+        team: is2v2 ? team : undefined,
+        segmentHits: {},
+        triplesHit: 0
+      };
+    });
 
     setGameState({
       players,
@@ -200,6 +255,15 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
     if (newScore === 0) {
         if (state.config.outMode === 'DO' && lastDart.mult !== 2) bust = true;
         if (state.config.outMode === 'MO' && lastDart.mult !== 2 && lastDart.mult !== 3) bust = true;
+        
+        // 2v2 Freeze Rule Check:
+        if (!bust && state.config.is2v2) {
+            const freezeInfo = get2v2FreezeStatus(state.players, state.activePlayer);
+            if (freezeInfo.isFrozen) {
+                bust = true; // Attempted checkout while frozen is a BUST
+            }
+        }
+
         if (!bust) isWin = true;
     }
 
@@ -208,6 +272,9 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
         setCelebration({ type: 'bust', playerIndex: state.activePlayer });
         triggerHaptic('bust');
         playBustSound();
+        if (newScore === 0 && state.config.is2v2) {
+            speak("Frozen!");
+        }
       } else if (isWin) {
         setCelebration({ type: 'checkout', playerIndex: state.activePlayer });
         triggerHaptic('victory');
@@ -449,9 +516,20 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
 
   const handleLegWin = (currentState: GameState, winnerIndex: number, newHighestThrow: number): GameState => {
     const newPlayers = [...currentState.players];
-    let winner = { ...newPlayers[winnerIndex] };
-    winner.legs += 1;
-    newPlayers[winnerIndex] = winner;
+    const winningPlayer = newPlayers[winnerIndex];
+    const is2v2 = !!currentState.config.is2v2 && newPlayers.length === 4;
+    const winningTeam = winningPlayer.team || (winnerIndex % 2 === 0 ? 1 : 2);
+
+    if (is2v2) {
+        for (let i = 0; i < newPlayers.length; i++) {
+            const pTeam = newPlayers[i].team || (i % 2 === 0 ? 1 : 2);
+            if (pTeam === winningTeam) {
+                newPlayers[i] = { ...newPlayers[i], legs: newPlayers[i].legs + 1 };
+            }
+        }
+    } else {
+        newPlayers[winnerIndex] = { ...newPlayers[winnerIndex], legs: newPlayers[winnerIndex].legs + 1 };
+    }
 
     for (let i = 0; i < newPlayers.length; i++) {
         let p = { ...newPlayers[i] };
@@ -468,13 +546,27 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
         newPlayers[winnerIndex].bestMatchLeg = (!newPlayers[winnerIndex].bestMatchLeg || legDartsTaken < newPlayers[winnerIndex].bestMatchLeg!) ? legDartsTaken : newPlayers[winnerIndex].bestMatchLeg;
     }
 
-    winner = newPlayers[winnerIndex];
+    const teamWonLegs = newPlayers[winnerIndex].legs;
 
-    if (winner.legs >= currentState.config.legsToWin) {
-        winner.sets += 1;
-        newPlayers[winnerIndex] = winner;
+    if (teamWonLegs >= currentState.config.legsToWin) {
+        if (is2v2) {
+            for (let i = 0; i < newPlayers.length; i++) {
+                const pTeam = newPlayers[i].team || (i % 2 === 0 ? 1 : 2);
+                if (pTeam === winningTeam) {
+                    newPlayers[i] = { ...newPlayers[i], sets: newPlayers[i].sets + 1, legs: 0 };
+                } else {
+                    newPlayers[i] = { ...newPlayers[i], legs: 0 };
+                }
+            }
+        } else {
+            newPlayers[winnerIndex] = { ...newPlayers[winnerIndex], sets: newPlayers[winnerIndex].sets + 1 };
+            for (let i = 0; i < newPlayers.length; i++) {
+                newPlayers[i].legs = 0;
+            }
+        }
         
-        if (winner.sets >= currentState.config.setsToWin) {
+        const teamWonSets = newPlayers[winnerIndex].sets;
+        if (teamWonSets >= currentState.config.setsToWin) {
             showMatchStats(currentState, winnerIndex, newPlayers, newHighestThrow);
             localStorage.removeItem('dartcounter_saved_game');
             setHasSavedGame(false);
@@ -483,10 +575,6 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
               players: newPlayers,
               isProcessing: true
             };
-        }
-
-        for (let i = 0; i < newPlayers.length; i++) {
-            newPlayers[i].legs = 0;
         }
     }
 
@@ -501,14 +589,14 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
     let updatedProfiles = { ...profiles };
     let profilesChanged = false;
     
-    if (newHighestThrow > (updatedProfiles[winner.name]?.highestThrow || 0)) {
-       updatedProfiles[winner.name] = { ...updatedProfiles[winner.name], highestThrow: newHighestThrow };
+    if (newHighestThrow > (updatedProfiles[winningPlayer.name]?.highestThrow || 0)) {
+       updatedProfiles[winningPlayer.name] = { ...updatedProfiles[winningPlayer.name], highestThrow: newHighestThrow };
        profilesChanged = true;
     }
     
-    const currentBestLeg = updatedProfiles[winner.name]?.bestLegDarts;
+    const currentBestLeg = updatedProfiles[winningPlayer.name]?.bestLegDarts;
     if (!currentBestLeg || legDartsTaken < currentBestLeg) {
-       updatedProfiles[winner.name] = { ...updatedProfiles[winner.name], bestLegDarts: legDartsTaken };
+       updatedProfiles[winningPlayer.name] = { ...updatedProfiles[winningPlayer.name], bestLegDarts: legDartsTaken };
        profilesChanged = true;
     }
 
@@ -534,17 +622,24 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
   };
 
   const showMatchStats = async (_currentState: GameState, winnerIndex: number, finalPlayers: Player[], highestThrow: number) => {
-    let winnerName = finalPlayers[winnerIndex].name;
+    const is2v2 = !!_currentState.config.is2v2 && finalPlayers.length === 4;
+    const winningPlayer = finalPlayers[winnerIndex];
+    const winningTeam = winningPlayer.team || (winnerIndex % 2 === 0 ? 1 : 2);
+    let winnerName = is2v2
+        ? `Team ${winningTeam} (${finalPlayers.filter((_, i) => ((finalPlayers[i].team || (i % 2 === 0 ? 1 : 2)) === winningTeam)).map(p => p.name).join(' & ')})`
+        : finalPlayers[winnerIndex].name;
     
     const newProfiles = { ...profiles };
     finalPlayers.forEach((p, i) => {
         if (!newProfiles[p.name]) return;
         const prof = { ...newProfiles[p.name] };
-        if (i === winnerIndex) prof.wins += 1;
+        const pTeam = p.team || (i % 2 === 0 ? 1 : 2);
+        const didWin = is2v2 ? (pTeam === winningTeam) : (i === winnerIndex);
+        if (didWin) prof.wins += 1;
         prof.matches += 1;
         prof.dartsThrown += p.matchDarts;
         prof.pointsScored += p.matchPts;
-        if (p.name === winnerName) {
+        if (p.name === finalPlayers[winnerIndex].name) {
            if (highestThrow > prof.highestThrow) {
                prof.highestThrow = highestThrow;
            }
@@ -581,8 +676,9 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
         winner: winnerName,
         gameType: 'standard',
         isOnline: isOnline,
+        is2v2: is2v2,
         config: _currentState.config,
-        players: finalPlayers.map(p => ({
+        players: finalPlayers.map((p, i) => ({
             name: p.name, sets: p.sets, legs: p.legs,
             avg: p.matchDarts > 0 ? ((p.matchPts / p.matchDarts) * 3).toFixed(1) : "0.0",
             first9: p.matchFirst9Darts > 0 ? ((p.matchFirst9Pts / p.matchFirst9Darts) * 3).toFixed(1) : "0.0",
@@ -599,7 +695,8 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
             oneEighty: p.oneEighty,
             highestCheckout: p.highestCheckout,
             segmentHits: { ...(p.segmentHits || {}) },
-            triplesHit: p.triplesHit || 0
+            triplesHit: p.triplesHit || 0,
+            team: is2v2 ? (p.team || (i % 2 === 0 ? 1 : 2)) : undefined
         }))
     };
 
@@ -671,12 +768,23 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
 
     const timer = setTimeout(() => {
         const currentTurnScore = gameState.currentRoundDarts.reduce((s, d) => s + d.value, 0);
-        const dart = getBotDart(p.targetAverage || 40, p.score - currentTurnScore, gameState.config.outMode);
+        let teamContext: TeamContext | undefined = undefined;
+        if (gameState.config.is2v2 && gameState.players.length === 4) {
+            const freezeInfo = get2v2FreezeStatus(gameState.players, gameState.activePlayer);
+            const opponentIndices = gameState.activePlayer % 2 === 0 ? [1, 3] : [0, 2];
+            teamContext = {
+                is2v2: true,
+                partnerScore: freezeInfo.partnerScore,
+                opponent1Score: gameState.players[opponentIndices[0]]?.score ?? 0,
+                opponent2Score: gameState.players[opponentIndices[1]]?.score ?? 0
+            };
+        }
+        const dart = getBotDart(p.targetAverage || 40, p.score - currentTurnScore, gameState.config.outMode, teamContext);
         addDart(dart.base, dart.mult);
     }, 1200);
 
     return () => clearTimeout(timer);
-  }, [gameState.activePlayer, gameState.currentRoundDarts, gameState.isProcessing, roundBust, checkoutPrompt, gameState.players]);
+  }, [gameState.activePlayer, gameState.currentRoundDarts, gameState.isProcessing, roundBust, checkoutPrompt, gameState.players, gameState.config]);
 
   return {
     gameState, setGameState, roundBust, celebration, setCelebration,

@@ -132,4 +132,65 @@ describe('Bot AI Dart Generation', () => {
     // An avg 75 bot should finish legs faster (around 18-24 darts)
     expect(avgDarts75).toBeLessThan(avgDarts40);
   });
+
+  describe('2v2 Team Freeze Tactical Decisions ("Immer Block vor Check!")', () => {
+    it('does NOT throw at checkout double when bot team is FROZEN', () => {
+      // Bot has 40 points left. Partner has 200 points. Opponents have 50 + 50 = 100 points.
+      // Partner (200) > Opponents (100) -> FROZEN!
+      const teamContext = {
+        is2v2: true,
+        partnerScore: 200,
+        opponent1Score: 50,
+        opponent2Score: 50
+      };
+
+      for (let i = 0; i < 50; i++) {
+        const dart = getBotDart(80, 40, 'DO', teamContext);
+        // The bot should NOT hit D20 (which would be a freeze bust!)
+        // It should throw safe single or miss outside safely
+        const dartVal = dart.base * dart.mult;
+        expect(dartVal).not.toBe(40);
+      }
+    });
+
+    it('DOES throw at checkout double when bot team is UNFROZEN', () => {
+      // Bot has 40 points left. Partner has 60 points. Opponents have 50 + 50 = 100 points.
+      // Partner (60) <= Opponents (100) -> UNFROZEN!
+      const teamContext = {
+        is2v2: true,
+        partnerScore: 60,
+        opponent1Score: 50,
+        opponent2Score: 50
+      };
+
+      let d20Attempts = 0;
+      for (let i = 0; i < 100; i++) {
+        const dart = getBotDart(80, 40, 'DO', teamContext);
+        if (dart.base === 20 && dart.mult === 2) {
+          d20Attempts++;
+        }
+      }
+      expect(d20Attempts).toBeGreaterThan(0);
+    });
+
+    it('scores heavily on T20 when frozen with high score to reduce team total', () => {
+      // Bot has 300 points left. Partner has 250 points. Opponents have 100 + 100 = 200 points.
+      // Frozen!
+      const teamContext = {
+        is2v2: true,
+        partnerScore: 250,
+        opponent1Score: 100,
+        opponent2Score: 100
+      };
+
+      let twentySegmentHits = 0;
+      for (let i = 0; i < 50; i++) {
+        const dart = getBotDart(70, 300, 'DO', teamContext);
+        if (dart.base === 20 || dart.base === 1 || dart.base === 5) {
+          twentySegmentHits++;
+        }
+      }
+      expect(twentySegmentHits).toBeGreaterThan(40);
+    });
+  });
 });

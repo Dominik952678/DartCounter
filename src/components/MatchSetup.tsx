@@ -47,7 +47,13 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({ profiles, onStartGame, h
     return 'DO';
   });
 
+  const [is2v2, setIs2v2] = useState<boolean>(() => {
+    return localStorage.getItem('dart_x01_is2v2') === 'true';
+  });
+
   const [playerCount, setPlayerCount] = useState<number>(() => {
+    const saved2v2 = localStorage.getItem('dart_x01_is2v2') === 'true';
+    if (saved2v2) return 4;
     const saved = localStorage.getItem('dart_x01_playerCount');
     if (saved !== null) {
       const parsed = parseInt(saved, 10);
@@ -57,7 +63,7 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({ profiles, onStartGame, h
   });
 
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>(
-    isGuest ? ['Gast 1', 'Gast 2'] : []
+    isGuest ? ['Gast 1', 'Gast 2', 'Gast 3', 'Gast 4'] : []
   );
   const [guestBots, setGuestBots] = useState<Record<string, boolean>>({});
   
@@ -74,6 +80,13 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({ profiles, onStartGame, h
   }, []);
 
   const profileNames = Object.keys(profiles);
+
+  useEffect(() => {
+    localStorage.setItem('dart_x01_is2v2', is2v2 ? 'true' : 'false');
+    if (is2v2) {
+      setPlayerCount(4);
+    }
+  }, [is2v2]);
 
   useEffect(() => {
     if (typeof setsToWin === 'number' && setsToWin >= 1) {
@@ -96,8 +109,10 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({ profiles, onStartGame, h
   }, [outMode]);
 
   useEffect(() => {
-    localStorage.setItem('dart_x01_playerCount', playerCount.toString());
-  }, [playerCount]);
+    if (!is2v2) {
+      localStorage.setItem('dart_x01_playerCount', playerCount.toString());
+    }
+  }, [playerCount, is2v2]);
 
   useEffect(() => {
     if (!isGuest && profileNames.length > 0 && selectedPlayers.length === 0) {
@@ -266,7 +281,8 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({ profiles, onStartGame, h
       startScore,
       outMode,
       setsToWin: typeof setsToWin === 'number' ? setsToWin : 1,
-      legsToWin: typeof legsToWin === 'number' ? legsToWin : 1
+      legsToWin: typeof legsToWin === 'number' ? legsToWin : 1,
+      is2v2
     });
   };
 
@@ -382,21 +398,60 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({ profiles, onStartGame, h
       <div className="match-setup-grid">
         <div className="card">
           <div className="card-header">
-            <h2>Spieler</h2>
+            <h2>Modus & Spieler</h2>
           </div>
-          <div className="segment-control" style={{ marginBottom: '15px' }}>
-            {[1, 2, 3, 4].map(count => (
-              <label key={count} className={playerCount === count ? 'active' : ''}>
+
+          <div style={{ marginBottom: '16px' }}>
+            <div className="segment-control" style={{ marginBottom: '10px' }}>
+              <label className={!is2v2 ? 'active' : ''}>
                 <input 
                   type="radio" 
-                  name="playerCount" 
-                  value={count} 
-                  checked={playerCount === count}
-                  onChange={() => setPlayerCount(count)}
+                  name="matchMode2v2" 
+                  checked={!is2v2} 
+                  onChange={() => setIs2v2(false)} 
                 />
-                <span>{count}</span>
+                <span>👤 Einzel</span>
               </label>
-            ))}
+              <label className={is2v2 ? 'active' : ''}>
+                <input 
+                  type="radio" 
+                  name="matchMode2v2" 
+                  checked={is2v2} 
+                  onChange={() => setIs2v2(true)} 
+                />
+                <span>👥 2v2 Doppel</span>
+              </label>
+            </div>
+
+            {is2v2 ? (
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(10, 132, 255, 0.12), rgba(90, 200, 250, 0.06))',
+                border: '1px solid rgba(10, 132, 255, 0.3)',
+                borderRadius: '10px',
+                padding: '10px 12px',
+                fontSize: '0.82rem',
+                lineHeight: 1.4,
+                color: 'var(--text)',
+                marginBottom: '12px'
+              }}>
+                ❄️ <strong>Freeze-Regel:</strong> Geworfen wird alternierend (T1 ➔ T2 ➔ T1 ➔ T2). Ein Team gewinnt bei 0 Rest nur, wenn die eigenen Teampunkte ≤ den Gegnerpunkten sind!
+              </div>
+            ) : (
+              <div className="segment-control" style={{ marginBottom: '15px' }}>
+                {[1, 2, 3, 4].map(count => (
+                  <label key={count} className={playerCount === count ? 'active' : ''}>
+                    <input 
+                      type="radio" 
+                      name="playerCount" 
+                      value={count} 
+                      checked={playerCount === count}
+                      onChange={() => setPlayerCount(count)}
+                    />
+                    <span>{count} {count === 1 ? 'Spieler' : 'Spieler'}</span>
+                  </label>
+                ))}
+              </div>
+            )}
           </div>
         
           <div className="player-selects" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -404,6 +459,8 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({ profiles, onStartGame, h
             const isVisible = i < playerCount;
             const playerName = selectedPlayers[i] || '';
             const isBot = isGuest ? guestBots[playerName] : profiles[playerName]?.isBot;
+            const slotTeam = (i % 2 === 0 ? 1 : 2);
+            const teamColor = slotTeam === 1 ? 'var(--blue, #0a84ff)' : 'var(--orange, #ff9f0a)';
             
             return (
               <div 
@@ -429,7 +486,8 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({ profiles, onStartGame, h
                     background: 'var(--surface)',
                     padding: '8px 12px',
                     borderRadius: 'var(--radius)',
-                    border: '1px solid var(--card-border)'
+                    border: is2v2 ? `1px solid ${teamColor}` : '1px solid var(--card-border)',
+                    borderLeft: is2v2 ? `4px solid ${teamColor}` : undefined
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -479,8 +537,22 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({ profiles, onStartGame, h
                       </button>
                     </div>
                   </div>
+
+                  {is2v2 && (
+                    <span style={{
+                      background: slotTeam === 1 ? 'rgba(10, 132, 255, 0.2)' : 'rgba(255, 159, 10, 0.2)',
+                      color: teamColor,
+                      padding: '2px 6px',
+                      borderRadius: '4px',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      flexShrink: 0
+                    }}>
+                      T{slotTeam}
+                    </span>
+                  )}
                   
-                  <div className="avatar-circle" style={{ backgroundColor: getAvatarColor(playerName || `Gast ${i+1}`) }}>
+                  <div className="avatar-circle" style={{ backgroundColor: is2v2 ? teamColor : getAvatarColor(playerName || `Gast ${i+1}`) }}>
                     {isBot ? '🤖' : (playerName.charAt(0).toUpperCase() || '?')}
                   </div>
 
@@ -490,7 +562,7 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({ profiles, onStartGame, h
                           type="text" 
                           value={playerName} 
                           onChange={e => handlePlayerChange(i, e.target.value)} 
-                          placeholder={`Spieler ${i + 1}`} 
+                          placeholder={is2v2 ? `Team ${slotTeam} Spieler ${i < 2 ? 1 : 2}` : `Spieler ${i + 1}`} 
                           style={{ flex: 1, padding: '12px', border: 'none', background: 'transparent', color: 'var(--text)', fontSize: '16px' }} 
                         />
                         <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85em', color: 'var(--text-dim)', cursor: 'pointer', minWidth: '48px', minHeight: '48px', justifyContent: 'center' }}>
@@ -512,7 +584,7 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({ profiles, onStartGame, h
                       {profileNames.map(name => (
                         <option 
                           key={name} 
-                          value={name}
+                          value={name} 
                           style={{ color: '#000', background: '#fff' }}
                         >
                           {name} {profiles[name]?.isBot ? '(Bot)' : ''}

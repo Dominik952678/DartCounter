@@ -74,4 +74,16 @@ describe('MatchSetup Component', () => {
     fireEvent.click(masterOut);
     expect(masterOut.closest('label')).toHaveClass('active');
   });
+
+  it('allows toggling between Einzel and 2v2 Doppel mode', () => {
+    render(<MatchSetup {...defaultProps} />);
+
+    const doppelToggle = screen.getByText(/2v2 Doppel/i);
+    fireEvent.click(doppelToggle);
+
+    expect(doppelToggle.closest('label')).toHaveClass('active');
+    expect(screen.getByText(/Freeze-Regel/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/T1/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/T2/i).length).toBeGreaterThanOrEqual(1);
+  });
 });

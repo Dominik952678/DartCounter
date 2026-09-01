@@ -30,6 +30,7 @@ export interface GameConfig {
   outMode: 'SO' | 'DO' | 'MO';
   setsToWin: number;
   legsToWin: number;
+  is2v2?: boolean;
   // Minigame config
   rounds?: number;
   checkoutRounds?: number;
@@ -61,6 +62,7 @@ export interface Player {
   triplesHit?: number;
   color?: string;
   bestMatchLeg?: number;
+  team?: 1 | 2;
 }
 
 export interface Dart {
@@ -90,6 +92,7 @@ export interface PlayerStats {
   highestCheckout?: number;
   segmentHits?: Record<string, number>;
   triplesHit?: number;
+  team?: 1 | 2;
   
   // Minigame specific
   score?: number;
@@ -104,9 +107,17 @@ export interface MatchHistory {
   isOnline?: boolean;
   gameType?: 'standard' | 'powerScoring' | 'splitScore' | 'checkoutTraining';
   config?: GameConfig;
+  is2v2?: boolean;
   date: string;
   winner: string;
   players: PlayerStats[];
+}
+
+export interface TeamContext {
+  is2v2: boolean;
+  partnerScore: number;
+  opponent1Score: number;
+  opponent2Score: number;
 }
 
 export interface ProfilesDoc {

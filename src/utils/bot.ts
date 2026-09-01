@@ -155,14 +155,48 @@ export function throwAtTarget(
     }
 }
 
+import type { TeamContext } from '../types';
+
+export type { TeamContext };
+
 /**
- * Returns a single dart throw for a bot, dynamically adapting based on target average and game outMode.
+ * Returns a single dart throw for a bot, dynamically adapting based on target average, game outMode, and 2v2 team freeze context.
  */
 export function getBotDart(
     targetAverage: number, 
     currentScore: number, 
-    outMode: 'DO' | 'SO' | 'MO' = 'DO'
+    outMode: 'DO' | 'SO' | 'MO' = 'DO',
+    teamContext?: TeamContext
 ): { base: number, mult: number } {
+    // ── 0. 2v2 Team Freeze Tactical Decisions ──
+    if (teamContext?.is2v2) {
+        const opponentTotal = teamContext.opponent1Score + teamContext.opponent2Score;
+        const isFrozen = teamContext.partnerScore > opponentTotal;
+
+        // If the bot is FROZEN: it is NOT allowed to check out (finishing on 0 would cause a BUST).
+        if (isFrozen) {
+            if (currentScore <= 40) {
+                // If on a low score, avoid hitting the double that would reduce score to 0
+                if (currentScore > 20) {
+                    const safeSingle = Math.min(10, currentScore - 10);
+                    return throwAtTarget(safeSingle > 0 ? safeSingle : 1, 1, targetAverage, currentScore);
+                } else if (currentScore > 2) {
+                    // Score 3..20: throw at S1 or S2 to shave 1-2 points without going below 2
+                    return throwAtTarget(1, 1, targetAverage, currentScore);
+                } else {
+                    // On score 2 (D1): cannot throw without checking out, so safely miss outside
+                    return { base: 0, mult: 1 };
+                }
+            }
+            // If currentScore > 40: score heavily to reduce team total and unfreeze the team
+            return throwAtTarget(targetAverage >= 55 ? 20 : 20, targetAverage >= 55 ? 3 : 1, targetAverage, currentScore);
+        }
+
+        // If UNFROZEN:
+        // A) If the bot is on a valid finish, throw for the win!
+        // B) If partner has a finish coming up, ensure team stays ahead by scoring heavily
+    }
+
     // ── 1. Checkout Phase ──
     if (outMode === 'DO') {
         if (currentScore === 50) {
