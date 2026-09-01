@@ -94,6 +94,7 @@ export default function App() {
             onStartGame={gameEngine.startGame}
             hasSavedGame={gameEngine.hasSavedGame}
             onResumeGame={gameEngine.resumeGame}
+            onDiscardSavedGame={gameEngine.discardSavedGame}
             onStartMiniGame={(mode, players, settings) => {
                setMiniGameConfig({ players, settings });
                setScreen(mode as string);

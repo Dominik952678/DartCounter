@@ -107,11 +107,13 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
     return clone;
   };
 
+  const discardSavedGame = () => {
+    localStorage.removeItem('dartcounter_saved_game');
+    setHasSavedGame(false);
+  };
+
   const startGame = (chosenPlayers: string[], config: GameConfig) => {
     if (hasSavedGame) {
-      if (!window.confirm("Es gibt ein noch nicht beendetes Match. Möchtest du dieses verwerfen und ein neues Match starten?")) {
-        return;
-      }
       localStorage.removeItem('dartcounter_saved_game');
       setHasSavedGame(false);
     }
@@ -779,7 +781,7 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
 
   return {
     gameState, setGameState, roundBust, celebration, setCelebration,
-    checkoutPrompt, startGame, abortGame, resumeGame, undoSingleDart,
+    checkoutPrompt, startGame, abortGame, resumeGame, discardSavedGame, undoSingleDart,
     toggleMultiplier, submitCheckoutPrompt, hasSavedGame, setHasSavedGame,
     addDart, timeoutRef
   };

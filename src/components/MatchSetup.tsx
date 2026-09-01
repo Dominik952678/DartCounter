@@ -7,12 +7,43 @@ interface MatchSetupProps {
   onStartGame: (players: string[], config: GameConfig) => void;
   hasSavedGame?: boolean;
   onResumeGame?: () => void;
+  onDiscardSavedGame?: () => void;
   setProfiles?: (profiles: Record<string, Profile>) => void;
 }
 
-export const MatchSetup: React.FC<MatchSetupProps> = ({ profiles, onStartGame, hasSavedGame, onResumeGame, setProfiles }) => {
+interface SavedMatchSummary {
+  players: { name: string; score: number; legs: number; sets: number; isBot?: boolean; team?: number }[];
+  config: GameConfig;
+}
+
+export const MatchSetup: React.FC<MatchSetupProps> = ({ 
+  profiles, 
+  onStartGame, 
+  hasSavedGame, 
+  onResumeGame, 
+  onDiscardSavedGame, 
+  setProfiles 
+}) => {
   const { user } = useAuthStore();
   const isGuest = !user;
+
+  const [savedMatch, setSavedMatch] = useState<SavedMatchSummary | null>(() => {
+    try {
+      const raw = localStorage.getItem('dartcounter_saved_game');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.players && parsed.config) {
+          return { players: parsed.players, config: parsed.config };
+        }
+      }
+    } catch (e) {
+      console.error("Error reading saved match in MatchSetup", e);
+    }
+    return null;
+  });
+
+  const [isSavedBannerDismissed, setIsSavedBannerDismissed] = useState(false);
+  const [showOverwriteModal, setShowOverwriteModal] = useState(false);
 
   const [setsToWin, setSetsToWin] = useState<number | ''>(() => {
     const saved = localStorage.getItem('dart_x01_sets');
@@ -239,6 +270,33 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({ profiles, onStartGame, h
     }, 50);
   };
 
+  const executeStartGame = () => {
+    let chosenPlayers = selectedPlayers.slice(0, playerCount);
+    if (randomOrderOnStart) {
+      const shuffled = [...chosenPlayers];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      chosenPlayers = shuffled;
+    }
+
+    if (onDiscardSavedGame) {
+      onDiscardSavedGame();
+    } else {
+      localStorage.removeItem('dartcounter_saved_game');
+    }
+    setSavedMatch(null);
+
+    onStartGame(chosenPlayers, {
+      startScore,
+      outMode,
+      setsToWin: typeof setsToWin === 'number' ? setsToWin : 1,
+      legsToWin: typeof legsToWin === 'number' ? legsToWin : 1,
+      is2v2
+    });
+  };
+
   const handleStartGame = () => {
     let chosenPlayers = selectedPlayers.slice(0, playerCount);
 
@@ -268,22 +326,12 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({ profiles, onStartGame, h
        setProfiles(fakeProfiles);
     }
 
-    if (randomOrderOnStart) {
-      const shuffled = [...chosenPlayers];
-      for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-      }
-      chosenPlayers = shuffled;
+    if (hasSavedGame && savedMatch && !isSavedBannerDismissed) {
+      setShowOverwriteModal(true);
+      return;
     }
 
-    onStartGame(chosenPlayers, {
-      startScore,
-      outMode,
-      setsToWin: typeof setsToWin === 'number' ? setsToWin : 1,
-      legsToWin: typeof legsToWin === 'number' ? legsToWin : 1,
-      is2v2
-    });
+    executeStartGame();
   };
 
   // Avatar color generator based on name
@@ -375,21 +423,119 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({ profiles, onStartGame, h
         <p className="subtitle">Konfiguriere dein Match</p>
       </div>
 
-      {hasSavedGame && onResumeGame && (
-        <div className="card" style={{ 
-          background: 'linear-gradient(135deg, rgba(10, 132, 255, 0.2), rgba(10, 132, 255, 0.05))', 
-          borderColor: 'var(--blue)', 
-          marginBottom: '20px',
-          animation: 'pulse-soft 2s infinite ease-in-out'
+      {hasSavedGame && !isSavedBannerDismissed && savedMatch && (
+        <div className="card saved-game-card" style={{ 
+          background: 'linear-gradient(135deg, rgba(10, 132, 255, 0.18) 0%, rgba(20, 20, 32, 0.98) 100%)', 
+          border: '1.5px solid rgba(10, 132, 255, 0.65)', 
+          borderRadius: '16px',
+          padding: '16px 18px',
+          marginBottom: '22px',
+          boxShadow: '0 8px 30px rgba(0, 0, 0, 0.4), 0 0 20px rgba(10, 132, 255, 0.2)',
+          position: 'relative'
         }}>
-          <div style={{ textAlign: 'center', padding: '10px 0' }}>
-            <h3 style={{ margin: '0 0 10px 0', color: '#fff' }}>Laufendes Match gefunden</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '1.6rem' }}>🎯</span>
+              <div>
+                <h3 style={{ margin: 0, color: '#fff', fontSize: '1.05rem', fontWeight: 800 }}>Laufendes Match gefunden</h3>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-dim, #aaa)' }}>
+                  {savedMatch.config.startScore} {savedMatch.config.outMode} {savedMatch.config.is2v2 ? '· 2v2 Doppel' : ''} · {savedMatch.config.setsToWin > 1 ? `Best of ${savedMatch.config.setsToWin} Sets` : `Best of ${savedMatch.config.legsToWin} Legs`}
+                </span>
+              </div>
+            </div>
+            <button 
+              onClick={() => setIsSavedBannerDismissed(true)}
+              style={{
+                background: 'rgba(255, 255, 255, 0.08)',
+                border: 'none',
+                color: 'var(--text-dim, #aaa)',
+                fontSize: '1rem',
+                cursor: 'pointer',
+                padding: '4px 8px',
+                borderRadius: '6px'
+              }}
+              title="Schließen"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(${Math.min(savedMatch.players.length, 4)}, 1fr)`,
+            gap: '8px',
+            background: 'rgba(0, 0, 0, 0.35)',
+            padding: '10px',
+            borderRadius: '10px',
+            marginBottom: '14px'
+          }}>
+            {savedMatch.players.map((p, idx) => (
+              <div key={idx} style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text, #fff)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {p.isBot ? '🤖 ' : ''}{p.name}
+                </div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--blue, #0a84ff)' }}>
+                  {p.score}
+                </div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--text-dim, #888)' }}>
+                  {p.legs} {p.legs === 1 ? 'Leg' : 'Legs'}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             <button 
               className="btn-primary" 
               onClick={onResumeGame} 
-              style={{ fontWeight: 'bold' }}
+              style={{ 
+                flex: '1 1 160px', 
+                fontWeight: 800, 
+                padding: '11px 14px', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                gap: '6px',
+                fontSize: '0.9rem'
+              }}
             >
-              Laufendes Match fortsetzen
+              ▶️ Spiel fortsetzen
+            </button>
+
+            <button 
+              className="btn-secondary" 
+              onClick={() => {
+                if (onDiscardSavedGame) onDiscardSavedGame();
+                else localStorage.removeItem('dartcounter_saved_game');
+                setSavedMatch(null);
+              }} 
+              style={{ 
+                flex: '1 1 160px', 
+                fontWeight: 700, 
+                padding: '11px 14px', 
+                borderColor: 'rgba(255, 69, 58, 0.45)', 
+                color: '#ff453a', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                gap: '6px',
+                fontSize: '0.9rem'
+              }}
+            >
+              🗑️ Altes Spiel verwerfen
+            </button>
+
+            <button 
+              className="btn-secondary" 
+              onClick={() => setIsSavedBannerDismissed(true)} 
+              style={{ 
+                flex: '0 0 auto', 
+                fontWeight: 600, 
+                padding: '11px 14px',
+                fontSize: '0.9rem'
+              }}
+            >
+              Schließen
             </button>
           </div>
         </div>
@@ -815,6 +961,67 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({ profiles, onStartGame, h
       
       {/* spacer for bottom nav */}
       <div style={{ height: '80px' }}></div>
+
+      {showOverwriteModal && (
+        <div className="modal-backdrop" style={{
+          position: 'fixed',
+          top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0, 0, 0, 0.78)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '16px'
+        }}>
+          <div className="card" style={{
+            maxWidth: '460px',
+            width: '100%',
+            background: 'rgba(24, 24, 34, 0.98)',
+            border: '1.5px solid rgba(10, 132, 255, 0.65)',
+            borderRadius: '16px',
+            padding: '24px',
+            boxShadow: '0 16px 40px rgba(0, 0, 0, 0.7)'
+          }}>
+            <h3 style={{ margin: '0 0 10px 0', color: '#fff', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>🎯</span> Laufendes Match gefunden
+            </h3>
+            <p style={{ color: 'var(--text-dim, #ccc)', fontSize: '0.9rem', lineHeight: 1.5, marginBottom: '20px' }}>
+              Du hast noch ein unvollendetes Spiel gespeichert. Wie möchtest du fortfahren?
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <button
+                className="btn-primary"
+                onClick={() => {
+                  setShowOverwriteModal(false);
+                  if (onResumeGame) onResumeGame();
+                }}
+                style={{ padding: '13px', fontWeight: 800, fontSize: '0.95rem' }}
+              >
+                ▶️ Aktuelles Spiel fortsetzen
+              </button>
+              <button
+                className="btn-primary"
+                onClick={() => {
+                  setShowOverwriteModal(false);
+                  executeStartGame();
+                }}
+                style={{ background: 'linear-gradient(135deg, #ff3b30, #c70000)', borderColor: '#ff3b30', padding: '13px', fontWeight: 800, fontSize: '0.95rem' }}
+              >
+                🆕 Altes verwerfen & Neues Spiel starten
+              </button>
+              <button
+                className="btn-secondary"
+                onClick={() => setShowOverwriteModal(false)}
+                style={{ padding: '11px', fontWeight: 600 }}
+              >
+                Abbrechen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

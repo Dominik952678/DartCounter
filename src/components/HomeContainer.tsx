@@ -13,6 +13,7 @@ interface HomeContainerProps {
   onStartGame: (players: string[], config: GameConfig) => void;
   hasSavedGame?: boolean;
   onResumeGame?: () => void;
+  onDiscardSavedGame?: () => void;
   onStartMiniGame: (mode: string, players: string[], settings: any) => void;
   setProfiles: (profiles: Record<string, Profile>) => void;
   defaultTab?: 'match' | 'training';
@@ -24,6 +25,7 @@ export const HomeContainer: React.FC<HomeContainerProps> = ({
   onStartGame,
   hasSavedGame,
   onResumeGame,
+  onDiscardSavedGame,
   onStartMiniGame,
   defaultTab = 'match'
 }) => {
@@ -81,6 +83,7 @@ export const HomeContainer: React.FC<HomeContainerProps> = ({
             onStartGame={onStartGame}
             hasSavedGame={hasSavedGame}
             onResumeGame={onResumeGame}
+            onDiscardSavedGame={onDiscardSavedGame}
           />
         ) : (
           <TrainingHub 
