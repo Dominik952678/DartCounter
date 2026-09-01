@@ -153,14 +153,14 @@ describe('Bot AI Dart Generation', () => {
       }
     });
 
-    it('DOES throw at checkout double when bot team is UNFROZEN', () => {
-      // Bot has 40 points left. Partner has 60 points. Opponents have 50 + 50 = 100 points.
-      // Partner (60) <= Opponents (100) -> UNFROZEN!
+    it('DOES throw at checkout double when bot team is UNFROZEN and opponents are far behind / safe', () => {
+      // Bot has 40 points left. Partner has 60 points. Opponents have 250 + 250 = 500 points (safe!).
+      // Partner (60) <= Opponents (500) -> UNFROZEN & Safe!
       const teamContext = {
         is2v2: true,
         partnerScore: 60,
-        opponent1Score: 50,
-        opponent2Score: 50
+        opponent1Score: 250,
+        opponent2Score: 250
       };
 
       let d20Attempts = 0;
@@ -171,6 +171,28 @@ describe('Bot AI Dart Generation', () => {
         }
       }
       expect(d20Attempts).toBeGreaterThan(0);
+    });
+
+    it('prioritizes BLOCKING over risky finishing when opponents are threatening a checkout', () => {
+      // Bot has 40 points left.
+      // Opponents have 40 + 50 = 90 points (threatening checkout and not safely frozen!).
+      // Bot prioritizes scoring/blocking (aiming S20 to reduce team score by 20 pts) rather than risking a double!
+      const teamContext = {
+        is2v2: true,
+        partnerScore: 60,
+        opponent1Score: 40,
+        opponent2Score: 50
+      };
+
+      let s20Attempts = 0;
+      for (let i = 0; i < 100; i++) {
+        const dart = getBotDart(80, 40, 'DO', teamContext);
+        // Should aim at single 20 to reduce team total by 20 pts safely
+        if (dart.base === 20 && dart.mult === 1) {
+          s20Attempts++;
+        }
+      }
+      expect(s20Attempts).toBeGreaterThan(0);
     });
 
     it('scores heavily on T20 when frozen with high score to reduce team total', () => {

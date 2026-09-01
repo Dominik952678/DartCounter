@@ -168,54 +168,66 @@ export function getBotDart(
     outMode: 'DO' | 'SO' | 'MO' = 'DO',
     teamContext?: TeamContext
 ): { base: number, mult: number } {
-    // ── 0. 2v2 Team Freeze Tactical Decisions ──
+    // ── 0. 2v2 Team Freeze Tactical Decisions ("Blocken statt Finishen - Team Safety First") ──
     if (teamContext?.is2v2) {
+        const myTeamTotal = currentScore + teamContext.partnerScore;
         const opponentTotal = teamContext.opponent1Score + teamContext.opponent2Score;
         const isFrozen = teamContext.partnerScore > opponentTotal;
 
-        // Check if the bot can finish in this single dart
-        const canFinishThisDart = 
-            (outMode === 'DO' && ((currentScore <= 40 && currentScore % 2 === 0 && currentScore >= 2) || currentScore === 50)) ||
-            (outMode === 'MO' && ((currentScore <= 40 && currentScore % 2 === 0 && currentScore >= 2) || (currentScore <= 60 && currentScore % 3 === 0 && currentScore >= 3) || currentScore === 50)) ||
-            (outMode === 'SO' && (currentScore <= 60 || currentScore === 50));
+        // Opponent Threat Evaluation
+        const opp1Threat = teamContext.opponent1Score <= 100;
+        const opp2Threat = teamContext.opponent2Score <= 100;
+        const isOpponentThreatening = opp1Threat || opp2Threat;
 
-        // TACTIC A: Bot is FROZEN (Cannot check out - checking out causes BUST)
+        // Check if opponents are currently frozen by our team
+        // Opponent 1 is frozen if Opponent 2 > myTeamTotal
+        // Opponent 2 is frozen if Opponent 1 > myTeamTotal
+        const isOpp1Frozen = teamContext.opponent2Score > myTeamTotal;
+        const isOpp2Frozen = teamContext.opponent1Score > myTeamTotal;
+        const areThreateningOpponentsFrozen = 
+            (!opp1Threat || isOpp1Frozen) && (!opp2Threat || isOpp2Frozen);
+
+        // Safety margin: If opponents are threatening but NOT solidly frozen,
+        // we MUST prioritize BLOCKING over risky finishing to keep the team safe!
+        const needsBlockDefense = isOpponentThreatening && !areThreateningOpponentsFrozen;
+
+        // TACTIC A: Bot is FROZEN (Cannot check out - double hit causes BUST)
         if (isFrozen) {
             if (currentScore <= 40) {
-                // If on a low score, avoid hitting the double that would reduce score to 0
                 if (currentScore > 20) {
                     const safeSingle = Math.min(10, currentScore - 10);
                     return throwAtTarget(safeSingle > 0 ? safeSingle : 1, 1, targetAverage, currentScore);
                 } else if (currentScore > 2) {
-                    // Score 3..20: throw at S1 or S2 to shave 1-2 points without going below 2
                     return throwAtTarget(1, 1, targetAverage, currentScore);
                 } else {
-                    // On score 2 (D1): cannot throw without checking out, so safely miss outside
                     return { base: 0, mult: 1 };
                 }
             }
-            // If currentScore > 40: score heavily on T20 to reduce team total and unfreeze the team
             return throwAtTarget(20, targetAverage >= 50 ? 3 : 1, targetAverage, currentScore);
         }
 
-        // TACTIC B: Bot is UNFROZEN and can checkout in THIS dart -> GO FOR THE LEG WIN!
-        if (canFinishThisDart) {
-            // Check out immediately (handled in Checkout Phase below)
-        } else {
-            // TACTIC C: "IMMER BLOCK VOR CHECK!" - Opponent Threat Evaluation & Aggressive Blocking
-            const isOpponentThreatening = 
-                teamContext.opponent1Score <= 60 || 
-                teamContext.opponent2Score <= 60 || 
-                (teamContext.opponent1Score <= 100 && teamContext.opponent1Score !== 99 && teamContext.opponent1Score !== 97) ||
-                (teamContext.opponent2Score <= 100 && teamContext.opponent2Score !== 99 && teamContext.opponent2Score !== 97);
-            
-            // If opponents are threatening or partner is on a finish or score > 60:
-            // Throw aggressive scoring on T20 to place the freeze block onto the opponents or unfreeze partner!
-            const isPartnerOnFinish = teamContext.partnerScore <= 50 || (teamContext.partnerScore <= 40 && teamContext.partnerScore % 2 === 0);
-
-            if (isOpponentThreatening || isPartnerOnFinish || currentScore > 60) {
+        // TACTIC B: "BLOCKEN STATT FINISHEN" - Safety First for the Team!
+        // If opponents are threatening and not solidly blocked, do NOT risk missing a double:
+        // Score heavily on T20 / 20 to drive team total down and freeze the opponents!
+        if (needsBlockDefense) {
+            if (currentScore > 40) {
                 return throwAtTarget(20, targetAverage >= 50 ? 3 : 1, targetAverage, currentScore);
+            } else if (currentScore > 20) {
+                // e.g. at 40: aim S20 to leave 20 and reduce team total by 20 pts
+                return throwAtTarget(20, 1, targetAverage, currentScore);
             }
+            // If on score <= 20, proceed to checkout attempt below
+        }
+
+        // TACTIC C: If partner is on a finish (<= 50) and bot has high score, score on T20 to unfreeze partner
+        const isPartnerOnFinish = teamContext.partnerScore <= 50;
+        if (isPartnerOnFinish && currentScore > 40) {
+            return throwAtTarget(20, targetAverage >= 50 ? 3 : 1, targetAverage, currentScore);
+        }
+
+        // TACTIC D: If score > 60: always heavy scoring on T20
+        if (currentScore > 60) {
+            return throwAtTarget(20, targetAverage >= 50 ? 3 : 1, targetAverage, currentScore);
         }
     }
 
