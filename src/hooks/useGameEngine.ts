@@ -450,12 +450,9 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
   };
 
   const continueProcessRoundEnd = (stateAfterDart: GameState, isWin: boolean, currentPlayerIndex: number, highestThrow: number) => {
-      const snapshot = saveStateToHistory(stateAfterDart);
-      const newHistory = [...stateAfterDart.history, snapshot];
-      
       let nextState = {
         ...stateAfterDart,
-        history: newHistory
+        history: stateAfterDart.history
       };
 
       if (isWin) {
@@ -718,6 +715,7 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
     setCelebration(null);
     setCheckoutPrompt(null);
     setRoundBust(false);
+    setStatsModalData((prev: any) => ({ ...prev, isOpen: false }));
 
     setGameState(prev => {
       if (prev.history.length === 0) {
@@ -732,17 +730,10 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
       }
       
       const previousState = prev.history[prev.history.length - 1];
-      let newHistory = prev.history.slice(0, -1);
-
-      // If the restored state has 3 darts (mid-processing snapshot), keep popping
-      let restoredState = previousState;
-      while (restoredState.currentRoundDarts && restoredState.currentRoundDarts.length >= 3 && newHistory.length > 0) {
-          restoredState = newHistory[newHistory.length - 1];
-          newHistory = newHistory.slice(0, -1);
-      }
+      const newHistory = prev.history.slice(0, -1);
 
       return {
-        ...restoredState,
+        ...previousState,
         history: newHistory,
         isProcessing: false
       };

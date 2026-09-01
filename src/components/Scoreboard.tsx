@@ -27,7 +27,16 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
 
   const activeFreezeInfo = is2v2 ? get2v2FreezeStatus(players, activePlayer) : null;
   const t1Total = is2v2 ? (players[0]?.score || 0) + (players[2]?.score || 0) : 0;
+  const t1PartnerScore = is2v2 ? players[2]?.score || 0 : 0;
+  const t1OppTotal = is2v2 ? (players[1]?.score || 0) + (players[3]?.score || 0) : 0;
+  const t1Diff = t1PartnerScore - t1OppTotal;
+  const isT1Blocked = t1Diff > 0;
+
   const t2Total = is2v2 ? (players[1]?.score || 0) + (players[3]?.score || 0) : 0;
+  const t2PartnerScore = is2v2 ? players[3]?.score || 0 : 0;
+  const t2OppTotal = is2v2 ? (players[0]?.score || 0) + (players[2]?.score || 0) : 0;
+  const t2Diff = t2PartnerScore - t2OppTotal;
+  const isT2Blocked = t2Diff > 0;
   const activeTeam = is2v2 ? (players[activePlayer]?.team || (activePlayer % 2 === 0 ? 1 : 2)) : 1;
 
   return (
@@ -55,6 +64,17 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
             }} />
             <strong style={{ color: 'var(--blue, #0a84ff)' }}>Team 1:</strong>
             <span style={{ fontWeight: 800, color: '#fff' }}>{t1Total} Pkt</span>
+            <span style={{
+              fontSize: '0.72rem',
+              fontWeight: 700,
+              padding: '2px 6px',
+              borderRadius: '6px',
+              background: isT1Blocked ? 'rgba(90, 200, 250, 0.15)' : 'rgba(48, 209, 88, 0.15)',
+              color: isT1Blocked ? '#5ac8fa' : '#30d158',
+              border: isT1Blocked ? '1px solid rgba(90, 200, 250, 0.3)' : '1px solid rgba(48, 209, 88, 0.3)'
+            }}>
+              {isT1Blocked ? `🔒 -${t1Diff} Pkt` : `🔓 Frei`}
+            </span>
           </div>
 
           <div style={{
@@ -64,11 +84,14 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
             border: activeFreezeInfo?.isFrozen ? '1px solid rgba(90, 200, 250, 0.5)' : '1px solid rgba(48, 209, 88, 0.5)',
             color: activeFreezeInfo?.isFrozen ? '#5ac8fa' : '#30d158',
             fontSize: '0.78rem',
-            fontWeight: 700
+            fontWeight: 700,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px'
           }}>
             {activeFreezeInfo?.isFrozen 
-              ? `❄️ Team ${activeTeam} Frozen (+${activeFreezeInfo.pointDifference} Pkt)`
-              : `✓ Team ${activeTeam} Checkout bereit`}
+              ? `🔒 Team ${activeTeam} geblockt (Partner muss mind. ${activeFreezeInfo.pointDifference} Pkt werfen)`
+              : `🔓 Team ${activeTeam} frei zum Checken`}
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -81,6 +104,17 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
             }} />
             <strong style={{ color: 'var(--orange, #ff9f0a)' }}>Team 2:</strong>
             <span style={{ fontWeight: 800, color: '#fff' }}>{t2Total} Pkt</span>
+            <span style={{
+              fontSize: '0.72rem',
+              fontWeight: 700,
+              padding: '2px 6px',
+              borderRadius: '6px',
+              background: isT2Blocked ? 'rgba(90, 200, 250, 0.15)' : 'rgba(48, 209, 88, 0.15)',
+              color: isT2Blocked ? '#5ac8fa' : '#30d158',
+              border: isT2Blocked ? '1px solid rgba(90, 200, 250, 0.3)' : '1px solid rgba(48, 209, 88, 0.3)'
+            }}>
+              {isT2Blocked ? `🔒 -${t2Diff} Pkt` : `🔓 Frei`}
+            </span>
           </div>
         </div>
       )}
@@ -132,7 +166,7 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
             background: linear-gradient(145deg, rgba(76, 175, 80, 0.14), rgba(26, 26, 32, 0.95));
           }
           .score-display {
-            font-size: clamp(3rem, 10vw, 5.5rem);
+            font-size: clamp(2.8rem, 9vw, 5rem);
             font-weight: 900;
             line-height: 0.95;
             text-align: center;
@@ -167,10 +201,35 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
             border-radius: 8px;
             padding: 4px 10px;
             font-weight: 800;
-            font-size: 0.85rem;
+            font-size: 0.82rem;
             display: inline-block;
             margin: 0 auto;
-            letter-spacing: 0.4px;
+            letter-spacing: 0.3px;
+          }
+          .lock-badge-bar {
+            margin: 4px 0 2px 0;
+            padding: 3px 6px;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+          .lock-badge-bar.locked {
+            background: rgba(90, 200, 250, 0.14);
+            border: 1px solid rgba(90, 200, 250, 0.35);
+            color: #5ac8fa;
+          }
+          .lock-badge-bar.unlocked {
+            background: rgba(48, 209, 88, 0.14);
+            border: 1px solid rgba(48, 209, 88, 0.35);
+            color: #30d158;
           }
           @keyframes popIn {
             from { transform: scale(0.9); opacity: 0; }
@@ -256,9 +315,16 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
             : "–";
 
           const playerColor = p.color || (is2v2 ? (i % 2 === 0 ? 'var(--blue)' : 'var(--orange)') : 'var(--blue, #2196f3)');
-          const isPlayerFrozen = is2v2 && isActive && activeFreezeInfo?.isFrozen;
-          const checkoutSuggestion = isActive && isCheckoutRange ? getCheckoutSuggestion(liveScore, config.outMode, currentRoundDarts.length) : null;
 
+          const partnerIdx = is2v2 ? (i + 2) % 4 : 0;
+          const oppIdx1 = is2v2 ? (i % 2 === 0 ? 1 : 0) : 0;
+          const oppIdx2 = is2v2 ? (i % 2 === 0 ? 3 : 2) : 0;
+          const cardPartnerScore = is2v2 ? (players[partnerIdx]?.score ?? 0) : 0;
+          const cardOppTotal = is2v2 ? ((players[oppIdx1]?.score ?? 0) + (players[oppIdx2]?.score ?? 0)) : 0;
+          const cardPointDiff = is2v2 ? (cardPartnerScore - cardOppTotal) : 0;
+          const isCardBlocked = is2v2 && cardPointDiff > 0;
+
+          const checkoutSuggestion = isActive && isCheckoutRange ? getCheckoutSuggestion(liveScore, config.outMode, currentRoundDarts.length) : null;
           const playerTeamNumber = p.team || (i % 2 === 0 ? 1 : 2);
 
           return (
@@ -307,6 +373,22 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
                 </div>
               </div>
 
+              {is2v2 && (
+                <div className={`lock-badge-bar ${isCardBlocked ? 'locked' : 'unlocked'}`}>
+                  {isCardBlocked ? (
+                    <>
+                      <span>🔒</span>
+                      <span>Geblockt: Partner muss mind. <strong>{cardPointDiff} Pkt</strong> werfen</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>🔓</span>
+                      <span>Frei zum Checken</span>
+                    </>
+                  )}
+                </div>
+              )}
+
               <div className="score-display">
                 <span className="score-anim-pulse" key={liveScore}>
                   {liveScore}
@@ -319,9 +401,9 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
               </div>
               
               <div style={{ minHeight: '22px', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {isPlayerFrozen && isCheckoutRange ? (
-                  <div className="checkout-pill-frozen" title="Checken nicht erlaubt, da Teampunkte höher als Gegnerpunkte sind">
-                    ❄️ Geblockt (Freeze)
+                {isCardBlocked && isCheckoutRange ? (
+                  <div className="checkout-pill-frozen" title={`Checken gesperrt: Partner muss noch mindestens ${cardPointDiff} Punkte werfen`}>
+                    🔒 Geblockt (Partner: -{cardPointDiff} Pkt nötig)
                   </div>
                 ) : checkoutSuggestion ? (
                   <div className="checkout-pill">
