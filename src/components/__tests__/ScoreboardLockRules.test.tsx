@@ -89,4 +89,24 @@ describe('2v2 Freeze Lock & Block Display Rules', () => {
     expect(screen.getAllByText(/40 Pkt/i).length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText(/Team 1 geblockt \(Partner muss mind. 40 Pkt werfen\)/i)).toBeInTheDocument();
   });
+
+  it('RULE 5: Does NOT show any point numbers if multiple players are blocking (only Geblockt)', () => {
+    // Both P0 (200) and P2 (200) have scores > Opponents total (100)
+    const players = createPlayers([200, 50, 200, 50]);
+    render(
+      <Scoreboard 
+        players={players}
+        activePlayer={0}
+        startingPlayerOfLeg={0}
+        config={baseConfig}
+        currentRoundDarts={[]}
+      />
+    );
+
+    // No "Muss mind." numbers anywhere
+    expect(screen.queryByText(/Muss mind./i)).not.toBeInTheDocument();
+    // Cards show clean Geblockt
+    expect(screen.getAllByText('Geblockt').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText(/Beide Teams gegenseitig geblockt/i)).toBeInTheDocument();
+  });
 });
