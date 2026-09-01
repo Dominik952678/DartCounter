@@ -322,45 +322,60 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
             animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
           }
           .checkout-pill-frozen {
-            background: rgba(90, 200, 250, 0.25);
-            border: 1px solid rgba(90, 200, 250, 0.7);
-            color: #5ac8fa;
+            background: linear-gradient(135deg, rgba(0, 180, 255, 0.28) 0%, rgba(0, 114, 255, 0.18) 100%);
+            border: 1.5px solid rgba(0, 210, 255, 0.75);
+            color: #38d9ff;
             border-radius: 8px;
-            padding: 4px 10px;
+            padding: 5px 12px;
             font-weight: 800;
-            font-size: 0.82rem;
+            font-size: 0.84rem;
             display: inline-block;
             margin: 0 auto;
             letter-spacing: 0.3px;
+            box-shadow: 0 0 14px rgba(0, 200, 255, 0.35);
+            text-shadow: 0 0 6px rgba(0, 210, 255, 0.5);
           }
           .lock-badge-bar {
             margin: 4px 0 2px 0;
-            padding: 4px 8px;
-            border-radius: 7px;
-            font-size: clamp(0.7rem, 2vw, 0.78rem);
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: clamp(0.75rem, 2.2vw, 0.84rem);
             font-weight: 800;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 5px;
+            gap: 6px;
             text-align: center;
             line-height: 1.2;
             flex-shrink: 0;
+            letter-spacing: 0.2px;
             transition: all 0.25s ease;
+            backdrop-filter: blur(8px);
           }
           .lock-badge-bar.locked {
-            background: rgba(90, 200, 250, 0.18);
-            border: 1px solid rgba(90, 200, 250, 0.55);
-            color: #5ac8fa;
-            box-shadow: 0 0 10px rgba(90, 200, 250, 0.15);
+            background: linear-gradient(135deg, rgba(0, 180, 255, 0.24) 0%, rgba(0, 100, 220, 0.16) 100%);
+            border: 1.5px solid rgba(0, 210, 255, 0.75);
+            color: #38d9ff;
+            box-shadow: 0 0 16px rgba(0, 200, 255, 0.35), inset 0 0 8px rgba(0, 200, 255, 0.15);
+            text-shadow: 0 0 6px rgba(0, 210, 255, 0.6);
           }
           .lock-badge-bar.must-throw {
-            background: rgba(255, 159, 10, 0.18);
-            border: 1px solid rgba(255, 159, 10, 0.55);
-            color: #ff9f0a;
-            box-shadow: 0 0 10px rgba(255, 159, 10, 0.15);
+            background: linear-gradient(135deg, rgba(0, 210, 255, 0.32) 0%, rgba(30, 144, 255, 0.24) 100%);
+            border: 1.5px solid rgba(56, 217, 255, 0.9);
+            color: #e0f7ff;
+            box-shadow: 0 0 18px rgba(0, 220, 255, 0.45), inset 0 0 10px rgba(0, 220, 255, 0.2);
+            text-shadow: 0 0 8px rgba(0, 210, 255, 0.5);
+          }
+          .lock-badge-bar.must-throw strong {
+            color: #ffffff;
+            font-weight: 900;
+            text-shadow: 0 0 8px #00e5ff;
           }
           .lock-badge-bar.unlocking {
+            background: linear-gradient(135deg, rgba(48, 209, 88, 0.35) 0%, rgba(52, 199, 89, 0.2) 100%);
+            border: 1.5px solid rgba(48, 209, 88, 0.9);
+            color: #4cd964;
+            box-shadow: 0 0 20px rgba(48, 209, 88, 0.55), inset 0 0 10px rgba(48, 209, 88, 0.25);
             animation: lockOpenPop 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
           }
           .lock-icon-opening {
@@ -567,8 +582,11 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
               
               <div style={{ minHeight: '22px', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {isThisPlayerBlockedFromFinishing && isCheckoutRange ? (
-                  <div className="checkout-pill-frozen" title={`Checken gesperrt: Partner muss noch mindestens ${pointsToUnblockMe} Punkte werfen`}>
-                    🔒 Geblockt (Partner muss mind. {pointsToUnblockMe} Pkt werfen)
+                  <div 
+                    className="checkout-pill-frozen" 
+                    title={isBothBlocked ? 'Checken gesperrt: Beide Teams im Freeze' : `Checken gesperrt: Partner muss noch mindestens ${pointsToUnblockMe} Punkte werfen`}
+                  >
+                    {isBothBlocked ? '🔒 Geblockt' : `🔒 Geblockt (Partner muss mind. ${pointsToUnblockMe} Pkt werfen)`}
                   </div>
                 ) : checkoutSuggestion ? (
                   <div className="checkout-pill">
