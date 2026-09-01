@@ -20,11 +20,13 @@ import { startSync, saveProfiles, saveMatch, getMatches } from './db/database';
 import { useProfiles } from './hooks/useProfiles';
 import { useGameEngine } from './hooks/useGameEngine';
 import { useAuthStore } from './store/useAuthStore';
+import { useThemeStore } from './store/useThemeStore';
 
 export default function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, initialize } = useAuthStore();
+  const { theme, scanlines, gridAnimation } = useThemeStore();
   
   const { profiles, setProfiles, handleCreateProfile, handleUpdateProfile, handleDeleteProfile } = useProfiles(user);
   
@@ -369,6 +371,14 @@ export default function App() {
         history={savedMatches}
         onClose={() => setShowHistory(false)}
       />
+
+      {theme === 'vaporwave' && (
+        <>
+          <div className="vaporwave-sun" />
+          {gridAnimation && <div className="vaporwave-grid-floor" />}
+          {scanlines && <div className="crt-scanlines" />}
+        </>
+      )}
     </div>
   );
 }

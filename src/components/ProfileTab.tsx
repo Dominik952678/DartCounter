@@ -6,6 +6,7 @@ import { DartboardHeatmap } from './DartboardHeatmap';
 import { exportElementAsImage } from '../utils/exportImage';
 import { MatchImageExport } from './MatchImageExport';
 import { useAuthStore } from '../store/useAuthStore';
+import { useThemeStore } from '../store/useThemeStore';
 import { APP_VERSION, BUILD_TIME } from '../version';
 
 interface ProfileTabProps {
@@ -24,6 +25,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
   onDeleteProfile
 }) => {
   const { user } = useAuthStore();
+  const { theme, scanlines, gridAnimation, setTheme, toggleScanlines, toggleGridAnimation } = useThemeStore();
   const navigate = useNavigate();
   const [newProfileName, setNewProfileName] = useState('');
   const [isBotChecked, setIsBotChecked] = useState(false);
@@ -336,6 +338,81 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
           />
         </div>
       )}
+
+      {/* 🎨 Erscheinungsbild & Design System */}
+      <div className="card" style={{ marginTop: '20px' }}>
+        <div className="card-header" style={{ marginBottom: '16px' }}>
+          <h2>🎨 Design & Theme</h2>
+        </div>
+
+        <div style={{ marginBottom: '16px' }}>
+          <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--text-dim)', marginBottom: '8px', fontWeight: 600 }}>
+            App-Design wählen:
+          </label>
+          <div className="segment-control">
+            <label className={theme === 'classic' ? 'active' : ''}>
+              <input 
+                type="radio" 
+                name="themeSelect" 
+                checked={theme === 'classic'} 
+                onChange={() => setTheme('classic')} 
+              />
+              <span>🎯 Classic Dark</span>
+            </label>
+            <label className={theme === 'vaporwave' ? 'active' : ''}>
+              <input 
+                type="radio" 
+                name="themeSelect" 
+                checked={theme === 'vaporwave'} 
+                onChange={() => setTheme('vaporwave')} 
+              />
+              <span>🌆 Vaporwave Neon</span>
+            </label>
+          </div>
+        </div>
+
+        {theme === 'vaporwave' && (
+          <div style={{ 
+            background: 'rgba(0, 0, 0, 0.3)', 
+            padding: '14px', 
+            borderRadius: '10px', 
+            border: '1px solid rgba(255, 0, 255, 0.25)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <strong style={{ display: 'block', fontSize: '0.9rem', color: 'var(--cyan, #00FFFF)' }}>📺 CRT Scanlines Overlay</strong>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>Klassischer 80s Röhrenmonitor-Filter</span>
+              </div>
+              <button 
+                type="button" 
+                onClick={toggleScanlines}
+                className={scanlines ? 'btn-primary' : 'btn-secondary'}
+                style={{ padding: '6px 14px', fontSize: '0.8rem', minHeight: '34px' }}
+              >
+                {scanlines ? 'Aktiviert' : 'Deaktiviert'}
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <strong style={{ display: 'block', fontSize: '0.9rem', color: 'var(--magenta, #FF00FF)' }}>🏎️ 3D Outrun Perspektiv-Grid</strong>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>Animierter Neon-Gitter-Horizont</span>
+              </div>
+              <button 
+                type="button" 
+                onClick={toggleGridAnimation}
+                className={gridAnimation ? 'btn-primary' : 'btn-secondary'}
+                style={{ padding: '6px 14px', fontSize: '0.8rem', minHeight: '34px' }}
+              >
+                {gridAnimation ? 'Aktiviert' : 'Deaktiviert'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* App Version & Info */}
       <div 

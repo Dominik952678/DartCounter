@@ -1,0 +1,435 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   🎯 VAPORWAVE / OUTRUN DESIGN SYSTEM
+   "Digital Nostalgia meets Neon Future — Synthetic reality drenched in retro-futuristic excess."
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+[data-theme="vaporwave"] {
+  /* ── Vaporwave Design Tokens ── */
+  --bg: #090014;
+  --bg-surface: #120924;
+  --card: rgba(26, 16, 60, 0.84);
+  --card-hover: rgba(45, 27, 78, 0.92);
+  --card-border: #2D1B4E;
+  --card-border-glow: rgba(0, 255, 255, 0.4);
+  --surface: rgba(255, 0, 255, 0.06);
+  --surface-hover: rgba(0, 255, 255, 0.12);
+
+  --text: #E0E0E0;
+  --text-dim: rgba(224, 224, 224, 0.72);
+  --text-muted: rgba(224, 224, 224, 0.4);
+
+  /* Primary Neon Primaries */
+  --magenta: #FF00FF;
+  --cyan: #00FFFF;
+  --sunset: #FF9900;
+  --spring-green: #00FF9D;
+
+  --blue: #00FFFF;
+  --blue-glow: rgba(0, 255, 255, 0.35);
+  --green: #00FF9D;
+  --green-glow: rgba(0, 255, 157, 0.35);
+  --orange: #FF9900;
+  --orange-glow: rgba(255, 153, 0, 0.35);
+  --red: #FF0055;
+  --red-glow: rgba(255, 0, 85, 0.35);
+  --purple: #FF00FF;
+  --purple-glow: rgba(255, 0, 255, 0.35);
+
+  /* Geometric angular sharpness */
+  --radius-sm: 0px;
+  --radius: 0px;
+  --radius-lg: 0px;
+
+  /* Authentic Typography */
+  --font: 'Share Tech Mono', monospace, -apple-system, sans-serif;
+  --font-heading: 'Orbitron', -apple-system, sans-serif;
+}
+
+/* ── Typography & Headings ── */
+[data-theme="vaporwave"] h1,
+[data-theme="vaporwave"] h2,
+[data-theme="vaporwave"] h3,
+[data-theme="vaporwave"] h4,
+[data-theme="vaporwave"] .app-header h1,
+[data-theme="vaporwave"] .card-header h2,
+[data-theme="vaporwave"] .section-title {
+  font-family: var(--font-heading);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+[data-theme="vaporwave"] .app-header h1 {
+  background: linear-gradient(to right, #FF9900 0%, #FF00FF 50%, #00FFFF 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 16px rgba(255, 0, 255, 0.5));
+}
+
+[data-theme="vaporwave"] .card-header h2 {
+  color: #00FFFF;
+  text-shadow: 0 0 10px rgba(0, 255, 255, 0.6);
+}
+
+/* ── Angular Glass Cards with Laser Top Border ── */
+[data-theme="vaporwave"] .card,
+[data-theme="vaporwave"] .match-card,
+[data-theme="vaporwave"] .history-item {
+  background: rgba(26, 16, 60, 0.84) !important;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1.5px solid #2D1B4E !important;
+  border-top: 2.5px solid #00FFFF !important;
+  border-radius: 0px !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(0, 255, 255, 0.2) !important;
+  transition: all 0.2s linear;
+}
+
+[data-theme="vaporwave"] .card:hover {
+  border-color: rgba(255, 0, 255, 0.6) !important;
+  border-top-color: #00FFFF !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.8), 0 0 20px rgba(0, 255, 255, 0.25) !important;
+}
+
+/* ── Skewed Interactive Buttons with Neon Explosion ── */
+[data-theme="vaporwave"] .btn-primary,
+[data-theme="vaporwave"] .btn-success,
+[data-theme="vaporwave"] .btn-secondary,
+[data-theme="vaporwave"] .btn-ghost {
+  border-radius: 0px !important;
+  font-family: var(--font) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  transform: skew(-8deg);
+  transition: all 0.18s ease-in-out;
+}
+
+[data-theme="vaporwave"] .btn-primary > *,
+[data-theme="vaporwave"] .btn-success > *,
+[data-theme="vaporwave"] .btn-secondary > *,
+[data-theme="vaporwave"] .btn-ghost > * {
+  display: inline-block;
+  transform: skew(8deg);
+}
+
+[data-theme="vaporwave"] .btn-primary {
+  background: rgba(0, 255, 255, 0.12) !important;
+  border: 2px solid #00FFFF !important;
+  color: #00FFFF !important;
+  box-shadow: 0 0 14px rgba(0, 255, 255, 0.4) !important;
+}
+
+[data-theme="vaporwave"] .btn-primary:hover,
+[data-theme="vaporwave"] .btn-primary:active {
+  transform: skew(0deg) scale(1.02) !important;
+  background: #00FFFF !important;
+  color: #090014 !important;
+  box-shadow: 0 0 25px #00FFFF, 0 0 50px rgba(0, 255, 255, 0.6) !important;
+  font-weight: 900 !important;
+}
+
+[data-theme="vaporwave"] .btn-success {
+  background: rgba(0, 255, 157, 0.15) !important;
+  border: 2px solid #00FF9D !important;
+  color: #00FF9D !important;
+  box-shadow: 0 0 16px rgba(0, 255, 157, 0.45) !important;
+}
+
+[data-theme="vaporwave"] .btn-success:hover,
+[data-theme="vaporwave"] .btn-success:active {
+  transform: skew(0deg) scale(1.02) !important;
+  background: #00FF9D !important;
+  color: #090014 !important;
+  box-shadow: 0 0 30px #00FF9D, 0 0 60px rgba(0, 255, 157, 0.6) !important;
+  font-weight: 900 !important;
+}
+
+[data-theme="vaporwave"] .btn-secondary {
+  background: rgba(255, 0, 255, 0.12) !important;
+  border: 2px solid #FF00FF !important;
+  color: #FF00FF !important;
+  box-shadow: 0 0 14px rgba(255, 0, 255, 0.35) !important;
+}
+
+[data-theme="vaporwave"] .btn-secondary:hover,
+[data-theme="vaporwave"] .btn-secondary:active {
+  transform: skew(0deg) scale(1.02) !important;
+  background: #FF00FF !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 25px #FF00FF, 0 0 50px rgba(255, 0, 255, 0.5) !important;
+}
+
+/* ── Segment Controls (Terminal Matrix Tabs) ── */
+[data-theme="vaporwave"] .segment-control {
+  background: #090014 !important;
+  border: 1.5px solid #2D1B4E !important;
+  border-radius: 0px !important;
+  padding: 3px !important;
+}
+
+[data-theme="vaporwave"] .segment-control label {
+  border-radius: 0px !important;
+  font-family: var(--font-heading) !important;
+  font-size: 0.8rem !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+  transition: all 0.15s linear;
+}
+
+[data-theme="vaporwave"] .segment-control label.active {
+  background: linear-gradient(135deg, rgba(255, 0, 255, 0.28), rgba(0, 255, 255, 0.28)) !important;
+  color: #00FFFF !important;
+  border: 1px solid #00FFFF !important;
+  box-shadow: 0 0 14px rgba(0, 255, 255, 0.5) !important;
+  font-weight: 800 !important;
+}
+
+/* ── Scoreboard Player Cards in Outrun ── */
+[data-theme="vaporwave"] .player-card {
+  border-radius: 0px !important;
+  border: 1.5px solid #2D1B4E !important;
+  border-top: 3px solid #00FFFF !important;
+  background: rgba(26, 16, 60, 0.85) !important;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6) !important;
+}
+
+[data-theme="vaporwave"] .player-card.is-active {
+  border-color: #FF00FF !important;
+  border-top: 3px solid #00FFFF !important;
+  box-shadow: 0 0 24px rgba(255, 0, 255, 0.45), inset 0 0 16px rgba(0, 255, 255, 0.15) !important;
+  background: rgba(36, 20, 80, 0.92) !important;
+}
+
+[data-theme="vaporwave"] .player-name {
+  font-family: var(--font-heading) !important;
+  letter-spacing: 0.06em !important;
+  text-transform: uppercase !important;
+}
+
+[data-theme="vaporwave"] .score-display .score-anim-pulse {
+  font-family: var(--font-heading) !important;
+  letter-spacing: -0.02em !important;
+  color: #00FFFF !important;
+  text-shadow: 0 0 16px rgba(0, 255, 255, 0.7) !important;
+}
+
+[data-theme="vaporwave"] .checkout-pill {
+  border-radius: 0px !important;
+  border: 1px solid #00FF9D !important;
+  background: rgba(0, 255, 157, 0.15) !important;
+  color: #00FF9D !important;
+  font-family: var(--font) !important;
+  box-shadow: 0 0 10px rgba(0, 255, 157, 0.4) !important;
+}
+
+/* ── Keypad Numpad in Vaporwave ── */
+[data-theme="vaporwave"] .num-btn {
+  border-radius: 0px !important;
+  border: 1.5px solid #2D1B4E !important;
+  background: rgba(26, 16, 60, 0.88) !important;
+  color: #E0E0E0 !important;
+  font-family: var(--font-heading) !important;
+  font-weight: 700 !important;
+  transition: all 0.1s linear !important;
+}
+
+[data-theme="vaporwave"] .num-btn:hover,
+[data-theme="vaporwave"] .num-btn:active {
+  border-color: #00FFFF !important;
+  color: #00FFFF !important;
+  background: rgba(0, 255, 255, 0.22) !important;
+  box-shadow: 0 0 18px rgba(0, 255, 255, 0.7), inset 0 0 10px rgba(0, 255, 255, 0.3) !important;
+  transform: scale(0.96) !important;
+}
+
+[data-theme="vaporwave"] .mod-btn {
+  border-radius: 0px !important;
+  border: 1.5px solid #2D1B4E !important;
+  background: rgba(26, 16, 60, 0.75) !important;
+  font-family: var(--font-heading) !important;
+  text-transform: uppercase !important;
+}
+
+[data-theme="vaporwave"] .mod-active-double {
+  background: #FF9900 !important;
+  color: #090014 !important;
+  border-color: #FF9900 !important;
+  box-shadow: 0 0 20px #FF9900 !important;
+  font-weight: 900 !important;
+}
+
+[data-theme="vaporwave"] .mod-active-triple {
+  background: #FF00FF !important;
+  color: #ffffff !important;
+  border-color: #FF00FF !important;
+  box-shadow: 0 0 20px #FF00FF !important;
+  font-weight: 900 !important;
+}
+
+[data-theme="vaporwave"] .dart-box {
+  border-radius: 0px !important;
+  border: 1.5px solid #2D1B4E !important;
+  background: rgba(26, 16, 60, 0.8) !important;
+  font-family: var(--font-heading) !important;
+}
+
+[data-theme="vaporwave"] .dart-filled {
+  border-color: #00FFFF !important;
+  box-shadow: 0 0 12px rgba(0, 255, 255, 0.4) !important;
+}
+
+/* ── Bottom Navigation in Vaporwave ── */
+[data-theme="vaporwave"] .bottom-nav {
+  background: rgba(9, 0, 20, 0.95) !important;
+  border-top: 2px solid #FF00FF !important;
+  box-shadow: 0 -4px 25px rgba(255, 0, 255, 0.3) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+[data-theme="vaporwave"] .nav-item {
+  border-radius: 0px !important;
+  font-family: var(--font) !important;
+}
+
+[data-theme="vaporwave"] .nav-item.active {
+  color: #00FFFF !important;
+  text-shadow: 0 0 12px rgba(0, 255, 255, 0.85) !important;
+}
+
+[data-theme="vaporwave"] .nav-item.active .nav-icon {
+  filter: drop-shadow(0 0 8px #00FFFF);
+}
+
+/* ── Visual FX: Animated 3D Grid Floor & Sun ── */
+.vaporwave-grid-floor {
+  position: fixed;
+  bottom: 0;
+  left: -50%;
+  width: 200%;
+  height: 52vh;
+  background-image: 
+    linear-gradient(transparent 93%, rgba(255, 0, 255, 0.35) 94%),
+    linear-gradient(90deg, transparent 93%, rgba(0, 255, 255, 0.35) 94%);
+  background-size: 50px 50px;
+  transform: perspective(350px) rotateX(68deg);
+  transform-origin: bottom center;
+  mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 15%, rgba(0, 0, 0, 0) 90%);
+  -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 15%, rgba(0, 0, 0, 0) 90%);
+  pointer-events: none;
+  z-index: 0;
+  animation: outrun-grid-scroll 8s linear infinite;
+}
+
+@keyframes outrun-grid-scroll {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 500px; }
+}
+
+.vaporwave-sun {
+  position: fixed;
+  top: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(520px, 80vw);
+  height: min(520px, 80vw);
+  border-radius: 50%;
+  background: linear-gradient(to bottom, #FF9900 0%, #FF00FF 80%);
+  filter: blur(90px);
+  opacity: 0.16;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.crt-scanlines {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(rgba(18, 16, 20, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+  background-size: 100% 4px;
+  pointer-events: none;
+  z-index: 99999;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   📱 RESPONSIVE ADAPTATIONS: IPAD AIR & IPHONE 17 PRO (PORTRAIT & LANDSCAPE)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* iPhone 17 Pro Safe Area & Dynamic Island Handling */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .app-container {
+    padding-top: max(env(safe-area-inset-top), 16px);
+    padding-bottom: max(calc(env(safe-area-inset-bottom) + 72px), 80px);
+    padding-left: max(env(safe-area-inset-left), 14px);
+    padding-right: max(env(safe-area-inset-right), 14px);
+  }
+}
+
+/* iPhone 17 Pro Landscape (Ultra Compact Height ~390px - 440px) */
+@media (orientation: landscape) and (max-height: 480px) {
+  .match-top-header {
+    margin-bottom: 4px !important;
+    padding: 3px 8px !important;
+    min-height: 28px !important;
+  }
+  
+  .game-screen-body {
+    gap: 6px !important;
+  }
+  
+  .keypad {
+    gap: 4px !important;
+  }
+  
+  .dart-display {
+    margin-bottom: 0px !important;
+  }
+  
+  .dart-box {
+    width: 38px !important;
+    height: 38px !important;
+    font-size: 0.95em !important;
+  }
+  
+  .num-btn {
+    min-height: 34px !important;
+    font-size: 1.15rem !important;
+  }
+
+  .mod-btn {
+    min-height: 32px !important;
+    padding: 4px 2px !important;
+    font-size: 0.8rem !important;
+  }
+
+  .player-card {
+    padding: 6px 10px !important;
+  }
+
+  .score-display .score-anim-pulse {
+    font-size: 2.2rem !important;
+  }
+}
+
+/* iPad Air (Portrait: ~820px wide, Landscape: ~1180px wide) */
+@media (min-width: 768px) and (max-width: 1200px) {
+  .match-setup-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 16px !important;
+  }
+
+  .game-screen-left .scoreboard {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+  }
+
+  .player-card {
+    padding: 16px 20px !important;
+  }
+
+  .num-btn {
+    font-size: 1.65rem !important;
+  }
+}
