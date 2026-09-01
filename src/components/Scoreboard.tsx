@@ -588,14 +588,7 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
               </div>
               
               <div style={{ minHeight: '22px', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {isThisPlayerBlockedFromFinishing && isCheckoutRange ? (
-                  <div 
-                    className="checkout-pill-frozen" 
-                    title={isOnlySinglePersonBlocking ? `Checken gesperrt: Partner muss noch mindestens ${pointsToUnblockMe} Punkte werfen` : 'Checken gesperrt: Beide Teams im Freeze'}
-                  >
-                    {isOnlySinglePersonBlocking ? `🔒 Geblockt (Partner muss mind. ${pointsToUnblockMe} Pkt werfen)` : '🔒 Geblockt'}
-                  </div>
-                ) : checkoutSuggestion ? (
+                {!isThisPlayerBlockedFromFinishing && checkoutSuggestion ? (
                   <div className="checkout-pill">
                     {checkoutSuggestion}
                   </div>

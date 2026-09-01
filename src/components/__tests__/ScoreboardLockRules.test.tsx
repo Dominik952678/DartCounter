@@ -53,12 +53,11 @@ describe('2v2 Freeze Lock & Block Display Rules', () => {
       />
     );
 
-    // Blocked player (P0) shows Geblockt (no number)
-    expect(screen.getAllByText('Geblockt').length).toBeGreaterThanOrEqual(1);
+    // Blocked player (P0) shows Geblockt (exactly 1 on the whole card, no duplicate bottom pill!)
+    expect(screen.getAllByText('Geblockt').length).toBe(1);
 
     // Thrower player (P2) shows the required points
-    expect(screen.getAllByText(/Muss mind./i).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText(/100 Pkt/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/Muss mind./i).length).toBe(2); // 1 on top banner + 1 on thrower card
     expect(screen.getByText(/Team 1 geblockt \(Partner muss mind. 100 Pkt werfen\)/i)).toBeInTheDocument();
   });
 
