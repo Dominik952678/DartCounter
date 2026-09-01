@@ -274,8 +274,8 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
           }
           .player-card {
             position: relative;
-            background: rgba(26, 26, 32, 0.9);
-            border-radius: 14px;
+            background: rgba(15, 23, 42, 0.9);
+            border-radius: var(--radius, 14px);
             padding: 8px 10px;
             transition: all 0.2s ease;
             overflow: hidden;
@@ -288,27 +288,29 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
             box-sizing: border-box;
           }
           .player-card.is-inactive {
-            opacity: 0.6;
+            opacity: 0.55;
             filter: grayscale(20%);
           }
           .player-card.is-active {
-            box-shadow: 0 0 20px rgba(10, 132, 255, 0.2);
-            border-left: 5px solid var(--player-color, var(--blue));
-            border-color: rgba(255, 255, 255, 0.25);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
+            border-left: 5px solid var(--player-color, var(--primary, #F59E0B));
+            border-color: rgba(245, 158, 11, 0.3);
             opacity: 1;
             filter: grayscale(0%);
-            background: rgba(30, 30, 38, 0.98);
+            background: rgba(15, 23, 42, 0.98);
           }
           .player-card.checkout-range {
-            background: linear-gradient(145deg, rgba(76, 175, 80, 0.14), rgba(26, 26, 32, 0.95));
+            background: linear-gradient(145deg, rgba(16, 185, 129, 0.12), rgba(15, 23, 42, 0.95));
           }
           .score-display {
             font-size: clamp(2.8rem, 9vw, 5rem);
             font-weight: 900;
+            font-family: var(--font-mono, 'JetBrains Mono', monospace);
+            font-variant-numeric: tabular-nums;
             line-height: 0.95;
             text-align: center;
             margin: auto 0;
-            color: var(--text, #fff);
+            color: var(--text, #F1F5F9);
             text-shadow: 0 2px 12px rgba(0,0,0,0.5);
             display: flex;
             align-items: center;
@@ -319,9 +321,9 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
             color: var(--player-color, var(--text));
           }
           .checkout-pill {
-            background: var(--player-color, var(--blue, #2196f3));
-            color: #fff;
-            border-radius: 8px;
+            background: var(--primary, #F59E0B);
+            color: #000;
+            border-radius: var(--radius-xs, 6px);
             padding: 4px 10px;
             font-weight: 800;
             font-size: 0.92rem;
@@ -423,7 +425,7 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
               color: var(--text-dim, #aaa);
               margin-top: 10px;
               padding-top: 10px;
-              border-top: 1px solid rgba(255,255,255,0.08);
+              border-top: 1px solid var(--card-border, rgba(148,163,184,0.12));
               text-align: center;
             }
             .compact-stats span {
@@ -525,8 +527,8 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
                   {is2v2 && (
                     <span className="badge" style={{ 
                       background: isCardInvolvedInLock 
-                        ? 'rgba(255, 30, 30, 0.25)' 
-                        : (playerTeamNumber === 1 ? 'rgba(10, 132, 255, 0.25)' : 'rgba(255, 159, 10, 0.25)'), 
+                        ? 'rgba(239, 68, 68, 0.25)' 
+                        : (playerTeamNumber === 1 ? 'rgba(59, 130, 246, 0.25)' : 'rgba(249, 115, 22, 0.25)'), 
                       color: isCardInvolvedInLock 
                         ? '#ff4d4d' 
                         : (playerTeamNumber === 1 ? 'var(--blue)' : 'var(--orange)'),
