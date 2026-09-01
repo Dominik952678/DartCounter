@@ -149,10 +149,9 @@ describe('Scoreboard Component', () => {
       />
     );
 
-    // Partner has 200, opponents have 100. Diff = +100 Pkt -> Team 1 is geblockt, Team 2 blockt mit 100 Pkt!
-    expect(screen.getByText(/Team 2 blockt Team 1 mit 100 Pkt/i)).toBeInTheDocument();
-    expect(screen.getByText(/🔒 Geblockt \(Partner: -100 Pkt nötig\)/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/Blockt mit/i).length).toBeGreaterThanOrEqual(1);
+    // Partner has 200, opponents have 100. Diff = +100 Pkt -> Team 1 is geblockt! Partner must throw 100 Pkt!
+    expect(screen.getByText(/Team 1 geblockt \(Partner muss mind. 100 Pkt werfen\)/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Muss mind./i).length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText(/Geblockt/i).length).toBeGreaterThanOrEqual(1);
   });
 

@@ -111,7 +111,7 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
                 color: '#5ac8fa',
                 border: '1px solid rgba(90, 200, 250, 0.4)'
               }}>
-                🔒
+                🔒 Geblockt
               </span>
             ) : isT1Blocked ? (
               <span style={{
@@ -124,18 +124,6 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
                 border: '1px solid rgba(90, 200, 250, 0.4)'
               }}>
                 🔒 Geblockt
-              </span>
-            ) : isT2Blocked ? (
-              <span style={{
-                fontSize: '0.72rem',
-                fontWeight: 800,
-                padding: '2px 6px',
-                borderRadius: '6px',
-                background: 'rgba(255, 159, 10, 0.18)',
-                color: '#ff9f0a',
-                border: '1px solid rgba(255, 159, 10, 0.4)'
-              }}>
-                🔒 Blockt mit {t2Diff} Pkt
               </span>
             ) : null}
           </div>
@@ -172,9 +160,9 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
             ) : isBothBlocked ? (
               <span>🔒 Beide Teams gegenseitig geblockt</span>
             ) : isT1Blocked ? (
-              <span>🔒 Team 2 blockt Team 1 mit {t1Diff} Pkt</span>
+              <span>🔒 Team 1 geblockt (Partner muss mind. {t1Diff} Pkt werfen)</span>
             ) : isT2Blocked ? (
-              <span>🔒 Team 1 blockt Team 2 mit {t2Diff} Pkt</span>
+              <span>🔒 Team 2 geblockt (Partner muss mind. {t2Diff} Pkt werfen)</span>
             ) : (
               <span>🎯 2v2 Doppel Modus (Freeze)</span>
             )}
@@ -204,7 +192,7 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
                 color: '#5ac8fa',
                 border: '1px solid rgba(90, 200, 250, 0.4)'
               }}>
-                🔒
+                🔒 Geblockt
               </span>
             ) : isT2Blocked ? (
               <span style={{
@@ -217,18 +205,6 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
                 border: '1px solid rgba(90, 200, 250, 0.4)'
               }}>
                 🔒 Geblockt
-              </span>
-            ) : isT1Blocked ? (
-              <span style={{
-                fontSize: '0.72rem',
-                fontWeight: 800,
-                padding: '2px 6px',
-                borderRadius: '6px',
-                background: 'rgba(10, 132, 255, 0.18)',
-                color: 'var(--blue, #0a84ff)',
-                border: '1px solid rgba(10, 132, 255, 0.4)'
-              }}>
-                🔒 Blockt mit {t1Diff} Pkt
               </span>
             ) : null}
           </div>
@@ -378,7 +354,7 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
             color: #5ac8fa;
             box-shadow: 0 0 10px rgba(90, 200, 250, 0.15);
           }
-          .lock-badge-bar.blocking {
+          .lock-badge-bar.must-throw {
             background: rgba(255, 159, 10, 0.18);
             border: 1px solid rgba(255, 159, 10, 0.55);
             color: #ff9f0a;
@@ -477,11 +453,21 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
           const playerColor = p.color || (is2v2 ? (i % 2 === 0 ? 'var(--blue)' : 'var(--orange)') : 'var(--blue, #2196f3)');
           const playerTeamNumber = p.team || (i % 2 === 0 ? 1 : 2);
 
-          const isMyTeamBlocked = playerTeamNumber === 1 ? isT1Blocked : isT2Blocked;
-          const isOppTeamBlocked = playerTeamNumber === 1 ? isT2Blocked : isT1Blocked;
+          const partnerIdx = is2v2 ? (i + 2) % 4 : 0;
+          const opp1Idx = is2v2 ? (i % 2 === 0 ? 1 : 0) : 0;
+          const opp2Idx = is2v2 ? (i % 2 === 0 ? 3 : 2) : 0;
+          const oppTeamTotal = is2v2 ? (liveScores[opp1Idx] + liveScores[opp2Idx]) : 0;
+
+          // If partner's score > opponents total, this player is blocked from checking out
+          const pointsToUnblockMe = is2v2 ? liveScores[partnerIdx] - oppTeamTotal : 0;
+          const isThisPlayerBlockedFromFinishing = pointsToUnblockMe > 0;
+
+          // If this player's score > opponents total, this player is the one whose score is too high and must throw points down
+          const pointsINeedToThrow = is2v2 ? liveScores[i] - oppTeamTotal : 0;
+          const isThisPlayerTheThrower = pointsINeedToThrow > 0;
+
+          const isCardInvolvedInLock = isThisPlayerBlockedFromFinishing || isThisPlayerTheThrower;
           const isMyTeamJustUnlocked = playerTeamNumber === 1 ? t1JustUnlocked : t2JustUnlocked;
-          const oppTeamDiff = playerTeamNumber === 1 ? t2Diff : t1Diff;
-          const myTeamDiff = playerTeamNumber === 1 ? t1Diff : t2Diff;
 
           const checkoutSuggestion = isActive && isCheckoutRange ? getCheckoutSuggestion(liveScore, config.outMode, currentRoundDarts.length) : null;
 
@@ -526,7 +512,7 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
                     }}>
                       {isMyTeamJustUnlocked ? (
                         <span>🔓</span>
-                      ) : (isMyTeamBlocked || isOppTeamBlocked) ? (
+                      ) : isCardInvolvedInLock ? (
                         <span>🔒</span>
                       ) : null}
                       <span>T{playerTeamNumber}</span>
@@ -539,7 +525,7 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
                 </div>
               </div>
 
-              {/* 2v2 Lock & Block Status Bar - Only shown if there is a block or unlock animation */}
+              {/* 2v2 Lock Status Bar */}
               {is2v2 && isMyTeamJustUnlocked && (
                 <div className="lock-badge-bar unlocking">
                   <span className="lock-icon-opening">🔓</span>
@@ -547,24 +533,24 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
                 </div>
               )}
 
-              {is2v2 && !isMyTeamJustUnlocked && isBothBlocked && (
+              {is2v2 && !isMyTeamJustUnlocked && isBothBlocked && isCardInvolvedInLock && (
                 <div className="lock-badge-bar locked">
                   <span>🔒</span>
                   <span><strong>Geblockt</strong></span>
                 </div>
               )}
 
-              {is2v2 && !isMyTeamJustUnlocked && !isBothBlocked && isMyTeamBlocked && (
-                <div className="lock-badge-bar locked">
+              {is2v2 && !isMyTeamJustUnlocked && !isBothBlocked && isThisPlayerTheThrower && (
+                <div className="lock-badge-bar must-throw">
                   <span>🔒</span>
-                  <span><strong>Geblockt</strong></span>
+                  <span>Muss mind. <strong>{pointsINeedToThrow} Pkt</strong> werfen</span>
                 </div>
               )}
 
-              {is2v2 && !isMyTeamJustUnlocked && !isBothBlocked && !isMyTeamBlocked && isOppTeamBlocked && (
-                <div className="lock-badge-bar blocking">
+              {is2v2 && !isMyTeamJustUnlocked && !isBothBlocked && !isThisPlayerTheThrower && isThisPlayerBlockedFromFinishing && (
+                <div className="lock-badge-bar locked">
                   <span>🔒</span>
-                  <span>Blockt mit <strong>{oppTeamDiff} Pkt</strong></span>
+                  <span><strong>Geblockt</strong></span>
                 </div>
               )}
 
@@ -580,9 +566,9 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
               </div>
               
               <div style={{ minHeight: '22px', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {isMyTeamBlocked && isCheckoutRange ? (
-                  <div className="checkout-pill-frozen" title={`Checken gesperrt: Partner muss noch mindestens ${myTeamDiff} Punkte werfen`}>
-                    🔒 Geblockt (Partner: -{myTeamDiff} Pkt nötig)
+                {isThisPlayerBlockedFromFinishing && isCheckoutRange ? (
+                  <div className="checkout-pill-frozen" title={`Checken gesperrt: Partner muss noch mindestens ${pointsToUnblockMe} Punkte werfen`}>
+                    🔒 Geblockt (Partner muss mind. {pointsToUnblockMe} Pkt werfen)
                   </div>
                 ) : checkoutSuggestion ? (
                   <div className="checkout-pill">

@@ -38,10 +38,10 @@ describe('2v2 Freeze Lock & Block Display Rules', () => {
     expect(screen.queryByText(/Blockt mit/i)).not.toBeInTheDocument();
   });
 
-  it('RULE 3: When only one team is blocked, both show a lock and the blocker shows points', () => {
+  it('RULE 3: Only the person who must throw points has a number display, blocked player shows Geblockt, opponents clean', () => {
     // Team 1: P0 (40), P2 (200). Partner P2 has 200.
     // Team 2: P1 (50), P3 (50). Total = 100.
-    // P2 (200) > T2 (100) -> Team 1 is geblockt! Team 2 blocks Team 1 by 100 points!
+    // P2 (200) > T2 (100) -> Team 1 is geblockt! P2 needs to throw 100 pts!
     const players = createPlayers([40, 50, 200, 50]);
     render(
       <Scoreboard 
@@ -53,22 +53,23 @@ describe('2v2 Freeze Lock & Block Display Rules', () => {
       />
     );
 
-    // Blocked team shows Geblockt
+    // Blocked player (P0) shows Geblockt (no number)
     expect(screen.getAllByText('Geblockt').length).toBeGreaterThanOrEqual(1);
 
-    // Blocking team shows how many points they are blocking by
-    expect(screen.getAllByText(/Blockt mit/i).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText(/Team 2 blockt Team 1 mit 100 Pkt/i)).toBeInTheDocument();
+    // Thrower player (P2) shows the required points
+    expect(screen.getAllByText(/Muss mind./i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/100 Pkt/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText(/Team 1 geblockt \(Partner muss mind. 100 Pkt werfen\)/i)).toBeInTheDocument();
   });
 
-  it('RULE 4: Updates blocker points live after each dart thrown', () => {
+  it('RULE 4: Updates required points live after each dart thrown by the thrower', () => {
     // Team 1: P0 (40), P2 (200). Partner P2 has 200.
     // Team 2: P1 (50), P3 (50). Total = 100. (Block diff = 100).
     const players = createPlayers([40, 50, 200, 50]);
     
-    // Active player is P2 (Partner in Team 1). Throws T20 (60 pts).
+    // Active player is P2 (The thrower in Team 1). Throws T20 (60 pts).
     // Live score of P2 becomes 200 - 60 = 140.
-    // Live block diff becomes 140 - 100 = 40!
+    // Points P2 needs to throw becomes 140 - 100 = 40!
     const roundDarts: Dart[] = [
       { base: 20, mult: 3, value: 60, label: 'T20' }
     ];
@@ -84,6 +85,8 @@ describe('2v2 Freeze Lock & Block Display Rules', () => {
     );
 
     // Should update live to 40 Pkt!
-    expect(screen.getByText(/Team 2 blockt Team 1 mit 40 Pkt/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Muss mind./i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/40 Pkt/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText(/Team 1 geblockt \(Partner muss mind. 40 Pkt werfen\)/i)).toBeInTheDocument();
   });
 });
