@@ -149,10 +149,11 @@ describe('Scoreboard Component', () => {
       />
     );
 
-    // Partner has 200, opponents have 100. Diff = +100 Pkt -> FROZEN / Geblockt
-    expect(screen.getByText(/Team 1 geblockt/i)).toBeInTheDocument();
+    // Partner has 200, opponents have 100. Diff = +100 Pkt -> Team 1 is geblockt, Team 2 blockt mit 100 Pkt!
+    expect(screen.getByText(/Team 2 blockt Team 1 mit 100 Pkt/i)).toBeInTheDocument();
     expect(screen.getByText(/🔒 Geblockt \(Partner: -100 Pkt nötig\)/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/Partner muss mind./i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/Blockt mit/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/Geblockt/i).length).toBeGreaterThanOrEqual(1);
   });
 
   it('displays compact stats correctly (Leg, Match, CO, 100+, 180)', () => {
