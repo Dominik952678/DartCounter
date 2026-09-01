@@ -107,9 +107,10 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
                 fontWeight: 800,
                 padding: '2px 6px',
                 borderRadius: '6px',
-                background: 'rgba(90, 200, 250, 0.18)',
-                color: '#5ac8fa',
-                border: '1px solid rgba(90, 200, 250, 0.4)'
+                background: 'rgba(255, 30, 30, 0.25)',
+                color: '#ff4d4d',
+                border: '1px solid #ff3333',
+                boxShadow: '0 0 8px rgba(255, 30, 30, 0.35)'
               }}>
                 🔒 Geblockt
               </span>
@@ -119,9 +120,10 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
                 fontWeight: 800,
                 padding: '2px 6px',
                 borderRadius: '6px',
-                background: 'rgba(90, 200, 250, 0.18)',
-                color: '#5ac8fa',
-                border: '1px solid rgba(90, 200, 250, 0.4)'
+                background: 'rgba(255, 30, 30, 0.25)',
+                color: '#ff4d4d',
+                border: '1px solid #ff3333',
+                boxShadow: '0 0 8px rgba(255, 30, 30, 0.35)'
               }}>
                 🔒 Geblockt
               </span>
@@ -132,26 +134,27 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
             padding: '4px 12px',
             borderRadius: '12px',
             background: (t1JustUnlocked || t2JustUnlocked) 
-              ? 'rgba(48, 209, 88, 0.25)'
+              ? 'linear-gradient(135deg, rgba(48, 209, 88, 0.35), rgba(52, 199, 89, 0.18))'
               : isAnyBlocked 
-                ? 'rgba(90, 200, 250, 0.22)' 
+                ? 'linear-gradient(135deg, rgba(255, 30, 30, 0.28), rgba(180, 0, 0, 0.18))' 
                 : 'rgba(255, 255, 255, 0.05)',
             border: (t1JustUnlocked || t2JustUnlocked)
-              ? '1px solid rgba(48, 209, 88, 0.8)'
+              ? '1px solid #30d158'
               : isAnyBlocked 
-                ? '1px solid rgba(90, 200, 250, 0.7)' 
+                ? '1px solid #ff3333' 
                 : '1px solid rgba(255, 255, 255, 0.1)',
             color: (t1JustUnlocked || t2JustUnlocked) 
               ? '#30d158' 
               : isAnyBlocked 
-                ? '#5ac8fa' 
+                ? '#ff4d4d' 
                 : 'var(--text-dim, #aaa)',
             fontSize: '0.82rem',
             fontWeight: 800,
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
-            boxShadow: isAnyBlocked ? '0 0 12px rgba(90, 200, 250, 0.25)' : 'none'
+            boxShadow: isAnyBlocked ? '0 0 16px rgba(255, 30, 30, 0.45)' : 'none',
+            textShadow: isAnyBlocked ? '0 0 8px rgba(255, 50, 50, 0.6)' : 'none'
           }}>
             {t1JustUnlocked ? (
               <span>🔓 Team 1 wurde entblockt!</span>
@@ -188,9 +191,10 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
                 fontWeight: 800,
                 padding: '2px 6px',
                 borderRadius: '6px',
-                background: 'rgba(90, 200, 250, 0.18)',
-                color: '#5ac8fa',
-                border: '1px solid rgba(90, 200, 250, 0.4)'
+                background: 'rgba(255, 30, 30, 0.25)',
+                color: '#ff4d4d',
+                border: '1px solid #ff3333',
+                boxShadow: '0 0 8px rgba(255, 30, 30, 0.35)'
               }}>
                 🔒 Geblockt
               </span>
@@ -200,9 +204,10 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
                 fontWeight: 800,
                 padding: '2px 6px',
                 borderRadius: '6px',
-                background: 'rgba(90, 200, 250, 0.18)',
-                color: '#5ac8fa',
-                border: '1px solid rgba(90, 200, 250, 0.4)'
+                background: 'rgba(255, 30, 30, 0.25)',
+                color: '#ff4d4d',
+                border: '1px solid #ff3333',
+                boxShadow: '0 0 8px rgba(255, 30, 30, 0.35)'
               }}>
                 🔒 Geblockt
               </span>
@@ -322,9 +327,9 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
             animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
           }
           .checkout-pill-frozen {
-            background: linear-gradient(135deg, rgba(0, 180, 255, 0.28) 0%, rgba(0, 114, 255, 0.18) 100%);
-            border: 1.5px solid rgba(0, 210, 255, 0.75);
-            color: #38d9ff;
+            background: linear-gradient(135deg, rgba(255, 30, 30, 0.38) 0%, rgba(180, 0, 0, 0.25) 100%);
+            border: 1.5px solid #ff3333;
+            color: #ff4d4d;
             border-radius: 8px;
             padding: 5px 12px;
             font-weight: 800;
@@ -332,8 +337,8 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
             display: inline-block;
             margin: 0 auto;
             letter-spacing: 0.3px;
-            box-shadow: 0 0 14px rgba(0, 200, 255, 0.35);
-            text-shadow: 0 0 6px rgba(0, 210, 255, 0.5);
+            box-shadow: 0 0 16px rgba(255, 30, 30, 0.45);
+            text-shadow: 0 0 8px rgba(255, 50, 50, 0.8);
           }
           .lock-badge-bar {
             margin: 4px 0 2px 0;
@@ -348,28 +353,28 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
             text-align: center;
             line-height: 1.2;
             flex-shrink: 0;
-            letter-spacing: 0.2px;
+            letter-spacing: 0.3px;
             transition: all 0.25s ease;
             backdrop-filter: blur(8px);
           }
           .lock-badge-bar.locked {
-            background: linear-gradient(135deg, rgba(0, 180, 255, 0.24) 0%, rgba(0, 100, 220, 0.16) 100%);
-            border: 1.5px solid rgba(0, 210, 255, 0.75);
-            color: #38d9ff;
-            box-shadow: 0 0 16px rgba(0, 200, 255, 0.35), inset 0 0 8px rgba(0, 200, 255, 0.15);
-            text-shadow: 0 0 6px rgba(0, 210, 255, 0.6);
+            background: linear-gradient(135deg, rgba(255, 25, 25, 0.35) 0%, rgba(170, 0, 0, 0.25) 100%);
+            border: 1.5px solid #ff3333;
+            color: #ff4d4d;
+            box-shadow: 0 0 16px rgba(255, 30, 30, 0.5), inset 0 0 8px rgba(255, 30, 30, 0.25);
+            text-shadow: 0 0 8px rgba(255, 50, 50, 0.8);
           }
           .lock-badge-bar.must-throw {
-            background: linear-gradient(135deg, rgba(0, 210, 255, 0.32) 0%, rgba(30, 144, 255, 0.24) 100%);
-            border: 1.5px solid rgba(56, 217, 255, 0.9);
-            color: #e0f7ff;
-            box-shadow: 0 0 18px rgba(0, 220, 255, 0.45), inset 0 0 10px rgba(0, 220, 255, 0.2);
-            text-shadow: 0 0 8px rgba(0, 210, 255, 0.5);
+            background: linear-gradient(135deg, rgba(255, 60, 0, 0.38) 0%, rgba(190, 20, 0, 0.26) 100%);
+            border: 1.5px solid #ff4500;
+            color: #fff2f2;
+            box-shadow: 0 0 18px rgba(255, 60, 0, 0.5), inset 0 0 10px rgba(255, 60, 0, 0.25);
+            text-shadow: 0 0 8px rgba(255, 60, 0, 0.6);
           }
           .lock-badge-bar.must-throw strong {
             color: #ffffff;
             font-weight: 900;
-            text-shadow: 0 0 8px #00e5ff;
+            text-shadow: 0 0 10px #ff3333;
           }
           .lock-badge-bar.unlocking {
             background: linear-gradient(135deg, rgba(48, 209, 88, 0.35) 0%, rgba(52, 199, 89, 0.2) 100%);
@@ -514,9 +519,13 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
                 <div className="badge-container" style={{ display: 'flex', gap: '4px', flexShrink: 0, alignItems: 'center' }}>
                   {is2v2 && (
                     <span className="badge" style={{ 
-                      background: playerTeamNumber === 1 ? 'rgba(10, 132, 255, 0.25)' : 'rgba(255, 159, 10, 0.25)', 
-                      color: playerTeamNumber === 1 ? 'var(--blue)' : 'var(--orange)',
-                      border: `1px solid ${playerTeamNumber === 1 ? 'var(--blue)' : 'var(--orange)'}`,
+                      background: isCardInvolvedInLock 
+                        ? 'rgba(255, 30, 30, 0.25)' 
+                        : (playerTeamNumber === 1 ? 'rgba(10, 132, 255, 0.25)' : 'rgba(255, 159, 10, 0.25)'), 
+                      color: isCardInvolvedInLock 
+                        ? '#ff4d4d' 
+                        : (playerTeamNumber === 1 ? 'var(--blue)' : 'var(--orange)'),
+                      border: `1px solid ${isCardInvolvedInLock ? '#ff3333' : (playerTeamNumber === 1 ? 'var(--blue)' : 'var(--orange)')}`,
                       padding: '2px 6px', 
                       borderRadius: '4px', 
                       fontSize: '0.72rem', 
