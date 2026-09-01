@@ -153,7 +153,7 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
       players,
       activePlayer: 0,
       startingPlayerOfLeg: 0,
-      config,
+      config: { ...config, is2v2: is2v2 || !!config.is2v2 },
       currentRoundDarts: [],
       currentMultiplier: 1,
       isProcessing: false,

@@ -20,7 +20,7 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
   currentRoundDarts,
   celebration
 }) => {
-  const is2v2 = !!config.is2v2 && players.length === 4;
+  const is2v2 = Boolean(config?.is2v2 || (players.length === 4 && (players[0]?.team !== undefined || players.some(p => p.team !== undefined))));
   const gridColumns = players.length === 1 
     ? '1fr' 
     : (players.length === 2 ? '1fr 1fr' : (players.length === 3 ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)'));
@@ -47,9 +47,9 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
           justifyContent: 'space-between',
           alignItems: 'center',
           background: 'rgba(20, 20, 26, 0.95)',
-          padding: '6px 12px',
+          padding: '8px 12px',
           borderRadius: '10px',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
+          border: '1px solid rgba(255, 255, 255, 0.12)',
           fontSize: '0.85rem',
           flexWrap: 'wrap',
           gap: '8px'
@@ -66,32 +66,36 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
             <span style={{ fontWeight: 800, color: '#fff' }}>{t1Total} Pkt</span>
             <span style={{
               fontSize: '0.72rem',
-              fontWeight: 700,
+              fontWeight: 800,
               padding: '2px 6px',
               borderRadius: '6px',
-              background: isT1Blocked ? 'rgba(90, 200, 250, 0.15)' : 'rgba(48, 209, 88, 0.15)',
+              background: isT1Blocked ? 'rgba(90, 200, 250, 0.18)' : 'rgba(48, 209, 88, 0.18)',
               color: isT1Blocked ? '#5ac8fa' : '#30d158',
-              border: isT1Blocked ? '1px solid rgba(90, 200, 250, 0.3)' : '1px solid rgba(48, 209, 88, 0.3)'
+              border: isT1Blocked ? '1px solid rgba(90, 200, 250, 0.4)' : '1px solid rgba(48, 209, 88, 0.4)'
             }}>
               {isT1Blocked ? `🔒 -${t1Diff} Pkt` : `🔓 Frei`}
             </span>
           </div>
 
           <div style={{
-            padding: '3px 10px',
+            padding: '4px 12px',
             borderRadius: '12px',
-            background: activeFreezeInfo?.isFrozen ? 'rgba(90, 200, 250, 0.2)' : 'rgba(48, 209, 88, 0.2)',
-            border: activeFreezeInfo?.isFrozen ? '1px solid rgba(90, 200, 250, 0.5)' : '1px solid rgba(48, 209, 88, 0.5)',
+            background: activeFreezeInfo?.isFrozen ? 'rgba(90, 200, 250, 0.22)' : 'rgba(48, 209, 88, 0.22)',
+            border: activeFreezeInfo?.isFrozen ? '1px solid rgba(90, 200, 250, 0.7)' : '1px solid rgba(48, 209, 88, 0.7)',
             color: activeFreezeInfo?.isFrozen ? '#5ac8fa' : '#30d158',
-            fontSize: '0.78rem',
-            fontWeight: 700,
+            fontSize: '0.82rem',
+            fontWeight: 800,
             display: 'flex',
             alignItems: 'center',
-            gap: '4px'
+            gap: '6px',
+            boxShadow: activeFreezeInfo?.isFrozen ? '0 0 12px rgba(90, 200, 250, 0.25)' : 'none'
           }}>
-            {activeFreezeInfo?.isFrozen 
-              ? `🔒 Team ${activeTeam} geblockt (Partner muss mind. ${activeFreezeInfo.pointDifference} Pkt werfen)`
-              : `🔓 Team ${activeTeam} frei zum Checken`}
+            <span style={{ fontSize: '1rem' }}>{activeFreezeInfo?.isFrozen ? '🔒' : '🔓'}</span>
+            <span>
+              {activeFreezeInfo?.isFrozen 
+                ? `Team ${activeTeam} geblockt (Partner muss mind. ${activeFreezeInfo.pointDifference} Pkt werfen)`
+                : `Team ${activeTeam} frei zum Checken`}
+            </span>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -106,12 +110,12 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
             <span style={{ fontWeight: 800, color: '#fff' }}>{t2Total} Pkt</span>
             <span style={{
               fontSize: '0.72rem',
-              fontWeight: 700,
+              fontWeight: 800,
               padding: '2px 6px',
               borderRadius: '6px',
-              background: isT2Blocked ? 'rgba(90, 200, 250, 0.15)' : 'rgba(48, 209, 88, 0.15)',
+              background: isT2Blocked ? 'rgba(90, 200, 250, 0.18)' : 'rgba(48, 209, 88, 0.18)',
               color: isT2Blocked ? '#5ac8fa' : '#30d158',
-              border: isT2Blocked ? '1px solid rgba(90, 200, 250, 0.3)' : '1px solid rgba(48, 209, 88, 0.3)'
+              border: isT2Blocked ? '1px solid rgba(90, 200, 250, 0.4)' : '1px solid rgba(48, 209, 88, 0.4)'
             }}>
               {isT2Blocked ? `🔒 -${t2Diff} Pkt` : `🔓 Frei`}
             </span>
@@ -195,8 +199,8 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
             animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
           }
           .checkout-pill-frozen {
-            background: rgba(90, 200, 250, 0.2);
-            border: 1px solid rgba(90, 200, 250, 0.6);
+            background: rgba(90, 200, 250, 0.25);
+            border: 1px solid rgba(90, 200, 250, 0.7);
             color: #5ac8fa;
             border-radius: 8px;
             padding: 4px 10px;
@@ -208,27 +212,27 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
           }
           .lock-badge-bar {
             margin: 4px 0 2px 0;
-            padding: 3px 6px;
-            border-radius: 6px;
-            font-size: 0.72rem;
-            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 7px;
+            font-size: clamp(0.7rem, 2vw, 0.78rem);
+            font-weight: 800;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 4px;
+            gap: 5px;
             text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            line-height: 1.2;
+            flex-shrink: 0;
           }
           .lock-badge-bar.locked {
-            background: rgba(90, 200, 250, 0.14);
-            border: 1px solid rgba(90, 200, 250, 0.35);
+            background: rgba(90, 200, 250, 0.18);
+            border: 1px solid rgba(90, 200, 250, 0.55);
             color: #5ac8fa;
+            box-shadow: 0 0 10px rgba(90, 200, 250, 0.15);
           }
           .lock-badge-bar.unlocked {
-            background: rgba(48, 209, 88, 0.14);
-            border: 1px solid rgba(48, 209, 88, 0.35);
+            background: rgba(48, 209, 88, 0.18);
+            border: 1px solid rgba(48, 209, 88, 0.55);
             color: #30d158;
           }
           @keyframes popIn {
@@ -361,9 +365,13 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
                       padding: '2px 6px', 
                       borderRadius: '4px', 
                       fontSize: '0.72rem', 
-                      fontWeight: 700 
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '3px'
                     }}>
-                      T{playerTeamNumber}
+                      <span>{isCardBlocked ? '🔒' : '🔓'}</span>
+                      <span>T{playerTeamNumber}</span>
                     </span>
                   )}
                   {config.setsToWin > 1 && (
@@ -375,17 +383,14 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
 
               {is2v2 && (
                 <div className={`lock-badge-bar ${isCardBlocked ? 'locked' : 'unlocked'}`}>
-                  {isCardBlocked ? (
-                    <>
-                      <span>🔒</span>
-                      <span>Geblockt: Partner muss mind. <strong>{cardPointDiff} Pkt</strong> werfen</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>🔓</span>
-                      <span>Frei zum Checken</span>
-                    </>
-                  )}
+                  <span style={{ fontSize: '0.92rem', lineHeight: 1 }}>{isCardBlocked ? '🔒' : '🔓'}</span>
+                  <span>
+                    {isCardBlocked ? (
+                      <>Geblockt: Partner muss mind. <strong>{cardPointDiff} Pkt</strong> werfen</>
+                    ) : (
+                      <>Frei zum Checken</>
+                    )}
+                  </span>
                 </div>
               )}
 

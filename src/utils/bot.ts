@@ -173,7 +173,13 @@ export function getBotDart(
         const opponentTotal = teamContext.opponent1Score + teamContext.opponent2Score;
         const isFrozen = teamContext.partnerScore > opponentTotal;
 
-        // If the bot is FROZEN: it is NOT allowed to check out (finishing on 0 would cause a BUST).
+        // Check if the bot can finish in this single dart
+        const canFinishThisDart = 
+            (outMode === 'DO' && ((currentScore <= 40 && currentScore % 2 === 0 && currentScore >= 2) || currentScore === 50)) ||
+            (outMode === 'MO' && ((currentScore <= 40 && currentScore % 2 === 0 && currentScore >= 2) || (currentScore <= 60 && currentScore % 3 === 0 && currentScore >= 3) || currentScore === 50)) ||
+            (outMode === 'SO' && (currentScore <= 60 || currentScore === 50));
+
+        // TACTIC A: Bot is FROZEN (Cannot check out - checking out causes BUST)
         if (isFrozen) {
             if (currentScore <= 40) {
                 // If on a low score, avoid hitting the double that would reduce score to 0
@@ -188,13 +194,29 @@ export function getBotDart(
                     return { base: 0, mult: 1 };
                 }
             }
-            // If currentScore > 40: score heavily to reduce team total and unfreeze the team
-            return throwAtTarget(targetAverage >= 55 ? 20 : 20, targetAverage >= 55 ? 3 : 1, targetAverage, currentScore);
+            // If currentScore > 40: score heavily on T20 to reduce team total and unfreeze the team
+            return throwAtTarget(20, targetAverage >= 50 ? 3 : 1, targetAverage, currentScore);
         }
 
-        // If UNFROZEN:
-        // A) If the bot is on a valid finish, throw for the win!
-        // B) If partner has a finish coming up, ensure team stays ahead by scoring heavily
+        // TACTIC B: Bot is UNFROZEN and can checkout in THIS dart -> GO FOR THE LEG WIN!
+        if (canFinishThisDart) {
+            // Check out immediately (handled in Checkout Phase below)
+        } else {
+            // TACTIC C: "IMMER BLOCK VOR CHECK!" - Opponent Threat Evaluation & Aggressive Blocking
+            const isOpponentThreatening = 
+                teamContext.opponent1Score <= 60 || 
+                teamContext.opponent2Score <= 60 || 
+                (teamContext.opponent1Score <= 100 && teamContext.opponent1Score !== 99 && teamContext.opponent1Score !== 97) ||
+                (teamContext.opponent2Score <= 100 && teamContext.opponent2Score !== 99 && teamContext.opponent2Score !== 97);
+            
+            // If opponents are threatening or partner is on a finish or score > 60:
+            // Throw aggressive scoring on T20 to place the freeze block onto the opponents or unfreeze partner!
+            const isPartnerOnFinish = teamContext.partnerScore <= 50 || (teamContext.partnerScore <= 40 && teamContext.partnerScore % 2 === 0);
+
+            if (isOpponentThreatening || isPartnerOnFinish || currentScore > 60) {
+                return throwAtTarget(20, targetAverage >= 50 ? 3 : 1, targetAverage, currentScore);
+            }
+        }
     }
 
     // ── 1. Checkout Phase ──

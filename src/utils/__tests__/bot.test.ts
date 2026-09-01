@@ -192,5 +192,47 @@ describe('Bot AI Dart Generation', () => {
       }
       expect(twentySegmentHits).toBeGreaterThan(40);
     });
+
+    it('actively places a block on opponents by aiming at T20 when opponents are threatening a finish', () => {
+      // Opponent 1 has 32 points left (threatening finish).
+      // Bot has 80 points left (cannot checkout in 1 dart in DO).
+      // Bot should prioritize BLOCKING opponents with heavy T20 scoring instead of a small setup single!
+      const teamContext = {
+        is2v2: true,
+        partnerScore: 80,
+        opponent1Score: 32,
+        opponent2Score: 120
+      };
+
+      let twentySegmentHits = 0;
+      for (let i = 0; i < 50; i++) {
+        const dart = getBotDart(75, 80, 'DO', teamContext);
+        if (dart.base === 20 || dart.base === 1 || dart.base === 5) {
+          twentySegmentHits++;
+        }
+      }
+      expect(twentySegmentHits).toBeGreaterThan(40);
+    });
+
+    it('actively unfreezes partner by aiming at T20 when partner is on a finish', () => {
+      // Partner has 40 points left.
+      // Bot has 90 points left.
+      // Bot aggressively scores on T20 to unblock partner for next turn!
+      const teamContext = {
+        is2v2: true,
+        partnerScore: 40,
+        opponent1Score: 100,
+        opponent2Score: 100
+      };
+
+      let twentySegmentHits = 0;
+      for (let i = 0; i < 50; i++) {
+        const dart = getBotDart(75, 90, 'DO', teamContext);
+        if (dart.base === 20 || dart.base === 1 || dart.base === 5) {
+          twentySegmentHits++;
+        }
+      }
+      expect(twentySegmentHits).toBeGreaterThan(40);
+    });
   });
 });
