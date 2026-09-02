@@ -268,7 +268,7 @@ export const MainMenu: React.FC = () => {
         }
 
         .training-section-label {
-          font-size: clamp(0.7em, 1.1vh, 0.76em);
+          font-size: clamp(0.74em, 1.2vh, 0.8em);
           text-transform: uppercase;
           letter-spacing: 0.8px;
           color: var(--text-dim);
@@ -288,12 +288,14 @@ export const MainMenu: React.FC = () => {
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          padding: clamp(8px, 1.2vh, 11px) clamp(4px, 1vw, 8px);
-          background: var(--surface);
+          gap: clamp(3px, 0.6vh, 6px);
+          padding: clamp(12px, 1.8vh, 16px) clamp(6px, 1vw, 10px);
+          min-height: clamp(78px, 11vh, 100px);
+          background: var(--card);
           border: 1px solid var(--card-border);
-          border-radius: var(--radius-sm, 10px);
+          border-radius: var(--radius, 14px);
           cursor: pointer;
-          transition: all 0.15s ease;
+          transition: transform 0.15s ease, border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
           color: var(--text);
           box-sizing: border-box;
           text-align: center;
@@ -310,13 +312,14 @@ export const MainMenu: React.FC = () => {
         }
 
         .training-chip-icon {
-          font-size: clamp(1.2rem, 2vh, 1.45rem);
+          font-size: clamp(1.5rem, 2.6vh, 1.9rem);
+          line-height: 1;
         }
 
         .training-chip-title {
-          font-weight: 700;
-          font-size: clamp(0.74em, 1.2vh, 0.82em);
-          margin-top: 2px;
+          font-weight: 800;
+          font-size: clamp(0.86em, 1.5vh, 1em);
+          letter-spacing: -0.01em;
         }
 
         /* ── 4. User Status Bar (Docked bottom) ── */
@@ -378,7 +381,7 @@ export const MainMenu: React.FC = () => {
           .secondary-tile-icon { width: 26px !important; height: 26px !important; font-size: 1rem !important; }
           .secondary-tile-desc { display: none !important; }
           .training-section-label { display: none !important; }
-          .training-chip { padding: 4px 10px !important; }
+          .training-chip { padding: 4px 12px !important; min-height: 0 !important; }
           .menu-status-bar { padding: 4px 10px !important; }
           .menu-version { display: none !important; }
         }
@@ -521,7 +524,8 @@ export const MainMenu: React.FC = () => {
             flex-direction: row !important;
             justify-content: flex-start !important;
             gap: 10px !important;
-            padding: 8px 12px !important;
+            padding: 8px 14px !important;
+            min-height: 0 !important;
           }
         }
       `}</style>

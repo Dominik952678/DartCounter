@@ -82,6 +82,8 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
 
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const callerTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Ensures a guest revocation is announced once per match, not once per poll. */
+  const remoteAbortLatch = useRef(false);
 
   /**
    * Mirror of the current state that is updated *synchronously* on every write.
@@ -214,6 +216,7 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
     setCelebration(null);
     setCheckoutPrompt(null);
     setRemoteAbortNotice(null);
+    remoteAbortLatch.current = false;
     setHasSavedGame(true);
     setScreen('game');
   }, [applyState, clearTimers, setScreen]);
@@ -230,11 +233,43 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
     setCelebration(null);
     setCheckoutPrompt(null);
     setRoundBust(false);
+    // Clearing the roster is what actually ends the match: the guest-revocation
+    // watcher below keys off it, and leaving stale players behind kept that
+    // interval alive after an abort.
+    applyState({
+      players: [],
+      activePlayer: 0,
+      startingPlayerOfLeg: 0,
+      config: stateRef.current.config,
+      currentRoundDarts: [],
+      currentMultiplier: 1,
+      isProcessing: false,
+      history: []
+    });
     setScreen('start');
-  }, [clearTimers, setScreen]);
+  }, [applyState, clearTimers, setScreen]);
+
+  /**
+   * Drops a cloud guest's borrowed profile from this device. Once they revoke
+   * the link their stats are no longer ours to keep or show, so the entry has
+   * to leave the player list rather than linger as a dead option.
+   */
+  const dropLinkedGuestProfile = useCallback((guest: Player) => {
+    const current = profilesRef.current;
+    const doomed = Object.keys(current).filter(name => {
+      const prof = current[name];
+      if (!prof?.isLinkedCloudGuest) return false; // never touch a local profile
+      return guest.linkedUserId ? prof.linkedUserId === guest.linkedUserId : name === guest.name;
+    });
+    if (doomed.length === 0) return;
+    const next = { ...current };
+    doomed.forEach(name => delete next[name]);
+    persistProfiles(next);
+  }, [persistProfiles]);
 
   // Watch for a linked guest revoking the session from their own device.
   useEffect(() => {
+    if (remoteAbortLatch.current) return;
     if (gameState.players.length === 0) return;
     const linkedGuests = gameState.players.filter(p => p.linkedUserId && p.syncAuthToken);
     if (linkedGuests.length === 0) return;
@@ -242,7 +277,9 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
     let cancelled = false;
     const interval = setInterval(async () => {
       for (const guest of linkedGuests) {
-        if (cancelled) return;
+        // The latch survives the re-render that clearing the roster triggers,
+        // so a revocation reports itself exactly once per match.
+        if (cancelled || remoteAbortLatch.current) return;
         try {
           const { data } = await supabase
             .from('documents')
@@ -253,8 +290,11 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
           if (!data?.data) continue;
           const tokenDoc = data.data as GuestSyncTokenDoc;
           if (tokenDoc.liveMatch?.isAborted || tokenDoc.authToken !== guest.syncAuthToken || tokenDoc.syncEnabled === false) {
-            if (cancelled) return;
-            setRemoteAbortNotice(`@${guest.name} hat das Match aus der Ferne beendet oder die Verbindung getrennt.`);
+            if (cancelled || remoteAbortLatch.current) return;
+            remoteAbortLatch.current = true;
+            clearInterval(interval);
+            setRemoteAbortNotice(`@${guest.name} hat die Verbindung getrennt. Das Match wurde beendet und das Gastprofil entfernt.`);
+            dropLinkedGuestProfile(guest);
             abortGame();
             return;
           }
@@ -268,7 +308,7 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
       cancelled = true;
       clearInterval(interval);
     };
-  }, [gameState.players, abortGame]);
+  }, [gameState.players, abortGame, dropLinkedGuestProfile]);
 
   const resumeGame = useCallback(() => {
     const saved = localStorage.getItem(SAVED_GAME_KEY);

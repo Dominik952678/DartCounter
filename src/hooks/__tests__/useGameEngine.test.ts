@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useGameEngine, get2v2FreezeStatus } from '../useGameEngine';
+import { supabase } from '../../db/database';
 import type { Profile, GameConfig, Player } from '../../types';
 
 describe('useGameEngine Hook & Undo Logic', () => {
@@ -126,5 +127,130 @@ describe('useGameEngine Hook & Undo Logic', () => {
     expect(result.current.gameState.players[0].score).toBe(40);
     expect(result.current.gameState.players[0].legs).toBe(0);
     expect(result.current.gameState.currentRoundDarts).toHaveLength(0);
+  });
+});
+
+describe('linked cloud guest revoking mid-match', () => {
+  const baseProps = {
+    setScreen: vi.fn(),
+    setStatsModalData: vi.fn()
+  };
+
+  const linkedProfiles: Record<string, Profile> = {
+    'Dominik': { wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0 },
+    'CloudGast': {
+      wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0,
+      isLinkedCloudGuest: true,
+      linkedUserId: 'user_guest_1',
+      linkedUsername: 'CloudGast',
+      syncAuthToken: 'tok_original'
+    }
+  };
+
+  const config: GameConfig = { startScore: 501, outMode: 'DO', setsToWin: 1, legsToWin: 3 };
+
+  beforeEach(() => {
+    localStorage.clear();
+    vi.useFakeTimers();
+    // The guest has revoked the link: the cloud token no longer matches.
+    vi.spyOn(supabase, 'from').mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: { data: { authToken: 'tok_revoked', syncEnabled: false } }
+          })
+        })
+      }),
+      upsert: vi.fn().mockResolvedValue({ error: null }),
+      insert: vi.fn().mockResolvedValue({ error: null })
+    } as unknown as ReturnType<typeof supabase.from>);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  const advance = async (ms: number) => {
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(ms);
+    });
+  };
+
+  it('reports the revocation once, ends the match and removes the guest profile', async () => {
+    const setProfiles = vi.fn();
+    const { result } = renderHook(() =>
+      useGameEngine({ ...baseProps, profiles: linkedProfiles, setProfiles })
+    );
+
+    act(() => {
+      result.current.startGame(['Dominik', 'CloudGast'], config);
+    });
+    expect(result.current.gameState.players).toHaveLength(2);
+
+    // First poll detects the revoked token.
+    await advance(4500);
+
+    expect(result.current.remoteAbortNotice).toContain('CloudGast');
+    // The match is over: an empty roster is what stops the watcher.
+    expect(result.current.gameState.players).toHaveLength(0);
+
+    // The borrowed guest profile is gone; the local player survives.
+    const written = setProfiles.mock.calls.at(-1)?.[0] as Record<string, Profile>;
+    expect(written).toBeDefined();
+    expect(written['CloudGast']).toBeUndefined();
+    expect(written['Dominik']).toBeDefined();
+
+    // The original bug: the notice re-fired every few seconds forever.
+    const callsAfterFirstNotice = setProfiles.mock.calls.length;
+    await advance(20000);
+    expect(setProfiles.mock.calls.length).toBe(callsAfterFirstNotice);
+    expect(result.current.remoteAbortNotice).toContain('CloudGast');
+  });
+
+  it('lets the notice be dismissed and does not bring it back', async () => {
+    const { result } = renderHook(() =>
+      useGameEngine({ ...baseProps, profiles: linkedProfiles, setProfiles: vi.fn() })
+    );
+
+    act(() => {
+      result.current.startGame(['Dominik', 'CloudGast'], config);
+    });
+    await advance(4500);
+    expect(result.current.remoteAbortNotice).not.toBeNull();
+
+    act(() => {
+      result.current.dismissRemoteAbortNotice();
+    });
+    expect(result.current.remoteAbortNotice).toBeNull();
+
+    await advance(20000);
+    expect(result.current.remoteAbortNotice).toBeNull();
+  });
+
+  it('keeps playing while the guest link is still valid', async () => {
+    vi.spyOn(supabase, 'from').mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: { data: { authToken: 'tok_original', syncEnabled: true } }
+          })
+        })
+      }),
+      upsert: vi.fn().mockResolvedValue({ error: null })
+    } as unknown as ReturnType<typeof supabase.from>);
+
+    const setProfiles = vi.fn();
+    const { result } = renderHook(() =>
+      useGameEngine({ ...baseProps, profiles: linkedProfiles, setProfiles })
+    );
+
+    act(() => {
+      result.current.startGame(['Dominik', 'CloudGast'], config);
+    });
+    await advance(15000);
+
+    expect(result.current.remoteAbortNotice).toBeNull();
+    expect(result.current.gameState.players).toHaveLength(2);
   });
 });
