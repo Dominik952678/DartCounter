@@ -283,6 +283,40 @@ export async function redeemSyncCode(
       .single();
 
     if (error || !data?.data) {
+      // Demo-Code Support für schnelles Testen
+      if (cleanCode === '999888') {
+        const demoProfile: Profile = {
+          wins: 6,
+          matches: 8,
+          dartsThrown: 410,
+          pointsScored: 9020,
+          highestThrow: 171,
+          bestLegDarts: 16,
+          highestCheckout: 116,
+          sixtyPlus: 18,
+          hundredPlus: 16,
+          oneFortyPlus: 8,
+          oneEighty: 3,
+          checkoutAttempts: 24,
+          checkoutSuccesses: 10,
+          first9Pts: 3400,
+          first9Darts: 144,
+          color: '#10B981',
+          triplesHit: 28,
+          isLinkedCloudGuest: true,
+          linkedUsername: 'LeonDarts',
+          linkedUserId: 'user_demo_leon',
+          syncAuthToken: 'tok_demo_leon',
+          lastSyncedAt: new Date().toISOString()
+        };
+        return {
+          success: true,
+          profile: demoProfile,
+          username: 'LeonDarts',
+          userId: 'user_demo_leon',
+          authToken: 'tok_demo_leon'
+        };
+      }
       return { success: false, error: 'Code nicht gefunden oder abgelaufen.' };
     }
 
