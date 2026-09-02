@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { GameConfig, Profile } from '../types';
 import { useAuthStore } from '../store/useAuthStore';
-import { redeemSyncCode, saveProfiles, validateGuestSyncTokens } from '../db/database';
+import { getActiveUserSyncInfo, redeemSyncCode, saveProfiles, setGuestLiveMatchStatus, validateGuestSyncTokens } from '../db/database';
 
 interface MatchSetupProps {
   profiles: Record<string, Profile>;
@@ -352,6 +352,16 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
     }
     setSavedMatch(null);
 
+    // Melde Live-Match für alle beteiligten Cloud-Gäste an
+    let hostId = localStorage.getItem('dartcounter_host_device_id') || 'host_local';
+    let hostName = user?.user_metadata?.username || user?.email || 'Host-Gerät';
+    chosenPlayers.forEach(p => {
+      const prof = profiles[p];
+      if (prof?.isLinkedCloudGuest && prof.linkedUserId) {
+        setGuestLiveMatchStatus(prof.linkedUserId, hostId, hostName, { gameType: is2v2 ? '2v2' : 'standard' });
+      }
+    });
+
     onStartGame(chosenPlayers, {
       startScore,
       outMode,
@@ -378,7 +388,17 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
       return;
     }
 
-    // Pre-flight check: Prüfen, ob verknüpfte Cloud-Gäste noch autorisiert sind
+    // 1. Wenn Sync auf diesem Account aktiv ist und ein Host verbunden ist: lokales Spiel blockieren
+    if (user?.id) {
+      const syncInfo = await getActiveUserSyncInfo(user.id);
+      if (syncInfo && syncInfo.syncEnabled !== false && (syncInfo.activeHost || (syncInfo.activeHosts && syncInfo.activeHosts.length > 0))) {
+        const host = syncInfo.activeHost || syncInfo.activeHosts![0];
+        setErrorMsg(`⚠️ Gast-Sync ist aktiv: Dein Profil ist aktuell auf '${host.hostName}' gekoppelt. Du kannst hier erst wieder lokal spielen, wenn du die Verbindung trennst oder Gast-Sync im Profil-Tab deaktivierst.`);
+        return;
+      }
+    }
+
+    // 2. Pre-flight check: Prüfen, ob verknüpfte Cloud-Gäste noch autorisiert sind
     const hasLinkedGuests = chosenPlayers.some(p => profiles[p]?.isLinkedCloudGuest);
     if (hasLinkedGuests) {
       const check = await validateGuestSyncTokens(chosenPlayers, profiles);

@@ -31,7 +31,26 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
     chartData, checkoutChartData, radarData, maxRadarHits, pieData,
     isMinigame, minigameAvgScore, minigameBestScore
   } = useMemo(() => {
-    const safeMatches = Array.isArray(matches) ? matches : [];
+    let safeMatches = Array.isArray(matches) ? [...matches] : [];
+    if (profile?.linkedUserId) {
+      try {
+        const guestRaw = localStorage.getItem(`guest_matches_${profile.linkedUserId}`);
+        if (guestRaw) {
+          const guestMatches = JSON.parse(guestRaw);
+          if (Array.isArray(guestMatches)) {
+            const existingIds = new Set(safeMatches.map(m => m._id || m.date));
+            guestMatches.forEach(gm => {
+              if (!existingIds.has(gm._id || gm.date)) {
+                safeMatches.push(gm);
+              }
+            });
+          }
+        }
+      } catch (e) {
+        console.error("Error merging guest matches", e);
+      }
+    }
+
     const playerMatchesTotal = safeMatches.filter(m => m && Array.isArray(m.players) && m.players.some(p => p && p.name === profileName));
     
     const modes = new Set<string>();
@@ -570,8 +589,8 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
           </div>
         )}
 
-        {/* Delete */}
-        {onDeleteProfile && (
+        {/* Delete - Gesperrt für Cloud-Gäste */}
+        {onDeleteProfile && !profile?.isLinkedCloudGuest && (
           <button 
             className="btn-delete-profile"
             onClick={() => {

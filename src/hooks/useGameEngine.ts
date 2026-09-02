@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import type { GameState, Profile, MatchHistory, GameConfig, Player } from '../types';
-import { saveProfiles } from '../db/database';
+import { saveProfiles, setGuestLiveMatchStatus, supabase } from '../db/database';
 import { getBotDart, type TeamContext } from '../utils/bot';
 import { playSciFiHitSound, play180Sound, playBustSound, playHighFinishSound, speak, playDartHitSound, announceScore, announceGameShot } from '../utils/audio';
 import { triggerHaptic } from '../utils/haptics';
@@ -174,10 +174,48 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
+    // Clear live match status for any linked guest
+    gameState.players.forEach(p => {
+      if (p.linkedUserId) {
+        setGuestLiveMatchStatus(p.linkedUserId, '', '', null);
+      }
+    });
     localStorage.removeItem('dartcounter_saved_game');
     setHasSavedGame(false);
     setScreen('start');
   };
+
+  // Monitor active match for remote abort from linked guests
+  useEffect(() => {
+    if (!gameState.players || gameState.players.length === 0) return;
+    const linkedGuests = gameState.players.filter(p => p.linkedUserId && p.syncAuthToken);
+    if (linkedGuests.length === 0) return;
+
+    const interval = setInterval(async () => {
+      for (const guest of linkedGuests) {
+        try {
+          const { data } = await supabase
+            .from('documents')
+            .select('data')
+            .eq('id', `user_sync_${guest.linkedUserId}`)
+            .single();
+
+          if (data?.data) {
+            const tokenDoc = data.data as any;
+            if (tokenDoc.liveMatch?.isAborted || tokenDoc.authToken !== guest.syncAuthToken || tokenDoc.syncEnabled === false) {
+              alert(`⚠️ Match abgebrochen: @${guest.name} hat das Match aus der Ferne beendet (oder die Verbindung getrennt).`);
+              abortGame();
+              break;
+            }
+          }
+        } catch (e) {
+          // ignore
+        }
+      }
+    }, 2500);
+
+    return () => clearInterval(interval);
+  }, [screen, gameState.players]);
 
   const resumeGame = () => {
     const saved = localStorage.getItem('dartcounter_saved_game');

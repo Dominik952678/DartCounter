@@ -307,4 +307,119 @@ describe('📱 Guest-Cloud-Sync System (Multi-User & Anti-Stat-Washing)', () => 
     expect(revokedRes.valid).toBe(false);
     expect(revokedRes.revokedGuests).toContain('Alex');
   });
+
+  it('toggles user sync off and on, immediately invalidating tokens when off', async () => {
+    const mockUpsert = vi.fn().mockResolvedValue({ error: null });
+    vi.spyOn(supabase, 'from').mockReturnValue({
+      upsert: mockUpsert,
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({ data: null })
+        })
+      })
+    } as any);
+
+    const { toggleUserSync } = await import('../database');
+
+    // 1. Toggle OFF
+    const disabledDoc = await toggleUserSync('user_123', 'Alex', false);
+    expect(disabledDoc.syncEnabled).toBe(false);
+    expect(disabledDoc.authToken).toContain('tok_disabled_');
+    expect(disabledDoc.liveMatch?.isAborted).toBe(true);
+
+    // 2. Toggle ON
+    const enabledDoc = await toggleUserSync('user_123', 'Alex', true);
+    expect(enabledDoc.syncEnabled).toBe(true);
+    expect(enabledDoc.code).toHaveLength(6);
+  });
+
+  it('enforces single-host exclusivity by replacing previous host connection upon new redemption', async () => {
+    const existingDoc: GuestSyncTokenDoc = {
+      code: '123456',
+      userId: 'user_123',
+      username: 'Alex',
+      authToken: 'tok_active',
+      createdAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 3600000).toISOString(),
+      syncEnabled: true,
+      profileSnapshot: { wins: 5, matches: 5, dartsThrown: 100, pointsScored: 2000, highestThrow: 100 },
+      activeHost: { hostId: 'host_old', hostName: 'Old Phone', linkedAt: new Date().toISOString() },
+      activeHosts: [{ hostId: 'host_old', hostName: 'Old Phone', linkedAt: new Date().toISOString() }]
+    };
+
+    const mockUpsert = vi.fn().mockResolvedValue({ error: null });
+    vi.spyOn(supabase, 'from').mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({ data: { data: existingDoc } })
+        })
+      }),
+      upsert: mockUpsert
+    } as any);
+
+    const res = await redeemSyncCode('123456', 'host_new_ipad', 'New iPad');
+    expect(res.success).toBe(true);
+    
+    expect(mockUpsert).toHaveBeenCalled();
+    const updatedData = mockUpsert.mock.calls[0][0].data;
+    expect(updatedData.activeHost?.hostId).toBe('host_new_ipad');
+    expect(updatedData.activeHosts).toHaveLength(1);
+    expect(updatedData.activeHosts[0].hostId).toBe('host_new_ipad');
+  });
+
+  it('rejects redemption if guest has sync disabled', async () => {
+    const disabledDoc: GuestSyncTokenDoc = {
+      code: '123456',
+      userId: 'user_123',
+      username: 'Alex',
+      authToken: 'tok_active',
+      createdAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 3600000).toISOString(),
+      syncEnabled: false
+    };
+
+    vi.spyOn(supabase, 'from').mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({ data: { data: disabledDoc } })
+        })
+      })
+    } as any);
+
+    const res = await redeemSyncCode('123456', 'host_1', 'Dominik iPad');
+    expect(res.success).toBe(false);
+    expect(res.error).toContain('deaktiviert');
+  });
+
+  it('reports live match status and allows remote aborting from main account', async () => {
+    const mockTokenDoc: GuestSyncTokenDoc = {
+      code: '123456',
+      userId: 'user_123',
+      username: 'Alex',
+      authToken: 'tok_active',
+      createdAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 3600000).toISOString(),
+      syncEnabled: true,
+      liveMatch: { hostId: 'host_ipad', hostName: 'Dominik iPad', startedAt: new Date().toISOString(), isAborted: false }
+    };
+
+    const mockUpsert = vi.fn().mockResolvedValue({ error: null });
+    vi.spyOn(supabase, 'from').mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({ data: { data: mockTokenDoc } })
+        })
+      }),
+      upsert: mockUpsert
+    } as any);
+
+    const { abortGuestMatchRemote } = await import('../database');
+    const abortRes = await abortGuestMatchRemote('user_123');
+    expect(abortRes.success).toBe(true);
+
+    const updatedDoc = mockUpsert.mock.calls[0][0].data;
+    expect(updatedDoc.liveMatch?.isAborted).toBe(true);
+    expect(updatedDoc.authToken).not.toBe('tok_active');
+    expect(updatedDoc.activeHosts).toHaveLength(0);
+  });
 });

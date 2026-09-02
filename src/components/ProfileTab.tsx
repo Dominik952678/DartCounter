@@ -7,7 +7,7 @@ import { exportElementAsImage } from '../utils/exportImage';
 import { MatchImageExport } from './MatchImageExport';
 import { useAuthStore } from '../store/useAuthStore';
 import { useThemeStore } from '../store/useThemeStore';
-import { generateUserSyncCode, getActiveUserSyncInfo, redeemSyncCode, revokeHostAccess, saveMatch, supabase } from '../db/database';
+import { generateUserSyncCode, getActiveUserSyncInfo, redeemSyncCode, revokeHostAccess, toggleUserSync, abortGuestMatchRemote, saveMatch, supabase } from '../db/database';
 import { SAMPLE_PROFILES, SAMPLE_MATCHES, SAMPLE_PROFILE_KEYS } from '../utils/sampleData';
 import { APP_VERSION, BUILD_TIME } from '../version';
 
@@ -128,9 +128,34 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
     setSyncLoading(true);
     const username = user.user_metadata?.username || user.email || 'Spieler';
     const profile = profiles[username] || Object.values(profiles)[0];
-    const newToken = await generateUserSyncCode(user.id, username, profile);
+    const newToken = await generateUserSyncCode(user.id, username, profile, matches);
     setUserSyncInfo(newToken);
     setSyncLoading(false);
+  };
+
+  const handleToggleSync = async (enabled: boolean) => {
+    if (!user?.id) return;
+    setSyncLoading(true);
+    const username = user.user_metadata?.username || user.email || 'Spieler';
+    const profile = profiles[username] || Object.values(profiles)[0];
+    const updatedDoc = await toggleUserSync(user.id, username, enabled, profile, matches);
+    setUserSyncInfo(updatedDoc);
+    setSyncLoading(false);
+    if (!enabled) {
+      setImportSuccess("Gast-Sync deaktiviert. Alle Host-Verbindungen wurden getrennt.");
+      setTimeout(() => setImportSuccess(null), 3000);
+    }
+  };
+
+  const handleAbortRemoteMatch = async () => {
+    if (!user?.id) return;
+    if (!window.confirm("Möchtest du das laufende Match auf dem Host-Gerät wirklich abbrechen und die Verbindung trennen?")) return;
+    setSyncLoading(true);
+    await abortGuestMatchRemote(user.id);
+    await loadSyncInfo();
+    setSyncLoading(false);
+    setImportSuccess("🛑 Match auf Host-Gerät abgebrochen und Verbindung getrennt.");
+    setTimeout(() => setImportSuccess(null), 4000);
   };
 
   const handleRevokeHost = async (hostId?: string) => {
@@ -492,16 +517,67 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
       {/* 📱 Gast-Sync & Geräte-Freigabe (Nur für angemeldete Nutzer) */}
       {user && (
         <div className="card" style={{ marginTop: '20px' }}>
-          <div className="card-header" style={{ marginBottom: '12px' }}>
+          <div className="card-header" style={{ marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ fontSize: '1.3em' }}>📱</span>
               <h2>Gast-Sync & Geräte-Freigaben</h2>
             </div>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>Auf Freundes-Geräten spielen</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '0.8rem', color: userSyncInfo?.syncEnabled !== false ? 'var(--green, #10B981)' : 'var(--text-dim)', fontWeight: 700 }}>
+                {userSyncInfo?.syncEnabled !== false ? '🟢 Sync Aktiv' : '⚪ Sync Aus'}
+              </span>
+              <button
+                type="button"
+                className={userSyncInfo?.syncEnabled !== false ? 'btn-secondary' : 'btn-primary'}
+                onClick={() => handleToggleSync(userSyncInfo?.syncEnabled === false)}
+                disabled={syncLoading}
+                style={{ padding: '4px 12px', fontSize: '0.78rem', minHeight: '30px' }}
+              >
+                {userSyncInfo?.syncEnabled !== false ? 'Deaktivieren' : 'Aktivieren'}
+              </button>
+            </div>
           </div>
 
+          {/* 🔴 Live-Match Banner auf dem Main Account */}
+          {userSyncInfo?.liveMatch && !userSyncInfo?.liveMatch?.isAborted && (
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(245, 158, 11, 0.2))',
+              border: '1px solid rgba(239, 68, 68, 0.4)',
+              borderRadius: '12px',
+              padding: '14px 16px',
+              marginBottom: '16px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '12px',
+              boxShadow: '0 0 20px rgba(239, 68, 68, 0.25)'
+            }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '1.3rem' }}>🎯</span>
+                  <strong style={{ color: 'var(--red, #ef4444)', fontSize: '0.98rem' }}>
+                    Live-Match aktiv auf {userSyncInfo.liveMatch.hostName}!
+                  </strong>
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)', marginTop: '4px' }}>
+                  Dein Profil wird gerade in einem {userSyncInfo.liveMatch.gameType || 'Standard'}-Spiel verwendet.
+                </div>
+              </div>
+              <button
+                type="button"
+                className="btn-danger"
+                onClick={handleAbortRemoteMatch}
+                disabled={syncLoading}
+                style={{ padding: '8px 16px', fontSize: '0.85rem', fontWeight: 800 }}
+              >
+                🛑 Match remote abbrechen & Trennen
+              </button>
+            </div>
+          )}
+
           <p style={{ fontSize: '0.86rem', color: 'var(--text-dim)', margin: '0 0 14px 0', lineHeight: 1.5 }}>
-            Teile deinen 6-stelligen Code mit einem Freund (Host), um auf seinem Gerät als Gast zu spielen. Alle gespielten Matches werden automatisch in dein Cloud-Konto synchronisiert!
+            Teile deinen 6-stelligen Code mit einem Freund (Host), um auf seinem Gerät als Gast zu spielen. Dein Profil kann immer auf maximal einem Host-Gerät gekoppelt sein.
           </p>
 
           <div style={{ 
@@ -513,7 +589,22 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
             flexDirection: 'column',
             gap: '14px'
           }}>
-            {userSyncInfo && new Date(userSyncInfo.expiresAt) > new Date() ? (
+            {userSyncInfo?.syncEnabled === false ? (
+              <div style={{ textAlign: 'center', padding: '12px 0' }}>
+                <p style={{ fontSize: '0.88rem', color: 'var(--text-dim)', marginBottom: '14px' }}>
+                  Gast-Sync ist aktuell deaktiviert. Dein Profil kann von keinem fremden Gerät verwendet werden.
+                </p>
+                <button 
+                  type="button" 
+                  className="btn-primary" 
+                  onClick={() => handleToggleSync(true)}
+                  disabled={syncLoading}
+                  style={{ padding: '10px 22px', fontWeight: 800 }}
+                >
+                  ⚡ Gast-Sync aktivieren
+                </button>
+              </div>
+            ) : userSyncInfo && userSyncInfo.code && new Date(userSyncInfo.expiresAt) > new Date() ? (
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
                   <div>
@@ -556,13 +647,13 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                   </div>
                 </div>
 
-                {/* 🛡️ Aktive Host-Verbindungen & Entkoppeln */}
+                {/* 🛡️ Aktive Host-Verbindung (Exklusiv max. 1 Host) */}
                 <div style={{ marginTop: '16px', borderTop: '1px solid var(--card-border)', paddingTop: '12px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                     <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text)' }}>
-                      Gekoppelte Host-Geräte:
+                      Gekoppeltes Host-Gerät:
                     </span>
-                    {userSyncInfo.activeHosts && userSyncInfo.activeHosts.length > 0 && (
+                    {(userSyncInfo.activeHost || (userSyncInfo.activeHosts && userSyncInfo.activeHosts.length > 0)) && (
                       <button 
                         type="button"
                         className="btn-danger"
@@ -570,30 +661,31 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                         disabled={syncLoading}
                         style={{ padding: '3px 8px', fontSize: '0.74rem', minHeight: '26px' }}
                       >
-                        ⛔ Alle trennen
+                        ⛔ Entkoppeln
                       </button>
                     )}
                   </div>
 
-                  {userSyncInfo.activeHosts && userSyncInfo.activeHosts.length > 0 ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      {userSyncInfo.activeHosts.map((host, hIdx) => (
+                  {userSyncInfo.activeHost || (userSyncInfo.activeHosts && userSyncInfo.activeHosts.length > 0) ? (
+                    (() => {
+                      const host = userSyncInfo.activeHost || userSyncInfo.activeHosts![0];
+                      return (
                         <div 
-                          key={hIdx}
                           style={{
-                            background: 'rgba(255, 255, 255, 0.04)',
-                            padding: '8px 12px',
-                            borderRadius: '8px',
+                            background: 'rgba(59, 130, 246, 0.08)',
+                            border: '1px solid rgba(59, 130, 246, 0.25)',
+                            padding: '10px 14px',
+                            borderRadius: '10px',
                             display: 'flex',
                             justifyContent: 'space-between',
                             alignItems: 'center',
-                            fontSize: '0.82rem'
+                            fontSize: '0.85rem'
                           }}
                         >
                           <div>
                             <strong style={{ color: 'var(--blue)' }}>📱 {host.hostName}</strong>
                             <span style={{ color: 'var(--text-dim)', marginLeft: '8px', fontSize: '0.75rem' }}>
-                              (Verbunden {new Date(host.linkedAt).toLocaleDateString('de-DE')})
+                              (Gekoppelt {new Date(host.linkedAt).toLocaleDateString('de-DE')})
                             </span>
                           </div>
                           <button 
@@ -601,16 +693,16 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                             className="btn-danger"
                             onClick={() => handleRevokeHost(host.hostId)}
                             disabled={syncLoading}
-                            style={{ padding: '2px 8px', fontSize: '0.74rem', minHeight: '26px' }}
+                            style={{ padding: '3px 10px', fontSize: '0.75rem', minHeight: '28px' }}
                           >
-                            Entkoppeln
+                            Trennen
                           </button>
                         </div>
-                      ))}
-                    </div>
+                      );
+                    })()
                   ) : (
                     <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)' }}>
-                      Noch keine fremden Geräte mit diesem Code gekoppelt.
+                      Noch kein Host-Gerät mit diesem Code gekoppelt.
                     </span>
                   )}
                 </div>

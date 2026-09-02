@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import type { MatchHistory, Profile, GuestSyncTokenDoc, Player } from '../types';
+import type { MatchHistory, Profile, GuestSyncTokenDoc, ActiveHostConnection, Player } from '../types';
 
 const SUPABASE_URL = 'https://pdbycflxxokbwfsfrmwu.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_vkBLAop52YK5pN6JrIAjfQ__Q9dvli0';
@@ -188,27 +188,13 @@ export async function getMatches(userId?: string | null): Promise<MatchHistory[]
 export async function generateUserSyncCode(
   userId: string, 
   username: string,
-  localProfile?: Profile
+  localProfile?: Profile,
+  localMatches?: MatchHistory[]
 ): Promise<GuestSyncTokenDoc> {
   const code = String(Math.floor(100000 + Math.random() * 900000));
   const authToken = `tok_${Date.now()}_${Math.random().toString(36).substring(2, 12)}`;
   const now = new Date();
   const expiresAt = new Date(now.getTime() + 48 * 60 * 60 * 1000).toISOString(); // 48 Stunden gültig
-
-  // Vorherige aktive Hosts erhalten, falls vorhanden
-  let existingHosts: any[] = [];
-  try {
-    const { data: prevDoc } = await supabase
-      .from('documents')
-      .select('data')
-      .eq('id', `user_sync_${userId}`)
-      .single();
-    if (prevDoc?.data?.activeHosts) {
-      existingHosts = prevDoc.data.activeHosts;
-    }
-  } catch (e) {
-    // Ignorieren falls nicht vorhanden
-  }
 
   // Snapshot der aktuellen Profil-Statistiken erfassen
   let profileSnapshot: Profile | undefined = localProfile;
@@ -221,6 +207,17 @@ export async function generateUserSyncCode(
     }
   }
 
+  // Snapshot der letzten Matches erfassen (für vollständige Statistik auf Host-Gerät)
+  let matchesSnapshot: MatchHistory[] | undefined = localMatches?.slice(0, 15);
+  if (!matchesSnapshot) {
+    try {
+      const fetchedMatches = await getMatches(userId);
+      matchesSnapshot = fetchedMatches?.slice(0, 15);
+    } catch (e) {
+      console.warn("Could not fetch matches snapshot", e);
+    }
+  }
+
   const tokenDoc: GuestSyncTokenDoc = {
     code,
     userId,
@@ -228,8 +225,12 @@ export async function generateUserSyncCode(
     authToken,
     createdAt: now.toISOString(),
     expiresAt,
-    activeHosts: existingHosts,
-    profileSnapshot
+    syncEnabled: true,
+    activeHost: null,
+    activeHosts: [],
+    profileSnapshot,
+    matchesSnapshot,
+    liveMatch: null
   };
 
   try {
@@ -252,6 +253,48 @@ export async function generateUserSyncCode(
 }
 
 /**
+ * Schaltet den Gast-Sync für den Benutzer an oder aus.
+ * Wenn ausgeschaltet, werden alle Host-Verbindungen sofort getrennt und laufende Spiele abgebrochen.
+ */
+export async function toggleUserSync(
+  userId: string,
+  username: string,
+  enabled: boolean,
+  localProfile?: Profile,
+  localMatches?: MatchHistory[]
+): Promise<GuestSyncTokenDoc> {
+  if (enabled) {
+    return generateUserSyncCode(userId, username, localProfile, localMatches);
+  }
+
+  // Sync ausschalten: Token ungültig machen, Host trennen und Live-Match abbrechen
+  const newToken = `tok_disabled_${Date.now()}`;
+  const disabledDoc: GuestSyncTokenDoc = {
+    code: '',
+    userId,
+    username,
+    authToken: newToken,
+    createdAt: new Date().toISOString(),
+    expiresAt: new Date().toISOString(),
+    syncEnabled: false,
+    activeHost: null,
+    activeHosts: [],
+    liveMatch: { isAborted: true, hostId: '', hostName: '', startedAt: '' }
+  };
+
+  try {
+    await supabase
+      .from('documents')
+      .upsert({ id: `user_sync_${userId}`, data: { ...disabledDoc, type: 'user_sync' } });
+    localStorage.removeItem('dartcounter_active_sync_code');
+  } catch (err) {
+    console.error("Error disabling user sync in Supabase", err);
+  }
+
+  return disabledDoc;
+}
+
+/**
  * Ruft die aktiven Sync-Informationen und gekoppelten Host-Geräte des Nutzers ab.
  */
 export async function getActiveUserSyncInfo(userId: string): Promise<GuestSyncTokenDoc | null> {
@@ -265,9 +308,9 @@ export async function getActiveUserSyncInfo(userId: string): Promise<GuestSyncTo
     if (error || !data?.data) return null;
     const tokenDoc = data.data as GuestSyncTokenDoc;
     
-    // Prüfen ob abgelaufen
-    if (new Date(tokenDoc.expiresAt) <= new Date()) {
-      return null;
+    // Prüfen ob abgelaufen oder deaktiviert
+    if (tokenDoc.syncEnabled === false || new Date(tokenDoc.expiresAt) <= new Date()) {
+      return tokenDoc;
     }
     return tokenDoc;
   } catch (err) {
@@ -278,13 +321,13 @@ export async function getActiveUserSyncInfo(userId: string): Promise<GuestSyncTo
 
 /**
  * Löst einen 6-stelligen Sync-Code auf dem Host-Gerät ein.
- * Überprüft Gültigkeit, registriert das Host-Gerät und liefert das vollständige Profil des Gastes.
+ * Überprüft Gültigkeit, registriert das Host-Gerät (exklusiv max. 1 Host) und liefert das vollständige Profil des Gastes.
  */
 export async function redeemSyncCode(
   rawCode: string, 
   hostId: string, 
   hostName: string
-): Promise<{ success: boolean; error?: string; profile?: Profile; username?: string; userId?: string; authToken?: string }> {
+): Promise<{ success: boolean; error?: string; profile?: Profile; username?: string; userId?: string; authToken?: string; matches?: MatchHistory[] }> {
   const cleanCode = rawCode.replace(/\s+/g, '').trim();
   if (!cleanCode || cleanCode.length < 6) {
     return { success: false, error: 'Ungültiger Code. Bitte 6 Ziffern eingeben.' };
@@ -299,44 +342,14 @@ export async function redeemSyncCode(
       .single();
 
     if (error || !data?.data) {
-      // Demo-Code Support für schnelles Testen
-      if (cleanCode === '999888') {
-        const demoProfile: Profile = {
-          wins: 6,
-          matches: 8,
-          dartsThrown: 410,
-          pointsScored: 9020,
-          highestThrow: 171,
-          bestLegDarts: 16,
-          highestCheckout: 116,
-          sixtyPlus: 18,
-          hundredPlus: 16,
-          oneFortyPlus: 8,
-          oneEighty: 3,
-          checkoutAttempts: 24,
-          checkoutSuccesses: 10,
-          first9Pts: 3400,
-          first9Darts: 144,
-          color: '#10B981',
-          triplesHit: 28,
-          isLinkedCloudGuest: true,
-          linkedUsername: 'LeonDarts',
-          linkedUserId: 'user_demo_leon',
-          syncAuthToken: 'tok_demo_leon',
-          lastSyncedAt: new Date().toISOString()
-        };
-        return {
-          success: true,
-          profile: demoProfile,
-          username: 'LeonDarts',
-          userId: 'user_demo_leon',
-          authToken: 'tok_demo_leon'
-        };
-      }
       return { success: false, error: 'Code nicht gefunden oder abgelaufen.' };
     }
 
     const tokenDoc = data.data as GuestSyncTokenDoc;
+
+    if (tokenDoc.syncEnabled === false) {
+      return { success: false, error: 'Der Nutzer hat den Gast-Sync aktuell deaktiviert.' };
+    }
 
     if (new Date(tokenDoc.expiresAt) <= new Date()) {
       return { success: false, error: 'Dieser Sync-Code ist abgelaufen. Bitte neuen Code generieren.' };
@@ -355,28 +368,33 @@ export async function redeemSyncCode(
       if (found) baseProfile = { ...found };
     }
 
-    // 3. Host in activeHosts registrieren (falls noch nicht vorhanden)
-    const activeHosts = tokenDoc.activeHosts || [];
-    const hostIndex = activeHosts.findIndex(h => h.hostId === hostId);
-    const hostEntry = {
+    // 3. Exklusivität: Genau 1 aktiver Host (bisherige Verbindungen werden abgelöst)
+    const hostEntry: ActiveHostConnection = {
       hostId,
       hostName: hostName || 'Unbekanntes Gerät',
       linkedAt: new Date().toISOString()
     };
 
-    if (hostIndex >= 0) {
-      activeHosts[hostIndex] = { ...activeHosts[hostIndex], ...hostEntry };
-    } else {
-      activeHosts.push(hostEntry);
-    }
-
-    const updatedTokenDoc = { ...tokenDoc, activeHosts };
+    const updatedTokenDoc: GuestSyncTokenDoc = {
+      ...tokenDoc,
+      activeHost: hostEntry,
+      activeHosts: [hostEntry]
+    };
 
     // Aktualisiere Token-Docs
     await supabase.from('documents').upsert({ id: `sync_code_${cleanCode}`, data: updatedTokenDoc });
     await supabase.from('documents').upsert({ id: `user_sync_${tokenDoc.userId}`, data: updatedTokenDoc });
 
-    // 4. Konstruiere das verknüpfte Gast-Profil für den Host
+    // 4. Speichere Match-Snapshot lokal beim Host, damit alle Stats & Historien sichtbar sind
+    if (tokenDoc.matchesSnapshot && tokenDoc.matchesSnapshot.length > 0) {
+      try {
+        localStorage.setItem(`guest_matches_${tokenDoc.userId}`, JSON.stringify(tokenDoc.matchesSnapshot));
+      } catch (e) {
+        console.error("Could not save guest matches snapshot", e);
+      }
+    }
+
+    // 5. Konstruiere das verknüpfte Gast-Profil für den Host
     const linkedProfile: Profile = {
       ...baseProfile,
       linkedUserId: tokenDoc.userId,
@@ -391,11 +409,128 @@ export async function redeemSyncCode(
       profile: linkedProfile,
       username: tokenDoc.username,
       userId: tokenDoc.userId,
-      authToken: tokenDoc.authToken
+      authToken: tokenDoc.authToken,
+      matches: tokenDoc.matchesSnapshot
     };
   } catch (err: any) {
     console.error("Error redeeming sync code", err);
     return { success: false, error: err?.message || 'Fehler beim Einlösen des Codes.' };
+  }
+}
+
+/**
+ * Meldet den Start oder das Ende eines Live-Matches für den Gast an Supabase.
+ */
+export async function setGuestLiveMatchStatus(
+  userId: string, 
+  hostId: string, 
+  hostName: string, 
+  matchInfo: { gameType?: string } | null
+): Promise<void> {
+  try {
+    const { data: userDoc } = await supabase
+      .from('documents')
+      .select('data')
+      .eq('id', `user_sync_${userId}`)
+      .single();
+
+    if (!userDoc?.data) return;
+    const tokenDoc = userDoc.data as GuestSyncTokenDoc;
+
+    const liveMatch = matchInfo ? {
+      hostId,
+      hostName,
+      startedAt: new Date().toISOString(),
+      gameType: matchInfo.gameType || 'standard',
+      isAborted: false
+    } : null;
+
+    const updatedDoc: GuestSyncTokenDoc = {
+      ...tokenDoc,
+      liveMatch
+    };
+
+    await supabase.from('documents').upsert({ id: `user_sync_${userId}`, data: updatedDoc });
+    if (tokenDoc.code) {
+      await supabase.from('documents').upsert({ id: `sync_code_${tokenDoc.code}`, data: updatedDoc });
+    }
+  } catch (err) {
+    console.error("Error setting guest live match status", err);
+  }
+}
+
+/**
+ * Bricht ein laufendes Match auf einem fremden Host-Gerät aus der Ferne ab und entkoppelt sofort.
+ */
+export async function abortGuestMatchRemote(userId: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { data: userDoc } = await supabase
+      .from('documents')
+      .select('data')
+      .eq('id', `user_sync_${userId}`)
+      .single();
+
+    if (!userDoc?.data) return { success: false, error: 'Kein Profil gefunden' };
+    const tokenDoc = userDoc.data as GuestSyncTokenDoc;
+
+    const newAuthToken = `tok_revoked_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+    const updatedDoc: GuestSyncTokenDoc = {
+      ...tokenDoc,
+      authToken: newAuthToken,
+      activeHost: null,
+      activeHosts: [],
+      liveMatch: {
+        isAborted: true,
+        hostId: tokenDoc.liveMatch?.hostId || '',
+        hostName: tokenDoc.liveMatch?.hostName || '',
+        startedAt: tokenDoc.liveMatch?.startedAt || ''
+      }
+    };
+
+    await supabase.from('documents').upsert({ id: `user_sync_${userId}`, data: updatedDoc });
+    if (tokenDoc.code) {
+      await supabase.from('documents').upsert({ id: `sync_code_${tokenDoc.code}`, data: updatedDoc });
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error aborting guest match remote", err);
+    return { success: false, error: err?.message || 'Fehler beim Abbrechen des Matches' };
+  }
+}
+
+/**
+ * Ermöglicht dem Gast, den Zugriff für einen bestimmten Host oder alle Hosts zu widerrufen (Anti-Stat-Washing).
+ */
+export async function revokeHostAccess(userId: string, _hostIdToRevoke?: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { data: userDoc } = await supabase
+      .from('documents')
+      .select('data')
+      .eq('id', `user_sync_${userId}`)
+      .single();
+
+    if (!userDoc?.data) return { success: false, error: 'Kein Dokument gefunden.' };
+    const tokenDoc = userDoc.data as GuestSyncTokenDoc;
+
+    const newAuthToken = `tok_${Date.now()}_${Math.random().toString(36).substring(2, 12)}`;
+    const updatedTokenDoc: GuestSyncTokenDoc = {
+      ...tokenDoc,
+      authToken: newAuthToken,
+      activeHost: null,
+      activeHosts: [],
+      liveMatch: { isAborted: true, hostId: '', hostName: '', startedAt: '' }
+    };
+
+    await supabase.from('documents').upsert({ id: `user_sync_${userId}`, data: updatedTokenDoc });
+    if (tokenDoc.code) {
+      await supabase.from('documents').upsert({ id: `sync_code_${tokenDoc.code}`, data: updatedTokenDoc });
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error revoking host access", err);
+    return { success: false, error: err?.message || 'Fehler beim Widerrufen.' };
   }
 }
 
@@ -442,46 +577,6 @@ export async function validateGuestSyncTokens(
     valid: revokedGuests.length === 0,
     revokedGuests
   };
-}
-
-/**
- * Ermöglicht dem Gast, den Zugriff für einen bestimmten Host oder alle Hosts zu widerrufen (Anti-Stat-Washing).
- */
-export async function revokeHostAccess(userId: string, hostIdToRevoke?: string): Promise<{ success: boolean; error?: string }> {
-  try {
-    const { data: userDoc } = await supabase
-      .from('documents')
-      .select('data')
-      .eq('id', `user_sync_${userId}`)
-      .single();
-
-    if (!userDoc?.data) return { success: true };
-
-    const tokenDoc = userDoc.data as GuestSyncTokenDoc;
-    const newAuthToken = `tok_${Date.now()}_revoked_${Math.random().toString(36).substring(2, 10)}`;
-
-    let updatedHosts: any[] = [];
-    if (hostIdToRevoke && tokenDoc.activeHosts) {
-      updatedHosts = tokenDoc.activeHosts.filter(h => h.hostId !== hostIdToRevoke);
-    }
-
-    const updatedDoc: GuestSyncTokenDoc = {
-      ...tokenDoc,
-      authToken: newAuthToken, // Token neu rollen -> alte Hosts können keine Matches mehr autorisieren!
-      activeHosts: updatedHosts
-    };
-
-    // Beide Docs aktualisieren
-    await supabase.from('documents').upsert({ id: `user_sync_${userId}`, data: updatedDoc });
-    if (tokenDoc.code) {
-      await supabase.from('documents').upsert({ id: `sync_code_${tokenDoc.code}`, data: updatedDoc });
-    }
-
-    return { success: true };
-  } catch (err: any) {
-    console.error("Error revoking host access", err);
-    return { success: false, error: err?.message || 'Fehler beim Widerrufen des Zugriffs.' };
-  }
 }
 
 /**

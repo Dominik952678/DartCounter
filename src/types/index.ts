@@ -37,6 +37,14 @@ export interface ActiveHostConnection {
   lastMatchAt?: string;
 }
 
+export interface LiveMatchInfo {
+  hostId: string;
+  hostName: string;
+  startedAt: string;
+  gameType?: string;
+  isAborted?: boolean;
+}
+
 export interface GuestSyncTokenDoc {
   code: string;
   userId: string;
@@ -44,8 +52,12 @@ export interface GuestSyncTokenDoc {
   authToken: string;
   createdAt: string;
   expiresAt: string;
+  syncEnabled?: boolean;
+  activeHost?: ActiveHostConnection | null;
   activeHosts?: ActiveHostConnection[];
   profileSnapshot?: Profile;
+  matchesSnapshot?: MatchHistory[];
+  liveMatch?: LiveMatchInfo | null;
 }
 
 export interface GameConfig {
