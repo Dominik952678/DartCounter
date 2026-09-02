@@ -233,4 +233,78 @@ describe('📱 Guest-Cloud-Sync System (Multi-User & Anti-Stat-Washing)', () => 
     expect(mockInsert).toHaveBeenCalled();
     expect(mockUpsert).toHaveBeenCalled();
   });
+
+  it('correctly captures profileSnapshot during code generation and transfers full stats to host', async () => {
+    const mockProfile = {
+      wins: 15,
+      matches: 20,
+      dartsThrown: 800,
+      pointsScored: 20000,
+      highestThrow: 180,
+      bestLegDarts: 13,
+      highestCheckout: 140,
+      oneEighty: 6
+    };
+
+    const mockUpsert = vi.fn().mockResolvedValue({ error: null });
+    vi.spyOn(supabase, 'from').mockReturnValue({
+      upsert: mockUpsert,
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({ data: null })
+        })
+      })
+    } as any);
+
+    const tokenDoc = await generateUserSyncCode('user_pro', 'ProDarts', mockProfile);
+    expect(tokenDoc.profileSnapshot).toEqual(mockProfile);
+    expect(tokenDoc.profileSnapshot?.bestLegDarts).toBe(13);
+    expect(tokenDoc.profileSnapshot?.highestCheckout).toBe(140);
+  });
+
+  it('validates guest sync tokens and blocks start if token was revoked', async () => {
+    // 1. Valid token
+    vi.spyOn(supabase, 'from').mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: {
+              data: {
+                authToken: 'tok_CURRENT_VALID',
+                expiresAt: new Date(Date.now() + 3600000).toISOString()
+              }
+            }
+          })
+        })
+      })
+    } as any);
+
+    const validProfiles = {
+      Alex: {
+        wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0,
+        isLinkedCloudGuest: true,
+        linkedUserId: 'user_alex',
+        syncAuthToken: 'tok_CURRENT_VALID'
+      }
+    };
+
+    const { validateGuestSyncTokens } = await import('../database');
+    const validRes = await validateGuestSyncTokens(['Alex'], validProfiles);
+    expect(validRes.valid).toBe(true);
+    expect(validRes.revokedGuests).toHaveLength(0);
+
+    // 2. Revoked token
+    const revokedProfiles = {
+      Alex: {
+        wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0,
+        isLinkedCloudGuest: true,
+        linkedUserId: 'user_alex',
+        syncAuthToken: 'tok_OLD_REVOKED'
+      }
+    };
+
+    const revokedRes = await validateGuestSyncTokens(['Alex'], revokedProfiles);
+    expect(revokedRes.valid).toBe(false);
+    expect(revokedRes.revokedGuests).toContain('Alex');
+  });
 });

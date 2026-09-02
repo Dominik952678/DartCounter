@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { GameConfig, Profile } from '../types';
 import { useAuthStore } from '../store/useAuthStore';
-import { redeemSyncCode, saveProfiles } from '../db/database';
+import { redeemSyncCode, saveProfiles, validateGuestSyncTokens } from '../db/database';
 
 interface MatchSetupProps {
   profiles: Record<string, Profile>;
@@ -361,7 +361,7 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
     });
   };
 
-  const handleStartGame = () => {
+  const handleStartGame = async () => {
     let chosenPlayers = selectedPlayers.slice(0, playerCount);
 
     if (new Set(chosenPlayers).size !== chosenPlayers.length) {
@@ -376,6 +376,16 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
     if (!hasHuman) {
       setErrorMsg("Ein Spiel nur mit Bots ist nicht möglich. Bitte wähle mindestens einen echten Spieler!");
       return;
+    }
+
+    // Pre-flight check: Prüfen, ob verknüpfte Cloud-Gäste noch autorisiert sind
+    const hasLinkedGuests = chosenPlayers.some(p => profiles[p]?.isLinkedCloudGuest);
+    if (hasLinkedGuests) {
+      const check = await validateGuestSyncTokens(chosenPlayers, profiles);
+      if (!check.valid) {
+        setErrorMsg(`⚠️ Die Freigabe für Cloud-Gast @${check.revokedGuests.join(', @')} wurde vom Nutzer widerrufen (oder ist abgelaufen). Bitte vor Spielstart neuen Code anfordern.`);
+        return;
+      }
     }
 
     if (isGuest && setProfiles) {

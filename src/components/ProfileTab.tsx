@@ -7,7 +7,7 @@ import { exportElementAsImage } from '../utils/exportImage';
 import { MatchImageExport } from './MatchImageExport';
 import { useAuthStore } from '../store/useAuthStore';
 import { useThemeStore } from '../store/useThemeStore';
-import { generateUserSyncCode, getActiveUserSyncInfo, redeemSyncCode, revokeHostAccess, saveMatch } from '../db/database';
+import { generateUserSyncCode, getActiveUserSyncInfo, redeemSyncCode, revokeHostAccess, saveMatch, supabase } from '../db/database';
 import { SAMPLE_PROFILES, SAMPLE_MATCHES, SAMPLE_PROFILE_KEYS } from '../utils/sampleData';
 import { APP_VERSION, BUILD_TIME } from '../version';
 
@@ -82,18 +82,53 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
   const loadSyncInfo = useCallback(async () => {
     if (!user?.id) return;
     const info = await getActiveUserSyncInfo(user.id);
-    setUserSyncInfo(info);
+    setUserSyncInfo(prev => {
+      // Toast notice if a new host just connected
+      if (prev && info && info.activeHosts && prev.activeHosts) {
+        if (info.activeHosts.length > prev.activeHosts.length) {
+          const newest = info.activeHosts[info.activeHosts.length - 1];
+          setImportSuccess(`🎉 Neues Host-Gerät verbunden: ${newest.hostName}`);
+          setTimeout(() => setImportSuccess(null), 4000);
+        }
+      }
+      return info;
+    });
   }, [user]);
 
+  // Live Auto-Refresh & Realtime listener on user_sync_${user.id}
   useEffect(() => {
+    if (!user?.id) return;
     loadSyncInfo();
-  }, [loadSyncInfo]);
+
+    const channel = supabase.channel(`live_sync_profile_${user.id}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'documents',
+        filter: `id=eq.user_sync_${user.id}`
+      }, (payload) => {
+        if (payload?.new && (payload.new as any).data) {
+          setUserSyncInfo((payload.new as any).data as GuestSyncTokenDoc);
+        }
+      })
+      .subscribe();
+
+    const poll = setInterval(() => {
+      loadSyncInfo();
+    }, 2000);
+
+    return () => {
+      clearInterval(poll);
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, loadSyncInfo]);
 
   const handleGenerateCode = async () => {
     if (!user?.id) return;
     setSyncLoading(true);
     const username = user.user_metadata?.username || user.email || 'Spieler';
-    const newToken = await generateUserSyncCode(user.id, username);
+    const profile = profiles[username] || Object.values(profiles)[0];
+    const newToken = await generateUserSyncCode(user.id, username, profile);
     setUserSyncInfo(newToken);
     setSyncLoading(false);
   };

@@ -45,6 +45,7 @@ export interface GuestSyncTokenDoc {
   createdAt: string;
   expiresAt: string;
   activeHosts?: ActiveHostConnection[];
+  profileSnapshot?: Profile;
 }
 
 export interface GameConfig {

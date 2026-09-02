@@ -185,7 +185,11 @@ export async function getMatches(userId?: string | null): Promise<MatchHistory[]
  * Erzeugt einen neuen 6-stelligen Sync-Code für den registrierten Benutzer.
  * Invalidiert vorherige Codes und stellt sicher, dass fremde Geräte sich authentifizieren müssen.
  */
-export async function generateUserSyncCode(userId: string, username: string): Promise<GuestSyncTokenDoc> {
+export async function generateUserSyncCode(
+  userId: string, 
+  username: string,
+  localProfile?: Profile
+): Promise<GuestSyncTokenDoc> {
   const code = String(Math.floor(100000 + Math.random() * 900000));
   const authToken = `tok_${Date.now()}_${Math.random().toString(36).substring(2, 12)}`;
   const now = new Date();
@@ -206,6 +210,17 @@ export async function generateUserSyncCode(userId: string, username: string): Pr
     // Ignorieren falls nicht vorhanden
   }
 
+  // Snapshot der aktuellen Profil-Statistiken erfassen
+  let profileSnapshot: Profile | undefined = localProfile;
+  if (!profileSnapshot) {
+    try {
+      const profilesMap = await getProfiles(userId, username);
+      profileSnapshot = profilesMap[username] || Object.values(profilesMap)[0];
+    } catch (e) {
+      console.warn("Could not fetch profile snapshot for sync code", e);
+    }
+  }
+
   const tokenDoc: GuestSyncTokenDoc = {
     code,
     userId,
@@ -213,7 +228,8 @@ export async function generateUserSyncCode(userId: string, username: string): Pr
     authToken,
     createdAt: now.toISOString(),
     expiresAt,
-    activeHosts: existingHosts
+    activeHosts: existingHosts,
+    profileSnapshot
   };
 
   try {
@@ -262,7 +278,7 @@ export async function getActiveUserSyncInfo(userId: string): Promise<GuestSyncTo
 
 /**
  * Löst einen 6-stelligen Sync-Code auf dem Host-Gerät ein.
- * Überprüft Gültigkeit, registriert das Host-Gerät und liefert das Profil des Gastes.
+ * Überprüft Gültigkeit, registriert das Host-Gerät und liefert das vollständige Profil des Gastes.
  */
 export async function redeemSyncCode(
   rawCode: string, 
@@ -326,11 +342,18 @@ export async function redeemSyncCode(
       return { success: false, error: 'Dieser Sync-Code ist abgelaufen. Bitte neuen Code generieren.' };
     }
 
-    // 2. Profil des Gastes aus Supabase laden
-    const guestProfiles = await getProfiles(tokenDoc.userId, tokenDoc.username);
-    const baseProfile = guestProfiles[tokenDoc.username] || Object.values(guestProfiles)[0] || {
+    // 2. Profil des Gastes aus Snapshot oder Supabase laden
+    let baseProfile: Profile = {
       wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0
     };
+
+    if (tokenDoc.profileSnapshot) {
+      baseProfile = { ...tokenDoc.profileSnapshot };
+    } else {
+      const guestProfiles = await getProfiles(tokenDoc.userId, tokenDoc.username);
+      const found = guestProfiles[tokenDoc.username] || Object.values(guestProfiles)[0];
+      if (found) baseProfile = { ...found };
+    }
 
     // 3. Host in activeHosts registrieren (falls noch nicht vorhanden)
     const activeHosts = tokenDoc.activeHosts || [];
@@ -374,6 +397,51 @@ export async function redeemSyncCode(
     console.error("Error redeeming sync code", err);
     return { success: false, error: err?.message || 'Fehler beim Einlösen des Codes.' };
   }
+}
+
+/**
+ * Überprüft vor Spielstart, ob verknüpfte Cloud-Gäste noch autorisiert sind.
+ * Falls ein Gast den Zugriff widerrufen hat oder der Code abgelaufen ist,
+ * wird der Gast als entkoppelt gemeldet.
+ */
+export async function validateGuestSyncTokens(
+  playerNames: string[],
+  profiles: Record<string, Profile>
+): Promise<{ valid: boolean; revokedGuests: string[] }> {
+  const revokedGuests: string[] = [];
+
+  for (const name of playerNames) {
+    const profile = profiles[name];
+    if (profile?.isLinkedCloudGuest && profile.linkedUserId && profile.syncAuthToken) {
+      try {
+        const { data, error } = await supabase
+          .from('documents')
+          .select('data')
+          .eq('id', `user_sync_${profile.linkedUserId}`)
+          .single();
+
+        if (error || !data?.data) {
+          revokedGuests.push(name);
+          continue;
+        }
+
+        const tokenDoc = data.data as GuestSyncTokenDoc;
+        const isExpired = new Date(tokenDoc.expiresAt) <= new Date();
+        const isTokenMismatch = tokenDoc.authToken !== profile.syncAuthToken;
+
+        if (isExpired || isTokenMismatch) {
+          revokedGuests.push(name);
+        }
+      } catch (e) {
+        console.error("Error validating guest token for " + name, e);
+      }
+    }
+  }
+
+  return {
+    valid: revokedGuests.length === 0,
+    revokedGuests
+  };
 }
 
 /**
