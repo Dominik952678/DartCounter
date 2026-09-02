@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Profile } from '../types';
 import { useAuthStore } from '../store/useAuthStore';
+import { getActiveUserSyncInfo } from '../db/database';
 
 export type MiniGameMode = 'checkout' | 'powerscoring' | 'splitscore';
 
@@ -155,7 +156,7 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
     return colors[Math.abs(hash) % colors.length];
   };
 
-  const handleStart = () => {
+  const handleStart = async () => {
     let chosenPlayers = selectedPlayers.slice(0, playerCount);
 
     if (new Set(chosenPlayers).size !== chosenPlayers.length) {
@@ -170,6 +171,38 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
     if (!hasHuman) {
       setErrorMsg("Ein Spiel nur mit Bots ist nicht möglich. Bitte wähle mindestens einen echten Spieler!");
       return;
+    }
+
+    // Wenn Gast-Sync aktiv ist: Spielstart blockieren
+    try {
+      const rawLocal = localStorage.getItem('dartcounter_active_sync_code');
+      if (rawLocal) {
+        const localDoc = JSON.parse(rawLocal);
+        if (localDoc && localDoc.syncEnabled !== false && localDoc.code && new Date(localDoc.expiresAt) > new Date()) {
+          const hostName = localDoc.activeHost?.hostName || localDoc.activeHosts?.[0]?.hostName;
+          if (hostName) {
+            setErrorMsg(`⚠️ Gast-Sync ist aktiv: Dein Profil ist aktuell auf '${hostName}' gekoppelt. Du kannst erst wieder lokal spielen, wenn du die Verbindung trennst oder Gast-Sync im Profil-Tab deaktivierst.`);
+          } else {
+            setErrorMsg(`⚠️ Gast-Sync ist aktiviert! Solange Gast-Sync aktiv ist, können auf diesem Gerät keine lokalen Spiele gestartet werden. Bitte deaktiviere Gast-Sync im Profil-Tab.`);
+          }
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn("Could not read local sync code in TrainingHub", e);
+    }
+
+    if (user?.id) {
+      const syncInfo = await getActiveUserSyncInfo(user.id);
+      if (syncInfo && syncInfo.syncEnabled !== false && syncInfo.code && new Date(syncInfo.expiresAt) > new Date()) {
+        const host = syncInfo.activeHost || syncInfo.activeHosts?.[0];
+        if (host) {
+          setErrorMsg(`⚠️ Gast-Sync ist aktiv: Dein Profil ist aktuell auf '${host.hostName}' gekoppelt. Du kannst erst wieder lokal spielen, wenn du die Verbindung trennst oder Gast-Sync im Profil-Tab deaktivierst.`);
+        } else {
+          setErrorMsg(`⚠️ Gast-Sync ist aktiviert! Solange Gast-Sync aktiv ist, können auf diesem Gerät keine lokalen Spiele gestartet werden. Bitte deaktiviere Gast-Sync im Profil-Tab.`);
+        }
+        return;
+      }
     }
 
     if (isGuest && setProfiles) {
