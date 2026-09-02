@@ -9,6 +9,26 @@ export interface OnlinePlayer {
   isHost: boolean;
 }
 
+export interface PublicLobby {
+  isLobby: boolean;
+  isPublic: boolean;
+  code: string;
+  hostName: string;
+  settings: GameConfig;
+}
+
+interface PresenceData {
+  type?: string;
+  id?: string;
+  username?: string;
+  isHost?: boolean;
+  isLobby?: boolean;
+  isPublic?: boolean;
+  code?: string;
+  hostName?: string;
+  settings?: GameConfig;
+}
+
 interface OnlineState {
   globalChannel: RealtimeChannel | null;
   roomChannel: RealtimeChannel | null;
@@ -18,7 +38,7 @@ interface OnlineState {
   players: OnlinePlayer[];
   roomSettings: GameConfig | null;
   
-  publicLobbies: any[];
+  publicLobbies: PublicLobby[];
   
   initGlobalLobby: () => void;
   createRoom: (username: string, isPublic: boolean, settings: GameConfig) => Promise<string>;
@@ -46,12 +66,12 @@ export const useOnlineStore = create<OnlineState>((set, get) => ({
     
     channel.on('presence', { event: 'sync' }, () => {
       const state = channel.presenceState();
-      const activeLobbies: any[] = [];
+      const activeLobbies: PublicLobby[] = [];
       
-      Object.values(state).forEach((presences: any) => {
-        presences.forEach((p: any) => {
-          if (p.isLobby && p.isPublic) {
-            activeLobbies.push(p);
+      Object.values(state).forEach((presences: unknown[]) => {
+        (presences as PresenceData[]).forEach((p) => {
+          if (p.isLobby && p.isPublic && p.code && p.hostName && p.settings) {
+            activeLobbies.push(p as PublicLobby);
           }
         });
       });
@@ -75,16 +95,17 @@ export const useOnlineStore = create<OnlineState>((set, get) => ({
         .on('presence', { event: 'sync' }, () => {
           const state = channel.presenceState();
           const pList: OnlinePlayer[] = [];
-          Object.values(state).forEach((presences: any) => {
-            presences.forEach((p: any) => {
-              if (p.type === 'player') pList.push({ id: p.id, username: p.username, isHost: p.isHost });
+          Object.values(state).forEach((presences: unknown[]) => {
+            (presences as PresenceData[]).forEach((p) => {
+              if (p.type === 'player' && p.id && p.username) pList.push({ id: p.id, username: p.username, isHost: !!p.isHost });
             });
           });
           
           set({ players: pList });
         })
-        .on('broadcast', { event: 'settings_update' }, (payload) => {
-           set({ roomSettings: payload.settings });
+        .on('broadcast', { event: 'settings_update' }, (payload: { [key: string]: unknown; payload?: { settings?: GameConfig }; settings?: GameConfig }) => {
+           const settings = payload.payload?.settings || payload.settings;
+           if (settings) set({ roomSettings: settings });
         })
         .subscribe(async (status) => {
           if (status === 'SUBSCRIBED') {
@@ -131,17 +152,17 @@ export const useOnlineStore = create<OnlineState>((set, get) => ({
           
           if (!syncReceived) {
              syncReceived = true;
-             const hasHost = Object.values(state).some((presences: any) => 
-                presences.some((p: any) => p.isHost)
+             const hasHost = Object.values(state).some((presences: unknown[]) => 
+                (presences as PresenceData[]).some((p) => p.isHost)
              );
              
              if (hasHost) {
                  clearTimeout(to);
                  const pList: OnlinePlayer[] = [];
-                 Object.values(state).forEach((presences: any) => {
-                     presences.forEach((p: any) => {
-                         if (p.type === 'player') {
-                             pList.push({ id: p.id, username: p.username, isHost: p.isHost });
+                 Object.values(state).forEach((presences: unknown[]) => {
+                     (presences as PresenceData[]).forEach((p) => {
+                         if (p.type === 'player' && p.id && p.username) {
+                             pList.push({ id: p.id, username: p.username, isHost: !!p.isHost });
                          }
                      });
                  });
@@ -157,18 +178,19 @@ export const useOnlineStore = create<OnlineState>((set, get) => ({
              }
           } else {
              const pList: OnlinePlayer[] = [];
-             Object.values(state).forEach((presences: any) => {
-                 presences.forEach((p: any) => {
-                     if (p.type === 'player') {
-                         pList.push({ id: p.id, username: p.username, isHost: p.isHost });
+             Object.values(state).forEach((presences: unknown[]) => {
+                 (presences as PresenceData[]).forEach((p) => {
+                     if (p.type === 'player' && p.id && p.username) {
+                         pList.push({ id: p.id, username: p.username, isHost: !!p.isHost });
                      }
                  });
              });
              set({ players: pList });
           }
         })
-        .on('broadcast', { event: 'settings_update' }, (payload) => {
-           set({ roomSettings: payload.settings });
+        .on('broadcast', { event: 'settings_update' }, (payload: { [key: string]: unknown; payload?: { settings?: GameConfig }; settings?: GameConfig }) => {
+           const settings = payload.payload?.settings || payload.settings;
+           if (settings) set({ roomSettings: settings });
         })
         .subscribe();
     });

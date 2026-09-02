@@ -182,3 +182,12 @@ export interface GameState {
   isProcessing: boolean;
   history: GameState[];
 }
+
+export interface StatsModalData {
+  isOpen: boolean;
+  winnerIndex: number | null;
+  players: Player[];
+  matchData: MatchHistory | null;
+  pendingProfiles?: Record<string, Profile>;
+  pendingMatchData?: MatchHistory;
+}

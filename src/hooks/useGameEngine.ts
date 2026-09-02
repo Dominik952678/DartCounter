@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
-import type { GameState, Profile, MatchHistory, GameConfig, Player } from '../types';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import type { GameState, Profile, MatchHistory, GameConfig, Player, GuestSyncTokenDoc, StatsModalData } from '../types';
 import { saveProfiles, setGuestLiveMatchStatus, supabase } from '../db/database';
 import { getBotDart, type TeamContext } from '../utils/bot';
 import { playSciFiHitSound, play180Sound, playBustSound, playHighFinishSound, speak, playDartHitSound, announceScore, announceGameShot } from '../utils/audio';
@@ -45,7 +45,7 @@ interface UseGameEngineProps {
   setProfiles: (profiles: Record<string, Profile>) => void;
   setSavedMatches?: (matches: MatchHistory[]) => void;
   setScreen: (screen: 'start' | 'game' | 'powerscoring' | 'splitscore' | 'checkout') => void;
-  setStatsModalData: (data: any) => void;
+  setStatsModalData: React.Dispatch<React.SetStateAction<StatsModalData>> | ((data: StatsModalData | ((prev: StatsModalData) => StatsModalData)) => void);
   isOnline?: boolean;
   user?: { id: string } | null;
 }
@@ -62,7 +62,7 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
     history: []
   });
 
-  const [hasSavedGame, setHasSavedGame] = useState(false);
+  const [hasSavedGame, setHasSavedGame] = useState(() => typeof window !== 'undefined' && !!localStorage.getItem('dartcounter_saved_game'));
   const [roundBust, setRoundBust] = useState(false);
   const [celebration, setCelebration] = useState<{ type: string, playerIndex: number } | null>(null);
   
@@ -84,17 +84,11 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
     };
   }, []);
 
-  useEffect(() => {
-    const saved = localStorage.getItem('dartcounter_saved_game');
-    if (saved) setHasSavedGame(true);
-  }, []);
-
   // Live Auto-Save to localStorage
   useEffect(() => {
     if (!isOnline && gameState.players.length > 0 && gameState.players.some(p => p.legs > 0 || p.sets > 0 || p.matchDarts > 0)) {
       try {
         localStorage.setItem('dartcounter_saved_game', JSON.stringify(gameState));
-        setHasSavedGame(true);
       } catch (e) {
         console.error("Auto-save error", e);
       }
@@ -112,64 +106,71 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
     setHasSavedGame(false);
   };
 
-  const startGame = (chosenPlayers: string[], config: GameConfig) => {
-    if (hasSavedGame) {
-      localStorage.removeItem('dartcounter_saved_game');
-      setHasSavedGame(false);
+  const startGame = (playerNames: string[], config: GameConfig) => {
+    if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
     }
 
-    const is2v2 = !!config.is2v2 && chosenPlayers.length === 4;
-
-    const players: Player[] = chosenPlayers.map((name, index) => {
-      const team: 1 | 2 = (index % 2 === 0 ? 1 : 2);
-      const teamColor = team === 1 ? 'var(--blue, #0a84ff)' : 'var(--orange, #ff9f0a)';
+    const playerObjs: Player[] = playerNames.map((name) => {
+      const p = profiles[name];
       return {
-        name, 
-        score: config.startScore, 
-        legs: 0, 
+        name,
+        score: config.startScore,
+        legs: 0,
         sets: 0,
-        legPts: 0, 
-        legDarts: 0, 
-        matchPts: 0, 
-        matchDarts: 0, 
-        legHistory: [],
-        matchFirst9Pts: 0, 
+        legDarts: 0,
+        matchDarts: 0,
+        legPts: 0,
+        matchPts: 0,
+        first9Pts: 0,
+        first9Darts: 0,
+        matchFirst9Pts: 0,
         matchFirst9Darts: 0,
-        sixtyPlus: 0, 
-        hundredPlus: 0, 
-        oneFortyPlus: 0, 
-        oneEighty: 0, 
+        sixtyPlus: 0,
+        hundredPlus: 0,
+        oneFortyPlus: 0,
+        oneEighty: 0,
         highestCheckout: 0,
-        checkoutAttempts: 0, 
+        triplesHit: 0,
+        checkoutAttempts: 0,
         checkoutSuccesses: 0,
-        isBot: profiles[name]?.isBot,
-        targetAverage: profiles[name]?.targetAverage,
-        color: is2v2 ? teamColor : (profiles[name]?.color || teamColor),
-        team: is2v2 ? team : undefined,
-        linkedUserId: profiles[name]?.linkedUserId,
-        linkedUsername: profiles[name]?.linkedUsername,
-        isLinkedCloudGuest: profiles[name]?.isLinkedCloudGuest,
-        syncAuthToken: profiles[name]?.syncAuthToken,
+        isBot: p?.isBot || false,
+        targetAverage: p?.targetAverage || 40,
+        linkedUserId: p?.linkedUserId,
+        syncAuthToken: p?.syncAuthToken,
         segmentHits: {},
-        triplesHit: 0
+        legHistory: []
       };
     });
 
+    // Notify cloud profile of any linked guest about the active match
+    playerObjs.forEach(p => {
+      if (p.linkedUserId && p.syncAuthToken) {
+        setGuestLiveMatchStatus(p.linkedUserId, p.syncAuthToken, `Match (${config.startScore} ${config.outMode})`, {
+          players: playerObjs.map(pl => pl.name),
+          mode: `${config.startScore} ${config.outMode}`,
+          isAborted: false
+        });
+      }
+    });
+
     setGameState({
-      players,
+      players: playerObjs,
       activePlayer: 0,
       startingPlayerOfLeg: 0,
-      config: { ...config, is2v2: is2v2 || !!config.is2v2 },
+      config,
       currentRoundDarts: [],
       currentMultiplier: 1,
       isProcessing: false,
       history: []
     });
     setRoundBust(false);
+    setHasSavedGame(true);
     setScreen('game');
   };
 
-  const abortGame = () => {
+  const abortGame = useCallback(() => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
@@ -183,7 +184,7 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
     localStorage.removeItem('dartcounter_saved_game');
     setHasSavedGame(false);
     setScreen('start');
-  };
+  }, [gameState.players, setScreen]);
 
   // Monitor active match for remote abort from linked guests
   useEffect(() => {
@@ -201,21 +202,21 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
             .single();
 
           if (data?.data) {
-            const tokenDoc = data.data as any;
+            const tokenDoc = data.data as GuestSyncTokenDoc;
             if (tokenDoc.liveMatch?.isAborted || tokenDoc.authToken !== guest.syncAuthToken || tokenDoc.syncEnabled === false) {
               alert(`⚠️ Match abgebrochen: @${guest.name} hat das Match aus der Ferne beendet (oder die Verbindung getrennt).`);
               abortGame();
               break;
             }
           }
-        } catch (e) {
+        } catch {
           // ignore
         }
       }
     }, 2500);
 
     return () => clearInterval(interval);
-  }, [screen, gameState.players]);
+  }, [gameState.players, abortGame]);
 
   const resumeGame = () => {
     const saved = localStorage.getItem('dartcounter_saved_game');
@@ -253,7 +254,7 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
       let multString = mult === 1 ? "" : (mult === 2 ? "D" : "T");
       if (baseValue === 25) multString = mult === 2 ? "DB" : "B";
       if (baseValue === 0) multString = "Miss";
-      let displayString = baseValue === 0 ? "0" : `${multString}${baseValue === 25 && mult === 1 ? "" : (baseValue === 25 ? "" : baseValue)}`;
+      const displayString = baseValue === 0 ? "0" : `${multString}${baseValue === 25 && mult === 1 ? "" : (baseValue === 25 ? "" : baseValue)}`;
 
       const newDart = {
         base: baseValue,
@@ -287,10 +288,10 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
   };
 
   const checkEndOfRound = (state: GameState) => {
-    let roundTotal = state.currentRoundDarts.reduce((sum, dart) => sum + dart.value, 0);
-    let p = state.players[state.activePlayer];
-    let newScore = p.score - roundTotal;
-    let lastDart = state.currentRoundDarts[state.currentRoundDarts.length - 1];
+    const roundTotal = state.currentRoundDarts.reduce((sum, dart) => sum + dart.value, 0);
+    const p = state.players[state.activePlayer];
+    const newScore = p.score - roundTotal;
+    const lastDart = state.currentRoundDarts[state.currentRoundDarts.length - 1];
     
     let bust = false, isWin = false;
 
@@ -354,12 +355,12 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
 
   const processRoundEnd = (_stateSnapshotBeforeTimeout: GameState, bust: boolean, isWin: boolean, roundTotal: number) => {
     setGameState(prevState => {
-      let p = prevState.players[prevState.activePlayer];
-      let dartsThrown = prevState.currentRoundDarts.length;
+      const p = prevState.players[prevState.activePlayer];
+      const dartsThrown = prevState.currentRoundDarts.length;
       
       let tempScore = p.score;
       let wasOnDouble = isOnCheckout(tempScore, prevState.config.outMode);
-      for (let dart of prevState.currentRoundDarts) {
+      for (const dart of prevState.currentRoundDarts) {
           tempScore -= dart.value;
           if (tempScore > 0 && isOnCheckout(tempScore, prevState.config.outMode)) {
               wasOnDouble = true;
@@ -371,7 +372,7 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
       const currentPlayerIndex = prevState.activePlayer;
       const updatedPlayer = { ...p };
 
-      let startDartCount = updatedPlayer.legDarts;
+      const startDartCount = updatedPlayer.legDarts;
       for (let i = 0; i < dartsThrown; i++) {
           if (startDartCount + i < 9) {
               updatedPlayer.matchFirst9Darts += 1;
@@ -387,8 +388,8 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
       let highestThrow = profiles[updatedPlayer.name]?.highestThrow || 0;
 
       if (!updatedPlayer.segmentHits) updatedPlayer.segmentHits = {};
-      for (let dart of prevState.currentRoundDarts) {
-          let segmentKey = '';
+      for (const dart of prevState.currentRoundDarts) {
+          let segmentKey: string;
           if (dart.base === 25) {
               segmentKey = dart.mult === 2 ? 'DB' : 'SB';
           } else if (dart.base === 0) {
@@ -434,7 +435,7 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
           let botAttempts = 0;
           let botSuccesses = 0;
           let tScore = p.score;
-          for (let dart of prevState.currentRoundDarts) {
+          for (const dart of prevState.currentRoundDarts) {
               if (isOnCheckout(tScore, prevState.config.outMode)) {
                   botAttempts++;
                   if (tScore - dart.value === 0 && (
@@ -457,7 +458,7 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
          let tScore = p.score;
          let needsPrompt = false;
          
-         for (let dart of prevState.currentRoundDarts) {
+         for (const dart of prevState.currentRoundDarts) {
              if (isOnCheckout(tScore, prevState.config.outMode)) {
                  autoCheckoutDarts++;
                  // At 50, it's ambiguous (D25 vs going for setup)
@@ -494,7 +495,7 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
   };
 
   const continueProcessRoundEnd = (stateAfterDart: GameState, isWin: boolean, currentPlayerIndex: number, highestThrow: number) => {
-      let nextState = {
+      const nextState = {
         ...stateAfterDart,
         history: stateAfterDart.history
       };
@@ -573,8 +574,8 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
     }
 
     for (let i = 0; i < newPlayers.length; i++) {
-        let p = { ...newPlayers[i] };
-        let legAvg = p.legDarts > 0 ? ((p.legPts / p.legDarts) * 3).toFixed(1) : "0.0";
+        const p = { ...newPlayers[i] };
+        const legAvg = p.legDarts > 0 ? ((p.legPts / p.legDarts) * 3).toFixed(1) : "0.0";
         p.legHistory = [...p.legHistory, legAvg];
         p.legPts = 0; 
         p.legDarts = 0; 
@@ -627,7 +628,7 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
         }, 1500);
     }
 
-    let updatedProfiles = { ...profiles };
+    const updatedProfiles = { ...profiles };
     let profilesChanged = false;
     
     if (newHighestThrow > (updatedProfiles[winningPlayer.name]?.highestThrow || 0)) {
@@ -666,7 +667,7 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
     const is2v2 = !!_currentState.config.is2v2 && finalPlayers.length === 4;
     const winningPlayer = finalPlayers[winnerIndex];
     const winningTeam = winningPlayer.team || (winnerIndex % 2 === 0 ? 1 : 2);
-    let winnerName = is2v2
+    const winnerName = is2v2
         ? `Team ${winningTeam} (${finalPlayers.filter((_, i) => ((finalPlayers[i].team || (i % 2 === 0 ? 1 : 2)) === winningTeam)).map(p => p.name).join(' & ')})`
         : finalPlayers[winnerIndex].name;
     
@@ -712,7 +713,7 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
         newProfiles[p.name] = prof;
     });
 
-    let matchData: MatchHistory = {
+    const matchData: MatchHistory = {
         date: new Date().toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' }),
         winner: winnerName,
         gameType: 'standard',
@@ -762,7 +763,7 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
     setCelebration(null);
     setCheckoutPrompt(null);
     setRoundBust(false);
-    setStatsModalData((prev: any) => ({ ...prev, isOpen: false }));
+    setStatsModalData(prev => ({ ...prev, isOpen: false }));
 
     setGameState(prev => {
       if (prev.history.length === 0) {
@@ -797,6 +798,11 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
     });
   };
 
+  const addDartRef = useRef(addDart);
+  useEffect(() => {
+    addDartRef.current = addDart;
+  });
+
   useEffect(() => {
     if (!gameState.players.length) return;
     const p = gameState.players[gameState.activePlayer];
@@ -818,7 +824,7 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
             };
         }
         const dart = getBotDart(p.targetAverage || 40, p.score - currentTurnScore, gameState.config.outMode, teamContext);
-        addDart(dart.base, dart.mult);
+        addDartRef.current(dart.base, dart.mult);
     }, 1200);
 
     return () => clearTimeout(timer);

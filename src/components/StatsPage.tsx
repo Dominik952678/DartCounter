@@ -23,15 +23,14 @@ export const StatsPage: React.FC = () => {
     getMatches(user?.id).then(setMatches);
   }, [user?.id]);
 
-  useEffect(() => {
-     if (!selectedProfile) {
-        if (user && user.user_metadata?.username && profiles[user.user_metadata.username]) {
-           setSelectedProfile(user.user_metadata.username);
-        } else if (Object.keys(profiles).length > 0) {
-           setSelectedProfile(Object.keys(profiles)[0]);
-        }
-     }
-  }, [user, profiles, selectedProfile]);
+  const defaultProfile = useMemo(() => {
+    if (user?.user_metadata?.username && profiles[user.user_metadata.username]) {
+      return user.user_metadata.username;
+    }
+    return Object.keys(profiles)[0] || '';
+  }, [user, profiles]);
+
+  const effectiveProfile = selectedProfile || defaultProfile;
 
   const availableModes = useMemo(() => {
      const modes = new Set<string>();
@@ -102,7 +101,7 @@ export const StatsPage: React.FC = () => {
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
                <label style={{ fontSize: '0.8em', color: 'var(--text-dim)', marginBottom: '4px' }}>Spieler</label>
                <select 
-                  value={selectedProfile} 
+                  value={effectiveProfile} 
                   onChange={(e) => setSelectedProfile(e.target.value)}
                   style={{ background: 'var(--bg-surface)', color: 'var(--text)', border: '1px solid var(--card-border)', padding: '8px 12px', borderRadius: '10px' }}
                >
@@ -132,8 +131,8 @@ export const StatsPage: React.FC = () => {
            mode={selectedMode}
            isOnline={false}
            matches={matches}
-           profileName={selectedProfile}
-           baseProfile={profiles[selectedProfile]}
+           profileName={effectiveProfile}
+           baseProfile={profiles[effectiveProfile]}
            onPlay={() => navigate('/offline')}
            playLabel="🎯 Offline spielen"
          />
@@ -143,7 +142,7 @@ export const StatsPage: React.FC = () => {
            mode={selectedMode}
            isOnline={true}
            matches={matches}
-           profileName={selectedProfile}
+           profileName={effectiveProfile}
            baseProfile={undefined}
            onPlay={() => navigate('/online')}
            playLabel="🌍 Online Multiplayer"

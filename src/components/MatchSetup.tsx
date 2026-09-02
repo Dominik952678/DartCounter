@@ -102,9 +102,27 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
     return 2;
   });
 
-  const [selectedPlayers, setSelectedPlayers] = useState<string[]>(
-    isGuest ? ['Gast 1', 'Gast 2', 'Gast 3', 'Gast 4'] : []
-  );
+  const [selectedPlayers, setSelectedPlayers] = useState<string[]>(() => {
+    if (isGuest) return ['Gast 1', 'Gast 2', 'Gast 3', 'Gast 4'];
+    const pNames = Object.keys(profiles);
+    if (pNames.length > 0) {
+      const initial: string[] = [];
+      const humans = pNames.filter(n => !profiles[n]?.isBot);
+      const bots = pNames.filter(n => profiles[n]?.isBot);
+      for (let i = 0; i < 4; i++) {
+        if (i === 0 && humans.length > 0) {
+          initial.push(humans[0]);
+        } else {
+          const nextHuman = humans.find(h => !initial.includes(h));
+          const nextBot = bots.find(b => !initial.includes(b));
+          if (nextHuman) initial.push(nextHuman);
+          else if (nextBot) initial.push(nextBot);
+        }
+      }
+      return initial;
+    }
+    return [];
+  });
   const [guestBots, setGuestBots] = useState<Record<string, boolean>>({});
   
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -123,9 +141,6 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
 
   useEffect(() => {
     localStorage.setItem('dart_x01_is2v2', is2v2 ? 'true' : 'false');
-    if (is2v2) {
-      setPlayerCount(4);
-    }
   }, [is2v2]);
 
   useEffect(() => {
@@ -153,43 +168,6 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
       localStorage.setItem('dart_x01_playerCount', playerCount.toString());
     }
   }, [playerCount, is2v2]);
-
-  useEffect(() => {
-    if (!isGuest && profileNames.length > 0 && selectedPlayers.length === 0) {
-      const initial: string[] = [];
-      const humans = profileNames.filter(n => !profiles[n].isBot);
-      const bots = profileNames.filter(n => profiles[n].isBot);
-      
-      for (let i = 0; i < 4; i++) {
-        if (i === 0 && humans.length > 0) {
-          initial.push(humans[0]);
-        } else {
-          const nextHuman = humans.find(h => !initial.includes(h));
-          const nextBot = bots.find(b => !initial.includes(b));
-          if (nextHuman) initial.push(nextHuman);
-          else if (nextBot) initial.push(nextBot);
-        }
-      }
-      setSelectedPlayers(initial);
-    }
-  }, [profileNames.length, isGuest]);
-
-  useEffect(() => {
-     if (isGuest) {
-        setSelectedPlayers(prev => {
-           const next = [...prev];
-           for (let i = 0; i < playerCount; i++) {
-              if (!next[i]) next[i] = `Gast ${i + 1}`;
-           }
-           return next;
-        });
-     }
-  }, [playerCount, isGuest]);
-
-  // Clear error when selected players change
-  useEffect(() => {
-    if (errorMsg) setErrorMsg(null);
-  }, [selectedPlayers, guestBots, playerCount]);
 
   const handlePlayerChange = (index: number, name: string) => {
     const newSelected = [...selectedPlayers];
@@ -353,8 +331,8 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
     setSavedMatch(null);
 
     // Melde Live-Match für alle beteiligten Cloud-Gäste an
-    let hostId = localStorage.getItem('dartcounter_host_device_id') || 'host_local';
-    let hostName = user?.user_metadata?.username || user?.email || 'Host-Gerät';
+    const hostId = localStorage.getItem('dartcounter_host_device_id') || 'host_local';
+    const hostName = user?.user_metadata?.username || user?.email || 'Host-Gerät';
     chosenPlayers.forEach(p => {
       const prof = profiles[p];
       if (prof?.isLinkedCloudGuest && prof.linkedUserId) {
@@ -372,7 +350,7 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
   };
 
   const handleStartGame = async () => {
-    let chosenPlayers = selectedPlayers.slice(0, playerCount);
+    const chosenPlayers = selectedPlayers.slice(0, playerCount);
 
     if (new Set(chosenPlayers).size !== chosenPlayers.length) {
       setErrorMsg("Ein Spieler kann nicht mehrfach antreten. Bitte wähle unterschiedliche Spieler!");
@@ -679,7 +657,10 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
                   type="radio" 
                   name="matchMode2v2" 
                   checked={is2v2} 
-                  onChange={() => setIs2v2(true)} 
+                  onChange={() => {
+                    setIs2v2(true);
+                    setPlayerCount(4);
+                  }} 
                 />
                 <span>👥 2v2 Doppel</span>
               </label>

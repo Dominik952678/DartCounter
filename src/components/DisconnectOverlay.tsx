@@ -4,20 +4,18 @@ export const DisconnectOverlay: React.FC<{ isHostDisconnected: boolean, onTimeou
   const [timeLeft, setTimeLeft] = useState(60);
 
   useEffect(() => {
-    if (isHostDisconnected) {
-      setTimeLeft(60);
-      const interval = setInterval(() => {
-         setTimeLeft(prev => {
-             if (prev <= 1) {
-                 clearInterval(interval);
-                 onTimeout();
-                 return 0;
-             }
-             return prev - 1;
-         });
-      }, 1000);
-      return () => clearInterval(interval);
-    }
+    if (!isHostDisconnected) return;
+    const interval = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          onTimeout();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
   }, [isHostDisconnected, onTimeout]);
 
   if (!isHostDisconnected) return null;

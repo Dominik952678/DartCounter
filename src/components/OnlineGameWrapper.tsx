@@ -8,7 +8,7 @@ import { useOnlineStore } from '../store/useOnlineStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { useProfiles } from '../hooks/useProfiles';
 import { useGameEngine } from '../hooks/useGameEngine';
-import type { GameState, MatchHistory, Profile } from '../types';
+import type { GameState, MatchHistory, Profile, StatsModalData } from '../types';
 import { StatsModal } from './Modals';
 import { DisconnectOverlay } from './DisconnectOverlay';
 import { saveProfiles, saveMatch } from '../db/database';
@@ -19,10 +19,15 @@ export const OnlineGameWrapper: React.FC = () => {
   const { user } = useAuthStore();
   const { profiles, setProfiles } = useProfiles(user);
   const [syncedState, setSyncedState] = useState<GameState | null>(null);
-  const [statsData, setStatsData] = useState<any>({ isOpen: false });
+  const [statsData, setStatsData] = useState<StatsModalData>({
+    isOpen: false,
+    winnerIndex: null,
+    players: [],
+    matchData: null
+  });
   const [clientMultiplier, setClientMultiplier] = useState(1);
-  const [clientCheckoutPrompt, setClientCheckoutPrompt] = useState<any>(null);
-  const [clientCelebration, setClientCelebration] = useState<any>(null);
+  const [clientCheckoutPrompt, setClientCheckoutPrompt] = useState<{ maxDarts: number; autoDarts: number; isWin: boolean } | null>(null);
+  const [clientCelebration, setClientCelebration] = useState<{ type: string; playerIndex: number } | null>(null);
   const [clientRoundBust, setClientRoundBust] = useState(false);
   
   const myUsername = (user ? (user.user_metadata?.username || user.email) : localStorage.getItem('dart_guest_online_name')) || 'Gast';
@@ -37,7 +42,10 @@ export const OnlineGameWrapper: React.FC = () => {
      user
   });
 
-  const handleMinigameFinish = async (results: any, gameType: string) => {
+  const handleMinigameFinish = async (
+    results: { name: string; score: number; attempts?: number; dartsUsed?: number; roundsCompleted?: number }[],
+    gameType: string
+  ) => {
     let newProfiles: Record<string, Profile>;
     setProfiles(prev => {
       newProfiles = { ...prev };
@@ -52,7 +60,7 @@ export const OnlineGameWrapper: React.FC = () => {
                 p.powerScoring.totalScore = (p.powerScoring.totalScore || 0) + r.score;
              }
           }
-          const maxScore = Math.max(...results.map((r:any) => r.score));
+          const maxScore = Math.max(...results.map(r => r.score));
           for (const r of results) {
              if (r.score === maxScore && newProfiles[r.name]) {
                 newProfiles[r.name].powerScoring!.wins += 1;
@@ -68,7 +76,7 @@ export const OnlineGameWrapper: React.FC = () => {
                 p.splitScore.totalScore = (p.splitScore.totalScore || 0) + r.score;
              }
           }
-          const maxScore = Math.max(...results.map((r:any) => r.score));
+          const maxScore = Math.max(...results.map(r => r.score));
           for (const r of results) {
              if (r.score === maxScore && newProfiles[r.name]) {
                 newProfiles[r.name].splitScore!.wins += 1;
@@ -80,10 +88,10 @@ export const OnlineGameWrapper: React.FC = () => {
                 const p = newProfiles[r.name];
                 if (!p.checkoutTraining) p.checkoutTraining = { bestCheckout: 0, roundsCompleted: 0, matchesPlayed: 0, wins: 0, totalAttempts: 0, totalDartsUsed: 0 };
                 p.checkoutTraining.bestCheckout = Math.max(p.checkoutTraining.bestCheckout, r.score);
-                p.checkoutTraining.roundsCompleted += r.roundsCompleted;
+                p.checkoutTraining.roundsCompleted += r.roundsCompleted || 0;
                 p.checkoutTraining.matchesPlayed += 1;
-                p.checkoutTraining.totalAttempts = (p.checkoutTraining.totalAttempts || 0) + r.attempts;
-                p.checkoutTraining.totalDartsUsed = (p.checkoutTraining.totalDartsUsed || 0) + r.dartsUsed;
+                p.checkoutTraining.totalAttempts = (p.checkoutTraining.totalAttempts || 0) + (r.attempts || 0);
+                p.checkoutTraining.totalDartsUsed = (p.checkoutTraining.totalDartsUsed || 0) + (r.dartsUsed || 0);
              }
           }
       }
@@ -95,12 +103,12 @@ export const OnlineGameWrapper: React.FC = () => {
       await saveProfiles(newProfiles!, user.id);
     }
     
-    let matchData: MatchHistory = {
+    const matchData: MatchHistory = {
         date: new Date().toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' }),
-        winner: results.reduce((prev:any, current:any) => (prev.score > current.score) ? prev : current).name,
-        gameType: gameType as any,
+        winner: results.reduce((prev, current) => (prev.score > current.score) ? prev : current).name,
+        gameType: gameType as MatchHistory['gameType'],
         isOnline: true,
-        players: results.map((r:any) => ({
+        players: results.map(r => ({
             name: r.name, sets: 0, legs: 0, avg: "0.0", first9: "0.0", score: r.score, attempts: r.attempts, dartsUsed: r.dartsUsed
         }))
     };
@@ -126,16 +134,20 @@ export const OnlineGameWrapper: React.FC = () => {
         }
 
         const sub = roomChannel
-          .on('broadcast', { event: 'client_throw' }, (payload) => {
-             const data = payload?.payload ?? payload;
-             hostEngine.addDart(data.base, data.mult);
+          .on('broadcast', { event: 'client_throw' }, (payload: unknown) => {
+             const data = (payload && typeof payload === 'object' && 'payload' in payload ? (payload as { payload: { base: number; mult: number } }).payload : payload) as { base: number; mult: number };
+             if (data && typeof data.base === 'number') {
+               hostEngine.addDart(data.base, data.mult);
+             }
           })
           .on('broadcast', { event: 'client_undo' }, () => {
              hostEngine.undoSingleDart();
           })
-          .on('broadcast', { event: 'client_submit_checkout' }, (payload) => {
-             const data = payload?.payload ?? payload;
-             hostEngine.submitCheckoutPrompt(data.darts);
+          .on('broadcast', { event: 'client_submit_checkout' }, (payload: unknown) => {
+             const data = (payload && typeof payload === 'object' && 'payload' in payload ? (payload as { payload: { darts: number } }).payload : payload) as { darts: number };
+             if (data && typeof data.darts === 'number') {
+               hostEngine.submitCheckoutPrompt(data.darts);
+             }
           })
           .on('broadcast', { event: 'client_request_state' }, () => {
              if (hostEngine.gameState.players.length > 0) {
@@ -155,16 +167,16 @@ export const OnlineGameWrapper: React.FC = () => {
         return () => { sub.unsubscribe(); };
      } else {
         const sub = roomChannel
-          .on('broadcast', { event: 'state_update' }, (payload) => {
-             const data = payload?.payload ?? payload;
-             setSyncedState(data.state);
-             if (data.celebration !== undefined) setClientCelebration(data.celebration);
-             if (data.roundBust !== undefined) setClientRoundBust(data.roundBust);
-             if (data.checkoutPrompt !== undefined) setClientCheckoutPrompt(data.checkoutPrompt);
+          .on('broadcast', { event: 'state_update' }, (payload: unknown) => {
+             const data = (payload && typeof payload === 'object' && 'payload' in payload ? (payload as { payload: Record<string, unknown> }).payload : payload) as Record<string, unknown>;
+             if (data?.state) setSyncedState(data.state as GameState);
+             if (data?.celebration !== undefined) setClientCelebration(data.celebration as { type: string; playerIndex: number } | null);
+             if (data?.roundBust !== undefined) setClientRoundBust(data.roundBust as boolean);
+             if (data?.checkoutPrompt !== undefined) setClientCheckoutPrompt(data.checkoutPrompt as { maxDarts: number; autoDarts: number; isWin: boolean } | null);
           })
-          .on('broadcast', { event: 'game_ended' }, (payload) => {
-             const data = payload?.payload ?? payload;
-             setStatsData(data.statsData);
+          .on('broadcast', { event: 'game_ended' }, (payload: unknown) => {
+             const data = (payload && typeof payload === 'object' && 'payload' in payload ? (payload as { payload: { statsData: StatsModalData } }).payload : payload) as { statsData: StatsModalData };
+             if (data?.statsData) setStatsData(data.statsData);
           });
         
         // Immediately request current state from host
@@ -188,7 +200,7 @@ export const OnlineGameWrapper: React.FC = () => {
           sub.unsubscribe(); 
         };
      }
-  }, [roomChannel, isHost, players, roomSettings, myUsername, navigate, syncedState]);
+  }, [roomChannel, isHost, players, roomSettings, myUsername, navigate, syncedState, hostEngine]);
 
   // Host broadcasts state, celebrations, busts, and checkout prompts
   useEffect(() => {
@@ -203,7 +215,6 @@ export const OnlineGameWrapper: React.FC = () => {
                checkoutPrompt: hostEngine.checkoutPrompt
              }
          });
-         setSyncedState(hostEngine.gameState);
      }
   }, [isHost, roomChannel, hostEngine.gameState, hostEngine.celebration, hostEngine.roundBust, hostEngine.checkoutPrompt]);
 
@@ -222,7 +233,7 @@ export const OnlineGameWrapper: React.FC = () => {
       players: players.map(p => p.username),
       profiles,
       onAbort: () => { leaveRoom(); navigate('/online'); },
-      onFinish: (r: any) => handleMinigameFinish(r, roomSettings.mode || 'standard'),
+      onFinish: (r: unknown) => handleMinigameFinish(r as { name: string; score: number; attempts?: number; dartsUsed?: number; roundsCompleted?: number }[], roomSettings.mode || 'standard'),
       isOnline: true,
       isHost,
       roomChannel,
@@ -234,7 +245,9 @@ export const OnlineGameWrapper: React.FC = () => {
     if (roomSettings.mode === 'checkout') return <CheckoutTraining {...props} checkoutTargets={roomSettings.checkoutTargets || 10} checkoutRounds={roomSettings.checkoutRounds || 1} onFinish={(r) => handleMinigameFinish(r, 'checkoutTraining')} />;
   }
 
-  if (!syncedState || syncedState.players.length === 0) {
+  const effectiveGameState = isHost ? hostEngine.gameState : syncedState;
+
+  if (!effectiveGameState || effectiveGameState.players.length === 0) {
     return (
       <div className="screen active-screen app-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '80vh', gap: '16px', textAlign: 'center', padding: '24px' }}>
         <div style={{ fontSize: '3rem', animation: 'spin 2s linear infinite' }}>🎯</div>
@@ -255,7 +268,7 @@ export const OnlineGameWrapper: React.FC = () => {
     );
   }
 
-  const activePlayer = syncedState.players[syncedState.activePlayer];
+  const activePlayer = effectiveGameState.players[effectiveGameState.activePlayer];
   const isMyTurn = activePlayer?.name === myUsername;
   const isHostDisconnected = !isHost && players.every(p => !p.isHost);
 
@@ -287,7 +300,9 @@ export const OnlineGameWrapper: React.FC = () => {
       }
   };
 
-  const activeCheckoutPrompt = isHost ? hostEngine.checkoutPrompt : clientCheckoutPrompt;
+  const activeCheckoutPrompt = isHost
+    ? (hostEngine.checkoutPrompt ? { maxDarts: hostEngine.checkoutPrompt.maxDarts, autoDarts: hostEngine.checkoutPrompt.autoDarts, isWin: hostEngine.checkoutPrompt.isWin } : null)
+    : clientCheckoutPrompt;
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
@@ -301,13 +316,13 @@ export const OnlineGameWrapper: React.FC = () => {
       
       <div style={{ opacity: isMyTurn ? 1 : 0.75, height: '100%' }}>
         <GameScreen 
-          players={syncedState.players}
-          activePlayer={syncedState.activePlayer}
-          startingPlayerOfLeg={syncedState.startingPlayerOfLeg}
-          config={syncedState.config}
-          currentRoundDarts={syncedState.currentRoundDarts}
-          currentMultiplier={isHost ? syncedState.currentMultiplier : clientMultiplier}
-          isProcessing={syncedState.isProcessing}
+          players={effectiveGameState.players}
+          activePlayer={effectiveGameState.activePlayer}
+          startingPlayerOfLeg={effectiveGameState.startingPlayerOfLeg}
+          config={effectiveGameState.config}
+          currentRoundDarts={effectiveGameState.currentRoundDarts}
+          currentMultiplier={isHost ? effectiveGameState.currentMultiplier : clientMultiplier}
+          isProcessing={effectiveGameState.isProcessing}
           roundBust={isHost ? hostEngine.roundBust : clientRoundBust}
           addDart={handleAddDart}
           toggleMultiplier={isHost ? hostEngine.toggleMultiplier : (m) => setClientMultiplier(prev => prev === m ? 1 : m)}
@@ -316,15 +331,15 @@ export const OnlineGameWrapper: React.FC = () => {
           checkoutPrompt={activeCheckoutPrompt}
           submitCheckoutPrompt={handleSubmitCheckout}
           celebration={isHost ? hostEngine.celebration : clientCelebration}
-          canUndo={syncedState.currentRoundDarts.length > 0 || (syncedState.history && syncedState.history.length > 0)}
+          canUndo={effectiveGameState.currentRoundDarts.length > 0 || (effectiveGameState.history && effectiveGameState.history.length > 0)}
         />
       </div>
 
       <StatsModal 
         isOpen={statsData.isOpen}
-        winnerIndex={statsData.winnerIndex}
+        winnerIndex={statsData.winnerIndex ?? null}
         players={statsData.players || []}
-        matchData={statsData.matchData}
+        matchData={statsData.matchData ?? null}
         onClose={() => {
           setStatsData({ isOpen: false, winnerIndex: null, players: [], matchData: null });
           leaveRoom();

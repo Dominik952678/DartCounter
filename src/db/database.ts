@@ -56,7 +56,7 @@ export async function getProfiles(userId?: string | null, username?: string): Pr
       throw error;
     }
 
-    const fetchedProfiles = (data?.data as any)?.profiles || {};
+    const fetchedProfiles = (data?.data as { profiles?: Record<string, Profile> })?.profiles || {};
     if (Object.keys(fetchedProfiles).length === 0) {
       const initialName = username || 'Spieler';
       const initialProfiles: Record<string, Profile> = {
@@ -113,7 +113,7 @@ export async function saveMatch(match: MatchHistory, userId?: string | null): Pr
   const matchId = `match_${userId || 'guest'}_${Date.now()}`;
   match.type = 'match';
   match._id = matchId;
-  if (userId) (match as any).userId = userId;
+  if (userId) (match as MatchHistory & { userId?: string }).userId = userId;
 
   // Update local cache of matches
   try {
@@ -412,9 +412,10 @@ export async function redeemSyncCode(
       authToken: tokenDoc.authToken,
       matches: tokenDoc.matchesSnapshot
     };
-  } catch (err: any) {
-    console.error("Error redeeming sync code", err);
-    return { success: false, error: err?.message || 'Fehler beim Einlösen des Codes.' };
+  } catch (err: unknown) {
+    const error = err as Error;
+    console.error("Error redeeming sync code", error);
+    return { success: false, error: error?.message || 'Fehler beim Einlösen des Codes.' };
   }
 }
 
@@ -425,7 +426,7 @@ export async function setGuestLiveMatchStatus(
   userId: string, 
   hostId: string, 
   hostName: string, 
-  matchInfo: { gameType?: string } | null
+  matchInfo: { gameType?: string; players?: string[]; mode?: string; isAborted?: boolean } | null
 ): Promise<void> {
   try {
     const { data: userDoc } = await supabase
@@ -493,9 +494,10 @@ export async function abortGuestMatchRemote(userId: string): Promise<{ success: 
     }
 
     return { success: true };
-  } catch (err: any) {
-    console.error("Error aborting guest match remote", err);
-    return { success: false, error: err?.message || 'Fehler beim Abbrechen des Matches' };
+  } catch (err: unknown) {
+    const error = err as Error;
+    console.error("Error aborting guest match remote", error);
+    return { success: false, error: error?.message || 'Fehler beim Abbrechen des Matches' };
   }
 }
 
@@ -528,9 +530,10 @@ export async function revokeHostAccess(userId: string, _hostIdToRevoke?: string)
     }
 
     return { success: true };
-  } catch (err: any) {
-    console.error("Error revoking host access", err);
-    return { success: false, error: err?.message || 'Fehler beim Widerrufen.' };
+  } catch (err: unknown) {
+    const error = err as Error;
+    console.error("Error revoking host access", error);
+    return { success: false, error: error?.message || 'Fehler beim Widerrufen.' };
   }
 }
 
@@ -561,14 +564,17 @@ export async function validateGuestSyncTokens(
         }
 
         const tokenDoc = data.data as GuestSyncTokenDoc;
-        const isExpired = new Date(tokenDoc.expiresAt) <= new Date();
-        const isTokenMismatch = tokenDoc.authToken !== profile.syncAuthToken;
+        if (tokenDoc.authToken !== profile.syncAuthToken || tokenDoc.syncEnabled === false) {
+          revokedGuests.push(name);
+          continue;
+        }
 
-        if (isExpired || isTokenMismatch) {
+        const isExpired = new Date(tokenDoc.expiresAt) < new Date();
+        if (isExpired) {
           revokedGuests.push(name);
         }
-      } catch (e) {
-        console.error("Error validating guest token for " + name, e);
+      } catch {
+        revokedGuests.push(name);
       }
     }
   }
@@ -580,7 +586,8 @@ export async function validateGuestSyncTokens(
 }
 
 /**
- * Synchronisiert nach einem beendeten Match alle beteiligten Cloud-Gast-Spieler parallel mit ihren Supabase-Konten.
+ * Synchronisiert nach einem beendeten Match die Statistiken von verknüpften Cloud-Gästen
+ * direkt auf deren jeweilige Supabase-Profile.
  */
 export async function syncMatchesAndProfilesForGuests(
   finalPlayers: Player[],
@@ -596,9 +603,9 @@ export async function syncMatchesAndProfilesForGuests(
     const player = finalPlayers[i];
     
     // Prüfen ob dieser Spieler ein verknüpfter Cloud-Gast ist
-    const linkedUserId = (player as any).linkedUserId;
-    const syncAuthToken = (player as any).syncAuthToken;
-    const linkedUsername = (player as any).linkedUsername || player.name;
+    const linkedUserId = player.linkedUserId;
+    const syncAuthToken = player.syncAuthToken;
+    const linkedUsername = player.linkedUsername || player.name;
 
     if (!linkedUserId || !syncAuthToken) continue;
 
@@ -678,9 +685,10 @@ export async function syncMatchesAndProfilesForGuests(
       await saveProfiles(guestProfiles, linkedUserId);
 
       syncedGuests.push(linkedUsername);
-    } catch (guestErr: any) {
-      console.error(`Error syncing for guest ${linkedUsername}`, guestErr);
-      errors.push(`${linkedUsername}: ${guestErr?.message || 'Sync-Fehler'}`);
+    } catch (guestErr: unknown) {
+      const error = guestErr as Error;
+      console.error(`Error syncing for guest ${linkedUsername}`, error);
+      errors.push(`${linkedUsername}: ${error?.message || 'Sync-Fehler'}`);
     }
   }
 

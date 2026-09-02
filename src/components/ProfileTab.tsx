@@ -98,7 +98,10 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
   // Live Auto-Refresh & Realtime listener on user_sync_${user.id}
   useEffect(() => {
     if (!user?.id) return;
-    loadSyncInfo();
+    let isMounted = true;
+    (async () => {
+      if (isMounted) await loadSyncInfo();
+    })();
 
     const channel = supabase.channel(`live_sync_profile_${user.id}`)
       .on('postgres_changes', {
@@ -107,8 +110,9 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
         table: 'documents',
         filter: `id=eq.user_sync_${user.id}`
       }, (payload) => {
-        if (payload?.new && (payload.new as any).data) {
-          setUserSyncInfo((payload.new as any).data as GuestSyncTokenDoc);
+        const row = payload?.new as { data?: GuestSyncTokenDoc } | null;
+        if (row?.data) {
+          setUserSyncInfo(row.data);
         }
       })
       .subscribe();
@@ -118,6 +122,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
     }, 2000);
 
     return () => {
+      isMounted = false;
       clearInterval(poll);
       supabase.removeChannel(channel);
     };

@@ -12,8 +12,18 @@ export function useProfiles(user?: { id: string; user_metadata?: { username?: st
   }, [user?.id, user?.user_metadata?.username]);
 
   useEffect(() => {
-    loadProfiles();
-  }, [loadProfiles]);
+    let isMounted = true;
+    (async () => {
+      const username = user?.user_metadata?.username;
+      const loaded = await getProfiles(user?.id, username);
+      if (isMounted) {
+        setProfiles(loaded);
+      }
+    })();
+    return () => {
+      isMounted = false;
+    };
+  }, [user?.id, user?.user_metadata?.username]);
 
   const handleCreateProfile = async (name: string, isBot?: boolean, targetAverage?: number) => {
     let newProfiles: Record<string, Profile>;

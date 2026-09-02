@@ -31,7 +31,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
     chartData, checkoutChartData, radarData, maxRadarHits, pieData,
     isMinigame, minigameAvgScore, minigameBestScore
   } = useMemo(() => {
-    let safeMatches = Array.isArray(matches) ? [...matches] : [];
+    const safeMatches = Array.isArray(matches) ? [...matches] : [];
     if (profile?.linkedUserId) {
       try {
         const guestRaw = localStorage.getItem(`guest_matches_${profile.linkedUserId}`);
@@ -403,10 +403,10 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                           <Tooltip 
                             contentStyle={{ backgroundColor: '#1a1a1c', border: '1px solid var(--card-border)', borderRadius: '8px' }} 
                             itemStyle={{ color: '#fff' }}
-                            formatter={(value: any, name: any) => {
+                            formatter={(value: unknown, name: unknown) => {
                               const total = pieData.reduce((s: number, e: { value: number }) => s + e.value, 0);
                               const pct = total > 0 ? ((Number(value) / total) * 100).toFixed(1) : '0';
-                              return [`${value} Treffer (${pct}%)`, name];
+                              return [`${value} Treffer (${pct}%)`, String(name)];
                             }}
                           />
                         </PieChart>
@@ -544,7 +544,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                   <Tooltip 
                     contentStyle={{ backgroundColor: '#1a1a1c', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
                     labelStyle={{ color: '#999' }}
-                    formatter={(val: any) => [val, isMinigame ? 'Punkte (Score)' : '3-Dart Average']}
+                    formatter={(val: unknown) => [val as React.ReactNode, isMinigame ? 'Punkte (Score)' : '3-Dart Average']}
                   />
                   <Line 
                     type="monotone" 
@@ -580,7 +580,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                   <Tooltip 
                     contentStyle={{ backgroundColor: '#1a1a1c', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
                     labelStyle={{ color: '#999' }}
-                    formatter={(val: any) => [`${val}%`, 'Quote']}
+                    formatter={(val: unknown) => [`${val}%`, 'Quote']}
                   />
                   <Line type="monotone" dataKey="quote" stroke="#ff3b30" strokeWidth={2.5} dot={{ fill: '#ff3b30', r: 3, strokeWidth: 0 }} activeDot={{ r: 5, fill: '#ff3b30' }} />
                 </LineChart>

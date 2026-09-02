@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 import type { Profile, Dart } from '../types';
 import { Keypad } from './Keypad';
 import { getBotDart } from '../utils/bot';
@@ -12,7 +13,7 @@ interface PowerScoringProps {
   onAbort: () => void;
   isOnline?: boolean;
   isHost?: boolean;
-  roomChannel?: any;
+  roomChannel?: RealtimeChannel | null;
   myUsername?: string;
 }
 
@@ -57,49 +58,45 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
   const isMyTurn = isOnline ? (activeP.name === myUsername) : true;
 
   const stateRef = React.useRef({ gameState, activePlayer, currentRound, currentRoundDarts, isProcessing, currentMultiplier });
-  stateRef.current = { gameState, activePlayer, currentRound, currentRoundDarts, isProcessing, currentMultiplier };
 
   useEffect(() => {
-    if (isOnline && roomChannel) {
-      if (isHost) {
-         roomChannel.send({ type: 'broadcast', event: 'ps_state', payload: stateRef.current });
-         const sub = roomChannel.on('broadcast', { event: 'ps_throw' }, (p: any) => {
-            const data = p?.payload ?? p;
-            handleDart(data.base, data.overrideMult);
-         });
-         return () => { sub.unsubscribe(); };
+    stateRef.current = { gameState, activePlayer, currentRound, currentRoundDarts, isProcessing, currentMultiplier };
+  }, [gameState, activePlayer, currentRound, currentRoundDarts, isProcessing, currentMultiplier]);
+
+  const processRoundEnd = React.useCallback((darts: Dart[]) => {
+    const roundScore = darts.reduce((sum, d) => sum + d.value, 0);
+    if (roundScore === 180) play180Sound();
+    else speak(roundScore.toString());
+    
+    const st = stateRef.current;
+    
+    setGameState(prev => {
+      const newState = [...prev];
+      newState[st.activePlayer].score += roundScore;
+      return newState;
+    });
+
+    if (st.activePlayer === players.length - 1) {
+      if (st.currentRound === rounds) {
+        setCurrentRoundDarts([]);
+        setIsProcessing(true);
+        const finalResults = st.gameState.map((p, i) => ({
+           name: p.name,
+           score: p.score + (i === st.activePlayer ? roundScore : 0)
+        }));
+        setTimeout(() => onFinish(finalResults), 500);
+        return;
       } else {
-         const sub = roomChannel.on('broadcast', { event: 'ps_state' }, (p: any) => {
-            const data = p?.payload ?? p;
-            if (data.gameState) setGameState(data.gameState);
-            if (data.activePlayer !== undefined) setActivePlayer(data.activePlayer);
-            if (data.currentRound !== undefined) setCurrentRound(data.currentRound);
-            if (data.currentRoundDarts) setCurrentRoundDarts(data.currentRoundDarts);
-            if (data.isProcessing !== undefined) setIsProcessing(data.isProcessing);
-            if (data.currentMultiplier !== undefined) setCurrentMultiplier(data.currentMultiplier);
-         });
-         return () => { sub.unsubscribe(); };
+        setCurrentRound(prev => prev + 1);
       }
     }
-  }, [isOnline, isHost, roomChannel]);
+    
+    setActivePlayer((st.activePlayer + 1) % players.length);
+    setCurrentRoundDarts([]);
+    setIsProcessing(false);
+  }, [players.length, rounds, onFinish]);
 
-  useEffect(() => {
-    if (isOnline && isHost && roomChannel) {
-       roomChannel.send({ type: 'broadcast', event: 'ps_state', payload: stateRef.current });
-    }
-  }, [gameState, activePlayer, currentRound, currentRoundDarts, isProcessing, currentMultiplier, isOnline, isHost, roomChannel]);
-
-  useEffect(() => {
-    if (activeP.isBot && !isProcessing && currentRound <= rounds && (!isOnline || isHost)) {
-      const timer = setTimeout(() => {
-        const botThrow = getBotDart(activeP.targetAverage, 501, 'DO'); 
-        handleDart(botThrow.base, botThrow.mult);
-      }, 800);
-      return () => clearTimeout(timer);
-    }
-  }, [activePlayer, currentRoundDarts, isProcessing, currentRound, isOnline, isHost]);
-
-  const handleDart = (base: number, overrideMult?: number) => {
+  const handleDart = React.useCallback((base: number, overrideMult?: number) => {
     if (stateRef.current.isProcessing) return;
 
     if (isOnline && !isHost) {
@@ -141,41 +138,49 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
         processRoundEnd(newDarts);
       }, 1000);
     }
-  };
+  }, [isOnline, isHost, roomChannel, processRoundEnd]);
 
-  const processRoundEnd = (darts: Dart[]) => {
-    const roundScore = darts.reduce((sum, d) => sum + d.value, 0);
-    if (roundScore === 180) play180Sound();
-    else speak(roundScore.toString());
-    
-    const st = stateRef.current;
-    
-    setGameState(prev => {
-      const newState = [...prev];
-      newState[st.activePlayer].score += roundScore;
-      return newState;
-    });
-
-    if (st.activePlayer === players.length - 1) {
-      if (st.currentRound === rounds) {
-        setCurrentRoundDarts([]);
-        setIsProcessing(true);
-        const finalResults = st.gameState.map((p, i) => ({
-           name: p.name,
-           score: p.score + (i === st.activePlayer ? roundScore : 0)
-        }));
-        setTimeout(() => onFinish(finalResults), 500);
-        return;
+  useEffect(() => {
+    if (isOnline && roomChannel) {
+      if (isHost) {
+         roomChannel.send({ type: 'broadcast', event: 'ps_state', payload: stateRef.current });
+         const sub = roomChannel.on('broadcast', { event: 'ps_throw' }, (p: unknown) => {
+            const data = (p && typeof p === 'object' && 'payload' in p ? (p as { payload: { base: number; overrideMult?: number } }).payload : p) as { base: number; overrideMult?: number };
+            if (data && typeof data.base === 'number') {
+              handleDart(data.base, data.overrideMult);
+            }
+         });
+         return () => { sub.unsubscribe(); };
       } else {
-        setCurrentRound(prev => prev + 1);
+         const sub = roomChannel.on('broadcast', { event: 'ps_state' }, (p: unknown) => {
+            const data = (p && typeof p === 'object' && 'payload' in p ? (p as { payload: Record<string, unknown> }).payload : p) as Record<string, unknown>;
+            if (data?.gameState) setGameState(data.gameState as PlayerState[]);
+            if (data?.activePlayer !== undefined) setActivePlayer(data.activePlayer as number);
+            if (data?.currentRound !== undefined) setCurrentRound(data.currentRound as number);
+            if (data?.currentRoundDarts) setCurrentRoundDarts(data.currentRoundDarts as Dart[]);
+            if (data?.isProcessing !== undefined) setIsProcessing(data.isProcessing as boolean);
+            if (data?.currentMultiplier !== undefined) setCurrentMultiplier(data.currentMultiplier as number);
+         });
+         return () => { sub.unsubscribe(); };
       }
     }
-    
-    setActivePlayer((st.activePlayer + 1) % players.length);
-    setCurrentRoundDarts([]);
-    setIsProcessing(false);
-  };
+  }, [isOnline, isHost, roomChannel, handleDart]);
 
+  useEffect(() => {
+    if (isOnline && isHost && roomChannel) {
+       roomChannel.send({ type: 'broadcast', event: 'ps_state', payload: stateRef.current });
+    }
+  }, [gameState, activePlayer, currentRound, currentRoundDarts, isProcessing, currentMultiplier, isOnline, isHost, roomChannel]);
+
+  useEffect(() => {
+    if (activeP.isBot && !isProcessing && currentRound <= rounds && (!isOnline || isHost)) {
+      const timer = setTimeout(() => {
+        const botThrow = getBotDart(activeP.targetAverage, 501, 'DO'); 
+        handleDart(botThrow.base, botThrow.mult);
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  }, [activeP.isBot, activeP.targetAverage, currentRound, isProcessing, isOnline, isHost, rounds, handleDart]);
   const undoSingleDart = () => {
     if (isOnline && !isHost) return;
     if (timeoutRef.current) {

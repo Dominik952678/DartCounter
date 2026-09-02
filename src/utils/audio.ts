@@ -50,7 +50,7 @@ if (typeof window !== 'undefined' && window.speechSynthesis) {
 export const getAudioCtx = () => {
   if (!soundEnabled) return null;
   if (!audioCtx) {
-    const Ctx = window.AudioContext || (window as any).webkitAudioContext;
+    const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (Ctx) {
       audioCtx = new Ctx();
     }

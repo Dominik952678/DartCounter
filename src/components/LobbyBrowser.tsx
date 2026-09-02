@@ -214,7 +214,7 @@ export const LobbyBrowser: React.FC = () => {
               </div>
               <div className="config-item">
                 <label className="section-label">Out-Modus</label>
-                <select value={outMode} onChange={e => setOutMode(e.target.value as any)}>
+                <select value={outMode} onChange={e => setOutMode(e.target.value as 'SO' | 'DO' | 'MO')}>
                   <option value="SO">Single Out</option>
                   <option value="DO">Double Out</option>
                   <option value="MO">Master Out</option>

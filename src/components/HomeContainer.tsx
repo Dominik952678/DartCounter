@@ -14,7 +14,7 @@ interface HomeContainerProps {
   hasSavedGame?: boolean;
   onResumeGame?: () => void;
   onDiscardSavedGame?: () => void;
-  onStartMiniGame: (mode: string, players: string[], settings: any) => void;
+  onStartMiniGame: (mode: string, players: string[], settings: Record<string, unknown>) => void;
   setProfiles: (profiles: Record<string, Profile>) => void;
   defaultTab?: 'match' | 'training';
 }
@@ -40,15 +40,11 @@ export const HomeContainer: React.FC<HomeContainerProps> = ({
     return defaultTab;
   });
 
-  useEffect(() => {
-    if (tabParam === 'training' || tabParam === 'match') {
-      setActiveSubTab(tabParam);
-    }
-  }, [tabParam]);
+  const effectiveSubTab = (tabParam === 'training' || tabParam === 'match') ? tabParam : activeSubTab;
 
   useEffect(() => {
-    localStorage.setItem('dart_offline_subtab', activeSubTab);
-  }, [activeSubTab]);
+    localStorage.setItem('dart_offline_subtab', effectiveSubTab);
+  }, [effectiveSubTab]);
 
   return (
     <div className="home-container" style={{ paddingBottom: '20px' }}>
@@ -58,16 +54,16 @@ export const HomeContainer: React.FC<HomeContainerProps> = ({
             <input 
               type="radio" 
               name="offlineSubTab" 
-              checked={activeSubTab === 'match'} 
+              checked={effectiveSubTab === 'match'} 
               onChange={() => setActiveSubTab('match')} 
             />
             <span>🎯 X01 Match</span>
           </label>
-          <label className={activeSubTab === 'training' ? 'active' : ''}>
+          <label className={effectiveSubTab === 'training' ? 'active' : ''}>
             <input 
               type="radio" 
               name="offlineSubTab" 
-              checked={activeSubTab === 'training'} 
+              checked={effectiveSubTab === 'training'} 
               onChange={() => setActiveSubTab('training')} 
             />
             <span>🏋️ Training</span>
@@ -76,7 +72,7 @@ export const HomeContainer: React.FC<HomeContainerProps> = ({
       </div>
 
       <div className="home-content">
-        {activeSubTab === 'match' ? (
+        {effectiveSubTab === 'match' ? (
           <MatchSetup 
             profiles={profiles}
             setProfiles={setProfiles}

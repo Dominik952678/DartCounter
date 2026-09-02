@@ -36,11 +36,11 @@ if (typeof window !== 'undefined') {
     lang: string = 'en-GB';
     rate: number = 1;
     pitch: number = 1;
-    voice: any = null;
+    voice: SpeechSynthesisVoice | null = null;
     constructor(text?: string) {
       if (text) this.text = text;
     }
-  } as any;
+  } as unknown as typeof SpeechSynthesisUtterance;
 
   window.speechSynthesis = {
     speak: vi.fn(),
@@ -68,4 +68,4 @@ globalThis.Audio = class {
   }
   pause() {}
   load() {}
-} as any;
+} as unknown as typeof Audio;

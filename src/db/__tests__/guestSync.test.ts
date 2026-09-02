@@ -23,7 +23,7 @@ describe('📱 Guest-Cloud-Sync System (Multi-User & Anti-Stat-Washing)', () => 
           single: vi.fn().mockResolvedValue({ data: null })
         })
       })
-    } as any);
+    } as unknown as ReturnType<typeof supabase.from>);
 
     const result = await generateUserSyncCode('user_123', 'AlexDarts');
     
@@ -48,7 +48,7 @@ describe('📱 Guest-Cloud-Sync System (Multi-User & Anti-Stat-Washing)', () => 
           single: vi.fn().mockResolvedValue({ data: null, error: { message: 'Not found' } })
         })
       })
-    } as any);
+    } as unknown as ReturnType<typeof supabase.from>);
 
     const notFoundRes = await redeemSyncCode('999999', 'host_1', 'Dominik iPad');
     expect(notFoundRes.success).toBe(false);
@@ -78,7 +78,7 @@ describe('📱 Guest-Cloud-Sync System (Multi-User & Anti-Stat-Washing)', () => 
           })
         }),
         upsert: vi.fn().mockResolvedValue({ error: null })
-      } as any;
+      } as unknown as ReturnType<typeof supabase.from>;
     });
 
     const res = await redeemSyncCode('842195', 'host_ipad', 'Dominik iPad');
@@ -111,7 +111,7 @@ describe('📱 Guest-Cloud-Sync System (Multi-User & Anti-Stat-Washing)', () => 
         })
       }),
       upsert: mockUpsert
-    } as any);
+    } as unknown as ReturnType<typeof supabase.from>);
 
     const res = await revokeHostAccess('user_alex', 'host_ipad');
     expect(res.success).toBe(true);
@@ -134,7 +134,7 @@ describe('📱 Guest-Cloud-Sync System (Multi-User & Anti-Stat-Washing)', () => 
           })
         })
       })
-    } as any);
+    } as unknown as ReturnType<typeof supabase.from>);
 
     const mockPlayer: Player = {
       name: 'Alex',
@@ -194,7 +194,7 @@ describe('📱 Guest-Cloud-Sync System (Multi-User & Anti-Stat-Washing)', () => 
         }),
         insert: mockInsert,
         upsert: mockUpsert
-      } as any;
+      } as unknown as ReturnType<typeof supabase.from>;
     });
 
     const mockPlayer: Player = {
@@ -254,7 +254,7 @@ describe('📱 Guest-Cloud-Sync System (Multi-User & Anti-Stat-Washing)', () => 
           single: vi.fn().mockResolvedValue({ data: null })
         })
       })
-    } as any);
+    } as unknown as ReturnType<typeof supabase.from>);
 
     const tokenDoc = await generateUserSyncCode('user_pro', 'ProDarts', mockProfile);
     expect(tokenDoc.profileSnapshot).toEqual(mockProfile);
@@ -277,7 +277,7 @@ describe('📱 Guest-Cloud-Sync System (Multi-User & Anti-Stat-Washing)', () => 
           })
         })
       })
-    } as any);
+    } as unknown as ReturnType<typeof supabase.from>);
 
     const validProfiles = {
       Alex: {
@@ -317,7 +317,7 @@ describe('📱 Guest-Cloud-Sync System (Multi-User & Anti-Stat-Washing)', () => 
           single: vi.fn().mockResolvedValue({ data: null })
         })
       })
-    } as any);
+    } as unknown as ReturnType<typeof supabase.from>);
 
     const { toggleUserSync } = await import('../database');
 
@@ -355,7 +355,7 @@ describe('📱 Guest-Cloud-Sync System (Multi-User & Anti-Stat-Washing)', () => 
         })
       }),
       upsert: mockUpsert
-    } as any);
+    } as unknown as ReturnType<typeof supabase.from>);
 
     const res = await redeemSyncCode('123456', 'host_new_ipad', 'New iPad');
     expect(res.success).toBe(true);
@@ -384,7 +384,7 @@ describe('📱 Guest-Cloud-Sync System (Multi-User & Anti-Stat-Washing)', () => 
           single: vi.fn().mockResolvedValue({ data: { data: disabledDoc } })
         })
       })
-    } as any);
+    } as unknown as ReturnType<typeof supabase.from>);
 
     const res = await redeemSyncCode('123456', 'host_1', 'Dominik iPad');
     expect(res.success).toBe(false);
@@ -411,7 +411,7 @@ describe('📱 Guest-Cloud-Sync System (Multi-User & Anti-Stat-Washing)', () => 
         })
       }),
       upsert: mockUpsert
-    } as any);
+    } as unknown as ReturnType<typeof supabase.from>);
 
     const { abortGuestMatchRemote } = await import('../database');
     const abortRes = await abortGuestMatchRemote('user_123');

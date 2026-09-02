@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import type { RealtimeChannel } from '@supabase/supabase-js';
 import type { Profile, Dart } from '../types';
 import { Keypad } from './Keypad';
 import { getCheckoutSuggestion } from '../utils/checkouts';
@@ -14,7 +15,7 @@ interface CheckoutTrainingProps {
   onAbort: () => void;
   isOnline?: boolean;
   isHost?: boolean;
-  roomChannel?: any;
+  roomChannel?: RealtimeChannel | null;
   myUsername?: string;
 }
 
@@ -78,48 +79,170 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
   const isMyTurn = isOnline ? (activeP.name === myUsername) : true;
 
   const stateRef = React.useRef({ gameState, activePlayer, currentRoundDarts, isProcessing, currentMultiplier, roundBust });
-  stateRef.current = { gameState, activePlayer, currentRoundDarts, isProcessing, currentMultiplier, roundBust };
 
   useEffect(() => {
-    if (isOnline && roomChannel) {
-      if (isHost) {
-         roomChannel.send({ type: 'broadcast', event: 'ct_state', payload: stateRef.current });
-         const sub = roomChannel.on('broadcast', { event: 'ct_throw' }, (p: any) => {
-            const data = p?.payload ?? p;
-            handleDart(data.base, data.overrideMult);
-         });
-         return () => { sub.unsubscribe(); };
-      } else {
-         const sub = roomChannel.on('broadcast', { event: 'ct_state' }, (p: any) => {
-            const data = p?.payload ?? p;
-            if (data.gameState) setGameState(data.gameState);
-            if (data.activePlayer !== undefined) setActivePlayer(data.activePlayer);
-            if (data.currentRoundDarts) setCurrentRoundDarts(data.currentRoundDarts);
-            if (data.isProcessing !== undefined) setIsProcessing(data.isProcessing);
-            if (data.currentMultiplier !== undefined) setCurrentMultiplier(data.currentMultiplier);
-         });
-         return () => { sub.unsubscribe(); };
+    stateRef.current = { gameState, activePlayer, currentRoundDarts, isProcessing, currentMultiplier, roundBust };
+  }, [gameState, activePlayer, currentRoundDarts, isProcessing, currentMultiplier, roundBust]);
+
+  const advanceToNextPlayerOrFinish = React.useCallback((latestGameState: PlayerState[]) => {
+    const allFinished = latestGameState.every(p => p.attempts >= checkoutTargets);
+
+    if (allFinished) {
+      setCurrentRoundDarts([]);
+      setIsProcessing(true);
+      setTimeout(() => {
+        onFinish(latestGameState.map(p => ({ 
+          name: p.name, 
+          score: p.bestCheckout, 
+          roundsCompleted: p.roundsCompleted, 
+          attempts: p.attempts, 
+          dartsUsed: p.dartsUsed 
+        })));
+      }, 500);
+      return;
+    }
+
+    const st = stateRef.current;
+    let nextIdx = (st.activePlayer + 1) % players.length;
+    for (let i = 0; i < players.length; i++) {
+      if (latestGameState[nextIdx].attempts < checkoutTargets) {
+        break;
       }
+      nextIdx = (nextIdx + 1) % players.length;
     }
-  }, [isOnline, isHost, roomChannel]);
 
-  useEffect(() => {
-    if (isOnline && isHost && roomChannel) {
-       roomChannel.send({ type: 'broadcast', event: 'ct_state', payload: stateRef.current });
+    setActivePlayer(nextIdx);
+    setCurrentRoundDarts([]);
+    setIsProcessing(false);
+  }, [checkoutTargets, onFinish, players.length]);
+
+  const processCheckout = React.useCallback((dartsInThisTurn: number) => {
+    speak("Game Shot");
+
+    const st = stateRef.current;
+    const p = st.gameState[st.activePlayer];
+    const totalDartsForThisTarget = (p.roundsOnCurrentTarget * 3) + dartsInThisTurn;
+    const newAttempts = p.attempts + 1;
+    const newCompleted = p.roundsCompleted + 1;
+    const newBestCheckout = Math.max(p.bestCheckout, p.targetScore);
+    const newDartsUsed = p.dartsUsed + totalDartsForThisTarget;
+
+    let nextTarget = p.targetScore;
+    if (newAttempts < checkoutTargets) {
+      nextTarget = generateRandomScore();
     }
-  }, [gameState, activePlayer, currentRoundDarts, isProcessing, currentMultiplier, isOnline, isHost, roomChannel]);
 
-  useEffect(() => {
-    if (activeP && activeP.isBot && !isProcessing && (!isOnline || isHost)) {
-      const timer = setTimeout(() => {
-        const botThrow = getBotDart(activeP.targetAverage, activeP.currentScore, 'DO'); 
-        handleDart(botThrow.base, botThrow.mult);
-      }, 800);
-      return () => clearTimeout(timer);
+    const updatedPlayer: PlayerState = {
+      ...p,
+      attempts: newAttempts,
+      roundsCompleted: newCompleted,
+      bestCheckout: newBestCheckout,
+      dartsUsed: newDartsUsed,
+      targetScore: nextTarget,
+      currentScore: nextTarget,
+      scoreAtStartOfRound: nextTarget,
+      roundsOnCurrentTarget: 0
+    };
+
+    const nextGameState = [...st.gameState];
+    nextGameState[st.activePlayer] = updatedPlayer;
+    setGameState(nextGameState);
+
+    advanceToNextPlayerOrFinish(nextGameState);
+  }, [checkoutTargets, advanceToNextPlayerOrFinish]);
+
+  const processBust = React.useCallback((dartsInThisTurn: number) => {
+    speak("No Score");
+    setRoundBust(false);
+
+    const st = stateRef.current;
+    const p = st.gameState[st.activePlayer];
+    const nextRoundOnTarget = p.roundsOnCurrentTarget + 1;
+
+    let updatedPlayer: PlayerState;
+
+    if (nextRoundOnTarget >= checkoutRounds) {
+      // All allowed rounds on this target used -> target failed
+      const newAttempts = p.attempts + 1;
+      const totalDartsForThisTarget = (p.roundsOnCurrentTarget * 3) + dartsInThisTurn;
+      let nextTarget = p.targetScore;
+      if (newAttempts < checkoutTargets) {
+        nextTarget = generateRandomScore();
+      }
+
+      updatedPlayer = {
+        ...p,
+        attempts: newAttempts,
+        dartsUsed: p.dartsUsed + totalDartsForThisTarget,
+        targetScore: nextTarget,
+        currentScore: nextTarget,
+        scoreAtStartOfRound: nextTarget,
+        roundsOnCurrentTarget: 0
+      };
+    } else {
+      // Has remaining round attempts for this target -> reset score back to scoreAtStartOfRound
+      updatedPlayer = {
+        ...p,
+        currentScore: p.scoreAtStartOfRound,
+        roundsOnCurrentTarget: nextRoundOnTarget
+      };
     }
-  }, [activePlayer, currentRoundDarts, isProcessing, activeP?.currentScore, isOnline, isHost]);
 
-  const handleDart = (base: number, overrideMult?: number) => {
+    const nextGameState = [...st.gameState];
+    nextGameState[st.activePlayer] = updatedPlayer;
+    setGameState(nextGameState);
+
+    advanceToNextPlayerOrFinish(nextGameState);
+  }, [checkoutRounds, checkoutTargets, advanceToNextPlayerOrFinish]);
+
+  const processEndTurn = React.useCallback((darts: Dart[]) => {
+    const roundScore = darts.reduce((s, d) => s + d.value, 0);
+    if (roundScore > 0) speak(roundScore.toString());
+    else speak("No Score");
+
+    const st = stateRef.current;
+    const p = st.gameState[st.activePlayer];
+    const nextRoundOnTarget = p.roundsOnCurrentTarget + 1;
+    const remainingScore = p.currentScore;
+
+    let updatedPlayer: PlayerState;
+
+    if (nextRoundOnTarget >= checkoutRounds) {
+      // All allowed rounds on this target used -> target failed
+      const newAttempts = p.attempts + 1;
+      const totalDartsForThisTarget = nextRoundOnTarget * 3;
+      let nextTarget = p.targetScore;
+      if (newAttempts < checkoutTargets) {
+        nextTarget = generateRandomScore();
+      }
+
+      updatedPlayer = {
+        ...p,
+        attempts: newAttempts,
+        dartsUsed: p.dartsUsed + totalDartsForThisTarget,
+        targetScore: nextTarget,
+        currentScore: nextTarget,
+        scoreAtStartOfRound: nextTarget,
+        roundsOnCurrentTarget: 0
+      };
+    } else {
+      // Keep remaining score for next attempt at this target
+      updatedPlayer = {
+        ...p,
+        currentScore: remainingScore,
+        scoreAtStartOfRound: remainingScore,
+        roundsOnCurrentTarget: nextRoundOnTarget
+      };
+    }
+
+    const nextGameState = [...st.gameState];
+    nextGameState[st.activePlayer] = updatedPlayer;
+    setGameState(nextGameState);
+
+    advanceToNextPlayerOrFinish(nextGameState);
+  }, [checkoutRounds, checkoutTargets, advanceToNextPlayerOrFinish]);
+
+  const handleDart = React.useCallback((base: number, overrideMult?: number) => {
     if (stateRef.current.isProcessing) return;
 
     if (isOnline && !isHost) {
@@ -183,165 +306,48 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
       setIsProcessing(true);
       timeoutRef.current = setTimeout(() => processEndTurn(newDarts), 700);
     }
-  };
+  }, [isOnline, isHost, roomChannel, processCheckout, processBust, processEndTurn]);
 
-  const processCheckout = (dartsInThisTurn: number) => {
-    speak("Game Shot");
-
-    const st = stateRef.current;
-    const p = st.gameState[st.activePlayer];
-    const totalDartsForThisTarget = (p.roundsOnCurrentTarget * 3) + dartsInThisTurn;
-    const newAttempts = p.attempts + 1;
-    const newCompleted = p.roundsCompleted + 1;
-    const newBestCheckout = Math.max(p.bestCheckout, p.targetScore);
-    const newDartsUsed = p.dartsUsed + totalDartsForThisTarget;
-
-    let nextTarget = p.targetScore;
-    if (newAttempts < checkoutTargets) {
-      nextTarget = generateRandomScore();
-    }
-
-    const updatedPlayer: PlayerState = {
-      ...p,
-      attempts: newAttempts,
-      roundsCompleted: newCompleted,
-      bestCheckout: newBestCheckout,
-      dartsUsed: newDartsUsed,
-      targetScore: nextTarget,
-      currentScore: nextTarget,
-      scoreAtStartOfRound: nextTarget,
-      roundsOnCurrentTarget: 0
-    };
-
-    const nextGameState = [...st.gameState];
-    nextGameState[st.activePlayer] = updatedPlayer;
-    setGameState(nextGameState);
-
-    advanceToNextPlayerOrFinish(nextGameState);
-  };
-
-  const processBust = (dartsInThisTurn: number) => {
-    speak("No Score");
-    setRoundBust(false);
-
-    const st = stateRef.current;
-    const p = st.gameState[st.activePlayer];
-    const nextRoundOnTarget = p.roundsOnCurrentTarget + 1;
-
-    let updatedPlayer: PlayerState;
-
-    if (nextRoundOnTarget >= checkoutRounds) {
-      // All allowed rounds on this target used -> target failed
-      const newAttempts = p.attempts + 1;
-      const totalDartsForThisTarget = (p.roundsOnCurrentTarget * 3) + dartsInThisTurn;
-      let nextTarget = p.targetScore;
-      if (newAttempts < checkoutTargets) {
-        nextTarget = generateRandomScore();
+  useEffect(() => {
+    if (isOnline && roomChannel) {
+      if (isHost) {
+         roomChannel.send({ type: 'broadcast', event: 'ct_state', payload: stateRef.current });
+         const sub = roomChannel.on('broadcast', { event: 'ct_throw' }, (p: unknown) => {
+            const data = (p && typeof p === 'object' && 'payload' in p ? (p as { payload: { base: number; overrideMult?: number } }).payload : p) as { base: number; overrideMult?: number };
+            if (data && typeof data.base === 'number') {
+              handleDart(data.base, data.overrideMult);
+            }
+         });
+         return () => { sub.unsubscribe(); };
+      } else {
+         const sub = roomChannel.on('broadcast', { event: 'ct_state' }, (p: unknown) => {
+            const data = (p && typeof p === 'object' && 'payload' in p ? (p as { payload: Record<string, unknown> }).payload : p) as Record<string, unknown>;
+            if (data?.gameState) setGameState(data.gameState as PlayerState[]);
+            if (data?.activePlayer !== undefined) setActivePlayer(data.activePlayer as number);
+            if (data?.currentRoundDarts) setCurrentRoundDarts(data.currentRoundDarts as Dart[]);
+            if (data?.isProcessing !== undefined) setIsProcessing(data.isProcessing as boolean);
+            if (data?.currentMultiplier !== undefined) setCurrentMultiplier(data.currentMultiplier as number);
+         });
+         return () => { sub.unsubscribe(); };
       }
-
-      updatedPlayer = {
-        ...p,
-        attempts: newAttempts,
-        dartsUsed: p.dartsUsed + totalDartsForThisTarget,
-        targetScore: nextTarget,
-        currentScore: nextTarget,
-        scoreAtStartOfRound: nextTarget,
-        roundsOnCurrentTarget: 0
-      };
-    } else {
-      // Has remaining round attempts for this target -> reset score back to scoreAtStartOfRound
-      updatedPlayer = {
-        ...p,
-        currentScore: p.scoreAtStartOfRound,
-        roundsOnCurrentTarget: nextRoundOnTarget
-      };
     }
+  }, [isOnline, isHost, roomChannel, handleDart]);
 
-    const nextGameState = [...st.gameState];
-    nextGameState[st.activePlayer] = updatedPlayer;
-    setGameState(nextGameState);
-
-    advanceToNextPlayerOrFinish(nextGameState);
-  };
-
-  const processEndTurn = (darts: Dart[]) => {
-    const roundScore = darts.reduce((s, d) => s + d.value, 0);
-    if (roundScore > 0) speak(roundScore.toString());
-    else speak("No Score");
-
-    const st = stateRef.current;
-    const p = st.gameState[st.activePlayer];
-    const nextRoundOnTarget = p.roundsOnCurrentTarget + 1;
-    const remainingScore = p.currentScore;
-
-    let updatedPlayer: PlayerState;
-
-    if (nextRoundOnTarget >= checkoutRounds) {
-      // All allowed rounds on this target used -> target failed
-      const newAttempts = p.attempts + 1;
-      const totalDartsForThisTarget = nextRoundOnTarget * 3;
-      let nextTarget = p.targetScore;
-      if (newAttempts < checkoutTargets) {
-        nextTarget = generateRandomScore();
-      }
-
-      updatedPlayer = {
-        ...p,
-        attempts: newAttempts,
-        dartsUsed: p.dartsUsed + totalDartsForThisTarget,
-        targetScore: nextTarget,
-        currentScore: nextTarget,
-        scoreAtStartOfRound: nextTarget,
-        roundsOnCurrentTarget: 0
-      };
-    } else {
-      // Keep remaining score for next attempt at this target
-      updatedPlayer = {
-        ...p,
-        currentScore: remainingScore,
-        scoreAtStartOfRound: remainingScore,
-        roundsOnCurrentTarget: nextRoundOnTarget
-      };
+  useEffect(() => {
+    if (isOnline && isHost && roomChannel) {
+       roomChannel.send({ type: 'broadcast', event: 'ct_state', payload: stateRef.current });
     }
+  }, [gameState, activePlayer, currentRoundDarts, isProcessing, currentMultiplier, isOnline, isHost, roomChannel]);
 
-    const nextGameState = [...st.gameState];
-    nextGameState[st.activePlayer] = updatedPlayer;
-    setGameState(nextGameState);
-
-    advanceToNextPlayerOrFinish(nextGameState);
-  };
-
-  const advanceToNextPlayerOrFinish = (latestGameState: PlayerState[]) => {
-    const allFinished = latestGameState.every(p => p.attempts >= checkoutTargets);
-
-    if (allFinished) {
-      setCurrentRoundDarts([]);
-      setIsProcessing(true);
-      setTimeout(() => {
-        onFinish(latestGameState.map(p => ({ 
-          name: p.name, 
-          score: p.bestCheckout, 
-          roundsCompleted: p.roundsCompleted, 
-          attempts: p.attempts, 
-          dartsUsed: p.dartsUsed 
-        })));
-      }, 500);
-      return;
+  useEffect(() => {
+    if (activeP && activeP.isBot && !isProcessing && (!isOnline || isHost)) {
+      const timer = setTimeout(() => {
+        const botThrow = getBotDart(activeP.targetAverage, activeP.currentScore, 'DO'); 
+        handleDart(botThrow.base, botThrow.mult);
+      }, 800);
+      return () => clearTimeout(timer);
     }
-
-    const st = stateRef.current;
-    let nextIdx = (st.activePlayer + 1) % players.length;
-    for (let i = 0; i < players.length; i++) {
-      if (latestGameState[nextIdx].attempts < checkoutTargets) {
-        break;
-      }
-      nextIdx = (nextIdx + 1) % players.length;
-    }
-
-    setActivePlayer(nextIdx);
-    setCurrentRoundDarts([]);
-    setIsProcessing(false);
-  };
+  }, [activeP, isProcessing, isOnline, isHost, handleDart]);
 
   const undoSingleDart = () => {
     if (isOnline && !isHost) return;

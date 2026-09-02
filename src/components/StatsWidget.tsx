@@ -48,7 +48,6 @@ export const StatsWidget: React.FC<StatsWidgetProps> = ({ title, mode, isOnline,
     let totalDarts = 0, totalPts = 0;
     let totalFirst9Darts = 0, totalFirst9Pts = 0;
     let totalCheckAtt = 0, totalCheckSucc = 0;
-    let totalLegsPlayed = 0;
     let tripleDarts = 0, totalTriples = 0;
     let minigameBestScore = 0, minigameTotalScore = 0;
     
@@ -102,8 +101,6 @@ export const StatsWidget: React.FC<StatsWidgetProps> = ({ title, mode, isOnline,
                 tripleDarts += pStat.matchDarts;
                 totalTriples += pStat.triplesHit;
             }
-            const matchLegs = m.players.reduce((sum, p) => sum + (p.legs || 0), 0);
-            totalLegsPlayed += matchLegs > 0 ? matchLegs : 1;
         }
     });
 
@@ -145,7 +142,7 @@ export const StatsWidget: React.FC<StatsWidgetProps> = ({ title, mode, isOnline,
 
     const chartData = playerMatches.slice(0, 20).reverse().map((m, i) => {
         const pStat = m.players.find(p => p.name === profileName)!;
-        let val = isMinigame 
+        const val = isMinigame 
             ? (pStat.score || 0) 
             : (pStat.matchDarts ? (pStat.matchPts! / pStat.matchDarts) * 3 : parseFloat(pStat.avg || "0"));
         return { name: `${i+1}`, val: parseFloat(val.toFixed(2)) };
@@ -275,7 +272,7 @@ export const StatsWidget: React.FC<StatsWidgetProps> = ({ title, mode, isOnline,
                             <Tooltip 
                               contentStyle={{ backgroundColor: '#111827', border: '1px solid rgba(148, 163, 184, 0.15)', borderRadius: '10px' }} 
                               itemStyle={{ color: 'var(--text)' }}
-                              formatter={(value: any) => [value, isMinigame ? 'Punkte' : '3-Dart Average']}
+                              formatter={(value: unknown) => [value as React.ReactNode, isMinigame ? 'Punkte' : '3-Dart Average']}
                             />
                             <Line 
                               type="monotone" 
@@ -321,10 +318,10 @@ export const StatsWidget: React.FC<StatsWidgetProps> = ({ title, mode, isOnline,
                                   <Tooltip 
                                     contentStyle={{ backgroundColor: '#111827', border: '1px solid rgba(148, 163, 184, 0.15)', borderRadius: '10px' }} 
                                     itemStyle={{ color: 'var(--text)' }}
-                                    formatter={(value: any, name: any) => {
+                                    formatter={(value: unknown, name: unknown) => {
                                       const total = pieData.reduce((s, e) => s + e.value, 0);
                                       const pct = total > 0 ? ((Number(value) / total) * 100).toFixed(1) : '0';
-                                      return [`${value} Treffer (${pct}%)`, name];
+                                      return [`${value} Treffer (${pct}%)`, String(name)];
                                     }}
                                   />
                                 </PieChart>

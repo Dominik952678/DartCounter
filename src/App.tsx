@@ -31,7 +31,7 @@ export default function App() {
   const { profiles, setProfiles, handleCreateProfile, handleUpdateProfile, handleDeleteProfile } = useProfiles(user);
   
   const [savedMatches, setSavedMatches] = useState<MatchHistory[]>([]);
-  const [miniGameConfig, setMiniGameConfig] = useState<{players: string[], settings: Record<string, any>}>({players: [], settings: {}});
+  const [miniGameConfig, setMiniGameConfig] = useState<{players: string[], settings: Record<string, unknown>}>({players: [], settings: {}});
   const [showHistory, setShowHistory] = useState(false);
   const [matchSessionId, setMatchSessionId] = useState<number>(1);
 
@@ -130,7 +130,7 @@ export default function App() {
             key={matchSessionId}
             players={effectiveMiniGamePlayers}
             profiles={profiles}
-            rounds={miniGameConfig.settings.rounds || 10}
+            rounds={(miniGameConfig.settings.rounds as number) || 10}
             onAbort={() => setScreen('start')}
             onFinish={async (results) => {
                let updatedProfiles: Record<string, Profile> = {};
@@ -249,8 +249,8 @@ export default function App() {
             key={matchSessionId}
             players={effectiveMiniGamePlayers}
             profiles={profiles}
-            checkoutRounds={miniGameConfig.settings.checkoutRounds || 1}
-            checkoutTargets={miniGameConfig.settings.checkoutTargets || 10}
+            checkoutRounds={(miniGameConfig.settings.checkoutRounds as number) || 1}
+            checkoutTargets={(miniGameConfig.settings.checkoutTargets as number) || 10}
             onAbort={() => setScreen('start')}
             onFinish={async (results) => {
                let updatedProfiles: Record<string, Profile> = {};

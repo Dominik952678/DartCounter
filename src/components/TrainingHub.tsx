@@ -8,13 +8,14 @@ export type MiniGameMode = 'checkout' | 'powerscoring' | 'splitscore';
 interface TrainingHubProps {
   profiles: Record<string, Profile>;
   setProfiles?: (profiles: Record<string, Profile>) => void;
-  onStartMiniGame: (mode: MiniGameMode, players: string[], settings: any) => void;
+  onStartMiniGame: (mode: MiniGameMode, players: string[], settings: Record<string, unknown>) => void;
   initialMode?: MiniGameMode;
 }
 
 export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles, onStartMiniGame, initialMode = 'checkout' }) => {
   const { user } = useAuthStore();
   const isGuest = !user;
+  const profileNames = Object.keys(profiles);
 
   const [selectedMode, setSelectedMode] = useState<MiniGameMode>(() => {
     if (initialMode && ['checkout', 'powerscoring', 'splitscore'].includes(initialMode)) return initialMode;
@@ -22,12 +23,6 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
     if (saved && ['checkout', 'powerscoring', 'splitscore'].includes(saved)) return saved as MiniGameMode;
     return 'checkout';
   });
-
-  useEffect(() => {
-    if (initialMode) {
-      setSelectedMode(initialMode);
-    }
-  }, [initialMode]);
 
   const [playerCount, setPlayerCount] = useState<number>(() => {
     const saved = localStorage.getItem('dart_training_playerCount');
@@ -65,14 +60,30 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
     return 10;
   });
 
-  const [selectedPlayers, setSelectedPlayers] = useState<string[]>(
-    isGuest ? ['Gast 1'] : []
-  );
+  const [selectedPlayers, setSelectedPlayers] = useState<string[]>(() => {
+    if (isGuest) return ['Gast 1', 'Gast 2', 'Gast 3', 'Gast 4'];
+    const pNames = Object.keys(profiles);
+    if (pNames.length > 0) {
+      const initial: string[] = [];
+      const humans = pNames.filter(n => !profiles[n]?.isBot);
+      const bots = pNames.filter(n => profiles[n]?.isBot);
+      for (let i = 0; i < 4; i++) {
+        if (i === 0 && humans.length > 0) {
+          initial.push(humans[0]);
+        } else {
+          const nextHuman = humans.find(h => !initial.includes(h));
+          const nextBot = bots.find(b => !initial.includes(b));
+          if (nextHuman) initial.push(nextHuman);
+          else if (nextBot) initial.push(nextBot);
+        }
+      }
+      return initial;
+    }
+    return [];
+  });
   const [guestBots, setGuestBots] = useState<Record<string, boolean>>({});
   const [randomOrderOnStart, setRandomOrderOnStart] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  const profileNames = Object.keys(profiles);
 
   useEffect(() => {
     localStorage.setItem('dart_training_mode', selectedMode);
@@ -93,43 +104,6 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
   useEffect(() => {
     localStorage.setItem('dart_checkout_targets', checkoutTargets.toString());
   }, [checkoutTargets]);
-
-  useEffect(() => {
-    if (!isGuest && profileNames.length > 0 && selectedPlayers.length === 0) {
-      const initial: string[] = [];
-      const humans = profileNames.filter(n => !profiles[n]?.isBot);
-      const bots = profileNames.filter(n => profiles[n]?.isBot);
-      
-      for (let i = 0; i < 4; i++) {
-        if (i === 0 && humans.length > 0) {
-          initial.push(humans[0]);
-        } else {
-          const nextHuman = humans.find(h => !initial.includes(h));
-          const nextBot = bots.find(b => !initial.includes(b));
-          if (nextHuman) initial.push(nextHuman);
-          else if (nextBot) initial.push(nextBot);
-        }
-      }
-      setSelectedPlayers(initial);
-    }
-  }, [profileNames.length, isGuest]);
-
-  useEffect(() => {
-     if (isGuest) {
-        setSelectedPlayers(prev => {
-           const next = [...prev];
-           for (let i = 0; i < playerCount; i++) {
-              if (!next[i]) next[i] = `Gast ${i + 1}`;
-           }
-           return next;
-        });
-     }
-  }, [playerCount, isGuest]);
-
-  // Clear error when inputs change
-  useEffect(() => {
-    if (errorMsg) setErrorMsg(null);
-  }, [selectedPlayers, playerCount, selectedMode]);
 
   const handlePlayerChange = (index: number, name: string) => {
     const newSelected = [...selectedPlayers];
