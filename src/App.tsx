@@ -15,7 +15,7 @@ import { SplitScore } from './components/SplitScore';
 import { CheckoutTraining } from './components/CheckoutTraining';
 import { StatsModal, HistoryModal } from './components/Modals';
 import type { Player, MatchHistory, Profile } from './types';
-import { startSync, saveProfiles, saveMatch, getMatches, syncMatchesAndProfilesForGuests } from './db/database';
+import { startSync, saveProfiles, saveMatch, getMatches, syncMatchesAndProfilesForGuests, reconstructAllProfilesFromMatches } from './db/database';
 
 import { useProfiles } from './hooks/useProfiles';
 import { useGameEngine } from './hooks/useGameEngine';
@@ -72,8 +72,20 @@ export default function App() {
 
   useEffect(() => {
     startSync(window.location.hostname);
-    getMatches(user?.id).then(setSavedMatches);
-  }, [user?.id]);
+    getMatches(user?.id).then(matches => {
+      setSavedMatches(matches);
+      if (matches.length > 0) {
+        setProfiles(prev => {
+          const updated = reconstructAllProfilesFromMatches(prev, matches);
+          if (JSON.stringify(updated) !== JSON.stringify(prev)) {
+            saveProfiles(updated, user?.id).catch(console.error);
+            return updated;
+          }
+          return prev;
+        });
+      }
+    });
+  }, [user?.id, setProfiles]);
 
   return (
     <div className={`app-container ${isMatchActive ? 'app-container-match' : ''}`}>

@@ -18,8 +18,233 @@ export function getGuestDefaultProfiles(): Record<string, Profile> {
   };
 }
 
+/**
+ * Reconstructs or updates a Profile object with all accumulated historical data
+ * from the complete MatchHistory list. This ensures Win Rate, Best Leg, Segmentverteilung,
+ * 180s, Heatmap, and minigame scores are never lost even if the profiles table was reset.
+ */
+export function reconstructProfileFromMatches(
+  profileName: string,
+  baseProfile: Profile | undefined,
+  matches: MatchHistory[]
+): Profile {
+  const prof: Profile = {
+    wins: baseProfile?.wins || 0,
+    matches: baseProfile?.matches || 0,
+    dartsThrown: baseProfile?.dartsThrown || 0,
+    pointsScored: baseProfile?.pointsScored || 0,
+    highestThrow: baseProfile?.highestThrow || 0,
+    bestLegDarts: baseProfile?.bestLegDarts,
+    highestCheckout: baseProfile?.highestCheckout,
+    sixtyPlus: baseProfile?.sixtyPlus || 0,
+    hundredPlus: baseProfile?.hundredPlus || 0,
+    oneFortyPlus: baseProfile?.oneFortyPlus || 0,
+    oneEighty: baseProfile?.oneEighty || 0,
+    checkoutAttempts: baseProfile?.checkoutAttempts || 0,
+    checkoutSuccesses: baseProfile?.checkoutSuccesses || 0,
+    first9Pts: baseProfile?.first9Pts || 0,
+    first9Darts: baseProfile?.first9Darts || 0,
+    triplesHit: baseProfile?.triplesHit || 0,
+    segmentHits: { ...(baseProfile?.segmentHits || {}) },
+    isBot: baseProfile?.isBot,
+    targetAverage: baseProfile?.targetAverage,
+    color: baseProfile?.color || 'var(--blue)',
+    powerScoring: baseProfile?.powerScoring ? { ...baseProfile.powerScoring } : undefined,
+    splitScore: baseProfile?.splitScore ? { ...baseProfile.splitScore } : undefined,
+    checkoutTraining: baseProfile?.checkoutTraining ? { ...baseProfile.checkoutTraining } : undefined,
+    linkedUserId: baseProfile?.linkedUserId,
+    linkedUsername: baseProfile?.linkedUsername,
+    isLinkedCloudGuest: baseProfile?.isLinkedCloudGuest,
+    syncAuthToken: baseProfile?.syncAuthToken,
+    lastSyncedAt: baseProfile?.lastSyncedAt
+  };
+
+  const safeMatches = Array.isArray(matches) ? matches : [];
+  const playerMatches = safeMatches.filter(
+    m => m && Array.isArray(m.players) && m.players.some(p => p && p.name === profileName)
+  );
+
+  if (playerMatches.length === 0) return prof;
+
+  let matchWins = 0;
+  let matchDarts = 0;
+  let matchPts = 0;
+  let matchFirst9Pts = 0;
+  let matchFirst9Darts = 0;
+  let matchCheckAtt = 0;
+  let matchCheckSucc = 0;
+  let matchSixtyPlus = 0;
+  let matchHundredPlus = 0;
+  let matchOneFortyPlus = 0;
+  let matchOneEighty = 0;
+  let matchTriples = 0;
+  let matchHighestCheckout = 0;
+  let matchBestLeg = 0;
+  const matchSegmentHits: Record<string, number> = {};
+
+  playerMatches.forEach(m => {
+    const isWinner = m.winner === profileName || (!!m.is2v2 && m.winner?.includes(profileName));
+    if (isWinner) matchWins++;
+
+    const pStat = m.players?.find(p => p && p.name === profileName);
+    if (!pStat) return;
+
+    if (pStat.matchDarts) matchDarts += pStat.matchDarts;
+    if (pStat.matchPts) matchPts += pStat.matchPts;
+    if (pStat.first9Pts) matchFirst9Pts += pStat.first9Pts;
+    if (pStat.first9Darts) matchFirst9Darts += pStat.first9Darts;
+    if (pStat.checkoutAttempts) matchCheckAtt += pStat.checkoutAttempts;
+    if (pStat.checkoutSuccesses) matchCheckSucc += pStat.checkoutSuccesses;
+    if (pStat.sixtyPlus) matchSixtyPlus += pStat.sixtyPlus;
+    if (pStat.hundredPlus) matchHundredPlus += pStat.hundredPlus;
+    if (pStat.oneFortyPlus) matchOneFortyPlus += pStat.oneFortyPlus;
+    if (pStat.oneEighty) matchOneEighty += pStat.oneEighty;
+    if (pStat.triplesHit) matchTriples += pStat.triplesHit;
+
+    if (pStat.highestCheckout && pStat.highestCheckout > matchHighestCheckout) {
+      matchHighestCheckout = pStat.highestCheckout;
+    }
+    if (pStat.bestMatchLeg && pStat.bestMatchLeg > 0) {
+      if (matchBestLeg === 0 || pStat.bestMatchLeg < matchBestLeg) {
+        matchBestLeg = pStat.bestMatchLeg;
+      }
+    }
+
+    if (pStat.segmentHits) {
+      Object.entries(pStat.segmentHits).forEach(([seg, count]) => {
+        matchSegmentHits[seg] = (matchSegmentHits[seg] || 0) + (count || 0);
+      });
+    }
+
+    // Minigame stats
+    if (m.gameType === 'powerScoring' && pStat.score !== undefined) {
+      if (!prof.powerScoring) prof.powerScoring = { bestScore: 0, matchesPlayed: 0, wins: 0, totalScore: 0 };
+      prof.powerScoring.bestScore = Math.max(prof.powerScoring.bestScore, pStat.score);
+      prof.powerScoring.matchesPlayed = Math.max(
+        prof.powerScoring.matchesPlayed,
+        playerMatches.filter(pm => pm.gameType === 'powerScoring').length
+      );
+      prof.powerScoring.totalScore = (prof.powerScoring.totalScore || 0) + pStat.score;
+      if (isWinner) {
+        prof.powerScoring.wins = Math.max(
+          prof.powerScoring.wins,
+          playerMatches.filter(pm => pm.gameType === 'powerScoring' && pm.winner === profileName).length
+        );
+      }
+    } else if (m.gameType === 'splitScore' && pStat.score !== undefined) {
+      if (!prof.splitScore) prof.splitScore = { bestScore: 0, matchesPlayed: 0, wins: 0, totalScore: 0 };
+      prof.splitScore.bestScore = Math.max(prof.splitScore.bestScore, pStat.score);
+      prof.splitScore.matchesPlayed = Math.max(
+        prof.splitScore.matchesPlayed,
+        playerMatches.filter(pm => pm.gameType === 'splitScore').length
+      );
+      prof.splitScore.totalScore = (prof.splitScore.totalScore || 0) + pStat.score;
+      if (isWinner) {
+        prof.splitScore.wins = Math.max(
+          prof.splitScore.wins,
+          playerMatches.filter(pm => pm.gameType === 'splitScore' && pm.winner === profileName).length
+        );
+      }
+    } else if (m.gameType === 'checkoutTraining') {
+      if (!prof.checkoutTraining) prof.checkoutTraining = { bestCheckout: 0, roundsCompleted: 0, matchesPlayed: 0, wins: 0, totalAttempts: 0, totalDartsUsed: 0 };
+      if (pStat.score) prof.checkoutTraining.bestCheckout = Math.max(prof.checkoutTraining.bestCheckout, pStat.score);
+      prof.checkoutTraining.matchesPlayed = Math.max(
+        prof.checkoutTraining.matchesPlayed,
+        playerMatches.filter(pm => pm.gameType === 'checkoutTraining').length
+      );
+      if (pStat.attempts) prof.checkoutTraining.totalAttempts = (prof.checkoutTraining.totalAttempts || 0) + pStat.attempts;
+      if (pStat.dartsUsed) prof.checkoutTraining.totalDartsUsed = (prof.checkoutTraining.totalDartsUsed || 0) + pStat.dartsUsed;
+      if (isWinner) {
+        prof.checkoutTraining.wins = Math.max(
+          prof.checkoutTraining.wins,
+          playerMatches.filter(pm => pm.gameType === 'checkoutTraining' && pm.winner === profileName).length
+        );
+      }
+    }
+  });
+
+  // Reconcile standard profile stats with match totals
+  prof.matches = Math.max(prof.matches, playerMatches.length);
+  prof.wins = Math.max(prof.wins, matchWins);
+  prof.dartsThrown = Math.max(prof.dartsThrown, matchDarts);
+  prof.pointsScored = Math.max(prof.pointsScored, matchPts);
+  prof.first9Pts = Math.max(prof.first9Pts || 0, matchFirst9Pts);
+  prof.first9Darts = Math.max(prof.first9Darts || 0, matchFirst9Darts);
+  prof.checkoutAttempts = Math.max(prof.checkoutAttempts || 0, matchCheckAtt);
+  prof.checkoutSuccesses = Math.max(prof.checkoutSuccesses || 0, matchCheckSucc);
+  prof.sixtyPlus = Math.max(prof.sixtyPlus || 0, matchSixtyPlus);
+  prof.hundredPlus = Math.max(prof.hundredPlus || 0, matchHundredPlus);
+  prof.oneFortyPlus = Math.max(prof.oneFortyPlus || 0, matchOneFortyPlus);
+  prof.oneEighty = Math.max(prof.oneEighty || 0, matchOneEighty);
+  prof.triplesHit = Math.max(prof.triplesHit || 0, matchTriples);
+
+  if (matchHighestCheckout > 0) {
+    prof.highestCheckout = Math.max(prof.highestCheckout || 0, matchHighestCheckout);
+  }
+  if (matchBestLeg > 0) {
+    prof.bestLegDarts = prof.bestLegDarts ? Math.min(prof.bestLegDarts, matchBestLeg) : matchBestLeg;
+  }
+  if ((prof.highestCheckout || 0) > (prof.highestThrow || 0)) {
+    prof.highestThrow = prof.highestCheckout || 0;
+  }
+  if ((prof.oneEighty || 0) > 0 && (prof.highestThrow || 0) < 180) {
+    prof.highestThrow = 180;
+  }
+
+  // Merge segment hits
+  const baseHitsSum = Object.values(prof.segmentHits || {}).reduce((s, v) => s + (v || 0), 0);
+  const matchHitsSum = Object.values(matchSegmentHits).reduce((s, v) => s + (v || 0), 0);
+  if (matchHitsSum > baseHitsSum || baseHitsSum === 0) {
+    prof.segmentHits = matchSegmentHits;
+  } else {
+    Object.entries(matchSegmentHits).forEach(([seg, hits]) => {
+      if (!prof.segmentHits![seg]) {
+        prof.segmentHits![seg] = hits;
+      }
+    });
+  }
+
+  return prof;
+}
+
+/**
+ * Reconstructs all profiles in a Record using the provided MatchHistory list.
+ */
+export function reconstructAllProfilesFromMatches(
+  currentProfiles: Record<string, Profile>,
+  matches: MatchHistory[]
+): Record<string, Profile> {
+  const result: Record<string, Profile> = {};
+  
+  Object.entries(currentProfiles).forEach(([name, prof]) => {
+    result[name] = reconstructProfileFromMatches(name, prof, matches);
+  });
+
+  matches.forEach(m => {
+    if (m && Array.isArray(m.players)) {
+      m.players.forEach(p => {
+        if (p?.name && !result[p.name]) {
+          result[p.name] = reconstructProfileFromMatches(p.name, undefined, matches);
+        }
+      });
+    }
+  });
+
+  return result;
+}
+
 export async function getProfiles(userId?: string | null, username?: string): Promise<Record<string, Profile>> {
   const docId = userId ? `profiles_${userId}` : 'profiles_guest';
+  const matchesDocKey = userId ? `matches_${userId}` : 'matches_guest';
+
+  // Try reading cached matches for reconciling profile statistics
+  let localMatches: MatchHistory[] = [];
+  try {
+    const rawMatches = localStorage.getItem(matchesDocKey);
+    if (rawMatches) localMatches = JSON.parse(rawMatches);
+  } catch (e) {
+    console.error("Error reading cached matches for profile reconciliation", e);
+  }
 
   // Try reading from localStorage cache first for fast offline startup
   let cached: Record<string, Profile> | null = null;
@@ -30,9 +255,18 @@ export async function getProfiles(userId?: string | null, username?: string): Pr
     console.error("Error reading cached profiles", e);
   }
 
-  // If not logged in, return cached or default guest profiles
+  // If not logged in, return cached or default guest profiles reconciled with matches
   if (!userId) {
-    return cached || getGuestDefaultProfiles();
+    let guestProfiles = cached || getGuestDefaultProfiles();
+    if (localMatches.length > 0) {
+      guestProfiles = reconstructAllProfilesFromMatches(guestProfiles, localMatches);
+      try {
+        localStorage.setItem(docId, JSON.stringify(guestProfiles));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    return guestProfiles;
   }
 
   try {
@@ -46,24 +280,35 @@ export async function getProfiles(userId?: string | null, username?: string): Pr
       if (error.code === 'PGRST116') {
         // Document does not exist yet -> create initial profile with username
         const initialName = username || 'Spieler';
-        const initialProfiles: Record<string, Profile> = {
+        let initialProfiles: Record<string, Profile> = {
           [initialName]: { wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0, color: 'var(--blue)' }
         };
+        if (localMatches.length > 0) {
+          initialProfiles = reconstructAllProfilesFromMatches(initialProfiles, localMatches);
+        }
         await saveProfiles(initialProfiles, userId);
         return initialProfiles;
       }
-      if (cached) return cached;
+      if (cached) {
+        if (localMatches.length > 0) {
+          return reconstructAllProfilesFromMatches(cached, localMatches);
+        }
+        return cached;
+      }
       throw error;
     }
 
-    const fetchedProfiles = (data?.data as { profiles?: Record<string, Profile> })?.profiles || {};
+    let fetchedProfiles = (data?.data as { profiles?: Record<string, Profile> })?.profiles || {};
     if (Object.keys(fetchedProfiles).length === 0) {
       const initialName = username || 'Spieler';
-      const initialProfiles: Record<string, Profile> = {
+      fetchedProfiles = {
         [initialName]: { wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0, color: 'var(--blue)' }
       };
-      await saveProfiles(initialProfiles, userId);
-      return initialProfiles;
+    }
+
+    // Reconcile fetched profiles with matches to restore any missing stats
+    if (localMatches.length > 0) {
+      fetchedProfiles = reconstructAllProfilesFromMatches(fetchedProfiles, localMatches);
     }
 
     // Update local cache
@@ -76,11 +321,20 @@ export async function getProfiles(userId?: string | null, username?: string): Pr
     return fetchedProfiles;
   } catch (err) {
     console.error("Error getting profiles from Supabase", err);
-    if (cached) return cached;
+    if (cached) {
+      if (localMatches.length > 0) {
+        return reconstructAllProfilesFromMatches(cached, localMatches);
+      }
+      return cached;
+    }
     const initialName = username || 'Spieler';
-    return {
+    let fallbackProfiles: Record<string, Profile> = {
       [initialName]: { wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0, color: 'var(--blue)' }
     };
+    if (localMatches.length > 0) {
+      fallbackProfiles = reconstructAllProfilesFromMatches(fallbackProfiles, localMatches);
+    }
+    return fallbackProfiles;
   }
 }
 

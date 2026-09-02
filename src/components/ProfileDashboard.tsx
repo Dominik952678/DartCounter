@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import type { Profile, MatchHistory } from '../types';
+import { reconstructProfileFromMatches } from '../db/database';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Cell } from 'recharts';
 import { HeadToHead } from './HeadToHead';
 import { DartboardHeatmap } from './DartboardHeatmap';
@@ -26,10 +27,26 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
   const [compareWith, setCompareWith] = useState<string>('');
   const [selectedMode, setSelectedMode] = useState<string>('Alle (Standard)');
 
+  const effectiveProfile = useMemo(() => {
+    return reconstructProfileFromMatches(profileName, profile, matches);
+  }, [profileName, profile, matches]);
+
+  useEffect(() => {
+    if (onUpdateProfile && (
+      (effectiveProfile.matches > (profile?.matches || 0)) ||
+      (effectiveProfile.wins > (profile?.wins || 0)) ||
+      (effectiveProfile.dartsThrown > (profile?.dartsThrown || 0)) ||
+      (!profile?.segmentHits && Object.keys(effectiveProfile.segmentHits || {}).length > 0)
+    )) {
+      onUpdateProfile(profileName, effectiveProfile);
+    }
+  }, [effectiveProfile, onUpdateProfile, profile, profileName]);
+
   const { 
     availableModes, overallAvg, first9Avg, checkoutQuote, last5Avg, last5First9, last5Checkout, 
     chartData, checkoutChartData, radarData, maxRadarHits, pieData,
-    isMinigame, minigameAvgScore, minigameBestScore
+    isMinigame, minigameAvgScore, minigameBestScore,
+    segmentHitsObj
   } = useMemo(() => {
     const safeMatches = Array.isArray(matches) ? [...matches] : [];
     if (profile?.linkedUserId) {
@@ -158,7 +175,21 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
     }
     const minigameAvgScore = playerMatches.length > 0 ? Math.round(minigameTotalScore / playerMatches.length) : 0;
 
-    const segmentHitsObj = profile?.segmentHits || {};
+    const modeSegmentHits: Record<string, number> = {};
+    if (selectedMode !== 'Alle (Standard)') {
+      playerMatches.forEach(m => {
+        const pStat = m.players?.find(p => p && p.name === profileName);
+        if (pStat?.segmentHits) {
+          Object.entries(pStat.segmentHits).forEach(([seg, hits]) => {
+            modeSegmentHits[seg] = (modeSegmentHits[seg] || 0) + (hits || 0);
+          });
+        }
+      });
+    }
+
+    const segmentHitsObj = selectedMode === 'Alle (Standard)'
+      ? (effectiveProfile?.segmentHits || {})
+      : modeSegmentHits;
     const totalHits = Object.values(segmentHitsObj).reduce((sum, val) => sum + (val || 0), 0);
 
     const pieData: { name: string; value: number }[] = [];
@@ -198,12 +229,13 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
     return { 
       availableModes, overallAvg, first9Avg, checkoutQuote, last5Avg, last5First9, last5Checkout, 
       chartData, checkoutChartData, radarData, maxRadarHits, pieData,
-      isMinigame, minigameAvgScore, minigameBestScore
+      isMinigame, minigameAvgScore, minigameBestScore,
+      segmentHitsObj
     };
-  }, [profile, matches, profileName, selectedMode]);
+  }, [effectiveProfile, profile, matches, profileName, selectedMode]);
 
-  const winRate = (profile && profile.matches && profile.matches > 0) 
-    ? (((profile.wins || 0) / profile.matches) * 100).toFixed(0) 
+  const winRate = (effectiveProfile && effectiveProfile.matches && effectiveProfile.matches > 0) 
+    ? (((effectiveProfile.wins || 0) / effectiveProfile.matches) * 100).toFixed(0) 
     : "0";
 
   return (
@@ -314,8 +346,8 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
             {compareWith && allProfiles[compareWith] && (
               <div style={{ marginTop: '15px' }}>
                 <HeadToHead 
-                  profileA={{ name: profileName, profile }} 
-                  profileB={{ name: compareWith, profile: allProfiles[compareWith] }}
+                  profileA={{ name: profileName, profile: effectiveProfile }} 
+                  profileB={{ name: compareWith, profile: reconstructProfileFromMatches(compareWith, allProfiles[compareWith], matches) }}
                   onClose={() => setCompareWith('')}
                 />
               </div>
@@ -330,21 +362,21 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
               <div className="dash-stat-card">
                 <span className="dash-stat-label">Win Rate</span>
                 <span className="dash-stat-value">{winRate}%</span>
-                <span className="dash-stat-detail">{profile?.wins || 0}W / {profile?.matches || 0}G</span>
+                <span className="dash-stat-detail">{effectiveProfile?.wins || 0}W / {effectiveProfile?.matches || 0}G</span>
               </div>
               <div className="dash-stat-card">
                 <span className="dash-stat-label">Best Leg</span>
-                <span className="dash-stat-value">{profile?.bestLegDarts || '–'}</span>
+                <span className="dash-stat-value">{effectiveProfile?.bestLegDarts || '–'}</span>
                 <span className="dash-stat-detail">Darts</span>
               </div>
               <div className="dash-stat-card">
                 <span className="dash-stat-label">Best Finish</span>
-                <span className="dash-stat-value">{profile?.highestCheckout || '–'}</span>
+                <span className="dash-stat-value">{effectiveProfile?.highestCheckout || '–'}</span>
                 <span className="dash-stat-detail">Checkout</span>
               </div>
               <div className="dash-stat-card">
                 <span className="dash-stat-label">Best Throw</span>
-                <span className="dash-stat-value">{profile?.highestThrow || '–'}</span>
+                <span className="dash-stat-value">{effectiveProfile?.highestThrow || '–'}</span>
                 <span className="dash-stat-detail">3 Darts</span>
               </div>
             </div>
@@ -355,21 +387,21 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
               <div className="dash-stats-grid dash-stats-grid-4">
                 <div className="dash-stat-card">
                   <span className="dash-stat-label">180s</span>
-                  <span className="dash-stat-value accent-orange">{profile?.oneEighty || 0}</span>
+                  <span className="dash-stat-value accent-orange">{effectiveProfile?.oneEighty || 0}</span>
                 </div>
                 <div className="dash-stat-card">
                   <span className="dash-stat-label">Triple Quote</span>
                   <span className="dash-stat-value">
-                    {profile?.triplesHit && profile?.dartsThrown ? ((profile.triplesHit / profile.dartsThrown) * 100).toFixed(1) + '%' : '–'}
+                    {effectiveProfile?.triplesHit && effectiveProfile?.dartsThrown ? ((effectiveProfile.triplesHit / effectiveProfile.dartsThrown) * 100).toFixed(1) + '%' : '–'}
                   </span>
                 </div>
                 <div className="dash-stat-card">
                   <span className="dash-stat-label">140+</span>
-                  <span className="dash-stat-value">{profile?.oneFortyPlus || 0}</span>
+                  <span className="dash-stat-value">{effectiveProfile?.oneFortyPlus || 0}</span>
                 </div>
                 <div className="dash-stat-card">
                   <span className="dash-stat-label">100+</span>
-                  <span className="dash-stat-value">{profile?.hundredPlus || 0}</span>
+                  <span className="dash-stat-value">{effectiveProfile?.hundredPlus || 0}</span>
                 </div>
               </div>
             </div>
@@ -447,7 +479,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                         <PolarGrid stroke="var(--card-border)" />
                         <PolarAngleAxis dataKey="subject" tick={{ fill: 'var(--text-dim)', fontSize: 12 }} />
                         <PolarRadiusAxis angle={30} domain={[0, maxRadarHits]} tick={false} axisLine={false} />
-                        <Radar name={profileName} dataKey="hits" stroke={profile?.color || 'var(--blue)'} fill={profile?.color || 'var(--blue)'} fillOpacity={0.4} />
+                        <Radar name={profileName} dataKey="hits" stroke={effectiveProfile?.color || 'var(--blue)'} fill={effectiveProfile?.color || 'var(--blue)'} fillOpacity={0.4} />
                       </RadarChart>
                     </ResponsiveContainer>
                   </div>
@@ -457,7 +489,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
 
             {/* 2D Dartboard Heatmap */}
             <div style={{ marginTop: '20px' }}>
-              <DartboardHeatmap profile={profile} />
+              <DartboardHeatmap profile={effectiveProfile} customHits={segmentHitsObj} />
             </div>
 
             {/* Mini-Games Stats */}
@@ -466,28 +498,28 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
               <div className="dash-stats-grid dash-stats-grid-3">
                 <div className="dash-stat-card">
                   <span className="dash-stat-label">Power Scoring</span>
-                  <span className="dash-stat-value">{profile?.powerScoring?.bestScore || '–'}</span>
+                  <span className="dash-stat-value">{effectiveProfile?.powerScoring?.bestScore || '–'}</span>
                   <span className="dash-stat-detail">
-                    {profile?.powerScoring?.totalScore && profile?.powerScoring?.matchesPlayed ? 
-                    `Ø ${Math.round(profile.powerScoring.totalScore / profile.powerScoring.matchesPlayed)} | ` : ''}
-                    {profile?.powerScoring?.wins || 0}W
+                    {effectiveProfile?.powerScoring?.totalScore && effectiveProfile?.powerScoring?.matchesPlayed ? 
+                    `Ø ${Math.round(effectiveProfile.powerScoring.totalScore / effectiveProfile.powerScoring.matchesPlayed)} | ` : ''}
+                    {effectiveProfile?.powerScoring?.wins || 0}W
                   </span>
                 </div>
                 <div className="dash-stat-card">
                   <span className="dash-stat-label">Split Score</span>
-                  <span className="dash-stat-value">{profile?.splitScore?.bestScore || '–'}</span>
+                  <span className="dash-stat-value">{effectiveProfile?.splitScore?.bestScore || '–'}</span>
                   <span className="dash-stat-detail">
-                    {profile?.splitScore?.totalScore && profile?.splitScore?.matchesPlayed ? 
-                    `Ø ${Math.round(profile.splitScore.totalScore / profile.splitScore.matchesPlayed)} | ` : ''}
-                    {profile?.splitScore?.wins || 0}W
+                    {effectiveProfile?.splitScore?.totalScore && effectiveProfile?.splitScore?.matchesPlayed ? 
+                    `Ø ${Math.round(effectiveProfile.splitScore.totalScore / effectiveProfile.splitScore.matchesPlayed)} | ` : ''}
+                    {effectiveProfile?.splitScore?.wins || 0}W
                   </span>
                 </div>
                 <div className="dash-stat-card">
                   <span className="dash-stat-label">Checkout Training</span>
-                  <span className="dash-stat-value">{profile?.checkoutTraining?.bestCheckout || '–'}</span>
+                  <span className="dash-stat-value">{effectiveProfile?.checkoutTraining?.bestCheckout || '–'}</span>
                   <span className="dash-stat-detail">
-                    {profile?.checkoutTraining?.totalAttempts && profile?.checkoutTraining.totalAttempts > 0 ? 
-                    `${Math.round(((profile.checkoutTraining.roundsCompleted || 0) / profile.checkoutTraining.totalAttempts) * 100)}% Quote` 
+                    {effectiveProfile?.checkoutTraining?.totalAttempts && effectiveProfile?.checkoutTraining.totalAttempts > 0 ? 
+                    `${Math.round(((effectiveProfile.checkoutTraining.roundsCompleted || 0) / effectiveProfile.checkoutTraining.totalAttempts) * 100)}% Quote` 
                     : 'Best Out'}
                   </span>
                 </div>

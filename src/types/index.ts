@@ -126,6 +126,7 @@ export interface PlayerStats {
   checkoutSuccesses?: number;
   bestMatchLeg?: number;
   legHistory?: string[];
+  sixtyPlus?: number;
   hundredPlus?: number;
   oneFortyPlus?: number;
   oneEighty?: number;
