@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { applyMatchStatsToProfile, recordMatchForSelf } from '../database';
+import { applyMatchStatsToProfile, recordMatchForSelf, removeLinkedGuestProfiles } from '../database';
 import type { PlayerStats, Profile, MatchHistory } from '../../types';
 
 const basePlayerStat = (overrides: Partial<PlayerStats> = {}): PlayerStats => ({
@@ -131,5 +131,37 @@ describe('recordMatchForSelf', () => {
 
     const profiles = await recordMatchForSelf(match, 'Dominik');
     expect(profiles!['Dominik'].wins).toBe(1);
+  });
+});
+
+describe('removeLinkedGuestProfiles', () => {
+  const profiles: Record<string, Profile> = {
+    'Dominik': { wins: 5, matches: 10, dartsThrown: 0, pointsScored: 0, highestThrow: 0 },
+    'CloudGast': {
+      wins: 1, matches: 2, dartsThrown: 0, pointsScored: 0, highestThrow: 0,
+      isLinkedCloudGuest: true, linkedUserId: 'user_guest'
+    },
+    'Bot': { wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0, isBot: true }
+  };
+
+  it('removes a borrowed guest profile and reports it', () => {
+    const { profiles: next, removed } = removeLinkedGuestProfiles(profiles, ['CloudGast']);
+    expect(removed).toEqual(['CloudGast']);
+    expect(next['CloudGast']).toBeUndefined();
+    expect(next['Dominik']).toBeDefined();
+    expect(next['Bot']).toBeDefined();
+  });
+
+  it('never removes a local profile that happens to be named', () => {
+    const { profiles: next, removed } = removeLinkedGuestProfiles(profiles, ['Dominik', 'Bot']);
+    expect(removed).toEqual([]);
+    expect(next['Dominik']).toBeDefined();
+    expect(next['Bot']).toBeDefined();
+  });
+
+  it('returns the original object when nothing matched, and does not mutate', () => {
+    const { profiles: next } = removeLinkedGuestProfiles(profiles, ['Unbekannt']);
+    expect(next).toBe(profiles);
+    expect(Object.keys(profiles)).toHaveLength(3);
   });
 });

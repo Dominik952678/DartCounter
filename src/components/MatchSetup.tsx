@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { GameConfig, Profile } from '../types';
 import { useAuthStore } from '../store/useAuthStore';
-import { getActiveUserSyncInfo, redeemSyncCode, saveProfiles, validateGuestSyncTokens } from '../db/database';
+import { getActiveUserSyncInfo, redeemSyncCode, removeLinkedGuestProfiles, saveProfiles, validateGuestSyncTokens } from '../db/database';
 
 interface MatchSetupProps {
   profiles: Record<string, Profile>;
@@ -388,44 +388,36 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
       return;
     }
 
-    // 1. Wenn Sync auf diesem Account aktiv ist: lokales Spiel komplett blockieren!
-    try {
-      const rawLocal = localStorage.getItem('dartcounter_active_sync_code');
-      if (rawLocal) {
-        const localDoc = JSON.parse(rawLocal);
-        if (localDoc && localDoc.syncEnabled !== false && localDoc.code && new Date(localDoc.expiresAt) > new Date()) {
-          const hostName = localDoc.activeHost?.hostName || localDoc.activeHosts?.[0]?.hostName;
-          if (hostName) {
-            setErrorMsg(`⚠️ Gast-Sync ist aktiv: Dein Profil ist aktuell auf '${hostName}' gekoppelt. Du kannst erst wieder lokal spielen, wenn du die Verbindung trennst oder Gast-Sync im Profil-Tab deaktivierst.`);
-          } else {
-            setErrorMsg(`⚠️ Gast-Sync ist aktiviert (Code: ${localDoc.code.slice(0, 3)} ${localDoc.code.slice(3)})! Solange Gast-Sync aktiv ist, können auf diesem Gerät keine lokalen Spiele gestartet werden. Bitte deaktiviere Gast-Sync im Profil-Tab.`);
-          }
-          return;
-        }
-      }
-    } catch (e) {
-      console.warn("Could not read local sync code in MatchSetup", e);
-    }
-
+    // 1. Nur blockieren, wenn dieses Profil GERADE auf einem fremden Gerät läuft.
+    //
+    // Previously any live sync code blocked local play, so simply owning a code
+    // — or importing someone else's — meant you had to go and switch your own
+    // sync off before you could start a match on your own device.
     if (user?.id) {
       const syncInfo = await getActiveUserSyncInfo(user.id);
-      if (syncInfo && syncInfo.syncEnabled !== false && syncInfo.code && new Date(syncInfo.expiresAt) > new Date()) {
-        const host = syncInfo.activeHost || syncInfo.activeHosts?.[0];
-        if (host) {
-          setErrorMsg(`⚠️ Gast-Sync ist aktiv: Dein Profil ist aktuell auf '${host.hostName}' gekoppelt. Du kannst erst wieder lokal spielen, wenn du die Verbindung trennst oder Gast-Sync im Profil-Tab deaktivierst.`);
-        } else {
-          setErrorMsg(`⚠️ Gast-Sync ist aktiviert (Code: ${syncInfo.code.slice(0, 3)} ${syncInfo.code.slice(3)})! Solange Gast-Sync aktiv ist, können auf diesem Gerät keine lokalen Spiele gestartet werden. Bitte deaktiviere Gast-Sync im Profil-Tab.`);
-        }
+      const coupledHost = syncInfo?.activeHost || syncInfo?.activeHosts?.[0];
+      const syncOn = syncInfo?.syncEnabled === true
+        || (syncInfo?.syncEnabled === undefined && !!syncInfo?.code && new Date(syncInfo.expiresAt) > new Date());
+      if (syncInfo && syncOn && coupledHost) {
+        setErrorMsg(`⚠️ Dein Profil ist aktuell auf '${coupledHost.hostName}' gekoppelt. Trenne die Verbindung im Profil-Tab, um hier wieder lokal zu spielen.`);
         return;
       }
     }
 
-    // 2. Pre-flight check: Prüfen, ob verknüpfte Cloud-Gäste noch autorisiert sind
+    // 2. Pre-flight: Sind verknüpfte Cloud-Gäste noch autorisiert?
     const hasLinkedGuests = chosenPlayers.some(p => profiles[p]?.isLinkedCloudGuest);
     if (hasLinkedGuests) {
       const check = await validateGuestSyncTokens(chosenPlayers, profiles);
       if (!check.valid) {
-        setErrorMsg(`⚠️ Die Freigabe für Cloud-Gast @${check.revokedGuests.join(', @')} wurde vom Nutzer widerrufen (oder ist abgelaufen). Bitte vor Spielstart neuen Code anfordern.`);
+        // A cut link means the guest is gone: drop the profile and free the slot
+        // rather than leaving a dead entry the user has to clear by hand.
+        const { profiles: cleaned, removed } = removeLinkedGuestProfiles(profiles, check.revokedGuests);
+        if (removed.length > 0 && setProfiles) {
+          setProfiles(cleaned);
+          saveProfiles(cleaned, user?.id).catch(err => console.error('Could not persist profiles', err));
+          setPlayerOverrides(prev => prev.map(slot => (slot && removed.includes(slot) ? null : slot)));
+        }
+        setErrorMsg(`⚠️ Die Verbindung zu @${check.revokedGuests.join(', @')} wurde getrennt. Das Gastprofil wurde entfernt — bitte einen neuen Sync-Code anfordern.`);
         return;
       }
     }

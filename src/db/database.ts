@@ -438,6 +438,29 @@ export async function getMatches(userId?: string | null): Promise<MatchHistory[]
 }
 
 /**
+ * Removes borrowed cloud-guest profiles by name. Once a link is cut their stats
+ * are no longer ours to show, so the entry must leave the profile list instead
+ * of lingering as a dead option in every player selector.
+ *
+ * Only profiles flagged `isLinkedCloudGuest` are ever removed — a local profile
+ * that happens to share a name is left alone.
+ */
+export function removeLinkedGuestProfiles(
+  profiles: Record<string, Profile>,
+  names: string[]
+): { profiles: Record<string, Profile>; removed: string[] } {
+  const removed: string[] = [];
+  const next = { ...profiles };
+  for (const name of names) {
+    if (next[name]?.isLinkedCloudGuest) {
+      delete next[name];
+      removed.push(name);
+    }
+  }
+  return { profiles: removed.length > 0 ? next : profiles, removed };
+}
+
+/**
  * Folds a single match result into a profile. Used wherever a device has to
  * book stats for one specific player rather than for a whole local match —
  * notably online play, where every device only ever owns one seat.
