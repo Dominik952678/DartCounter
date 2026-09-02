@@ -152,18 +152,11 @@ describe('linked cloud guest revoking mid-match', () => {
   beforeEach(() => {
     localStorage.clear();
     vi.useFakeTimers();
-    // The guest has revoked the link: the cloud token no longer matches.
-    vi.spyOn(supabase, 'from').mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({
-            data: { data: { authToken: 'tok_revoked', syncEnabled: false } }
-          })
-        })
-      }),
-      upsert: vi.fn().mockResolvedValue({ error: null }),
-      insert: vi.fn().mockResolvedValue({ error: null })
-    } as unknown as ReturnType<typeof supabase.from>);
+    // The guest has revoked the link: the server reports the token as invalid.
+    vi.spyOn(supabase, 'rpc').mockResolvedValue({
+      data: { valid: false, aborted: false },
+      error: null
+    } as never);
   });
 
   afterEach(() => {
@@ -229,16 +222,10 @@ describe('linked cloud guest revoking mid-match', () => {
   });
 
   it('keeps playing while the guest link is still valid', async () => {
-    vi.spyOn(supabase, 'from').mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({
-            data: { data: { authToken: 'tok_original', syncEnabled: true } }
-          })
-        })
-      }),
-      upsert: vi.fn().mockResolvedValue({ error: null })
-    } as unknown as ReturnType<typeof supabase.from>);
+    vi.spyOn(supabase, 'rpc').mockResolvedValue({
+      data: { valid: true, aborted: false },
+      error: null
+    } as never);
 
     const setProfiles = vi.fn();
     const { result } = renderHook(() =>
@@ -252,5 +239,23 @@ describe('linked cloud guest revoking mid-match', () => {
 
     expect(result.current.remoteAbortNotice).toBeNull();
     expect(result.current.gameState.players).toHaveLength(2);
+  });
+
+  it('does not end the match when the sync check cannot reach the server', async () => {
+    vi.spyOn(supabase, 'rpc').mockRejectedValue(new Error('network down'));
+
+    const setProfiles = vi.fn();
+    const { result } = renderHook(() =>
+      useGameEngine({ ...baseProps, profiles: linkedProfiles, setProfiles })
+    );
+
+    act(() => {
+      result.current.startGame(['Dominik', 'CloudGast'], config);
+    });
+    await advance(15000);
+
+    expect(result.current.remoteAbortNotice).toBeNull();
+    expect(result.current.gameState.players).toHaveLength(2);
+    expect(setProfiles).not.toHaveBeenCalled();
   });
 });

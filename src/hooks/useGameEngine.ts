@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
-import type { GameState, Profile, MatchHistory, GameConfig, Player, GuestSyncTokenDoc, StatsModalData, Dart } from '../types';
-import { saveProfiles, setGuestLiveMatchStatus, supabase } from '../db/database';
+import type { GameState, Profile, MatchHistory, GameConfig, Player, StatsModalData, Dart } from '../types';
+import { saveProfiles, setGuestLiveMatchStatus, getGuestSyncStatus } from '../db/database';
 import { getBotDart, type TeamContext } from '../utils/bot';
 import { playSciFiHitSound, play180Sound, playBustSound, playHighFinishSound, speak, playDartHitSound, announceScore, announceGameShot } from '../utils/audio';
 import { triggerHaptic } from '../utils/haptics';
@@ -156,6 +156,8 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
   const startGame = useCallback((playerNames: string[], config: GameConfig) => {
     clearTimers();
 
+    const hostLabel = `${config.startScore} ${config.outMode}`;
+
     const playerObjs: Player[] = playerNames.map((name, index) => {
       const p = profilesRef.current[name];
       return {
@@ -194,9 +196,10 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
     // this device, so they can see (and abort) it from their own phone.
     playerObjs.forEach(p => {
       if (p.linkedUserId && p.syncAuthToken) {
-        setGuestLiveMatchStatus(p.linkedUserId, p.syncAuthToken, `Match (${config.startScore} ${config.outMode})`, {
+        setGuestLiveMatchStatus(p.linkedUserId, p.syncAuthToken, hostLabel, {
           players: playerObjs.map(pl => pl.name),
           mode: `${config.startScore} ${config.outMode}`,
+          gameType: config.is2v2 ? '2v2' : 'standard',
           isAborted: false
         });
       }
@@ -224,8 +227,8 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
   const abortGame = useCallback(() => {
     clearTimers();
     stateRef.current.players.forEach(p => {
-      if (p.linkedUserId) {
-        setGuestLiveMatchStatus(p.linkedUserId, '', '', null);
+      if (p.linkedUserId && p.syncAuthToken) {
+        setGuestLiveMatchStatus(p.linkedUserId, p.syncAuthToken, '', null);
       }
     });
     localStorage.removeItem(SAVED_GAME_KEY);
@@ -281,15 +284,10 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
         // so a revocation reports itself exactly once per match.
         if (cancelled || remoteAbortLatch.current) return;
         try {
-          const { data } = await supabase
-            .from('documents')
-            .select('data')
-            .eq('id', `user_sync_${guest.linkedUserId}`)
-            .single();
-
-          if (!data?.data) continue;
-          const tokenDoc = data.data as GuestSyncTokenDoc;
-          if (tokenDoc.liveMatch?.isAborted || tokenDoc.authToken !== guest.syncAuthToken || tokenDoc.syncEnabled === false) {
+          const status = await getGuestSyncStatus(guest.linkedUserId!, guest.syncAuthToken!);
+          // Unreachable means the network failed, not that the link was cut.
+          if (!status.reachable) continue;
+          if (status.aborted || !status.valid) {
             if (cancelled || remoteAbortLatch.current) return;
             remoteAbortLatch.current = true;
             clearInterval(interval);

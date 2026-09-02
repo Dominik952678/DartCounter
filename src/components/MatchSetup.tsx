@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { GameConfig, Profile } from '../types';
 import { useAuthStore } from '../store/useAuthStore';
-import { getActiveUserSyncInfo, redeemSyncCode, saveProfiles, setGuestLiveMatchStatus, validateGuestSyncTokens } from '../db/database';
+import { getActiveUserSyncInfo, redeemSyncCode, saveProfiles, validateGuestSyncTokens } from '../db/database';
 
 interface MatchSetupProps {
   profiles: Record<string, Profile>;
@@ -356,16 +356,6 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
       localStorage.removeItem('dartcounter_saved_game');
     }
     setSavedMatch(null);
-
-    // Melde Live-Match für alle beteiligten Cloud-Gäste an
-    const hostId = localStorage.getItem('dartcounter_host_device_id') || 'host_local';
-    const hostName = user?.user_metadata?.username || user?.email || 'Host-Gerät';
-    chosenPlayers.forEach(p => {
-      const prof = profiles[p];
-      if (prof?.isLinkedCloudGuest && prof.linkedUserId) {
-        setGuestLiveMatchStatus(prof.linkedUserId, hostId, hostName, { gameType: is2v2 ? '2v2' : 'standard' });
-      }
-    });
 
     onStartGame(chosenPlayers, {
       startScore,

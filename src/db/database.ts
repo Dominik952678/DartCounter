@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import type { MatchHistory, Profile, GuestSyncTokenDoc, ActiveHostConnection, Player, PlayerStats } from '../types';
+import type { MatchHistory, Profile, GuestSyncTokenDoc, Player, PlayerStats } from '../types';
 
 const SUPABASE_URL = 'https://pdbycflxxokbwfsfrmwu.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_vkBLAop52YK5pN6JrIAjfQ__Q9dvli0';
@@ -693,8 +693,8 @@ export async function readUserSyncDoc(
  * Überprüft Gültigkeit, registriert das Host-Gerät (exklusiv max. 1 Host) und liefert das vollständige Profil des Gastes.
  */
 export async function redeemSyncCode(
-  rawCode: string, 
-  hostId: string, 
+  rawCode: string,
+  _hostId: string,
   hostName: string
 ): Promise<{ success: boolean; error?: string; profile?: Profile; username?: string; userId?: string; authToken?: string; matches?: MatchHistory[] }> {
   const cleanCode = rawCode.replace(/\s+/g, '').trim();
@@ -703,83 +703,55 @@ export async function redeemSyncCode(
   }
 
   try {
-    // 1. Sync-Code in Supabase suchen
-    const { data, error } = await supabase
-      .from('documents')
-      .select('data')
-      .eq('id', `sync_code_${cleanCode}`)
-      .single();
+    // Redemption runs server-side: the sync_code_* rows are not client-readable,
+    // because a readable table of codes could be enumerated and every code
+    // grants access to somebody's profile.
+    const { data, error } = await supabase.rpc('redeem_sync_code', {
+      p_code: cleanCode,
+      p_host_name: hostName || 'Unbekanntes Gerät'
+    });
 
-    if (error || !data?.data) {
-      return { success: false, error: 'Code nicht gefunden oder abgelaufen.' };
+    if (error) {
+      console.error("Error redeeming sync code", error);
+      return { success: false, error: error.message || 'Fehler beim Einlösen des Codes.' };
     }
 
-    const tokenDoc = data.data as GuestSyncTokenDoc;
+    const result = data as {
+      success: boolean; error?: string; userId?: string; username?: string;
+      authToken?: string; profile?: Profile; matches?: MatchHistory[];
+    } | null;
 
-    if (tokenDoc.syncEnabled === false) {
-      return { success: false, error: 'Der Nutzer hat den Gast-Sync aktuell deaktiviert.' };
+    if (!result?.success) {
+      return { success: false, error: result?.error || 'Code nicht gefunden oder abgelaufen.' };
     }
 
-    if (new Date(tokenDoc.expiresAt) <= new Date()) {
-      return { success: false, error: 'Dieser Sync-Code ist abgelaufen. Bitte neuen Code generieren.' };
-    }
-
-    // 2. Profil des Gastes aus Snapshot oder Supabase laden
-    let baseProfile: Profile = {
-      wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0
-    };
-
-    if (tokenDoc.profileSnapshot) {
-      baseProfile = { ...tokenDoc.profileSnapshot };
-    } else {
-      const guestProfiles = await getProfiles(tokenDoc.userId, tokenDoc.username);
-      const found = guestProfiles[tokenDoc.username] || Object.values(guestProfiles)[0];
-      if (found) baseProfile = { ...found };
-    }
-
-    // 3. Exklusivität: Genau 1 aktiver Host (bisherige Verbindungen werden abgelöst)
-    const hostEntry: ActiveHostConnection = {
-      hostId,
-      hostName: hostName || 'Unbekanntes Gerät',
-      linkedAt: new Date().toISOString()
-    };
-
-    const updatedTokenDoc: GuestSyncTokenDoc = {
-      ...tokenDoc,
-      activeHost: hostEntry,
-      activeHosts: [hostEntry]
-    };
-
-    // Aktualisiere Token-Docs
-    await supabase.from('documents').upsert({ id: `sync_code_${cleanCode}`, data: updatedTokenDoc });
-    await supabase.from('documents').upsert({ id: `user_sync_${tokenDoc.userId}`, data: updatedTokenDoc });
-
-    // 4. Speichere Match-Snapshot lokal beim Host, damit alle Stats & Historien sichtbar sind
-    if (tokenDoc.matchesSnapshot && tokenDoc.matchesSnapshot.length > 0) {
+    const matches = Array.isArray(result.matches) ? result.matches : [];
+    if (matches.length > 0 && result.userId) {
       try {
-        localStorage.setItem(`guest_matches_${tokenDoc.userId}`, JSON.stringify(tokenDoc.matchesSnapshot));
+        localStorage.setItem(`guest_matches_${result.userId}`, JSON.stringify(matches));
       } catch (e) {
         console.error("Could not save guest matches snapshot", e);
       }
     }
 
-    // 5. Konstruiere das verknüpfte Gast-Profil für den Host
-    const linkedProfile: Profile = {
-      ...baseProfile,
-      linkedUserId: tokenDoc.userId,
-      linkedUsername: tokenDoc.username,
-      isLinkedCloudGuest: true,
-      syncAuthToken: tokenDoc.authToken,
-      lastSyncedAt: new Date().toISOString()
-    };
+    const baseProfile: Profile = result.profile && Object.keys(result.profile).length > 0
+      ? result.profile
+      : { wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0 };
 
     return {
       success: true,
-      profile: linkedProfile,
-      username: tokenDoc.username,
-      userId: tokenDoc.userId,
-      authToken: tokenDoc.authToken,
-      matches: tokenDoc.matchesSnapshot
+      profile: {
+        ...baseProfile,
+        linkedUserId: result.userId,
+        linkedUsername: result.username,
+        isLinkedCloudGuest: true,
+        syncAuthToken: result.authToken,
+        lastSyncedAt: new Date().toISOString()
+      },
+      username: result.username,
+      userId: result.userId,
+      authToken: result.authToken,
+      matches
     };
   } catch (err: unknown) {
     const error = err as Error;
@@ -792,38 +764,23 @@ export async function redeemSyncCode(
  * Meldet den Start oder das Ende eines Live-Matches für den Gast an Supabase.
  */
 export async function setGuestLiveMatchStatus(
-  userId: string, 
-  hostId: string, 
-  hostName: string, 
+  guestUserId: string,
+  authToken: string,
+  hostName: string,
   matchInfo: { gameType?: string; players?: string[]; mode?: string; isAborted?: boolean } | null
 ): Promise<void> {
+  if (!guestUserId || !authToken) return;
   try {
-    const { data: userDoc } = await supabase
-      .from('documents')
-      .select('data')
-      .eq('id', `user_sync_${userId}`)
-      .single();
-
-    if (!userDoc?.data) return;
-    const tokenDoc = userDoc.data as GuestSyncTokenDoc;
-
-    const liveMatch = matchInfo ? {
-      hostId,
-      hostName,
-      startedAt: new Date().toISOString(),
-      gameType: matchInfo.gameType || 'standard',
-      isAborted: false
-    } : null;
-
-    const updatedDoc: GuestSyncTokenDoc = {
-      ...tokenDoc,
-      liveMatch
-    };
-
-    await supabase.from('documents').upsert({ id: `user_sync_${userId}`, data: updatedDoc });
-    if (tokenDoc.code) {
-      await supabase.from('documents').upsert({ id: `sync_code_${tokenDoc.code}`, data: updatedDoc });
-    }
+    // The server checks the token before touching the guest's document, so a
+    // revoked host can no longer post a live-match banner to someone's profile.
+    const { error } = await supabase.rpc('set_guest_live_match', {
+      p_guest_id: guestUserId,
+      p_auth_token: authToken,
+      p_host_name: hostName || 'Host-Gerät',
+      p_game_type: matchInfo?.gameType || matchInfo?.mode || 'standard',
+      p_active: !!matchInfo
+    });
+    if (error) throw error;
   } catch (err) {
     console.error("Error setting guest live match status", err);
   }
@@ -919,39 +876,53 @@ export async function validateGuestSyncTokens(
 
   for (const name of playerNames) {
     const profile = profiles[name];
-    if (profile?.isLinkedCloudGuest && profile.linkedUserId && profile.syncAuthToken) {
-      try {
-        const { data, error } = await supabase
-          .from('documents')
-          .select('data')
-          .eq('id', `user_sync_${profile.linkedUserId}`)
-          .single();
+    if (!profile?.isLinkedCloudGuest || !profile.linkedUserId || !profile.syncAuthToken) continue;
 
-        if (error || !data?.data) {
-          revokedGuests.push(name);
-          continue;
-        }
-
-        const tokenDoc = data.data as GuestSyncTokenDoc;
-        if (tokenDoc.authToken !== profile.syncAuthToken || tokenDoc.syncEnabled === false) {
-          revokedGuests.push(name);
-          continue;
-        }
-
-        const isExpired = new Date(tokenDoc.expiresAt) < new Date();
-        if (isExpired) {
-          revokedGuests.push(name);
-        }
-      } catch {
-        revokedGuests.push(name);
+    try {
+      const { data, error } = await supabase.rpc('guest_sync_status', {
+        p_guest_id: profile.linkedUserId,
+        p_auth_token: profile.syncAuthToken
+      });
+      // A failed request proves nothing about the link. Treating it as a
+      // revocation used to block matches whenever the connection hiccuped.
+      if (error) {
+        console.error("Could not verify guest sync token", error);
+        continue;
       }
+      const status = data as { valid?: boolean } | null;
+      if (status?.valid !== true) revokedGuests.push(name);
+    } catch (err) {
+      console.error("Could not verify guest sync token", err);
     }
   }
 
-  return {
-    valid: revokedGuests.length === 0,
-    revokedGuests
-  };
+  return { valid: revokedGuests.length === 0, revokedGuests };
+}
+
+/**
+ * Fragt serverseitig ab, ob die Kopplung zu einem Cloud-Gast noch gültig ist.
+ * Wird während eines laufenden Matches gepollt.
+ */
+export async function getGuestSyncStatus(
+  guestUserId: string,
+  authToken: string
+): Promise<{ valid: boolean; aborted: boolean; reachable: boolean }> {
+  try {
+    const { data, error } = await supabase.rpc('guest_sync_status', {
+      p_guest_id: guestUserId,
+      p_auth_token: authToken
+    });
+    if (error) return { valid: true, aborted: false, reachable: false };
+    const status = data as { valid?: boolean; aborted?: boolean } | null;
+    return {
+      valid: status?.valid === true,
+      aborted: status?.aborted === true,
+      reachable: true
+    };
+  } catch {
+    // Offline: assume the link still holds rather than aborting a live match.
+    return { valid: true, aborted: false, reachable: false };
+  }
 }
 
 /**
@@ -968,90 +939,39 @@ export async function syncMatchesAndProfilesForGuests(
   const syncedGuests: string[] = [];
   const errors: string[] = [];
 
+  const is2v2 = !!matchData.is2v2 && finalPlayers.length === 4;
+
   for (let i = 0; i < finalPlayers.length; i++) {
     const player = finalPlayers[i];
-    
-    // Prüfen ob dieser Spieler ein verknüpfter Cloud-Gast ist
     const linkedUserId = player.linkedUserId;
     const syncAuthToken = player.syncAuthToken;
     const linkedUsername = player.linkedUsername || player.name;
 
     if (!linkedUserId || !syncAuthToken) continue;
 
-    try {
-      // 1. Auth-Token gegen Cloud validieren (Anti-Stat-Washing Schutz)
-      const { data: userSyncData, error: syncErr } = await supabase
-        .from('documents')
-        .select('data')
-        .eq('id', `user_sync_${linkedUserId}`)
-        .single();
+    const pTeam = player.team || (i % 2 === 0 ? 1 : 2);
+    const isWinner = is2v2 ? winnerName.includes(`Team ${pTeam}`) : player.name === winnerName;
 
-      if (syncErr || !userSyncData?.data) {
-        errors.push(`${linkedUsername}: Verbindung nicht mehr gültig.`);
+    try {
+      // The host submits the match; the server validates the token and derives
+      // the stat changes from the guest's own line in it. A host can therefore
+      // no longer post arbitrary totals to somebody else's profile.
+      const { data, error } = await supabase.rpc('sync_guest_match_result', {
+        p_guest_id: linkedUserId,
+        p_auth_token: syncAuthToken,
+        p_match: { ...matchData, hostName: hostName || 'Freund' },
+        p_player_name: player.name,
+        p_is_winner: isWinner
+      });
+
+      if (error) {
+        errors.push(`${linkedUsername}: ${error.message || 'Sync-Fehler'}`);
         continue;
       }
-
-      const activeToken = (userSyncData.data as GuestSyncTokenDoc).authToken;
-      if (activeToken !== syncAuthToken) {
+      if (data !== true) {
         errors.push(`${linkedUsername}: Zugriff wurde vom Nutzer widerrufen.`);
         continue;
       }
-
-      // 2. Match für das Gast-Konto speichern
-      const guestMatchId = `match_${linkedUserId}_${Date.now()}_guest`;
-      const guestMatch: MatchHistory = {
-        ...matchData,
-        _id: guestMatchId,
-        type: 'match',
-        isGuestMatch: true,
-        hostName: hostName || 'Freund'
-      };
-
-      await supabase.from('documents').insert({ id: guestMatchId, data: guestMatch });
-
-      // 3. Cloud-Profil des Gastes aktualisieren
-      const guestProfiles = await getProfiles(linkedUserId, linkedUsername, { skipLocalCache: true });
-      const profKey = guestProfiles[linkedUsername] ? linkedUsername : Object.keys(guestProfiles)[0] || linkedUsername;
-      const currentProf = guestProfiles[profKey] || {
-        wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0
-      };
-
-      const is2v2 = !!matchData.is2v2 && finalPlayers.length === 4;
-      const pTeam = player.team || (i % 2 === 0 ? 1 : 2);
-      const isWinner = is2v2 ? (winnerName.includes(`Team ${pTeam}`)) : (player.name === winnerName);
-
-      const updatedProf: Profile = {
-        ...currentProf,
-        matches: (currentProf.matches || 0) + 1,
-        wins: (currentProf.wins || 0) + (isWinner ? 1 : 0),
-        dartsThrown: (currentProf.dartsThrown || 0) + (player.matchDarts || 0),
-        pointsScored: (currentProf.pointsScored || 0) + (player.matchPts || 0),
-        sixtyPlus: (currentProf.sixtyPlus || 0) + (player.sixtyPlus || 0),
-        hundredPlus: (currentProf.hundredPlus || 0) + (player.hundredPlus || 0),
-        oneFortyPlus: (currentProf.oneFortyPlus || 0) + (player.oneFortyPlus || 0),
-        oneEighty: (currentProf.oneEighty || 0) + (player.oneEighty || 0),
-        checkoutAttempts: (currentProf.checkoutAttempts || 0) + (player.checkoutAttempts || 0),
-        checkoutSuccesses: (currentProf.checkoutSuccesses || 0) + (player.checkoutSuccesses || 0),
-        first9Pts: (currentProf.first9Pts || 0) + (player.matchFirst9Pts || 0),
-        first9Darts: (currentProf.first9Darts || 0) + (player.matchFirst9Darts || 0),
-        triplesHit: (currentProf.triplesHit || 0) + (player.triplesHit || 0),
-        highestCheckout: Math.max(currentProf.highestCheckout || 0, player.highestCheckout || 0),
-        lastSyncedAt: new Date().toISOString()
-      };
-
-      if (player.bestMatchLeg && (!currentProf.bestLegDarts || player.bestMatchLeg < currentProf.bestLegDarts)) {
-        updatedProf.bestLegDarts = player.bestMatchLeg;
-      }
-
-      if (player.segmentHits) {
-        if (!updatedProf.segmentHits) updatedProf.segmentHits = {};
-        Object.entries(player.segmentHits).forEach(([seg, hits]) => {
-          updatedProf.segmentHits![seg] = (updatedProf.segmentHits![seg] || 0) + hits;
-        });
-      }
-
-      guestProfiles[profKey] = updatedProf;
-      await saveProfiles(guestProfiles, linkedUserId, { skipLocalCache: true });
 
       syncedGuests.push(linkedUsername);
     } catch (guestErr: unknown) {

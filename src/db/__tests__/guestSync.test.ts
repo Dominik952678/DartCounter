@@ -1,12 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { 
-  generateUserSyncCode, 
-  redeemSyncCode, 
+import {
+  generateUserSyncCode,
+  redeemSyncCode,
   revokeHostAccess,
   syncMatchesAndProfilesForGuests,
-  supabase 
+  validateGuestSyncTokens,
+  supabase
 } from '../database';
-import type { Player, MatchHistory, GuestSyncTokenDoc } from '../../types';
+import type { Player, MatchHistory, Profile, GuestSyncTokenDoc } from '../../types';
 
 describe('📱 Guest-Cloud-Sync System (Multi-User & Anti-Stat-Washing)', () => {
   beforeEach(() => {
@@ -36,19 +37,16 @@ describe('📱 Guest-Cloud-Sync System (Multi-User & Anti-Stat-Washing)', () => 
   });
 
   it('rejects redeeming invalid or expired sync code', async () => {
-    // 1. Short code
+    // Too short to be a code: rejected before any request is made.
     const shortRes = await redeemSyncCode('123', 'host_1', 'Dominik iPad');
     expect(shortRes.success).toBe(false);
     expect(shortRes.error).toContain('Ungültiger Code');
 
-    // 2. Non-existent code
-    vi.spyOn(supabase, 'from').mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data: null, error: { message: 'Not found' } })
-        })
-      })
-    } as unknown as ReturnType<typeof supabase.from>);
+    // The server owns the verdict now; the client relays it.
+    vi.spyOn(supabase, 'rpc').mockResolvedValue({
+      data: { success: false, error: 'Code nicht gefunden oder abgelaufen.' },
+      error: null
+    } as never);
 
     const notFoundRes = await redeemSyncCode('999999', 'host_1', 'Dominik iPad');
     expect(notFoundRes.success).toBe(false);
@@ -56,35 +54,28 @@ describe('📱 Guest-Cloud-Sync System (Multi-User & Anti-Stat-Washing)', () => 
   });
 
   it('successfully redeems a valid sync code and attaches guest metadata', async () => {
-    const mockTokenDoc: GuestSyncTokenDoc = {
-      code: '842195',
-      userId: 'user_alex',
-      username: 'Alex',
-      authToken: 'tok_secret_123',
-      createdAt: new Date().toISOString(),
-      expiresAt: new Date(Date.now() + 3600000).toISOString(),
-      activeHosts: []
-    };
-
-    vi.spyOn(supabase, 'from').mockImplementation(() => {
-      return {
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({
-              data: {
-                data: mockTokenDoc
-              }
-            })
-          })
-        }),
-        upsert: vi.fn().mockResolvedValue({ error: null })
-      } as unknown as ReturnType<typeof supabase.from>;
-    });
+    const rpc = vi.spyOn(supabase, 'rpc').mockResolvedValue({
+      data: {
+        success: true,
+        userId: 'user_alex',
+        username: 'Alex',
+        authToken: 'tok_secret_123',
+        profile: { wins: 3, matches: 10, dartsThrown: 400, pointsScored: 8000, highestThrow: 140 },
+        matches: []
+      },
+      error: null
+    } as never);
 
     const res = await redeemSyncCode('842195', 'host_ipad', 'Dominik iPad');
+
+    expect(rpc).toHaveBeenCalledWith('redeem_sync_code', {
+      p_code: '842195',
+      p_host_name: 'Dominik iPad'
+    });
     expect(res.success).toBe(true);
     expect(res.username).toBe('Alex');
     expect(res.userId).toBe('user_alex');
+    expect(res.profile?.wins).toBe(3);
     expect(res.profile?.isLinkedCloudGuest).toBe(true);
     expect(res.profile?.linkedUserId).toBe('user_alex');
     expect(res.profile?.syncAuthToken).toBe('tok_secret_123');
@@ -122,116 +113,55 @@ describe('📱 Guest-Cloud-Sync System (Multi-User & Anti-Stat-Washing)', () => 
   });
 
   it('rejects match sync if guest has revoked access (Anti-Stat-Washing)', async () => {
-    vi.spyOn(supabase, 'from').mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({
-            data: {
-              data: {
-                authToken: 'tok_NEW_TOKEN_AFTER_REVOKE'
-              }
-            }
-          })
-        })
-      })
-    } as unknown as ReturnType<typeof supabase.from>);
+    // The server refuses the write and returns false; nothing is booked.
+    vi.spyOn(supabase, 'rpc').mockResolvedValue({ data: false, error: null } as never);
 
-    const mockPlayer: Player = {
-      name: 'Alex',
-      score: 0,
-      legs: 1,
-      sets: 0,
-      legPts: 0,
-      legDarts: 0,
-      matchPts: 501,
-      matchDarts: 15,
-      legHistory: [],
-      matchFirst9Pts: 300,
-      matchFirst9Darts: 9,
-      sixtyPlus: 2,
-      hundredPlus: 1,
-      oneFortyPlus: 1,
-      oneEighty: 1,
-      highestCheckout: 80,
-      checkoutAttempts: 2,
-      checkoutSuccesses: 1,
-      segmentHits: {},
-      linkedUserId: 'user_alex',
-      syncAuthToken: 'tok_OLD_REVOKED_TOKEN'
+    const players: Player[] = [{
+      name: 'Alex', score: 0, legs: 3, sets: 1, legPts: 0, legDarts: 0, matchPts: 1200, matchDarts: 60,
+      legHistory: [], matchFirst9Pts: 200, matchFirst9Darts: 9, sixtyPlus: 5, hundredPlus: 3,
+      oneFortyPlus: 1, oneEighty: 0, highestCheckout: 60, checkoutAttempts: 4, checkoutSuccesses: 3,
+      segmentHits: {}, linkedUserId: 'user_alex', syncAuthToken: 'tok_stale'
+    }];
+
+    const matchData: MatchHistory = {
+      date: '01.01.2026, 20:00', winner: 'Alex', gameType: 'standard',
+      players: [{ name: 'Alex', sets: 1, legs: 3, avg: '60.0', first9: '66.7' }]
     };
 
-    const mockMatch: MatchHistory = {
-      date: '02.09.2026',
-      winner: 'Alex',
-      players: []
-    };
+    const res = await syncMatchesAndProfilesForGuests(players, matchData, 'Alex', 'host_user', 'Host');
 
-    const result = await syncMatchesAndProfilesForGuests([mockPlayer], mockMatch, 'Alex', 'host_1', 'Dominik');
-    expect(result.syncedGuests).toHaveLength(0);
-    expect(result.errors.length).toBeGreaterThan(0);
-    expect(result.errors[0]).toContain('widerrufen');
+    expect(res.syncedGuests).toHaveLength(0);
+    expect(res.errors[0]).toContain('widerrufen');
   });
 
-  it('synchronizes matches and updates stats when token is valid', async () => {
-    const mockInsert = vi.fn().mockResolvedValue({ error: null });
-    const mockUpsert = vi.fn().mockResolvedValue({ error: null });
+  it('submits the match for server-side booking when the token is valid', async () => {
+    const rpc = vi.spyOn(supabase, 'rpc').mockResolvedValue({ data: true, error: null } as never);
 
-    vi.spyOn(supabase, 'from').mockImplementation(() => {
-      return {
-        select: vi.fn().mockReturnValue({
-          eq: vi.fn().mockReturnValue({
-            single: vi.fn().mockResolvedValue({
-              data: {
-                data: {
-                  authToken: 'tok_VALID_TOKEN',
-                  profiles: {
-                    Alex: { wins: 5, matches: 10, dartsThrown: 200, pointsScored: 4000, highestThrow: 140 }
-                  }
-                }
-              }
-            })
-          })
-        }),
-        insert: mockInsert,
-        upsert: mockUpsert
-      } as unknown as ReturnType<typeof supabase.from>;
-    });
+    const players: Player[] = [{
+      name: 'Alex', score: 0, legs: 3, sets: 1, legPts: 0, legDarts: 0, matchPts: 1200, matchDarts: 60,
+      legHistory: [], matchFirst9Pts: 200, matchFirst9Darts: 9, sixtyPlus: 5, hundredPlus: 3,
+      oneFortyPlus: 1, oneEighty: 2, highestCheckout: 96, checkoutAttempts: 4, checkoutSuccesses: 3,
+      segmentHits: { T20: 10 }, linkedUserId: 'user_alex', linkedUsername: 'Alex', syncAuthToken: 'tok_valid'
+    }];
 
-    const mockPlayer: Player = {
-      name: 'Alex',
-      score: 0,
-      legs: 1,
-      sets: 0,
-      legPts: 0,
-      legDarts: 0,
-      matchPts: 501,
-      matchDarts: 15,
-      legHistory: [],
-      matchFirst9Pts: 300,
-      matchFirst9Darts: 9,
-      sixtyPlus: 2,
-      hundredPlus: 1,
-      oneFortyPlus: 1,
-      oneEighty: 1,
-      highestCheckout: 80,
-      checkoutAttempts: 2,
-      checkoutSuccesses: 1,
-      segmentHits: { "20": 5, "T20": 2 },
-      linkedUserId: 'user_alex',
-      linkedUsername: 'Alex',
-      syncAuthToken: 'tok_VALID_TOKEN'
+    const matchData: MatchHistory = {
+      date: '01.01.2026, 20:00', winner: 'Alex', gameType: 'standard',
+      players: [{ name: 'Alex', sets: 1, legs: 3, avg: '60.0', first9: '66.7', matchDarts: 60, matchPts: 1200 }]
     };
 
-    const mockMatch: MatchHistory = {
-      date: '02.09.2026',
-      winner: 'Alex',
-      players: []
-    };
+    const res = await syncMatchesAndProfilesForGuests(players, matchData, 'Alex', 'host_user', 'Dominik');
 
-    const result = await syncMatchesAndProfilesForGuests([mockPlayer], mockMatch, 'Alex', 'host_1', 'Dominik');
-    expect(result.syncedGuests).toContain('Alex');
-    expect(mockInsert).toHaveBeenCalled();
-    expect(mockUpsert).toHaveBeenCalled();
+    expect(res.syncedGuests).toEqual(['Alex']);
+    expect(res.errors).toHaveLength(0);
+
+    // The host submits the match and its own seat; the totals are derived on
+    // the server, so no stat figures are sent as parameters.
+    const [fn, args] = rpc.mock.calls[0] as [string, Record<string, unknown>];
+    expect(fn).toBe('sync_guest_match_result');
+    expect(args.p_guest_id).toBe('user_alex');
+    expect(args.p_auth_token).toBe('tok_valid');
+    expect(args.p_player_name).toBe('Alex');
+    expect(args.p_is_winner).toBe(true);
   });
 
   it('correctly captures profileSnapshot during code generation and transfers full stats to host', async () => {
@@ -263,49 +193,40 @@ describe('📱 Guest-Cloud-Sync System (Multi-User & Anti-Stat-Washing)', () => 
   });
 
   it('validates guest sync tokens and blocks start if token was revoked', async () => {
-    // 1. Valid token
-    vi.spyOn(supabase, 'from').mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({
-            data: {
-              data: {
-                authToken: 'tok_CURRENT_VALID',
-                expiresAt: new Date(Date.now() + 3600000).toISOString()
-              }
-            }
-          })
-        })
-      })
-    } as unknown as ReturnType<typeof supabase.from>);
-
-    const validProfiles = {
-      Alex: {
+    const profiles: Record<string, Profile> = {
+      'Alex': {
         wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0,
-        isLinkedCloudGuest: true,
-        linkedUserId: 'user_alex',
-        syncAuthToken: 'tok_CURRENT_VALID'
+        isLinkedCloudGuest: true, linkedUserId: 'user_alex', syncAuthToken: 'tok_old'
+      },
+      'Dominik': { wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0 }
+    };
+
+    vi.spyOn(supabase, 'rpc').mockResolvedValue({ data: { valid: false }, error: null } as never);
+    const revoked = await validateGuestSyncTokens(['Dominik', 'Alex'], profiles);
+    expect(revoked.valid).toBe(false);
+    expect(revoked.revokedGuests).toEqual(['Alex']);
+
+    vi.spyOn(supabase, 'rpc').mockResolvedValue({ data: { valid: true }, error: null } as never);
+    const ok = await validateGuestSyncTokens(['Dominik', 'Alex'], profiles);
+    expect(ok.valid).toBe(true);
+    expect(ok.revokedGuests).toHaveLength(0);
+  });
+
+  it('does not treat an unreachable server as a revoked guest', async () => {
+    const profiles: Record<string, Profile> = {
+      'Alex': {
+        wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0,
+        isLinkedCloudGuest: true, linkedUserId: 'user_alex', syncAuthToken: 'tok_old'
       }
     };
 
-    const { validateGuestSyncTokens } = await import('../database');
-    const validRes = await validateGuestSyncTokens(['Alex'], validProfiles);
-    expect(validRes.valid).toBe(true);
-    expect(validRes.revokedGuests).toHaveLength(0);
+    vi.spyOn(supabase, 'rpc').mockResolvedValue({ data: null, error: { message: 'network down' } } as never);
 
-    // 2. Revoked token
-    const revokedProfiles = {
-      Alex: {
-        wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0,
-        isLinkedCloudGuest: true,
-        linkedUserId: 'user_alex',
-        syncAuthToken: 'tok_OLD_REVOKED'
-      }
-    };
-
-    const revokedRes = await validateGuestSyncTokens(['Alex'], revokedProfiles);
-    expect(revokedRes.valid).toBe(false);
-    expect(revokedRes.revokedGuests).toContain('Alex');
+    // A failed request proves nothing; blocking the match here would strand the
+    // players every time the connection hiccuped.
+    const res = await validateGuestSyncTokens(['Alex'], profiles);
+    expect(res.valid).toBe(true);
+    expect(res.revokedGuests).toHaveLength(0);
   });
 
   it('toggles user sync off and on, immediately invalidating tokens when off', async () => {
@@ -333,58 +254,27 @@ describe('📱 Guest-Cloud-Sync System (Multi-User & Anti-Stat-Washing)', () => 
     expect(enabledDoc.code).toHaveLength(6);
   });
 
-  it('enforces single-host exclusivity by replacing previous host connection upon new redemption', async () => {
-    const existingDoc: GuestSyncTokenDoc = {
-      code: '123456',
-      userId: 'user_123',
-      username: 'Alex',
-      authToken: 'tok_active',
-      createdAt: new Date().toISOString(),
-      expiresAt: new Date(Date.now() + 3600000).toISOString(),
-      syncEnabled: true,
-      profileSnapshot: { wins: 5, matches: 5, dartsThrown: 100, pointsScored: 2000, highestThrow: 100 },
-      activeHost: { hostId: 'host_old', hostName: 'Old Phone', linkedAt: new Date().toISOString() },
-      activeHosts: [{ hostId: 'host_old', hostName: 'Old Phone', linkedAt: new Date().toISOString() }]
-    };
+  it('sends the redeeming host name so the server can record a single active host', async () => {
+    // Exclusivity is enforced inside redeem_sync_code(); the client's job is
+    // simply to identify itself.
+    const rpc = vi.spyOn(supabase, 'rpc').mockResolvedValue({
+      data: { success: true, userId: 'user_alex', username: 'Alex', authToken: 'tok_1', profile: {}, matches: [] },
+      error: null
+    } as never);
 
-    const mockUpsert = vi.fn().mockResolvedValue({ error: null });
-    vi.spyOn(supabase, 'from').mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data: { data: existingDoc } })
-        })
-      }),
-      upsert: mockUpsert
-    } as unknown as ReturnType<typeof supabase.from>);
+    await redeemSyncCode('123456', 'host_new_ipad', 'New iPad');
 
-    const res = await redeemSyncCode('123456', 'host_new_ipad', 'New iPad');
-    expect(res.success).toBe(true);
-    
-    expect(mockUpsert).toHaveBeenCalled();
-    const updatedData = mockUpsert.mock.calls[0][0].data;
-    expect(updatedData.activeHost?.hostId).toBe('host_new_ipad');
-    expect(updatedData.activeHosts).toHaveLength(1);
-    expect(updatedData.activeHosts[0].hostId).toBe('host_new_ipad');
+    expect(rpc).toHaveBeenCalledWith('redeem_sync_code', {
+      p_code: '123456',
+      p_host_name: 'New iPad'
+    });
   });
 
   it('rejects redemption if guest has sync disabled', async () => {
-    const disabledDoc: GuestSyncTokenDoc = {
-      code: '123456',
-      userId: 'user_123',
-      username: 'Alex',
-      authToken: 'tok_active',
-      createdAt: new Date().toISOString(),
-      expiresAt: new Date(Date.now() + 3600000).toISOString(),
-      syncEnabled: false
-    };
-
-    vi.spyOn(supabase, 'from').mockReturnValue({
-      select: vi.fn().mockReturnValue({
-        eq: vi.fn().mockReturnValue({
-          single: vi.fn().mockResolvedValue({ data: { data: disabledDoc } })
-        })
-      })
-    } as unknown as ReturnType<typeof supabase.from>);
+    vi.spyOn(supabase, 'rpc').mockResolvedValue({
+      data: { success: false, error: 'Der Nutzer hat den Gast-Sync aktuell deaktiviert.' },
+      error: null
+    } as never);
 
     const res = await redeemSyncCode('123456', 'host_1', 'Dominik iPad');
     expect(res.success).toBe(false);
