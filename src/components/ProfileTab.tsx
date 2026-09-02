@@ -57,7 +57,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
     if (!user?.id) return;
     const info = await getActiveUserSyncInfo(user.id);
     setUserSyncInfo(info);
-  }, [user?.id]);
+  }, [user]);
 
   useEffect(() => {
     loadSyncInfo();
