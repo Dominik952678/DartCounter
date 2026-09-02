@@ -33,14 +33,14 @@ export const HomeContainer: React.FC<HomeContainerProps> = ({
   const tabParam = searchParams.get('tab');
   const modeParam = searchParams.get('mode') as MiniGameMode | null;
 
-  const [activeSubTab, setActiveSubTab] = useState<'match' | 'training'>(() => {
+  // `?tab=` only seeds the initial tab. Keeping it authoritative would freeze
+  // the switcher whenever the screen was opened from a quickstart link.
+  const [effectiveSubTab, setActiveSubTab] = useState<'match' | 'training'>(() => {
     if (tabParam === 'training' || tabParam === 'match') return tabParam;
     const saved = localStorage.getItem('dart_offline_subtab');
     if (saved === 'training' || saved === 'match') return saved;
     return defaultTab;
   });
-
-  const effectiveSubTab = (tabParam === 'training' || tabParam === 'match') ? tabParam : activeSubTab;
 
   useEffect(() => {
     localStorage.setItem('dart_offline_subtab', effectiveSubTab);
@@ -50,7 +50,7 @@ export const HomeContainer: React.FC<HomeContainerProps> = ({
     <div className="home-container" style={{ paddingBottom: '20px' }}>
       <div style={{ maxWidth: '400px', margin: '0 auto 16px auto', padding: '0 12px' }}>
         <div className="segment-control">
-          <label className={activeSubTab === 'match' ? 'active' : ''}>
+          <label className={effectiveSubTab === 'match' ? 'active' : ''}>
             <input 
               type="radio" 
               name="offlineSubTab" 

@@ -123,6 +123,37 @@ export const Keypad: React.FC<KeypadProps> = ({
           display: none;
         }
         
+        /* Undo key: one grid cell wide, so the label is optional chrome. */
+        .btn-undo {
+          grid-column: span 1;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 1px;
+          padding: 0 2px;
+          background: linear-gradient(135deg, var(--orange), #EA580C);
+          color: #000;
+          font-weight: 800;
+          white-space: nowrap;
+          overflow: hidden;
+        }
+        .btn-undo:disabled {
+          background: var(--surface);
+          color: var(--text-muted);
+          opacity: 0.5;
+        }
+        .btn-undo-icon { font-size: 1.15em; line-height: 1; }
+        .btn-undo-label {
+          font-size: 0.6em;
+          line-height: 1;
+          letter-spacing: 0.02em;
+        }
+        /* Too narrow for a word — the glyph alone stays legible. */
+        @media (max-width: 340px) {
+          .btn-undo-label { display: none; }
+        }
+
         /* Abort button less prominent */
         .text-only {
           background: rgba(255, 255, 255, 0.04) !important;
@@ -152,16 +183,18 @@ export const Keypad: React.FC<KeypadProps> = ({
       {/* Modifier Row */}
       <div className="modifier-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
         <button 
-          className={`mod-btn ${currentMultiplier === 2 ? 'mod-active-double' : ''}`} 
+          className={`mod-btn ${currentMultiplier === 2 ? 'mod-active-double' : ''}`}
           onClick={() => handleToggleMultiplier(2)}
           disabled={isProcessing}
+          aria-pressed={currentMultiplier === 2}
         >
           Double
         </button>
         <button 
-          className={`mod-btn ${currentMultiplier === 3 ? 'mod-active-triple' : ''}`} 
+          className={`mod-btn ${currentMultiplier === 3 ? 'mod-active-triple' : ''}`}
           onClick={() => handleToggleMultiplier(3)}
           disabled={isProcessing}
+          aria-pressed={currentMultiplier === 3}
         >
           Triple
         </button>
@@ -170,7 +203,13 @@ export const Keypad: React.FC<KeypadProps> = ({
       {/* Number Pad */}
       <div className={`numpad-grid ${currentMultiplier === 2 ? 'modifier-active-2' : ''} ${currentMultiplier === 3 ? 'modifier-active-3' : ''}`}>
         {numpadButtons.map(i => (
-          <button key={i} className="num-btn" onClick={() => handleAddDartClick(i)} disabled={isProcessing}>
+          <button
+            key={i}
+            className="num-btn"
+            onClick={() => handleAddDartClick(i)}
+            disabled={isProcessing}
+            aria-label={`${currentMultiplier === 3 ? 'Triple ' : currentMultiplier === 2 ? 'Double ' : ''}${i}`}
+          >
             {i}
           </button>
         ))}
@@ -191,22 +230,15 @@ export const Keypad: React.FC<KeypadProps> = ({
         <button className="num-btn mod-miss" style={{ gridColumn: 'span 2' }} onClick={() => handleAddDartClick(0)} disabled={isProcessing}>
           Miss
         </button>
-        <button 
-          className="num-btn btn-warning" 
-          style={{ 
-            gridColumn: 'span 1',
-            fontSize: '0.82em',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: 800,
-            padding: 0
-          }}
-          onClick={handleUndo} 
+        <button
+          className="num-btn btn-undo"
+          onClick={handleUndo}
           disabled={canUndo !== undefined ? !canUndo : (currentRoundDarts.length === 0)}
           title="Letzten Wurf zurücknehmen"
+          aria-label="Letzten Wurf zurücknehmen"
         >
-          ⟲ Zurück
+          <span className="btn-undo-icon" aria-hidden="true">⟲</span>
+          <span className="btn-undo-label">Zurück</span>
         </button>
       </div>
 

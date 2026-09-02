@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Routes, Route, useNavigate, Navigate, useLocation } from 'react-router-dom';
 import { HomeContainer } from './components/HomeContainer';
 import { MainMenu } from './components/MainMenu';
@@ -22,26 +22,48 @@ import { useGameEngine } from './hooks/useGameEngine';
 import { useAuthStore } from './store/useAuthStore';
 import { useThemeStore } from './store/useThemeStore';
 
+type MiniGameResult = {
+  name: string;
+  score: number;
+  attempts?: number;
+  dartsUsed?: number;
+  roundsCompleted?: number;
+};
+
+/** Placeholder player rows so the result modal can render mini-game scores. */
+const toModalPlayer = (r: MiniGameResult): Player => ({
+  name: r.name, score: r.score, legs: 0, sets: 0,
+  legPts: 0, legDarts: 0, matchPts: 0, matchDarts: 0, legHistory: [],
+  matchFirst9Pts: 0, matchFirst9Darts: 0, sixtyPlus: 0, hundredPlus: 0,
+  oneFortyPlus: 0, oneEighty: 0, checkoutAttempts: 0, checkoutSuccesses: 0,
+  highestCheckout: 0, segmentHits: {}
+});
+
 export default function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, initialize } = useAuthStore();
   const { theme, scanlines, gridAnimation } = useThemeStore();
-  
+
   const { profiles, setProfiles, handleCreateProfile, handleUpdateProfile, handleDeleteProfile } = useProfiles(user);
-  
+
   const [savedMatches, setSavedMatches] = useState<MatchHistory[]>([]);
-  const [miniGameConfig, setMiniGameConfig] = useState<{players: string[], settings: Record<string, unknown>}>({players: [], settings: {}});
+  const [miniGameConfig, setMiniGameConfig] = useState<{ players: string[], settings: Record<string, unknown> }>({ players: [], settings: {} });
   const [showHistory, setShowHistory] = useState(false);
   const [matchSessionId, setMatchSessionId] = useState<number>(1);
 
-  const hideBottomNavRoutes = ['/game', '/powerscoring', '/splitscore', '/checkout', '/online-game'];
-  const isMatchActive = hideBottomNavRoutes.some(route => location.pathname.startsWith(route)) || location.pathname.startsWith('/lobby/');
+  // Two different things, previously conflated: a live board takes over the
+  // viewport (fixed, no scrolling), while the lobby only hides the dock. Giving
+  // the lobby the fullscreen treatment clipped its "Spiel starten" button off
+  // the bottom of a phone with no way to scroll to it.
+  const fullscreenMatchRoutes = ['/game', '/powerscoring', '/splitscore', '/checkout', '/online-game'];
+  const isMatchActive = fullscreenMatchRoutes.some(route => location.pathname.startsWith(route));
+  const hideBottomNav = isMatchActive || location.pathname.startsWith('/lobby/');
 
-  const effectiveMiniGamePlayers = miniGameConfig.players.length > 0 
-    ? miniGameConfig.players 
+  const effectiveMiniGamePlayers = miniGameConfig.players.length > 0
+    ? miniGameConfig.players
     : [user?.user_metadata?.username || Object.keys(profiles)[0] || 'Gast 1'];
-  
+
   const [statsModalData, setStatsModalData] = useState<{
     isOpen: boolean;
     winnerIndex: number | null;
@@ -51,11 +73,11 @@ export default function App() {
     pendingMatchData?: MatchHistory;
   }>({ isOpen: false, winnerIndex: null, players: [], matchData: null });
 
-  // Map 'screen' string to actual routes for backwards compatibility in hooks
-  const setScreen = (screen: string) => {
+  // Bridges the hook's legacy `screen` strings onto the router.
+  const setScreen = useCallback((screen: string) => {
     if (screen === 'start') navigate('/offline');
     else navigate('/' + screen);
-  };
+  }, [navigate]);
 
   const gameEngine = useGameEngine({
     profiles,
@@ -74,18 +96,118 @@ export default function App() {
     startSync(window.location.hostname);
     getMatches(user?.id).then(matches => {
       setSavedMatches(matches);
-      if (matches.length > 0) {
-        setProfiles(prev => {
-          const updated = reconstructAllProfilesFromMatches(prev, matches);
-          if (JSON.stringify(updated) !== JSON.stringify(prev)) {
-            saveProfiles(updated, user?.id).catch(console.error);
-            return updated;
-          }
-          return prev;
-        });
-      }
+      if (matches.length === 0) return;
+      setProfiles(prev => {
+        const updated = reconstructAllProfilesFromMatches(prev, matches);
+        if (JSON.stringify(updated) === JSON.stringify(prev)) return prev;
+        saveProfiles(updated, user?.id).catch(console.error);
+        return updated;
+      });
     });
   }, [user?.id, setProfiles]);
+
+  /**
+   * Books a finished mini-game. The profile update is computed from the current
+   * profiles rather than inside a `setState` updater — updaters must stay pure,
+   * and the previous inline version double-counted every match under StrictMode.
+   */
+  const finishMiniGame = useCallback(async (
+    results: MiniGameResult[],
+    gameType: 'powerScoring' | 'splitScore' | 'checkoutTraining'
+  ) => {
+    const updatedProfiles: Record<string, Profile> = { ...profiles };
+    const maxScore = results.length > 0 ? Math.max(...results.map(r => r.score)) : 0;
+
+    for (const r of results) {
+      const existing = updatedProfiles[r.name];
+      if (!existing) continue;
+      const p: Profile = { ...existing };
+
+      if (gameType === 'powerScoring' || gameType === 'splitScore') {
+        const stats = { ...(p[gameType] || { bestScore: 0, matchesPlayed: 0, wins: 0, totalScore: 0 }) };
+        stats.bestScore = Math.max(stats.bestScore, r.score);
+        stats.matchesPlayed += 1;
+        stats.totalScore = (stats.totalScore || 0) + r.score;
+        if (r.score === maxScore) stats.wins += 1;
+        p[gameType] = stats;
+      } else {
+        const stats = { ...(p.checkoutTraining || { bestCheckout: 0, roundsCompleted: 0, matchesPlayed: 0, wins: 0, totalAttempts: 0, totalDartsUsed: 0 }) };
+        stats.bestCheckout = Math.max(stats.bestCheckout, r.score);
+        stats.roundsCompleted += r.roundsCompleted || 0;
+        stats.matchesPlayed += 1;
+        stats.totalAttempts = (stats.totalAttempts || 0) + (r.attempts || 0);
+        stats.totalDartsUsed = (stats.totalDartsUsed || 0) + (r.dartsUsed || 0);
+        if (r.score === maxScore) stats.wins += 1;
+        p.checkoutTraining = stats;
+      }
+
+      updatedProfiles[r.name] = p;
+    }
+
+    setProfiles(updatedProfiles);
+    await saveProfiles(updatedProfiles, user?.id);
+
+    const winner = results.reduce((prev, current) => (prev.score > current.score ? prev : current));
+    const matchData: MatchHistory = {
+      date: new Date().toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' }),
+      winner: winner.name,
+      gameType,
+      players: results.map(r => ({
+        name: r.name, sets: 0, legs: 0, avg: '0.0', first9: '0.0',
+        score: r.score,
+        ...(gameType === 'checkoutTraining' ? { attempts: r.attempts, dartsUsed: r.dartsUsed } : {})
+      }))
+    };
+    await saveMatch(matchData, user?.id);
+    getMatches(user?.id).then(setSavedMatches);
+
+    const winnerIdx = results.findIndex(r => r.name === winner.name);
+    setStatsModalData({
+      isOpen: true,
+      winnerIndex: winnerIdx >= 0 ? winnerIdx : 0,
+      players: results.map(toModalPlayer),
+      matchData
+    });
+  }, [profiles, setProfiles, user?.id]);
+
+  const commitPendingMatch = useCallback(async () => {
+    if (!statsModalData.pendingProfiles || !statsModalData.pendingMatchData) return;
+    setProfiles(statsModalData.pendingProfiles);
+    await saveProfiles(statsModalData.pendingProfiles, user?.id);
+    await saveMatch(statsModalData.pendingMatchData, user?.id);
+    getMatches(user?.id).then(setSavedMatches);
+
+    // Push each linked cloud guest's share of the match to their own account.
+    const hostName = user?.user_metadata?.username || user?.email || 'Host';
+    syncMatchesAndProfilesForGuests(
+      statsModalData.players,
+      statsModalData.pendingMatchData,
+      statsModalData.pendingMatchData.winner,
+      user?.id,
+      hostName
+    ).catch(err => console.error('Guest sync error in background', err));
+  }, [statsModalData, setProfiles, user]);
+
+  const themeOverlays = useMemo(() => {
+    if (theme === 'vaporwave') {
+      return (
+        <>
+          <div className="vaporwave-sun" />
+          {gridAnimation && <div className="vaporwave-grid-floor" />}
+          {scanlines && <div className="crt-scanlines" />}
+        </>
+      );
+    }
+    if (theme === 'cyberpunk') {
+      return (
+        <>
+          {gridAnimation && <div className="cyberpunk-circuit-grid" />}
+          {scanlines && <div className="cyberpunk-scanlines" />}
+        </>
+      );
+    }
+    return null;
+  }, [theme, gridAnimation, scanlines]);
 
   return (
     <div className={`app-container ${isMatchActive ? 'app-container-match' : ''}`}>
@@ -96,9 +218,9 @@ export default function App() {
         <Route path="/online" element={<LobbyBrowser />} />
         <Route path="/lobby/:code" element={<LobbyRoom />} />
         <Route path="/online-game" element={<OnlineGameWrapper />} />
-        
+
         <Route path="/offline" element={
-          <HomeContainer 
+          <HomeContainer
             profiles={profiles}
             setProfiles={setProfiles}
             matches={savedMatches}
@@ -110,14 +232,15 @@ export default function App() {
             onResumeGame={gameEngine.resumeGame}
             onDiscardSavedGame={gameEngine.discardSavedGame}
             onStartMiniGame={(mode, players, settings) => {
-               setMiniGameConfig({ players, settings });
-               setScreen(mode as string);
+              setMiniGameConfig({ players, settings });
+              setMatchSessionId(prev => prev + 1);
+              setScreen(mode as string);
             }}
           />
         } />
 
         <Route path="/game" element={
-          <GameScreen 
+          <GameScreen
             players={gameEngine.gameState.players}
             activePlayer={gameEngine.gameState.activePlayer}
             startingPlayerOfLeg={gameEngine.gameState.startingPlayerOfLeg}
@@ -138,183 +261,40 @@ export default function App() {
         } />
 
         <Route path="/powerscoring" element={
-          <PowerScoring 
+          <PowerScoring
             key={matchSessionId}
             players={effectiveMiniGamePlayers}
             profiles={profiles}
             rounds={(miniGameConfig.settings.rounds as number) || 10}
             onAbort={() => setScreen('start')}
-            onFinish={async (results) => {
-               let updatedProfiles: Record<string, Profile> = {};
-               setProfiles(prev => {
-                   updatedProfiles = { ...prev };
-                   for (const r of results) {
-                      if (updatedProfiles[r.name]) {
-                         const p = { ...updatedProfiles[r.name] };
-                         if (!p.powerScoring) p.powerScoring = { bestScore: 0, matchesPlayed: 0, wins: 0, totalScore: 0 };
-                         p.powerScoring = { ...p.powerScoring };
-                         p.powerScoring.bestScore = Math.max(p.powerScoring.bestScore, r.score);
-                         p.powerScoring.matchesPlayed += 1;
-                         p.powerScoring.totalScore = (p.powerScoring.totalScore || 0) + r.score;
-                         updatedProfiles[r.name] = p;
-                      }
-                   }
-                   const maxScore = Math.max(...results.map(r => r.score));
-                   for (const r of results) {
-                      if (r.score === maxScore && updatedProfiles[r.name]) {
-                         updatedProfiles[r.name].powerScoring!.wins += 1;
-                      }
-                   }
-                   return updatedProfiles;
-               });
-               await saveProfiles(updatedProfiles!, user?.id);
-               
-               const matchData: MatchHistory = {
-                   date: new Date().toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' }),
-                   winner: results.reduce((prev, current) => (prev.score > current.score) ? prev : current).name,
-                   gameType: 'powerScoring',
-                   players: results.map(r => ({
-                       name: r.name, sets: 0, legs: 0, avg: "0.0", first9: "0.0", score: r.score
-                   }))
-               };
-               await saveMatch(matchData, user?.id);
-               getMatches(user?.id).then(setSavedMatches);
-               
-               const winnerIdx = results.findIndex(r => r.name === matchData.winner);
-               setStatsModalData({
-                 isOpen: true,
-                 winnerIndex: winnerIdx >= 0 ? winnerIdx : 0,
-                 players: results.map(r => ({
-                   name: r.name, score: r.score, legs: 0, sets: 0,
-                   legPts: 0, legDarts: 0, matchPts: 0, matchDarts: 0, legHistory: [],
-                   matchFirst9Pts: 0, matchFirst9Darts: 0, sixtyPlus: 0, hundredPlus: 0,
-                   oneFortyPlus: 0, oneEighty: 0, checkoutAttempts: 0, checkoutSuccesses: 0,
-                   highestCheckout: 0, segmentHits: {}
-                 })),
-                 matchData
-               });
-            }}
+            onFinish={results => finishMiniGame(results, 'powerScoring')}
           />
         } />
 
         <Route path="/splitscore" element={
-          <SplitScore 
+          <SplitScore
             key={matchSessionId}
             players={effectiveMiniGamePlayers}
             profiles={profiles}
             onAbort={() => setScreen('start')}
-            onFinish={async (results) => {
-               let updatedProfiles: Record<string, Profile> = {};
-               setProfiles(prev => {
-                   updatedProfiles = { ...prev };
-                   for (const r of results) {
-                      if (updatedProfiles[r.name]) {
-                         const p = { ...updatedProfiles[r.name] };
-                         if (!p.splitScore) p.splitScore = { bestScore: 0, matchesPlayed: 0, wins: 0, totalScore: 0 };
-                         p.splitScore = { ...p.splitScore };
-                         p.splitScore.bestScore = Math.max(p.splitScore.bestScore, r.score);
-                         p.splitScore.matchesPlayed += 1;
-                         p.splitScore.totalScore = (p.splitScore.totalScore || 0) + r.score;
-                         updatedProfiles[r.name] = p;
-                      }
-                   }
-                   const maxScore = Math.max(...results.map(r => r.score));
-                   for (const r of results) {
-                      if (r.score === maxScore && updatedProfiles[r.name]) {
-                         updatedProfiles[r.name].splitScore!.wins += 1;
-                      }
-                   }
-                   return updatedProfiles;
-               });
-               await saveProfiles(updatedProfiles!, user?.id);
-               
-               const matchData: MatchHistory = {
-                   date: new Date().toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' }),
-                   winner: results.reduce((prev, current) => (prev.score > current.score) ? prev : current).name,
-                   gameType: 'splitScore',
-                   players: results.map(r => ({
-                       name: r.name, sets: 0, legs: 0, avg: "0.0", first9: "0.0", score: r.score
-                   }))
-               };
-               await saveMatch(matchData, user?.id);
-               getMatches(user?.id).then(setSavedMatches);
-               
-               const winnerIdx = results.findIndex(r => r.name === matchData.winner);
-               setStatsModalData({
-                 isOpen: true,
-                 winnerIndex: winnerIdx >= 0 ? winnerIdx : 0,
-                 players: results.map(r => ({
-                   name: r.name, score: r.score, legs: 0, sets: 0,
-                   legPts: 0, legDarts: 0, matchPts: 0, matchDarts: 0, legHistory: [],
-                   matchFirst9Pts: 0, matchFirst9Darts: 0, sixtyPlus: 0, hundredPlus: 0,
-                   oneFortyPlus: 0, oneEighty: 0, checkoutAttempts: 0, checkoutSuccesses: 0,
-                   highestCheckout: 0, segmentHits: {}
-                 })),
-                 matchData
-               });
-            }}
+            onFinish={results => finishMiniGame(results, 'splitScore')}
           />
         } />
 
         <Route path="/checkout" element={
-          <CheckoutTraining 
+          <CheckoutTraining
             key={matchSessionId}
             players={effectiveMiniGamePlayers}
             profiles={profiles}
             checkoutRounds={(miniGameConfig.settings.checkoutRounds as number) || 1}
             checkoutTargets={(miniGameConfig.settings.checkoutTargets as number) || 10}
             onAbort={() => setScreen('start')}
-            onFinish={async (results) => {
-               let updatedProfiles: Record<string, Profile> = {};
-               setProfiles(prev => {
-                   updatedProfiles = { ...prev };
-                   for (const r of results) {
-                      if (updatedProfiles[r.name]) {
-                         const p = { ...updatedProfiles[r.name] };
-                         if (!p.checkoutTraining) p.checkoutTraining = { bestCheckout: 0, roundsCompleted: 0, matchesPlayed: 0, wins: 0, totalAttempts: 0, totalDartsUsed: 0 };
-                         p.checkoutTraining = { ...p.checkoutTraining };
-                         p.checkoutTraining.bestCheckout = Math.max(p.checkoutTraining.bestCheckout, r.score);
-                         p.checkoutTraining.roundsCompleted += r.roundsCompleted;
-                         p.checkoutTraining.matchesPlayed += 1;
-                         p.checkoutTraining.totalAttempts = (p.checkoutTraining.totalAttempts || 0) + r.attempts;
-                         p.checkoutTraining.totalDartsUsed = (p.checkoutTraining.totalDartsUsed || 0) + r.dartsUsed;
-                         updatedProfiles[r.name] = p;
-                      }
-                   }
-                   return updatedProfiles;
-               });
-               await saveProfiles(updatedProfiles!, user?.id);
-               
-               const matchData: MatchHistory = {
-                   date: new Date().toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' }),
-                   winner: results.reduce((prev, current) => (prev.score > current.score) ? prev : current).name,
-                   gameType: 'checkoutTraining',
-                   players: results.map(r => ({
-                       name: r.name, sets: 0, legs: 0, avg: "0.0", first9: "0.0", score: r.score, attempts: r.attempts, dartsUsed: r.dartsUsed
-                   }))
-               };
-               await saveMatch(matchData, user?.id);
-               getMatches(user?.id).then(setSavedMatches);
-               
-               const winnerIdx = results.findIndex(r => r.name === matchData.winner);
-               setStatsModalData({
-                 isOpen: true,
-                 winnerIndex: winnerIdx >= 0 ? winnerIdx : 0,
-                 players: results.map(r => ({
-                   name: r.name, score: r.score, legs: 0, sets: 0,
-                   legPts: 0, legDarts: 0, matchPts: 0, matchDarts: 0, legHistory: [],
-                   matchFirst9Pts: 0, matchFirst9Darts: 0, sixtyPlus: 0, hundredPlus: 0,
-                   oneFortyPlus: 0, oneEighty: 0, checkoutAttempts: 0, checkoutSuccesses: 0,
-                   highestCheckout: 0, segmentHits: {}
-                 })),
-                 matchData
-               });
-            }}
+            onFinish={results => finishMiniGame(results, 'checkoutTraining')}
           />
         } />
-        
+
         <Route path="/profile" element={
-          <ProfileTab 
+          <ProfileTab
             profiles={profiles}
             matches={savedMatches}
             onCreateProfile={handleCreateProfile}
@@ -322,69 +302,46 @@ export default function App() {
             onDeleteProfile={handleDeleteProfile}
           />
         } />
-        
+
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
-      {!isMatchActive && <BottomNav />}
+      {!hideBottomNav && <BottomNav />}
 
-      <StatsModal 
+      {gameEngine.remoteAbortNotice && (
+        <div className="global-toast" role="alert">
+          <span aria-hidden="true">⚠️</span>
+          <div className="global-toast-body">
+            <strong>Match beendet</strong>
+            <span>{gameEngine.remoteAbortNotice}</span>
+          </div>
+          <button className="btn-close" onClick={gameEngine.dismissRemoteAbortNotice} aria-label="Hinweis schließen">✕</button>
+        </div>
+      )}
+
+      <StatsModal
         isOpen={statsModalData.isOpen}
         winnerIndex={statsModalData.winnerIndex}
         players={statsModalData.players}
         matchData={statsModalData.matchData}
         onClose={async () => {
-          if (statsModalData.pendingProfiles && statsModalData.pendingMatchData) {
-            setProfiles(statsModalData.pendingProfiles);
-            await saveProfiles(statsModalData.pendingProfiles, user?.id);
-            await saveMatch(statsModalData.pendingMatchData, user?.id);
-            getMatches(user?.id).then(setSavedMatches);
-
-            // Parallel Multi-User Guest Cloud-Sync (Anti-Stat-Washing protected)
-            const hostName = user?.user_metadata?.username || user?.email || 'Host';
-            syncMatchesAndProfilesForGuests(
-              statsModalData.players,
-              statsModalData.pendingMatchData,
-              statsModalData.pendingMatchData.winner,
-              user?.id,
-              hostName
-            ).catch(err => console.error("Guest sync error in background", err));
-          }
+          await commitPendingMatch();
           setStatsModalData({ isOpen: false, winnerIndex: null, players: [], matchData: null });
           gameEngine.abortGame();
           navigate('/');
         }}
         onRematch={async () => {
-          if (statsModalData.pendingProfiles && statsModalData.pendingMatchData) {
-            setProfiles(statsModalData.pendingProfiles);
-            await saveProfiles(statsModalData.pendingProfiles, user?.id);
-            await saveMatch(statsModalData.pendingMatchData, user?.id);
-            getMatches(user?.id).then(setSavedMatches);
-
-            // Parallel Multi-User Guest Cloud-Sync (Anti-Stat-Washing protected)
-            const hostName = user?.user_metadata?.username || user?.email || 'Host';
-            syncMatchesAndProfilesForGuests(
-              statsModalData.players,
-              statsModalData.pendingMatchData,
-              statsModalData.pendingMatchData.winner,
-              user?.id,
-              hostName
-            ).catch(err => console.error("Guest sync error in background", err));
-          }
+          await commitPendingMatch();
           const mData = statsModalData.matchData;
+          const playerNames = statsModalData.players.map(p => p.name);
           setStatsModalData({ isOpen: false, winnerIndex: null, players: [], matchData: null });
           setMatchSessionId(prev => prev + 1);
-          if (mData?.gameType === 'powerScoring') {
-            navigate('/powerscoring');
-          } else if (mData?.gameType === 'splitScore') {
-            navigate('/splitscore');
-          } else if (mData?.gameType === 'checkoutTraining') {
-            navigate('/checkout');
-          } else {
-            // Standard X01 Match rematch
-            const playerNames = statsModalData.players.map(p => p.name);
-            const config = mData?.config || gameEngine.gameState.config;
-            gameEngine.startGame(playerNames, config);
+
+          if (mData?.gameType === 'powerScoring') navigate('/powerscoring');
+          else if (mData?.gameType === 'splitScore') navigate('/splitscore');
+          else if (mData?.gameType === 'checkoutTraining') navigate('/checkout');
+          else {
+            gameEngine.startGame(playerNames, mData?.config || gameEngine.gameState.config);
             navigate('/game');
           }
         }}
@@ -398,26 +355,13 @@ export default function App() {
         }}
       />
 
-      <HistoryModal 
+      <HistoryModal
         isOpen={showHistory}
         history={savedMatches}
         onClose={() => setShowHistory(false)}
       />
 
-      {theme === 'vaporwave' && (
-        <>
-          <div className="vaporwave-sun" />
-          {gridAnimation && <div className="vaporwave-grid-floor" />}
-          {scanlines && <div className="crt-scanlines" />}
-        </>
-      )}
-
-      {theme === 'cyberpunk' && (
-        <>
-          {gridAnimation && <div className="cyberpunk-circuit-grid" />}
-          {scanlines && <div className="cyberpunk-scanlines" />}
-        </>
-      )}
+      {themeOverlays}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import type { MatchHistory, Profile, GuestSyncTokenDoc, ActiveHostConnection, Player } from '../types';
+import type { MatchHistory, Profile, GuestSyncTokenDoc, ActiveHostConnection, Player, PlayerStats } from '../types';
 
 const SUPABASE_URL = 'https://pdbycflxxokbwfsfrmwu.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_vkBLAop52YK5pN6JrIAjfQ__Q9dvli0';
@@ -224,14 +224,19 @@ export function reconstructAllProfilesFromMatches(
   return result;
 }
 
-export async function getProfiles(userId?: string | null, username?: string): Promise<Record<string, Profile>> {
+export async function getProfiles(
+  userId?: string | null,
+  username?: string,
+  options?: { skipLocalCache?: boolean }
+): Promise<Record<string, Profile>> {
   const docId = userId ? `profiles_${userId}` : 'profiles_guest';
   const matchesDocKey = userId ? `matches_${userId}` : 'matches_guest';
+  const useLocalCache = !options?.skipLocalCache;
 
   // Try reading cached matches for reconciling profile statistics
   let localMatches: MatchHistory[] = [];
   try {
-    const rawMatches = localStorage.getItem(matchesDocKey);
+    const rawMatches = useLocalCache ? localStorage.getItem(matchesDocKey) : null;
     if (rawMatches) localMatches = JSON.parse(rawMatches);
   } catch (e) {
     console.error("Error reading cached matches for profile reconciliation", e);
@@ -240,7 +245,7 @@ export async function getProfiles(userId?: string | null, username?: string): Pr
   // Try reading from localStorage cache first for fast offline startup
   let cached: Record<string, Profile> | null = null;
   try {
-    const raw = localStorage.getItem(docId);
+    const raw = useLocalCache ? localStorage.getItem(docId) : null;
     if (raw) cached = JSON.parse(raw);
   } catch (e) {
     console.error("Error reading cached profiles", e);
@@ -302,11 +307,12 @@ export async function getProfiles(userId?: string | null, username?: string): Pr
       fetchedProfiles = reconstructAllProfilesFromMatches(fetchedProfiles, localMatches);
     }
 
-    // Update local cache
-    try {
-      localStorage.setItem(docId, JSON.stringify(fetchedProfiles));
-    } catch (e) {
-      console.error(e);
+    if (useLocalCache) {
+      try {
+        localStorage.setItem(docId, JSON.stringify(fetchedProfiles));
+      } catch (e) {
+        console.error(e);
+      }
     }
 
     return fetchedProfiles;
@@ -329,14 +335,23 @@ export async function getProfiles(userId?: string | null, username?: string): Pr
   }
 }
 
-export async function saveProfiles(profiles: Record<string, Profile>, userId?: string | null): Promise<void> {
+export async function saveProfiles(
+  profiles: Record<string, Profile>,
+  userId?: string | null,
+  options?: { skipLocalCache?: boolean }
+): Promise<void> {
   const docId = userId ? `profiles_${userId}` : 'profiles_guest';
 
-  // Always update local cache
-  try {
-    localStorage.setItem(docId, JSON.stringify(profiles));
-  } catch (e) {
-    console.error(e);
+  // The local cache belongs to whoever is signed in on this device. When we
+  // write on behalf of a linked cloud guest, their data must go to the cloud
+  // only — leaving it in a stranger's browser is both a privacy leak and a
+  // source of stale reads on the next match.
+  if (!options?.skipLocalCache) {
+    try {
+      localStorage.setItem(docId, JSON.stringify(profiles));
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   if (!userId) return; // Guests do not write to persistent cloud database
@@ -420,6 +435,89 @@ export async function getMatches(userId?: string | null): Promise<MatchHistory[]
     console.error("Error getting matches from Supabase", err);
     return cached;
   }
+}
+
+/**
+ * Folds a single match result into a profile. Used wherever a device has to
+ * book stats for one specific player rather than for a whole local match —
+ * notably online play, where every device only ever owns one seat.
+ */
+export function applyMatchStatsToProfile(
+  base: Profile | undefined,
+  pStat: PlayerStats,
+  isWinner: boolean
+): Profile {
+  const prof: Profile = {
+    wins: 0,
+    matches: 0,
+    dartsThrown: 0,
+    pointsScored: 0,
+    highestThrow: 0,
+    ...(base || {})
+  };
+
+  prof.matches += 1;
+  if (isWinner) prof.wins += 1;
+  prof.dartsThrown += pStat.matchDarts || 0;
+  prof.pointsScored += pStat.matchPts || 0;
+  prof.sixtyPlus = (prof.sixtyPlus || 0) + (pStat.sixtyPlus || 0);
+  prof.hundredPlus = (prof.hundredPlus || 0) + (pStat.hundredPlus || 0);
+  prof.oneFortyPlus = (prof.oneFortyPlus || 0) + (pStat.oneFortyPlus || 0);
+  prof.oneEighty = (prof.oneEighty || 0) + (pStat.oneEighty || 0);
+  prof.checkoutAttempts = (prof.checkoutAttempts || 0) + (pStat.checkoutAttempts || 0);
+  prof.checkoutSuccesses = (prof.checkoutSuccesses || 0) + (pStat.checkoutSuccesses || 0);
+  prof.first9Pts = (prof.first9Pts || 0) + (pStat.first9Pts || 0);
+  prof.first9Darts = (prof.first9Darts || 0) + (pStat.first9Darts || 0);
+  prof.triplesHit = (prof.triplesHit || 0) + (pStat.triplesHit || 0);
+
+  if ((pStat.highestCheckout || 0) > (prof.highestCheckout || 0)) {
+    prof.highestCheckout = pStat.highestCheckout;
+  }
+  if ((pStat.oneEighty || 0) > 0 && prof.highestThrow < 180) {
+    prof.highestThrow = 180;
+  } else if ((pStat.highestCheckout || 0) > prof.highestThrow) {
+    prof.highestThrow = pStat.highestCheckout || prof.highestThrow;
+  }
+  if (pStat.bestMatchLeg && (!prof.bestLegDarts || pStat.bestMatchLeg < prof.bestLegDarts)) {
+    prof.bestLegDarts = pStat.bestMatchLeg;
+  }
+
+  if (pStat.segmentHits) {
+    prof.segmentHits = { ...(prof.segmentHits || {}) };
+    Object.entries(pStat.segmentHits).forEach(([seg, hits]) => {
+      prof.segmentHits![seg] = (prof.segmentHits![seg] || 0) + (hits || 0);
+    });
+  }
+
+  return prof;
+}
+
+/**
+ * Persists a finished match on *this* device and books the result onto the
+ * local player's own profile. Every participant in an online match calls this
+ * for their own seat, so personal statistics survive online play instead of
+ * only existing on the host.
+ */
+export async function recordMatchForSelf(
+  match: MatchHistory,
+  myPlayerName: string,
+  userId?: string | null,
+  username?: string
+): Promise<Record<string, Profile> | null> {
+  await saveMatch(match, userId);
+
+  const pStat = match.players?.find(p => p && p.name === myPlayerName);
+  if (!pStat) return null;
+
+  const profiles = await getProfiles(userId, username);
+  const key = profiles[myPlayerName] ? myPlayerName : (username && profiles[username] ? username : myPlayerName);
+  const isWinner = match.is2v2
+    ? !!match.winner && match.winner.includes(myPlayerName)
+    : match.winner === myPlayerName;
+
+  profiles[key] = applyMatchStatsToProfile(profiles[key], pStat, isWinner);
+  await saveProfiles(profiles, userId);
+  return profiles;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -886,7 +984,7 @@ export async function syncMatchesAndProfilesForGuests(
       await supabase.from('documents').insert({ id: guestMatchId, data: guestMatch });
 
       // 3. Cloud-Profil des Gastes aktualisieren
-      const guestProfiles = await getProfiles(linkedUserId, linkedUsername);
+      const guestProfiles = await getProfiles(linkedUserId, linkedUsername, { skipLocalCache: true });
       const profKey = guestProfiles[linkedUsername] ? linkedUsername : Object.keys(guestProfiles)[0] || linkedUsername;
       const currentProf = guestProfiles[profKey] || {
         wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0
@@ -927,7 +1025,7 @@ export async function syncMatchesAndProfilesForGuests(
       }
 
       guestProfiles[profKey] = updatedProf;
-      await saveProfiles(guestProfiles, linkedUserId);
+      await saveProfiles(guestProfiles, linkedUserId, { skipLocalCache: true });
 
       syncedGuests.push(linkedUsername);
     } catch (guestErr: unknown) {

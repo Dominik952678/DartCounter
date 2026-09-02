@@ -16,7 +16,7 @@ export const MainMenu: React.FC = () => {
   };
 
   return (
-    <div className="screen active-screen main-menu-screen" style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', overflowX: 'hidden', boxSizing: 'border-box' }}>
+    <div className="screen active-screen main-menu-screen shell-fill" style={{ width: '100%', alignItems: 'center', position: 'relative', overflowX: 'hidden', boxSizing: 'border-box' }}>
       <style>{`
         .hero-glow-bg {
           position: absolute;
@@ -30,18 +30,25 @@ export const MainMenu: React.FC = () => {
           z-index: 0;
         }
 
-        /* ── Fluid, Dynamic Main Card (Full height above navbar) ── */
+        /* ── Fluid, Dynamic Main Card (fills the shell above the dock) ── */
+        .main-menu-screen {
+          /* The .shell-fill utility derives the exact height left between the
+             safe areas and the floating dock, so nothing slides under the nav. */
+          display: flex;
+          flex-direction: column;
+        }
+
         .main-menu-card {
           position: relative;
           z-index: 1;
           width: 100%;
           max-width: min(520px, 100%);
-          min-height: calc(100dvh - max(calc(env(safe-area-inset-top) + 8px), 12px) - max(calc(env(safe-area-inset-bottom) + 64px), 74px));
+          flex: 1;
           display: flex;
           flex-direction: column;
           justify-content: space-between;
           transition: all 0.2s ease;
-          gap: clamp(8px, 1.4vh, 16px);
+          gap: clamp(10px, 2vh, 20px);
         }
 
         /* ── Header Area ── */
@@ -345,6 +352,37 @@ export const MainMenu: React.FC = () => {
           transition: all 0.15s ease;
         }
 
+        .menu-footer-area {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          width: 100%;
+          align-items: center;
+        }
+
+        /* ── Phone in landscape: ~400pt of height, so the chrome gets out
+              of the way and the three columns keep their content ── */
+        @media (orientation: landscape) and (max-height: 520px) {
+          .main-menu-card { gap: 6px !important; }
+          .menu-header-area { margin: 0 !important; }
+          .menu-header-icon { display: none !important; }
+          .menu-header-title { font-size: 1.2rem !important; }
+          .menu-header-subtitle { display: none !important; }
+          .hero-cta-icon { width: 38px !important; height: 38px !important; font-size: 1.3rem !important; }
+          .hero-cta-title { font-size: 1rem !important; }
+          .secondary-tile {
+            min-height: 0 !important;
+            padding: 8px 12px !important;
+            gap: 4px !important;
+          }
+          .secondary-tile-icon { width: 26px !important; height: 26px !important; font-size: 1rem !important; }
+          .secondary-tile-desc { display: none !important; }
+          .training-section-label { display: none !important; }
+          .training-chip { padding: 4px 10px !important; }
+          .menu-status-bar { padding: 4px 10px !important; }
+          .menu-version { display: none !important; }
+        }
+
         /* ── iPad in Portrait ── */
         @media (min-width: 768px) and (orientation: portrait) {
           .main-menu-card {
@@ -363,25 +401,25 @@ export const MainMenu: React.FC = () => {
         /* ── Landscape / Wide Mode (iPad & Desktop: 3-Column Layout) ── */
         @media (orientation: landscape) {
           .main-menu-screen {
-            height: 100% !important;
-            max-height: 100% !important;
-            overflow: hidden !important;
-            overscroll-behavior: none !important;
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: center !important;
-            align-items: center !important;
+            /* A hard height (not just min-height) is what lets the middle row
+               shrink on a phone in landscape, where ~400pt has to hold header,
+               tiles and status bar without anything sliding under the dock. */
+            height: calc(100dvh - var(--shell-pad-top) - var(--shell-pad-bottom));
+            min-height: 0;
+            overflow: hidden;
+            justify-content: center;
+            align-items: center;
           }
 
           .main-menu-card {
-            height: 100% !important;
-            max-height: 100% !important;
-            min-height: 0 !important;
             max-width: min(1080px, 94vw) !important;
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: center !important;
-            gap: clamp(6px, 1.2vh, 12px) !important;
+            gap: clamp(8px, 1.6vh, 14px) !important;
+          }
+
+          /* The tile stacks in landscape, where a trailing arrow on its own row
+             reads as a stray glyph rather than an affordance. */
+          .hero-cta-arrow {
+            display: none;
           }
 
           .menu-header-area {
@@ -413,7 +451,27 @@ export const MainMenu: React.FC = () => {
             grid-template-columns: 1.2fr 1fr 1fr !important;
             gap: clamp(10px, 1.8vw, 18px) !important;
             align-items: stretch !important;
+            /* Without a ceiling the three columns stretch to fill an iPad's
+               full height and the tiles turn into empty billboards. */
+            flex: 1 1 0 !important;
+            min-height: 0 !important;
+            overflow: hidden !important;
           }
+
+          .menu-header-area,
+          .menu-footer-area {
+            flex-shrink: 0 !important;
+          }
+
+          .main-menu-card {
+            min-height: 0 !important;
+          }
+
+          .secondary-tile {
+            justify-content: center !important;
+            gap: 10px !important;
+          }
+          .secondary-tile-title { margin-top: 0 !important; }
 
           .hero-cta-tile {
             height: 100% !important;
@@ -590,7 +648,7 @@ export const MainMenu: React.FC = () => {
         </div>
 
         {/* ── Docked User Status Bar & Version ── */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '100%', alignItems: 'center' }}>
+        <div className="menu-footer-area">
           <div className="menu-status-bar">
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, overflow: 'hidden' }}>
               <span style={{ 
@@ -628,8 +686,9 @@ export const MainMenu: React.FC = () => {
             )}
           </div>
 
-          <div 
-            style={{ 
+          <div
+            className="menu-version"
+            style={{
               padding: '2px 8px', 
               borderRadius: '8px', 
               display: 'inline-flex', 

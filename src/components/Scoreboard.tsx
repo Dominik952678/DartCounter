@@ -20,9 +20,6 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
   celebration
 }) => {
   const is2v2 = Boolean(config?.is2v2 || (players.length === 4 && (players[0]?.team !== undefined || players.some(p => p.team !== undefined))));
-  const gridColumns = players.length === 1 
-    ? '1fr' 
-    : (players.length === 2 ? '1fr 1fr' : (players.length === 3 ? 'repeat(3, 1fr)' : 'repeat(2, 1fr)'));
 
   // Live effective scores including current round darts of active player
   const liveScores = players.map((p, idx) => {
@@ -221,7 +218,10 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
         </div>
       )}
 
-      <div className="scoreboard" style={{ display: 'grid', gridTemplateColumns: gridColumns, gap: '8px', flex: 1, height: '100%', width: '100%', minWidth: 0, minHeight: 0 }}>
+      {/* The column count is a layout decision, so it lives in CSS: in landscape
+          the board sits in a tall, narrow column where stacked rows read far
+          better than squeezed side-by-side cards. */}
+      <div className="scoreboard" data-players={players.length} style={{ flex: 1, height: '100%', width: '100%', minWidth: 0, minHeight: 0 }}>
         <style>{`
           @keyframes scorePulse {
             0% { transform: scale(1); }
@@ -303,7 +303,9 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
             background: linear-gradient(145deg, rgba(16, 185, 129, 0.12), rgba(15, 23, 42, 0.95));
           }
           .score-display {
-            font-size: clamp(2.8rem, 9vw, 5rem);
+            /* Sized against the shorter viewport axis so the number grows with
+               the card in landscape instead of leaving an iPad card half empty. */
+            font-size: clamp(2.8rem, min(9vw, 16vh), 5rem);
             font-weight: 900;
             font-family: var(--font-mono, 'JetBrains Mono', monospace);
             font-variant-numeric: tabular-nums;
@@ -313,8 +315,9 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
             color: var(--text, #F1F5F9);
             text-shadow: 0 2px 12px rgba(0,0,0,0.5);
             display: flex;
-            align-items: center;
+            align-items: baseline;
             justify-content: center;
+            gap: 0.12em;
             letter-spacing: -0.02em;
           }
           .player-card.is-active .score-display {
@@ -399,7 +402,35 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
             to { transform: scale(1); opacity: 1; }
           }
           .compact-stats {
-            display: none;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 4px;
+            font-size: 0.68rem;
+            color: var(--text-dim, #aaa);
+            margin-top: 6px;
+            padding-top: 6px;
+            border-top: 1px solid var(--card-border, rgba(148,163,184,0.12));
+            text-align: center;
+          }
+          /* A phone in landscape has no vertical budget for the strip. */
+          @media (orientation: landscape) and (max-height: 520px) {
+            .compact-stats { display: none; }
+          }
+          /* Keep the strip to a single line on a phone: three figures fit, five wrap. */
+          @media (max-width: 767px) {
+            .compact-stats {
+              display: grid;
+              grid-template-columns: repeat(3, 1fr);
+              gap: 3px;
+            }
+            .compact-stats .stat-secondary { display: none; }
+            .compact-stats span {
+              padding: 3px 2px;
+              font-size: 0.62rem;
+              min-width: 0;
+              gap: 3px;
+            }
           }
           @media (min-width: 768px) {
             .scoreboard {
@@ -596,17 +627,17 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
                   </div>
                 ) : (
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-dim, #888)' }}>
-                    Darts: {p.legDarts + (isActive ? currentRoundDarts.length : 0)} · Ø {matchAvg}
+                    {p.legDarts + (isActive ? currentRoundDarts.length : 0)} Darts im Leg
                   </span>
                 )}
               </div>
 
               <div className="compact-stats">
-                <span>Leg: <strong>{legAvg}</strong></span>
-                <span>Match: <strong>{matchAvg}</strong></span>
-                <span>CO: <strong>{coPercent}%</strong></span>
-                <span>100+: <strong>{p.hundredPlus}</strong></span>
-                <span>180: <strong>{p.oneEighty}</strong></span>
+                <span>Leg <strong>{legAvg}</strong></span>
+                <span>Match <strong>{matchAvg}</strong></span>
+                <span>CO <strong>{coPercent}%</strong></span>
+                <span className="stat-secondary">100+: <strong>{p.hundredPlus}</strong></span>
+                <span className="stat-secondary">180: <strong>{p.oneEighty}</strong></span>
               </div>
             </div>
           );

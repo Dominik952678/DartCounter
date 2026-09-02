@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import type { Player, MatchHistory } from '../types';
 import { DartboardHeatmap } from './DartboardHeatmap';
 
@@ -376,6 +376,21 @@ export const HistoryModal: React.FC<{
   history: MatchHistory[];
   onClose: () => void;
 }> = ({ isOpen, history, onClose }) => {
+  const [query, setQuery] = useState('');
+
+  // Newest first, and the search box actually filters — it used to be a
+  // decorative input that ignored everything typed into it.
+  const visible = useMemo(() => {
+    const list = [...history].reverse();
+    const q = query.trim().toLowerCase();
+    if (!q) return list;
+    return list.filter(m =>
+      m.winner?.toLowerCase().includes(q) ||
+      m.date?.toLowerCase().includes(q) ||
+      m.players?.some(p => p.name?.toLowerCase().includes(q))
+    );
+  }, [history, query]);
+
   if (!isOpen) return null;
 
   return (
@@ -390,20 +405,23 @@ export const HistoryModal: React.FC<{
             <button className="btn-secondary" onClick={onClose} style={{ padding: '8px 16px', borderRadius: '20px', border: '1px solid var(--card-border, #333)', background: 'var(--surface, #2a2a2a)', color: 'var(--text, #fff)', cursor: 'pointer' }}>✕</button>
           </div>
           
-          <input 
-            type="text" 
-            className="search-bar" 
-            placeholder="🔍 Matches durchsuchen..." 
+          <input
+            type="text"
+            className="search-bar"
+            placeholder="🔍 Nach Spieler oder Datum suchen…"
+            aria-label="Matches durchsuchen"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
           />
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {history.length === 0 ? (
+            {visible.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-dim, #aaa)' }}>
                 <div style={{ fontSize: '2.5em', marginBottom: '12px' }}>🎯</div>
-                <p>Noch keine Matches gespeichert.</p>
+                <p>{history.length === 0 ? 'Noch keine Matches gespeichert.' : 'Kein Match passt zur Suche.'}</p>
               </div>
             ) : (
-              [...history].reverse().map((m, i) => (
+              visible.map((m, i) => (
                 <div key={i} className="history-item-modern">
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', paddingBottom: '8px', borderBottom: '1px solid var(--card-border, #333)' }}>
                     <span style={{ color: 'var(--green, #00C851)', fontWeight: 'bold' }}>🏆 {m.winner}</span>

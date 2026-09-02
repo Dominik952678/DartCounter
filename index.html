@@ -3,7 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+    <!-- `viewport-fit=cover` gives us the safe-area insets on notched iPhones.
+         Zoom is deliberately left enabled: blocking it fails WCAG 1.4.4 and iOS
+         ignores the request anyway. Accidental zoom is prevented by
+         `touch-action: manipulation` and 16px inputs instead. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#0B1120" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-capable" content="yes" />

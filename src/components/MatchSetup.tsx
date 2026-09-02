@@ -17,6 +17,20 @@ interface SavedMatchSummary {
   config: GameConfig;
 }
 
+/** Humans first, bots to fill up — the line-up most people want by default. */
+function buildDefaultLineup(profiles: Record<string, Profile>): string[] {
+  const names = Object.keys(profiles);
+  if (names.length === 0) return [];
+  const humans = names.filter(n => !profiles[n]?.isBot);
+  const bots = names.filter(n => profiles[n]?.isBot);
+  const ordered = [...humans, ...bots];
+  const lineup: string[] = [];
+  for (let i = 0; i < 4; i++) {
+    lineup.push(ordered[i] ?? ordered[ordered.length - 1] ?? names[0]);
+  }
+  return lineup;
+}
+
 export const MatchSetup: React.FC<MatchSetupProps> = ({ 
   profiles, 
   onStartGame, 
@@ -102,28 +116,41 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
     return 2;
   });
 
-  const [selectedPlayers, setSelectedPlayers] = useState<string[]>(() => {
-    if (isGuest) return ['Gast 1', 'Gast 2', 'Gast 3', 'Gast 4'];
-    const pNames = Object.keys(profiles);
-    if (pNames.length > 0) {
-      const initial: string[] = [];
-      const humans = pNames.filter(n => !profiles[n]?.isBot);
-      const bots = pNames.filter(n => profiles[n]?.isBot);
-      for (let i = 0; i < 4; i++) {
-        if (i === 0 && humans.length > 0) {
-          initial.push(humans[0]);
-        } else {
-          const nextHuman = humans.find(h => !initial.includes(h));
-          const nextBot = bots.find(b => !initial.includes(b));
-          if (nextHuman) initial.push(nextHuman);
-          else if (nextBot) initial.push(nextBot);
-        }
-      }
-      return initial;
-    }
-    return [];
-  });
+  /**
+   * Only the slots the user actually touched are stored; everything else is
+   * derived from the current profiles. Profiles load asynchronously (local
+   * cache first, cloud second), so a plain state snapshot taken on mount left
+   * the selects empty and started matches with blank player names.
+   */
+  const [playerOverrides, setPlayerOverrides] = useState<(string | null)[]>([null, null, null, null]);
   const [guestBots, setGuestBots] = useState<Record<string, boolean>>({});
+
+  const defaultLineup = React.useMemo(
+    () => (isGuest ? ['Gast 1', 'Gast 2', 'Gast 3', 'Gast 4'] : buildDefaultLineup(profiles)),
+    [isGuest, profiles]
+  );
+
+  const selectedPlayers = React.useMemo(
+    () => Array.from({ length: 4 }, (_, i) => {
+      const chosen = playerOverrides[i];
+      // A slot keeps its pick only while that profile still exists; guests may
+      // legitimately clear a name field, so empty strings are preserved.
+      if (chosen !== null && (isGuest || profiles[chosen])) return chosen;
+      return defaultLineup[i] ?? '';
+    }),
+    [playerOverrides, defaultLineup, profiles, isGuest]
+  );
+
+  const selectedPlayersRef = React.useRef(selectedPlayers);
+  useEffect(() => {
+    selectedPlayersRef.current = selectedPlayers;
+  });
+
+  const setSelectedPlayers = React.useCallback((update: string[] | ((prev: string[]) => string[])) => {
+    const next = typeof update === 'function' ? update(selectedPlayersRef.current) : update;
+    selectedPlayersRef.current = next;
+    setPlayerOverrides([next[0] ?? null, next[1] ?? null, next[2] ?? null, next[3] ?? null]);
+  }, []);
   
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isShuffling, setIsShuffling] = useState(false);
@@ -357,10 +384,15 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
       return;
     }
     
-    const hasHuman = isGuest 
+    if (chosenPlayers.some(p => !p || !p.trim())) {
+      setErrorMsg('Bitte gib für jeden Spielerplatz einen Namen ein.');
+      return;
+    }
+
+    const hasHuman = isGuest
        ? chosenPlayers.some(p => !guestBots[p])
        : chosenPlayers.some(p => profiles[p] && !profiles[p].isBot);
-       
+
     if (!hasHuman) {
       setErrorMsg("Ein Spiel nur mit Bots ist nicht möglich. Bitte wähle mindestens einen echten Spieler!");
       return;
@@ -409,15 +441,22 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
     }
 
     if (isGuest && setProfiles) {
-       const fakeProfiles: Record<string, Profile> = {};
-       chosenPlayers.forEach(p => {
-          fakeProfiles[p] = {
-             wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0,
-             isBot: guestBots[p] || false,
-             targetAverage: 40
-          };
-       });
-       setProfiles(fakeProfiles);
+      // Merge, never replace: a guest's accumulated stats live in these
+      // profiles, and overwriting them with zeroed records wiped the local
+      // history on every single start.
+      const nextProfiles: Record<string, Profile> = { ...profiles };
+      chosenPlayers.forEach(p => {
+        const existing = nextProfiles[p];
+        nextProfiles[p] = existing
+          ? { ...existing, isBot: guestBots[p] || false }
+          : {
+              wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0,
+              targetAverage: 40,
+              isBot: guestBots[p] || false
+            };
+      });
+      setProfiles(nextProfiles);
+      saveProfiles(nextProfiles, null).catch(err => console.error('Could not persist guest profiles', err));
     }
 
     if (hasSavedGame && savedMatch && !isSavedBannerDismissed) {
@@ -647,8 +686,14 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
                 <input 
                   type="radio" 
                   name="matchMode2v2" 
-                  checked={!is2v2} 
-                  onChange={() => setIs2v2(false)} 
+                  checked={!is2v2}
+                  onChange={() => {
+                    setIs2v2(false);
+                    // 2v2 forces four slots; going back to singles restores the
+                    // player count the user last chose there.
+                    const saved = parseInt(localStorage.getItem('dart_x01_playerCount') || '2', 10);
+                    setPlayerCount(!isNaN(saved) && saved >= 1 && saved <= 4 ? saved : 2);
+                  }}
                 />
                 <span>👤 Einzel</span>
               </label>
