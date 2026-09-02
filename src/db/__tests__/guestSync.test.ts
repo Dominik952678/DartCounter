@@ -423,3 +423,80 @@ describe('📱 Guest-Cloud-Sync System (Multi-User & Anti-Stat-Washing)', () => 
     expect(updatedDoc.activeHosts).toHaveLength(0);
   });
 });
+
+describe('sync code persistence and read failures', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    vi.restoreAllMocks();
+  });
+
+  it('reports a failed write instead of returning a phantom code', async () => {
+    // supabase-js reports write failures in `{ error }` rather than throwing.
+    // Swallowing that produced a code the UI displayed but the host could never
+    // redeem — and which vanished on the next poll.
+    vi.spyOn(supabase, 'from').mockReturnValue({
+      upsert: vi.fn().mockResolvedValue({ error: { message: 'permission denied' } }),
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({ single: vi.fn().mockResolvedValue({ data: null }) })
+      })
+    } as unknown as ReturnType<typeof supabase.from>);
+
+    await expect(generateUserSyncCode('user_1', 'Alex')).rejects.toThrow(/permission denied/);
+    expect(localStorage.getItem('dartcounter_active_sync_code')).toBeNull();
+  });
+
+  it('caches the code locally only once the write succeeded', async () => {
+    vi.spyOn(supabase, 'from').mockReturnValue({
+      upsert: vi.fn().mockResolvedValue({ error: null }),
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({ single: vi.fn().mockResolvedValue({ data: null }) })
+      })
+    } as unknown as ReturnType<typeof supabase.from>);
+
+    const doc = await generateUserSyncCode('user_1', 'Alex');
+    expect(doc.code).toHaveLength(6);
+    expect(doc.syncEnabled).toBe(true);
+    expect(localStorage.getItem('dartcounter_active_sync_code')).toContain(doc.code);
+  });
+
+  it('distinguishes a missing sync document from a failed read', async () => {
+    const { readUserSyncDoc } = await import('../database');
+
+    // No rows: the user genuinely has no sync document.
+    vi.spyOn(supabase, 'from').mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({ data: null, error: { code: 'PGRST116' } })
+        })
+      })
+    } as unknown as ReturnType<typeof supabase.from>);
+    await expect(readUserSyncDoc('user_1')).resolves.toEqual({ doc: null, ok: true });
+
+    // Transient failure: absence here proves nothing, so callers must not cache it.
+    vi.spyOn(supabase, 'from').mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({ data: null, error: { code: '500', message: 'boom' } })
+        })
+      })
+    } as unknown as ReturnType<typeof supabase.from>);
+    await expect(readUserSyncDoc('user_1')).resolves.toEqual({ doc: null, ok: false });
+  });
+
+  it('returns the stored document when the read succeeds', async () => {
+    const { readUserSyncDoc } = await import('../database');
+    vi.spyOn(supabase, 'from').mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        eq: vi.fn().mockReturnValue({
+          single: vi.fn().mockResolvedValue({
+            data: { data: { code: '123456', syncEnabled: true, userId: 'user_1' } }
+          })
+        })
+      })
+    } as unknown as ReturnType<typeof supabase.from>);
+
+    const { doc, ok } = await readUserSyncDoc('user_1');
+    expect(ok).toBe(true);
+    expect(doc?.code).toBe('123456');
+  });
+});

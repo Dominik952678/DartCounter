@@ -576,20 +576,30 @@ export async function generateUserSyncCode(
     liveMatch: null
   };
 
+  // 1. Speichern unter sync_code_{code} für schnellen Lookup beim Host
+  const { error: codeError } = await supabase
+    .from('documents')
+    .upsert({ id: `sync_code_${code}`, data: { ...tokenDoc, type: 'sync_code' } });
+
+  // 2. Speichern unter user_sync_{userId} für den Gast (Verwaltung & Widerruf)
+  const { error: userError } = await supabase
+    .from('documents')
+    .upsert({ id: `user_sync_${userId}`, data: { ...tokenDoc, type: 'user_sync' } });
+
+  const writeError = codeError || userError;
+  if (writeError) {
+    console.error("Error generating user sync code in Supabase", writeError);
+    // Surface it: a code that only exists in local state is worse than none,
+    // because the host can never redeem it.
+    throw new Error(
+      `Sync-Code konnte nicht gespeichert werden: ${writeError.message || 'Unbekannter Serverfehler'}`
+    );
+  }
+
   try {
-    // 1. Speichern unter sync_code_{code} für schnellen Lookup beim Host
-    await supabase
-      .from('documents')
-      .upsert({ id: `sync_code_${code}`, data: { ...tokenDoc, type: 'sync_code' } });
-
-    // 2. Speichern unter user_sync_{userId} für den Gast (Verwaltung & Widerruf)
-    await supabase
-      .from('documents')
-      .upsert({ id: `user_sync_${userId}`, data: { ...tokenDoc, type: 'user_sync' } });
-
     localStorage.setItem('dartcounter_active_sync_code', JSON.stringify(tokenDoc));
-  } catch (err) {
-    console.error("Error generating user sync code in Supabase", err);
+  } catch (e) {
+    console.error("Could not cache active sync code", e);
   }
 
   return tokenDoc;
@@ -625,15 +635,18 @@ export async function toggleUserSync(
     liveMatch: { isAborted: true, hostId: '', hostName: '', startedAt: '' }
   };
 
-  try {
-    await supabase
-      .from('documents')
-      .upsert({ id: `user_sync_${userId}`, data: { ...disabledDoc, type: 'user_sync' } });
-    localStorage.removeItem('dartcounter_active_sync_code');
-  } catch (err) {
-    console.error("Error disabling user sync in Supabase", err);
+  const { error } = await supabase
+    .from('documents')
+    .upsert({ id: `user_sync_${userId}`, data: { ...disabledDoc, type: 'user_sync' } });
+
+  if (error) {
+    console.error("Error disabling user sync in Supabase", error);
+    throw new Error(
+      `Gast-Sync konnte nicht deaktiviert werden: ${error.message || 'Unbekannter Serverfehler'}`
+    );
   }
 
+  localStorage.removeItem('dartcounter_active_sync_code');
   return disabledDoc;
 }
 
@@ -641,6 +654,18 @@ export async function toggleUserSync(
  * Ruft die aktiven Sync-Informationen und gekoppelten Host-Geräte des Nutzers ab.
  */
 export async function getActiveUserSyncInfo(userId: string): Promise<GuestSyncTokenDoc | null> {
+  const result = await readUserSyncDoc(userId);
+  return result.doc;
+}
+
+/**
+ * Reads the user's sync document, distinguishing "there is no document" from
+ * "the read failed". Callers that cache the result must not treat a failed
+ * request as proof that sync was never configured.
+ */
+export async function readUserSyncDoc(
+  userId: string
+): Promise<{ doc: GuestSyncTokenDoc | null; ok: boolean }> {
   try {
     const { data, error } = await supabase
       .from('documents')
@@ -648,17 +673,18 @@ export async function getActiveUserSyncInfo(userId: string): Promise<GuestSyncTo
       .eq('id', `user_sync_${userId}`)
       .single();
 
-    if (error || !data?.data) return null;
-    const tokenDoc = data.data as GuestSyncTokenDoc;
-    
-    // Prüfen ob abgelaufen oder deaktiviert
-    if (tokenDoc.syncEnabled === false || new Date(tokenDoc.expiresAt) <= new Date()) {
-      return tokenDoc;
+    // PGRST116 is PostgREST's "no rows" — the only result that genuinely means
+    // this user has no sync document.
+    if (error) {
+      if (error.code === 'PGRST116') return { doc: null, ok: true };
+      console.error("Error fetching active user sync info", error);
+      return { doc: null, ok: false };
     }
-    return tokenDoc;
+    if (!data?.data) return { doc: null, ok: true };
+    return { doc: data.data as GuestSyncTokenDoc, ok: true };
   } catch (err) {
     console.error("Error fetching active user sync info", err);
-    return null;
+    return { doc: null, ok: false };
   }
 }
 

@@ -7,7 +7,7 @@ import { exportElementAsImage } from '../utils/exportImage';
 import { MatchImageExport } from './MatchImageExport';
 import { useAuthStore } from '../store/useAuthStore';
 import { useThemeStore } from '../store/useThemeStore';
-import { generateUserSyncCode, getActiveUserSyncInfo, redeemSyncCode, revokeHostAccess, toggleUserSync, abortGuestMatchRemote, saveMatch, supabase } from '../db/database';
+import { generateUserSyncCode, readUserSyncDoc, redeemSyncCode, revokeHostAccess, toggleUserSync, abortGuestMatchRemote, saveMatch, supabase } from '../db/database';
 import { SAMPLE_PROFILES, SAMPLE_MATCHES, SAMPLE_PROFILE_KEYS } from '../utils/sampleData';
 import { APP_VERSION, BUILD_TIME } from '../version';
 
@@ -44,6 +44,9 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
   const [importCode, setImportCode] = useState('');
   const [importLoading, setImportLoading] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
+  // The import modal owns `importError`; sync failures need their own slot in
+  // the sync panel or they would never be seen.
+  const [syncError, setSyncError] = useState<string | null>(null);
   const [importSuccess, setImportSuccess] = useState<string | null>(null);
   const [importedGuestData, setImportedGuestData] = useState<{ profile: Profile; username: string } | null>(null);
   const [sampleDataStatus, setSampleDataStatus] = useState<string | null>(null);
@@ -81,7 +84,11 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
 
   const loadSyncInfo = useCallback(async () => {
     if (!user?.id) return;
-    const info = await getActiveUserSyncInfo(user.id);
+    const { doc: info, ok } = await readUserSyncDoc(user.id);
+    // A failed request is not evidence that the code is gone. Overwriting state
+    // with null on a flaky read is what made a freshly generated code vanish a
+    // couple of seconds after it appeared.
+    if (!ok) return;
     setUserSyncInfo(prev => {
       // Toast notice if a new host just connected
       if (prev && info && info.activeHosts && prev.activeHosts) {
@@ -94,6 +101,19 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
       return info;
     });
   }, [user]);
+
+  /**
+   * Sync is off until the user turns it on. `syncEnabled !== false` treated a
+   * missing document — i.e. a user who never enabled sync — as active, so the
+   * panel greeted everyone with "Sync Aktiv". Legacy documents predate the flag,
+   * so an unexpired code still counts as enabled.
+   */
+  const isSyncEnabled = React.useMemo(() => {
+    if (!userSyncInfo) return false;
+    if (userSyncInfo.syncEnabled === true) return true;
+    if (userSyncInfo.syncEnabled === false) return false;
+    return !!userSyncInfo.code && new Date(userSyncInfo.expiresAt) > new Date();
+  }, [userSyncInfo]);
 
   // Live Auto-Refresh & Realtime listener on user_sync_${user.id}
   useEffect(() => {
@@ -117,9 +137,11 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
       })
       .subscribe();
 
+    // The realtime subscription above is the primary signal; this is only a
+    // fallback for dropped websockets.
     const poll = setInterval(() => {
       loadSyncInfo();
-    }, 2000);
+    }, 15000);
 
     return () => {
       isMounted = false;
@@ -131,20 +153,33 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
   const handleGenerateCode = async () => {
     if (!user?.id) return;
     setSyncLoading(true);
+    setSyncError(null);
     const username = user.user_metadata?.username || user.email || 'Spieler';
     const profile = profiles[username] || Object.values(profiles)[0];
-    const newToken = await generateUserSyncCode(user.id, username, profile, matches);
-    setUserSyncInfo(newToken);
-    setSyncLoading(false);
+    try {
+      const newToken = await generateUserSyncCode(user.id, username, profile, matches);
+      setUserSyncInfo(newToken);
+    } catch (err) {
+      setSyncError(err instanceof Error ? err.message : 'Sync-Code konnte nicht erstellt werden.');
+    } finally {
+      setSyncLoading(false);
+    }
   };
 
   const handleToggleSync = async (enabled: boolean) => {
     if (!user?.id) return;
     setSyncLoading(true);
+    setSyncError(null);
     const username = user.user_metadata?.username || user.email || 'Spieler';
     const profile = profiles[username] || Object.values(profiles)[0];
-    const updatedDoc = await toggleUserSync(user.id, username, enabled, profile, matches);
-    setUserSyncInfo(updatedDoc);
+    try {
+      const updatedDoc = await toggleUserSync(user.id, username, enabled, profile, matches);
+      setUserSyncInfo(updatedDoc);
+    } catch (err) {
+      setSyncError(err instanceof Error ? err.message : 'Gast-Sync konnte nicht umgeschaltet werden.');
+      setSyncLoading(false);
+      return;
+    }
     setSyncLoading(false);
     if (!enabled) {
       setImportSuccess("Gast-Sync deaktiviert. Alle Host-Verbindungen wurden getrennt.");
@@ -560,17 +595,17 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
               <h2>Gast-Sync & Geräte-Freigaben</h2>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '0.8rem', color: userSyncInfo?.syncEnabled !== false ? 'var(--green, #10B981)' : 'var(--text-dim)', fontWeight: 700 }}>
-                {userSyncInfo?.syncEnabled !== false ? '🟢 Sync Aktiv' : '⚪ Sync Aus'}
+              <span style={{ fontSize: '0.8rem', color: isSyncEnabled ? 'var(--green, #10B981)' : 'var(--text-dim)', fontWeight: 700 }}>
+                {isSyncEnabled ? '🟢 Sync Aktiv' : '⚪ Sync Aus'}
               </span>
               <button
                 type="button"
-                className={userSyncInfo?.syncEnabled !== false ? 'btn-secondary' : 'btn-primary'}
-                onClick={() => handleToggleSync(userSyncInfo?.syncEnabled === false)}
+                className={isSyncEnabled ? 'btn-secondary' : 'btn-primary'}
+                onClick={() => handleToggleSync(!isSyncEnabled)}
                 disabled={syncLoading}
                 style={{ padding: '4px 12px', fontSize: '0.78rem', minHeight: '30px' }}
               >
-                {userSyncInfo?.syncEnabled !== false ? 'Deaktivieren' : 'Aktivieren'}
+                {isSyncEnabled ? 'Deaktivieren' : 'Aktivieren'}
               </button>
             </div>
           </div>
@@ -617,6 +652,13 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
             Teile deinen 6-stelligen Code mit einem Freund (Host), um auf seinem Gerät als Gast zu spielen. Dein Profil kann immer auf maximal einem Host-Gerät gekoppelt sein.
           </p>
 
+          {syncError && (
+            <div className="alert alert-error" role="alert" style={{ marginBottom: '14px' }}>
+              <span aria-hidden="true">⚠️</span>
+              <span>{syncError}</span>
+            </div>
+          )}
+
           <div style={{ 
             background: 'rgba(0, 0, 0, 0.35)', 
             padding: '16px', 
@@ -626,7 +668,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
             flexDirection: 'column',
             gap: '14px'
           }}>
-            {userSyncInfo?.syncEnabled === false ? (
+            {!isSyncEnabled ? (
               <div style={{ textAlign: 'center', padding: '12px 0' }}>
                 <p style={{ fontSize: '0.88rem', color: 'var(--text-dim)', marginBottom: '14px' }}>
                   Gast-Sync ist aktuell deaktiviert. Dein Profil kann von keinem fremden Gerät verwendet werden.
