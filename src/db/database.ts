@@ -213,12 +213,27 @@ export function reconstructProfileFromMatches(
  */
 export function reconstructAllProfilesFromMatches(
   currentProfiles: Record<string, Profile>,
-  matches: MatchHistory[]
+  matches: MatchHistory[],
+  ensureNames: string[] = []
 ): Record<string, Profile> {
   const result: Record<string, Profile> = {};
-  
+
   Object.entries(currentProfiles).forEach(([name, prof]) => {
     result[name] = reconstructProfileFromMatches(name, prof, matches);
+  });
+
+  // Named profiles that are missing but demonstrably played are recreated from
+  // the match history. Used to restore the account's own profile; opponents are
+  // still never auto-created, which is why this is opt-in per name.
+  const safeMatches = Array.isArray(matches) ? matches : [];
+  ensureNames.forEach(name => {
+    if (!name || result[name]) return;
+    const played = safeMatches.some(
+      m => m && Array.isArray(m.players) && m.players.some(p => p && p.name === name)
+    );
+    if (played) {
+      result[name] = reconstructProfileFromMatches(name, undefined, matches);
+    }
   });
 
   return result;

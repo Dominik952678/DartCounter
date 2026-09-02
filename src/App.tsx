@@ -45,7 +45,7 @@ export default function App() {
   const { user, initialize } = useAuthStore();
   const { theme, scanlines, gridAnimation } = useThemeStore();
 
-  const { profiles, setProfiles, handleCreateProfile, handleUpdateProfile, handleDeleteProfile } = useProfiles(user);
+  const { profiles, setProfiles, loadedForUserId, handleCreateProfile, handleUpdateProfile, handleDeleteProfile } = useProfiles(user);
 
   const [savedMatches, setSavedMatches] = useState<MatchHistory[]>([]);
   const [miniGameConfig, setMiniGameConfig] = useState<{ players: string[], settings: Record<string, unknown> }>({ players: [], settings: {} });
@@ -94,17 +94,32 @@ export default function App() {
 
   useEffect(() => {
     startSync(window.location.hostname);
+    let cancelled = false;
+
     getMatches(user?.id).then(matches => {
+      if (cancelled) return;
       setSavedMatches(matches);
       if (matches.length === 0) return;
+
+      // Reconciliation writes back to the cloud, so it must never run against a
+      // profile set that belongs to someone else. This effect and the loader in
+      // useProfiles both key off user?.id and race; when the match query won,
+      // `prev` still held the guest defaults and this saved them over the
+      // signed-in user's real profiles.
+      if (loadedForUserId !== (user?.id ?? null)) return;
+
+      const username = user?.user_metadata?.username;
       setProfiles(prev => {
-        const updated = reconstructAllProfilesFromMatches(prev, matches);
+        if (Object.keys(prev).length === 0) return prev;
+        const updated = reconstructAllProfilesFromMatches(prev, matches, username ? [username] : []);
         if (JSON.stringify(updated) === JSON.stringify(prev)) return prev;
         saveProfiles(updated, user?.id).catch(console.error);
         return updated;
       });
     });
-  }, [user?.id, setProfiles]);
+
+    return () => { cancelled = true; };
+  }, [user?.id, user?.user_metadata?.username, loadedForUserId, setProfiles]);
 
   /**
    * Books a finished mini-game. The profile update is computed from the current

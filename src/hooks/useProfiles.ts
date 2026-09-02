@@ -4,6 +4,15 @@ import { getProfiles, saveProfiles } from '../db/database';
 
 export function useProfiles(user?: { id: string; user_metadata?: { username?: string } } | null) {
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
+  /**
+   * Which account the profiles in state actually belong to.
+   *
+   * `undefined` while a load is in flight, `null` once guest profiles are
+   * loaded, otherwise the user id. Anything that writes profiles back to the
+   * cloud must wait for this to match the signed-in user — otherwise it can
+   * persist another account's (or the guest) profile set over the real one.
+   */
+  const [loadedForUserId, setLoadedForUserId] = useState<string | null | undefined>(undefined);
 
   const loadProfiles = useCallback(async () => {
     const username = user?.user_metadata?.username;
@@ -18,6 +27,7 @@ export function useProfiles(user?: { id: string; user_metadata?: { username?: st
       const loaded = await getProfiles(user?.id, username);
       if (isMounted) {
         setProfiles(loaded);
+        setLoadedForUserId(user?.id ?? null);
       }
     })();
     return () => {
@@ -56,6 +66,7 @@ export function useProfiles(user?: { id: string; user_metadata?: { username?: st
   return {
     profiles,
     setProfiles,
+    loadedForUserId,
     reloadProfiles: loadProfiles,
     handleCreateProfile,
     handleUpdateProfile,
