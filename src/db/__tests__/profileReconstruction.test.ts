@@ -143,7 +143,7 @@ describe('Profile Reconstruction from MatchHistory', () => {
     expect(res.splitScore?.wins).toBe(1);
   });
 
-  it('reconstructs all profiles including newly discovered players', () => {
+  it('reconstructs only existing profiles and does not auto-create unknown match players', () => {
     const initialProfiles: Record<string, Profile> = {
       Dominik: { wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0 }
     };
@@ -165,9 +165,7 @@ describe('Profile Reconstruction from MatchHistory', () => {
     expect(result.Dominik.wins).toBe(1);
     expect(result.Dominik.bestLegDarts).toBe(15);
 
-    expect(result.Sarah).toBeDefined();
-    expect(result.Sarah.matches).toBe(1);
-    expect(result.Sarah.wins).toBe(0);
-    expect(result.Sarah.dartsThrown).toBe(51);
+    // Opponent Sarah should NOT be auto-created as a local profile
+    expect(result.Sarah).toBeUndefined();
   });
 });

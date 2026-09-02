@@ -208,7 +208,8 @@ export function reconstructProfileFromMatches(
 }
 
 /**
- * Reconstructs all profiles in a Record using the provided MatchHistory list.
+ * Reconstructs existing profiles in a Record using the provided MatchHistory list.
+ * Note: Only profiles already present in currentProfiles are updated. New profiles are NOT created.
  */
 export function reconstructAllProfilesFromMatches(
   currentProfiles: Record<string, Profile>,
@@ -218,16 +219,6 @@ export function reconstructAllProfilesFromMatches(
   
   Object.entries(currentProfiles).forEach(([name, prof]) => {
     result[name] = reconstructProfileFromMatches(name, prof, matches);
-  });
-
-  matches.forEach(m => {
-    if (m && Array.isArray(m.players)) {
-      m.players.forEach(p => {
-        if (p?.name && !result[p.name]) {
-          result[p.name] = reconstructProfileFromMatches(p.name, undefined, matches);
-        }
-      });
-    }
   });
 
   return result;

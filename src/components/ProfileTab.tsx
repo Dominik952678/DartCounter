@@ -479,21 +479,24 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
               {profileNames.map(name => {
                 const isGuest = profiles[name]?.isLinkedCloudGuest;
                 return (
-                  <button 
+                  <div 
                     key={name} 
                     className="profile-chip" 
                     onClick={() => setViewProfile(name)}
                     style={{ 
                       borderLeftColor: profiles[name]?.color || 'var(--card-border)',
-                      position: 'relative'
+                      position: 'relative',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      cursor: 'pointer'
                     }}
                   >
-                    {isGuest ? '🔗 ' : (profiles[name]?.isBot ? '🤖 ' : '👤 ')}
-                    {name}
+                    <span>{isGuest ? '🔗 ' : (profiles[name]?.isBot ? '🤖 ' : '👤 ')} {name}</span>
                     {isGuest && (
                       <span style={{ 
                         fontSize: '0.7em', 
-                        marginLeft: '6px', 
+                        marginLeft: '4px', 
                         background: 'rgba(59, 130, 246, 0.25)', 
                         color: 'var(--blue)', 
                         padding: '1px 5px', 
@@ -503,7 +506,36 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                         Cloud
                       </span>
                     )}
-                  </button>
+                    {!isGuest && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (window.confirm(`Profil „${name}“ wirklich löschen?`)) {
+                            onDeleteProfile(name);
+                          }
+                        }}
+                        title={`Profil „${name}“ löschen`}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          color: 'var(--text-dim)',
+                          fontSize: '0.85rem',
+                          cursor: 'pointer',
+                          marginLeft: '4px',
+                          padding: '0 4px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          borderRadius: '4px',
+                          lineHeight: 1
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--red, #ef4444)')}
+                        onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-dim)')}
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
                 );
               })}
             </div>
