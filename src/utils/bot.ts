@@ -27,6 +27,39 @@ export const BOARD_NEIGHBORS: Record<number, [number, number]> = {
     5: [12, 20]
 };
 
+/** Clockwise segment order, starting at 20. */
+export const BOARD_ORDER = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5];
+
+/** The segment `offset` places clockwise (positive) or anticlockwise from `base`. */
+export function segmentAtOffset(base: number, offset: number): number {
+    const index = BOARD_ORDER.indexOf(base);
+    if (index === -1) return base;
+    const n = BOARD_ORDER.length;
+    return BOARD_ORDER[(((index + offset) % n) + n) % n];
+}
+
+/**
+ * How far a stray dart lands from the number it was aimed at, in segments.
+ *
+ * A steady hand slips into the bed next door; a beginner sprays two or three
+ * segments wide. That is why a weak bot aiming at the 20 should scatter onto 18
+ * or 12 and not only onto the 1 and 5 immediately flanking it.
+ *
+ * @param x normalised skill, 0 = novice, 1 = elite
+ */
+export function drawSegmentDrift(x: number): number {
+    const skill = Math.max(0, Math.min(1, x));
+    const threeAway = 0.14 * Math.pow(1 - skill, 1.6);
+    const twoAway = 0.34 * (1 - skill);
+    const roll = Math.random();
+
+    let magnitude = 1;
+    if (roll < threeAway) magnitude = 3;
+    else if (roll < threeAway + twoAway) magnitude = 2;
+
+    return (Math.random() < 0.5 ? -1 : 1) * magnitude;
+}
+
 /**
  * Simulates a single dart throw at an intended target with realistic board geometry and miss dispersion.
  */
@@ -74,10 +107,6 @@ export function throwAtTarget(
         }
     }
 
-    const neighbors = BOARD_NEIGHBORS[aimBase] || [1, 5];
-    const leftNeighbor = neighbors[0];
-    const rightNeighbor = neighbors[1];
-
     // ── 2. Aiming for a Double (Checkout) ──
     if (aimMult === 2) {
         // Double hit rate: scales smoothly from 14% (beginner) to 52% (pro)
@@ -94,9 +123,8 @@ export function throwAtTarget(
             // Missed inside into the single bed
             return { base: aimBase, mult: 1 };
         } else {
-            // Glanced off into neighbor single
-            const neighborBase = Math.random() < 0.5 ? leftNeighbor : rightNeighbor;
-            return { base: neighborBase, mult: 1 };
+            // Glanced off the wire into a nearby bed.
+            return { base: segmentAtOffset(aimBase, drawSegmentDrift(x)), mult: 1 };
         }
     }
 
@@ -113,13 +141,19 @@ export function throwAtTarget(
             // Staid in the large single bed of the number
             return { base: aimBase, mult: 1 };
         } else {
-            // Drifted into neighbor
-            const neighborBase = Math.random() < 0.5 ? leftNeighbor : rightNeighbor;
+            // Drifted off the aimed number entirely.
+            const driftedBase = segmentAtOffset(aimBase, drawSegmentDrift(x));
+            // A practised thrower is already at triple height and misses
+            // sideways, so they clip the neighbouring triple far more often
+            // than a beginner, whose darts land anywhere in the segment.
+            const staysOnTripleRing = 0.05 + 0.25 * x;
             const neighborRoll = Math.random();
-            if (neighborRoll < 0.90) {
-                return { base: neighborBase, mult: 1 };
-            } else if (neighborRoll < 0.96) {
-                return { base: neighborBase, mult: 3 };
+            if (neighborRoll < staysOnTripleRing) {
+                return { base: driftedBase, mult: 3 };
+            } else if (neighborRoll < staysOnTripleRing + 0.05) {
+                return { base: driftedBase, mult: 2 };
+            } else if (neighborRoll < 0.97) {
+                return { base: driftedBase, mult: 1 };
             } else {
                 return { base: 0, mult: 1 };
             }
@@ -132,26 +166,36 @@ export function throwAtTarget(
     const isCriticalLowScore = (currentScore !== undefined && currentScore <= 20) || aimBase <= 5;
     const singleHitRate = isCriticalLowScore
         ? Math.max(0.65, Math.min(0.96, 0.65 + 0.31 * x))
-        : Math.max(0.45, Math.min(0.92, 0.45 + 0.47 * Math.pow(x, 0.85)));
+        // Floor lowered from 0.45: a bot labelled "30 average" was landing in
+        // the 20 bed over half the time and actually playing near 40. The wider
+        // scatter also scores better than the old 1/5-only drift did, so the
+        // weak end needed pulling back to keep the label honest.
+        : Math.max(0.33, Math.min(0.92, 0.33 + 0.59 * Math.pow(x, 0.85)));
 
     const accidentalTriple = isCriticalLowScore ? 0.005 : Math.max(0.01, Math.min(0.05, 0.01 + 0.04 * x));
     const accidentalDouble = isCriticalLowScore ? 0.01 : Math.max(0.01, Math.min(0.04, 0.01 + 0.03 * x));
     const roll = Math.random();
 
+    // A dart that climbs into the treble or double ring most often stays on the
+    // number it was aimed at, but can just as easily clip the bed next door.
+    // Without this, every accidental treble a weak bot threw was a T20, because
+    // weak bots only ever aim at the 20.
+    const ringStrayBase = () =>
+        Math.random() < 0.6 ? aimBase : segmentAtOffset(aimBase, drawSegmentDrift(x));
+
     if (roll < singleHitRate) {
         return { base: aimBase, mult: 1 };
     } else if (roll < singleHitRate + accidentalTriple) {
-        return { base: aimBase, mult: 3 };
+        return { base: ringStrayBase(), mult: 3 };
     } else if (roll < singleHitRate + accidentalTriple + accidentalDouble) {
-        return { base: aimBase, mult: 2 };
+        return { base: ringStrayBase(), mult: 2 };
     } else {
         if (isCriticalLowScore) {
             // Miss outside the wire safely to prevent infinite bust loops on scores like 3, 5, 7
             return { base: 0, mult: 1 };
         }
-        // Normal drift into neighbor single
-        const neighborBase = Math.random() < 0.5 ? leftNeighbor : rightNeighbor;
-        return { base: neighborBase, mult: 1 };
+        // Normal drift into a nearby bed.
+        return { base: segmentAtOffset(aimBase, drawSegmentDrift(x)), mult: 1 };
     }
 }
 

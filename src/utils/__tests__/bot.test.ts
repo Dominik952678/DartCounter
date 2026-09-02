@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getBotDart, throwAtTarget, BOARD_NEIGHBORS } from '../bot';
+import { getBotDart, throwAtTarget, BOARD_NEIGHBORS, segmentAtOffset } from '../bot';
 
 describe('Bot AI Dart Generation', () => {
   it('returns valid base and mult values for high score scoring phase', () => {
@@ -45,6 +45,59 @@ describe('Bot AI Dart Generation', () => {
     }
     // A low skill bot aiming at 20 should frequently hit adjacent 1 or 5
     expect(neighborHits).toBeGreaterThan(50);
+  });
+
+  it('spreads a weak bot beyond the immediate neighbours of the 20', () => {
+    // 18 and 12 sit two segments either side of the 20. A beginner's darts have
+    // to reach them; only landing on the flanking 1 and 5 looks mechanical.
+    const iterations = 3000;
+    const landed = new Set<number>();
+    let twoOrMoreAway = 0;
+
+    for (let i = 0; i < iterations; i++) {
+      const dart = throwAtTarget(20, 3, 30);
+      landed.add(dart.base);
+      if ([18, 12, 4, 9].includes(dart.base)) twoOrMoreAway++;
+    }
+
+    expect(landed.has(18)).toBe(true);
+    expect(landed.has(12)).toBe(true);
+    expect(twoOrMoreAway).toBeGreaterThan(50);
+  });
+
+  it('keeps an elite bot tight around the 20', () => {
+    const iterations = 3000;
+    let farMisses = 0;
+    for (let i = 0; i < iterations; i++) {
+      const dart = throwAtTarget(20, 3, 110);
+      if (![20, 1, 5, 0].includes(dart.base)) farMisses++;
+    }
+    // Skill has to visibly narrow the grouping, otherwise the levels feel alike.
+    expect(farMisses / iterations).toBeLessThan(0.06);
+  });
+
+  it('does not make every treble a T20', () => {
+    // The original complaint: a bot's trebles were T20 essentially always,
+    // because weak bots only aim at the 20 and strays kept the aimed number.
+    const trebles: Record<number, number> = {};
+    for (let i = 0; i < 4000; i++) {
+      const dart = getBotDart(35, 300, 'DO');
+      if (dart.mult === 3) trebles[dart.base] = (trebles[dart.base] || 0) + 1;
+    }
+    const total = Object.values(trebles).reduce((a, b) => a + b, 0);
+    expect(total).toBeGreaterThan(20);
+    expect(Object.keys(trebles).length).toBeGreaterThan(2);
+    expect((trebles[20] || 0) / total).toBeLessThan(0.9);
+  });
+
+  it('walks the board in clockwise order when drifting', () => {
+    expect(segmentAtOffset(20, 1)).toBe(1);
+    expect(segmentAtOffset(20, 2)).toBe(18);
+    expect(segmentAtOffset(20, -1)).toBe(5);
+    expect(segmentAtOffset(20, -2)).toBe(12);
+    // Wraps around the full circle.
+    expect(segmentAtOffset(20, 20)).toBe(20);
+    expect(segmentAtOffset(5, 1)).toBe(20);
   });
 
   it('handles Bull (50) finish attempt correctly', () => {
@@ -208,7 +261,7 @@ describe('Bot AI Dart Generation', () => {
       let twentySegmentHits = 0;
       for (let i = 0; i < 50; i++) {
         const dart = getBotDart(70, 300, 'DO', teamContext);
-        if (dart.base === 20 || dart.base === 1 || dart.base === 5) {
+        if ([20, 1, 5, 18, 12].includes(dart.base)) {
           twentySegmentHits++;
         }
       }
@@ -229,7 +282,7 @@ describe('Bot AI Dart Generation', () => {
       let twentySegmentHits = 0;
       for (let i = 0; i < 50; i++) {
         const dart = getBotDart(75, 80, 'DO', teamContext);
-        if (dart.base === 20 || dart.base === 1 || dart.base === 5) {
+        if ([20, 1, 5, 18, 12].includes(dart.base)) {
           twentySegmentHits++;
         }
       }
@@ -250,7 +303,7 @@ describe('Bot AI Dart Generation', () => {
       let twentySegmentHits = 0;
       for (let i = 0; i < 50; i++) {
         const dart = getBotDart(75, 90, 'DO', teamContext);
-        if (dart.base === 20 || dart.base === 1 || dart.base === 5) {
+        if ([20, 1, 5, 18, 12].includes(dart.base)) {
           twentySegmentHits++;
         }
       }
