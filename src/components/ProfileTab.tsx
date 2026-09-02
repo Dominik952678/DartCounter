@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { Profile, MatchHistory } from '../types';
+import type { Profile, MatchHistory, GuestSyncTokenDoc } from '../types';
 import { ProfileDashboard } from './ProfileDashboard';
 import { DartboardHeatmap } from './DartboardHeatmap';
 import { exportElementAsImage } from '../utils/exportImage';
 import { MatchImageExport } from './MatchImageExport';
 import { useAuthStore } from '../store/useAuthStore';
 import { useThemeStore } from '../store/useThemeStore';
+import { generateUserSyncCode, getActiveUserSyncInfo, redeemSyncCode, revokeHostAccess } from '../db/database';
 import { APP_VERSION, BUILD_TIME } from '../version';
 
 interface ProfileTabProps {
@@ -34,12 +35,98 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
   const [showHistory, setShowHistory] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
 
+  // 📱 Gast-Cloud-Sync State
+  const [userSyncInfo, setUserSyncInfo] = useState<GuestSyncTokenDoc | null>(null);
+  const [syncLoading, setSyncLoading] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importCode, setImportCode] = useState('');
+  const [importLoading, setImportLoading] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [importSuccess, setImportSuccess] = useState<string | null>(null);
+  const [importedGuestData, setImportedGuestData] = useState<{ profile: Profile; username: string } | null>(null);
+
   const profileNames = Object.keys(profiles);
   const [previewProfile, setPreviewProfile] = useState<string>(
     user?.user_metadata?.username && profiles[user.user_metadata.username] 
       ? user.user_metadata.username 
       : profileNames[0] || ''
   );
+
+  const loadSyncInfo = useCallback(async () => {
+    if (!user?.id) return;
+    const info = await getActiveUserSyncInfo(user.id);
+    setUserSyncInfo(info);
+  }, [user?.id]);
+
+  useEffect(() => {
+    loadSyncInfo();
+  }, [loadSyncInfo]);
+
+  const handleGenerateCode = async () => {
+    if (!user?.id) return;
+    setSyncLoading(true);
+    const username = user.user_metadata?.username || user.email || 'Spieler';
+    const newToken = await generateUserSyncCode(user.id, username);
+    setUserSyncInfo(newToken);
+    setSyncLoading(false);
+  };
+
+  const handleRevokeHost = async (hostId?: string) => {
+    if (!user?.id) return;
+    setSyncLoading(true);
+    await revokeHostAccess(user.id, hostId);
+    await loadSyncInfo();
+    setSyncLoading(false);
+  };
+
+  const handleCopyCode = () => {
+    if (!userSyncInfo?.code) return;
+    navigator.clipboard.writeText(userSyncInfo.code);
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2000);
+  };
+
+  const handleCheckImportCode = async () => {
+    setImportError(null);
+    setImportSuccess(null);
+    setImportedGuestData(null);
+
+    const clean = importCode.replace(/\s+/g, '').trim();
+    if (clean.length < 6) {
+      setImportError("Bitte gib den 6-stelligen Sync-Code ein.");
+      return;
+    }
+
+    setImportLoading(true);
+    let hostId = localStorage.getItem('dartcounter_host_device_id');
+    if (!hostId) {
+      hostId = `host_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+      localStorage.setItem('dartcounter_host_device_id', hostId);
+    }
+    const hostName = user?.user_metadata?.username || user?.email || 'Host-Gerät';
+
+    const res = await redeemSyncCode(clean, hostId, hostName);
+    setImportLoading(false);
+
+    if (!res.success || !res.profile || !res.username) {
+      setImportError(res.error || "Code konnte nicht eingelöst werden.");
+    } else {
+      setImportedGuestData({ profile: res.profile, username: res.username });
+    }
+  };
+
+  const handleConfirmImport = () => {
+    if (!importedGuestData) return;
+    onUpdateProfile(importedGuestData.username, importedGuestData.profile);
+    setImportSuccess(`Gastkonto @${importedGuestData.username} erfolgreich verknüpft!`);
+    setTimeout(() => {
+      setShowImportModal(false);
+      setImportCode('');
+      setImportedGuestData(null);
+      setImportSuccess(null);
+    }, 1200);
+  };
 
   const handleCreateProfile = () => {
     const name = newProfileName.trim();
@@ -280,23 +367,54 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
         </div>
 
         <div className="card">
-          <div className="card-header">
+          <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h2>Vorhandene Profile</h2>
-            <span className="card-badge">{profileNames.length}</span>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <button 
+                type="button"
+                className="btn-primary"
+                onClick={() => setShowImportModal(true)}
+                style={{ padding: '4px 10px', fontSize: '0.8rem', minHeight: '32px' }}
+                title="Gastspieler via Sync-Code importieren"
+              >
+                ☁️ Gast importieren
+              </button>
+              <span className="card-badge">{profileNames.length}</span>
+            </div>
           </div>
           
           {profileNames.length > 0 ? (
             <div className="profile-chips">
-              {profileNames.map(name => (
-                <button 
-                  key={name} 
-                  className="profile-chip" 
-                  onClick={() => setViewProfile(name)}
-                  style={{ borderLeftColor: profiles[name]?.color || 'var(--card-border)' }}
-                >
-                  {profiles[name]?.isBot ? '🤖 ' : '👤 '}{name}
-                </button>
-              ))}
+              {profileNames.map(name => {
+                const isGuest = profiles[name]?.isLinkedCloudGuest;
+                return (
+                  <button 
+                    key={name} 
+                    className="profile-chip" 
+                    onClick={() => setViewProfile(name)}
+                    style={{ 
+                      borderLeftColor: profiles[name]?.color || 'var(--card-border)',
+                      position: 'relative'
+                    }}
+                  >
+                    {isGuest ? '🔗 ' : (profiles[name]?.isBot ? '🤖 ' : '👤 ')}
+                    {name}
+                    {isGuest && (
+                      <span style={{ 
+                        fontSize: '0.7em', 
+                        marginLeft: '6px', 
+                        background: 'rgba(59, 130, 246, 0.25)', 
+                        color: 'var(--blue)', 
+                        padding: '1px 5px', 
+                        borderRadius: '4px',
+                        fontWeight: 700 
+                      }}>
+                        Cloud
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           ) : (
             <p style={{ color: 'var(--text-dim)', fontSize: '0.9em', textAlign: 'center', padding: '20px 0' }}>
@@ -309,6 +427,293 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
           </button>
         </div>
       </div>
+
+      {/* 📱 Gast-Sync & Geräte-Freigabe (Nur für angemeldete Nutzer) */}
+      {user && (
+        <div className="card" style={{ marginTop: '20px' }}>
+          <div className="card-header" style={{ marginBottom: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '1.3em' }}>📱</span>
+              <h2>Gast-Sync & Geräte-Freigaben</h2>
+            </div>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>Auf Freundes-Geräten spielen</span>
+          </div>
+
+          <p style={{ fontSize: '0.86rem', color: 'var(--text-dim)', margin: '0 0 14px 0', lineHeight: 1.5 }}>
+            Teile deinen 6-stelligen Code mit einem Freund (Host), um auf seinem Gerät als Gast zu spielen. Alle gespielten Matches werden automatisch in dein Cloud-Konto synchronisiert!
+          </p>
+
+          <div style={{ 
+            background: 'rgba(0, 0, 0, 0.35)', 
+            padding: '16px', 
+            borderRadius: '12px', 
+            border: '1px solid var(--card-border)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '14px'
+          }}>
+            {userSyncInfo && new Date(userSyncInfo.expiresAt) > new Date() ? (
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                  <div>
+                    <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Dein aktiver Sync-Code:
+                    </span>
+                    <div style={{ 
+                      fontSize: '2rem', 
+                      fontWeight: 900, 
+                      letterSpacing: '0.15em', 
+                      color: 'var(--primary, #00ff88)', 
+                      fontFamily: 'var(--font-mono)' 
+                    }}>
+                      {userSyncInfo.code.slice(0, 3)} {userSyncInfo.code.slice(3)}
+                    </div>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
+                      Gültig bis: {new Date(userSyncInfo.expiresAt).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <button 
+                      type="button" 
+                      className="btn-primary" 
+                      onClick={handleCopyCode}
+                      style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                    >
+                      {copiedCode ? '✅ Kopiert!' : '📋 Code kopieren'}
+                    </button>
+                    <button 
+                      type="button" 
+                      className="btn-secondary" 
+                      onClick={handleGenerateCode}
+                      disabled={syncLoading}
+                      style={{ padding: '8px 14px', fontSize: '0.85rem' }}
+                      title="Generiert einen neuen Code und invalidiert alte Codes (Anti-Stat-Washing)"
+                    >
+                      🔄 Code erneuern
+                    </button>
+                  </div>
+                </div>
+
+                {/* 🛡️ Aktive Host-Verbindungen & Entkoppeln */}
+                <div style={{ marginTop: '16px', borderTop: '1px solid var(--card-border)', paddingTop: '12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text)' }}>
+                      Gekoppelte Host-Geräte:
+                    </span>
+                    {userSyncInfo.activeHosts && userSyncInfo.activeHosts.length > 0 && (
+                      <button 
+                        type="button"
+                        className="btn-danger"
+                        onClick={() => handleRevokeHost()}
+                        disabled={syncLoading}
+                        style={{ padding: '3px 8px', fontSize: '0.74rem', minHeight: '26px' }}
+                      >
+                        ⛔ Alle trennen
+                      </button>
+                    )}
+                  </div>
+
+                  {userSyncInfo.activeHosts && userSyncInfo.activeHosts.length > 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {userSyncInfo.activeHosts.map((host, hIdx) => (
+                        <div 
+                          key={hIdx}
+                          style={{
+                            background: 'rgba(255, 255, 255, 0.04)',
+                            padding: '8px 12px',
+                            borderRadius: '8px',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            fontSize: '0.82rem'
+                          }}
+                        >
+                          <div>
+                            <strong style={{ color: 'var(--blue)' }}>📱 {host.hostName}</strong>
+                            <span style={{ color: 'var(--text-dim)', marginLeft: '8px', fontSize: '0.75rem' }}>
+                              (Verbunden {new Date(host.linkedAt).toLocaleDateString('de-DE')})
+                            </span>
+                          </div>
+                          <button 
+                            type="button"
+                            className="btn-danger"
+                            onClick={() => handleRevokeHost(host.hostId)}
+                            disabled={syncLoading}
+                            style={{ padding: '2px 8px', fontSize: '0.74rem', minHeight: '26px' }}
+                          >
+                            Entkoppeln
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)' }}>
+                      Noch keine fremden Geräte mit diesem Code gekoppelt.
+                    </span>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '10px 0' }}>
+                <p style={{ fontSize: '0.88rem', color: 'var(--text-dim)', marginBottom: '12px' }}>
+                  Du hast aktuell keinen aktiven Sync-Code. Erstelle einen Code, um dein Profil auf dem Smartphone/iPad eines Freundes freizugeben.
+                </p>
+                <button 
+                  type="button" 
+                  className="btn-primary" 
+                  onClick={handleGenerateCode}
+                  disabled={syncLoading}
+                  style={{ padding: '10px 20px', fontWeight: 800 }}
+                >
+                  {syncLoading ? 'Erzeuge Code...' : '⚡ 6-stelligen Sync-Code generieren'}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ☁️ Modal: Gast via Sync-Code importieren */}
+      {showImportModal && (
+        <div className="modal-overlay" style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0,0,0,0.8)',
+          backdropFilter: 'blur(8px)',
+          zIndex: 10000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '16px'
+        }}>
+          <div className="modal-content card" style={{
+            maxWidth: '440px',
+            width: '100%',
+            background: 'var(--card)',
+            border: '1px solid var(--primary, #00ff88)',
+            padding: '24px',
+            boxShadow: '0 10px 40px rgba(0,0,0,0.6)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.25rem' }}>☁️ Gast via Sync-Code importieren</h3>
+              <button 
+                className="btn-ghost" 
+                onClick={() => {
+                  setShowImportModal(false);
+                  setImportError(null);
+                  setImportedGuestData(null);
+                }}
+                style={{ fontSize: '1.2rem', padding: '2px 8px' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)', marginBottom: '16px', lineHeight: 1.4 }}>
+              Gib den 6-stelligen Code ein, den dein Freund auf seinem Smartphone im Profil-Tab anzeigt:
+            </p>
+
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+              <input 
+                type="text" 
+                maxLength={7}
+                placeholder="z.B. 482 195" 
+                value={importCode}
+                onChange={(e) => setImportCode(e.target.value)}
+                style={{ 
+                  fontSize: '1.3rem', 
+                  textAlign: 'center', 
+                  letterSpacing: '0.1em', 
+                  fontWeight: 800,
+                  fontFamily: 'var(--font-mono)' 
+                }}
+                onKeyDown={(e) => e.key === 'Enter' && handleCheckImportCode()}
+              />
+              <button 
+                className="btn-primary" 
+                onClick={handleCheckImportCode}
+                disabled={importLoading || importCode.trim().length < 6}
+                style={{ padding: '0 16px', whiteSpace: 'nowrap' }}
+              >
+                {importLoading ? 'Prüfe...' : 'Suchen'}
+              </button>
+            </div>
+
+            {importError && (
+              <div style={{ 
+                background: 'rgba(239, 68, 68, 0.15)', 
+                border: '1px solid rgba(239, 68, 68, 0.3)', 
+                color: 'var(--red)', 
+                padding: '10px 12px', 
+                borderRadius: '8px', 
+                fontSize: '0.85rem', 
+                marginBottom: '14px' 
+              }}>
+                ⚠️ {importError}
+              </div>
+            )}
+
+            {importSuccess && (
+              <div style={{ 
+                background: 'rgba(16, 185, 129, 0.15)', 
+                border: '1px solid rgba(16, 185, 129, 0.3)', 
+                color: 'var(--green, #10B981)', 
+                padding: '10px 12px', 
+                borderRadius: '8px', 
+                fontSize: '0.85rem', 
+                marginBottom: '14px' 
+              }}>
+                ✅ {importSuccess}
+              </div>
+            )}
+
+            {importedGuestData && (
+              <div style={{
+                background: 'rgba(0, 0, 0, 0.3)',
+                border: '1px solid var(--card-border)',
+                borderRadius: '10px',
+                padding: '14px',
+                marginBottom: '16px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                  <div style={{
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '50%',
+                    background: importedGuestData.profile.color || 'var(--blue)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 900,
+                    color: '#fff'
+                  }}>
+                    {importedGuestData.username.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <strong style={{ fontSize: '1.05rem', color: 'var(--text)' }}>
+                      @{importedGuestData.username}
+                    </strong>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
+                      {importedGuestData.profile.matches || 0} Matches · Ø {importedGuestData.profile.dartsThrown > 0 ? (((importedGuestData.profile.pointsScored || 0) / importedGuestData.profile.dartsThrown) * 3).toFixed(1) : '0.0'}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                  <button 
+                    className="btn-primary" 
+                    onClick={handleConfirmImport}
+                    style={{ flex: 1, padding: '10px' }}
+                  >
+                    ➕ Profil zur Spielerliste hinzufügen
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* 2D Dartboard Heatmap Overview on Profile Tab */}
       {profileNames.length > 0 && (

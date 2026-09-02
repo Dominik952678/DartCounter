@@ -15,7 +15,7 @@ import { SplitScore } from './components/SplitScore';
 import { CheckoutTraining } from './components/CheckoutTraining';
 import { StatsModal, HistoryModal } from './components/Modals';
 import type { Player, MatchHistory, Profile } from './types';
-import { startSync, saveProfiles, saveMatch, getMatches } from './db/database';
+import { startSync, saveProfiles, saveMatch, getMatches, syncMatchesAndProfilesForGuests } from './db/database';
 
 import { useProfiles } from './hooks/useProfiles';
 import { useGameEngine } from './hooks/useGameEngine';
@@ -327,6 +327,16 @@ export default function App() {
             await saveProfiles(statsModalData.pendingProfiles, user?.id);
             await saveMatch(statsModalData.pendingMatchData, user?.id);
             getMatches(user?.id).then(setSavedMatches);
+
+            // Parallel Multi-User Guest Cloud-Sync (Anti-Stat-Washing protected)
+            const hostName = user?.user_metadata?.username || user?.email || 'Host';
+            syncMatchesAndProfilesForGuests(
+              statsModalData.players,
+              statsModalData.pendingMatchData,
+              statsModalData.pendingMatchData.winner,
+              user?.id,
+              hostName
+            ).catch(err => console.error("Guest sync error in background", err));
           }
           setStatsModalData({ isOpen: false, winnerIndex: null, players: [], matchData: null });
           gameEngine.abortGame();
@@ -338,6 +348,16 @@ export default function App() {
             await saveProfiles(statsModalData.pendingProfiles, user?.id);
             await saveMatch(statsModalData.pendingMatchData, user?.id);
             getMatches(user?.id).then(setSavedMatches);
+
+            // Parallel Multi-User Guest Cloud-Sync (Anti-Stat-Washing protected)
+            const hostName = user?.user_metadata?.username || user?.email || 'Host';
+            syncMatchesAndProfilesForGuests(
+              statsModalData.players,
+              statsModalData.pendingMatchData,
+              statsModalData.pendingMatchData.winner,
+              user?.id,
+              hostName
+            ).catch(err => console.error("Guest sync error in background", err));
           }
           const mData = statsModalData.matchData;
           setStatsModalData({ isOpen: false, winnerIndex: null, players: [], matchData: null });

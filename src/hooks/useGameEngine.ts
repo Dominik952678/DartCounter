@@ -146,6 +146,10 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
         targetAverage: profiles[name]?.targetAverage,
         color: is2v2 ? teamColor : (profiles[name]?.color || teamColor),
         team: is2v2 ? team : undefined,
+        linkedUserId: profiles[name]?.linkedUserId,
+        linkedUsername: profiles[name]?.linkedUsername,
+        isLinkedCloudGuest: profiles[name]?.isLinkedCloudGuest,
+        syncAuthToken: profiles[name]?.syncAuthToken,
         segmentHits: {},
         triplesHit: 0
       };
@@ -695,7 +699,10 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
             highestCheckout: p.highestCheckout,
             segmentHits: { ...(p.segmentHits || {}) },
             triplesHit: p.triplesHit || 0,
-            team: is2v2 ? (p.team || (i % 2 === 0 ? 1 : 2)) : undefined
+            team: is2v2 ? (p.team || (i % 2 === 0 ? 1 : 2)) : undefined,
+            linkedUserId: p.linkedUserId,
+            linkedUsername: p.linkedUsername,
+            isLinkedCloudGuest: p.isLinkedCloudGuest
         }))
     };
 

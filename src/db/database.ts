@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import type { MatchHistory, Profile } from '../types';
+import type { MatchHistory, Profile, GuestSyncTokenDoc, Player } from '../types';
 
 const SUPABASE_URL = 'https://pdbycflxxokbwfsfrmwu.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_vkBLAop52YK5pN6JrIAjfQ__Q9dvli0';
@@ -175,4 +175,317 @@ export async function getMatches(userId?: string | null): Promise<MatchHistory[]
     console.error("Error getting matches from Supabase", err);
     return cached;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   📱 GUEST-CLOUD-SYNC SYSTEM (MULTI-USER & ANTI-STAT-WASHING)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Erzeugt einen neuen 6-stelligen Sync-Code für den registrierten Benutzer.
+ * Invalidiert vorherige Codes und stellt sicher, dass fremde Geräte sich authentifizieren müssen.
+ */
+export async function generateUserSyncCode(userId: string, username: string): Promise<GuestSyncTokenDoc> {
+  const code = String(Math.floor(100000 + Math.random() * 900000));
+  const authToken = `tok_${Date.now()}_${Math.random().toString(36).substring(2, 12)}`;
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + 48 * 60 * 60 * 1000).toISOString(); // 48 Stunden gültig
+
+  // Vorherige aktive Hosts erhalten, falls vorhanden
+  let existingHosts: any[] = [];
+  try {
+    const { data: prevDoc } = await supabase
+      .from('documents')
+      .select('data')
+      .eq('id', `user_sync_${userId}`)
+      .single();
+    if (prevDoc?.data?.activeHosts) {
+      existingHosts = prevDoc.data.activeHosts;
+    }
+  } catch (e) {
+    // Ignorieren falls nicht vorhanden
+  }
+
+  const tokenDoc: GuestSyncTokenDoc = {
+    code,
+    userId,
+    username,
+    authToken,
+    createdAt: now.toISOString(),
+    expiresAt,
+    activeHosts: existingHosts
+  };
+
+  try {
+    // 1. Speichern unter sync_code_{code} für schnellen Lookup beim Host
+    await supabase
+      .from('documents')
+      .upsert({ id: `sync_code_${code}`, data: { ...tokenDoc, type: 'sync_code' } });
+
+    // 2. Speichern unter user_sync_{userId} für den Gast (Verwaltung & Widerruf)
+    await supabase
+      .from('documents')
+      .upsert({ id: `user_sync_${userId}`, data: { ...tokenDoc, type: 'user_sync' } });
+
+    localStorage.setItem('dartcounter_active_sync_code', JSON.stringify(tokenDoc));
+  } catch (err) {
+    console.error("Error generating user sync code in Supabase", err);
+  }
+
+  return tokenDoc;
+}
+
+/**
+ * Ruft die aktiven Sync-Informationen und gekoppelten Host-Geräte des Nutzers ab.
+ */
+export async function getActiveUserSyncInfo(userId: string): Promise<GuestSyncTokenDoc | null> {
+  try {
+    const { data, error } = await supabase
+      .from('documents')
+      .select('data')
+      .eq('id', `user_sync_${userId}`)
+      .single();
+
+    if (error || !data?.data) return null;
+    const tokenDoc = data.data as GuestSyncTokenDoc;
+    
+    // Prüfen ob abgelaufen
+    if (new Date(tokenDoc.expiresAt) <= new Date()) {
+      return null;
+    }
+    return tokenDoc;
+  } catch (err) {
+    console.error("Error fetching active user sync info", err);
+    return null;
+  }
+}
+
+/**
+ * Löst einen 6-stelligen Sync-Code auf dem Host-Gerät ein.
+ * Überprüft Gültigkeit, registriert das Host-Gerät und liefert das Profil des Gastes.
+ */
+export async function redeemSyncCode(
+  rawCode: string, 
+  hostId: string, 
+  hostName: string
+): Promise<{ success: boolean; error?: string; profile?: Profile; username?: string; userId?: string; authToken?: string }> {
+  const cleanCode = rawCode.replace(/\s+/g, '').trim();
+  if (!cleanCode || cleanCode.length < 6) {
+    return { success: false, error: 'Ungültiger Code. Bitte 6 Ziffern eingeben.' };
+  }
+
+  try {
+    // 1. Sync-Code in Supabase suchen
+    const { data, error } = await supabase
+      .from('documents')
+      .select('data')
+      .eq('id', `sync_code_${cleanCode}`)
+      .single();
+
+    if (error || !data?.data) {
+      return { success: false, error: 'Code nicht gefunden oder abgelaufen.' };
+    }
+
+    const tokenDoc = data.data as GuestSyncTokenDoc;
+
+    if (new Date(tokenDoc.expiresAt) <= new Date()) {
+      return { success: false, error: 'Dieser Sync-Code ist abgelaufen. Bitte neuen Code generieren.' };
+    }
+
+    // 2. Profil des Gastes aus Supabase laden
+    const guestProfiles = await getProfiles(tokenDoc.userId, tokenDoc.username);
+    const baseProfile = guestProfiles[tokenDoc.username] || Object.values(guestProfiles)[0] || {
+      wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0
+    };
+
+    // 3. Host in activeHosts registrieren (falls noch nicht vorhanden)
+    const activeHosts = tokenDoc.activeHosts || [];
+    const hostIndex = activeHosts.findIndex(h => h.hostId === hostId);
+    const hostEntry = {
+      hostId,
+      hostName: hostName || 'Unbekanntes Gerät',
+      linkedAt: new Date().toISOString()
+    };
+
+    if (hostIndex >= 0) {
+      activeHosts[hostIndex] = { ...activeHosts[hostIndex], ...hostEntry };
+    } else {
+      activeHosts.push(hostEntry);
+    }
+
+    const updatedTokenDoc = { ...tokenDoc, activeHosts };
+
+    // Aktualisiere Token-Docs
+    await supabase.from('documents').upsert({ id: `sync_code_${cleanCode}`, data: updatedTokenDoc });
+    await supabase.from('documents').upsert({ id: `user_sync_${tokenDoc.userId}`, data: updatedTokenDoc });
+
+    // 4. Konstruiere das verknüpfte Gast-Profil für den Host
+    const linkedProfile: Profile = {
+      ...baseProfile,
+      linkedUserId: tokenDoc.userId,
+      linkedUsername: tokenDoc.username,
+      isLinkedCloudGuest: true,
+      syncAuthToken: tokenDoc.authToken,
+      lastSyncedAt: new Date().toISOString()
+    };
+
+    return {
+      success: true,
+      profile: linkedProfile,
+      username: tokenDoc.username,
+      userId: tokenDoc.userId,
+      authToken: tokenDoc.authToken
+    };
+  } catch (err: any) {
+    console.error("Error redeeming sync code", err);
+    return { success: false, error: err?.message || 'Fehler beim Einlösen des Codes.' };
+  }
+}
+
+/**
+ * Ermöglicht dem Gast, den Zugriff für einen bestimmten Host oder alle Hosts zu widerrufen (Anti-Stat-Washing).
+ */
+export async function revokeHostAccess(userId: string, hostIdToRevoke?: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { data: userDoc } = await supabase
+      .from('documents')
+      .select('data')
+      .eq('id', `user_sync_${userId}`)
+      .single();
+
+    if (!userDoc?.data) return { success: true };
+
+    const tokenDoc = userDoc.data as GuestSyncTokenDoc;
+    const newAuthToken = `tok_${Date.now()}_revoked_${Math.random().toString(36).substring(2, 10)}`;
+
+    let updatedHosts: any[] = [];
+    if (hostIdToRevoke && tokenDoc.activeHosts) {
+      updatedHosts = tokenDoc.activeHosts.filter(h => h.hostId !== hostIdToRevoke);
+    }
+
+    const updatedDoc: GuestSyncTokenDoc = {
+      ...tokenDoc,
+      authToken: newAuthToken, // Token neu rollen -> alte Hosts können keine Matches mehr autorisieren!
+      activeHosts: updatedHosts
+    };
+
+    // Beide Docs aktualisieren
+    await supabase.from('documents').upsert({ id: `user_sync_${userId}`, data: updatedDoc });
+    if (tokenDoc.code) {
+      await supabase.from('documents').upsert({ id: `sync_code_${tokenDoc.code}`, data: updatedDoc });
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    console.error("Error revoking host access", err);
+    return { success: false, error: err?.message || 'Fehler beim Widerrufen des Zugriffs.' };
+  }
+}
+
+/**
+ * Synchronisiert nach einem beendeten Match alle beteiligten Cloud-Gast-Spieler parallel mit ihren Supabase-Konten.
+ */
+export async function syncMatchesAndProfilesForGuests(
+  finalPlayers: Player[],
+  matchData: MatchHistory,
+  winnerName: string,
+  _hostUserId?: string | null,
+  hostName?: string
+): Promise<{ syncedGuests: string[]; errors: string[] }> {
+  const syncedGuests: string[] = [];
+  const errors: string[] = [];
+
+  for (let i = 0; i < finalPlayers.length; i++) {
+    const player = finalPlayers[i];
+    
+    // Prüfen ob dieser Spieler ein verknüpfter Cloud-Gast ist
+    const linkedUserId = (player as any).linkedUserId;
+    const syncAuthToken = (player as any).syncAuthToken;
+    const linkedUsername = (player as any).linkedUsername || player.name;
+
+    if (!linkedUserId || !syncAuthToken) continue;
+
+    try {
+      // 1. Auth-Token gegen Cloud validieren (Anti-Stat-Washing Schutz)
+      const { data: userSyncData, error: syncErr } = await supabase
+        .from('documents')
+        .select('data')
+        .eq('id', `user_sync_${linkedUserId}`)
+        .single();
+
+      if (syncErr || !userSyncData?.data) {
+        errors.push(`${linkedUsername}: Verbindung nicht mehr gültig.`);
+        continue;
+      }
+
+      const activeToken = (userSyncData.data as GuestSyncTokenDoc).authToken;
+      if (activeToken !== syncAuthToken) {
+        errors.push(`${linkedUsername}: Zugriff wurde vom Nutzer widerrufen.`);
+        continue;
+      }
+
+      // 2. Match für das Gast-Konto speichern
+      const guestMatchId = `match_${linkedUserId}_${Date.now()}_guest`;
+      const guestMatch: MatchHistory = {
+        ...matchData,
+        _id: guestMatchId,
+        type: 'match',
+        isGuestMatch: true,
+        hostName: hostName || 'Freund'
+      };
+
+      await supabase.from('documents').insert({ id: guestMatchId, data: guestMatch });
+
+      // 3. Cloud-Profil des Gastes aktualisieren
+      const guestProfiles = await getProfiles(linkedUserId, linkedUsername);
+      const profKey = guestProfiles[linkedUsername] ? linkedUsername : Object.keys(guestProfiles)[0] || linkedUsername;
+      const currentProf = guestProfiles[profKey] || {
+        wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0
+      };
+
+      const is2v2 = !!matchData.is2v2 && finalPlayers.length === 4;
+      const pTeam = player.team || (i % 2 === 0 ? 1 : 2);
+      const isWinner = is2v2 ? (winnerName.includes(`Team ${pTeam}`)) : (player.name === winnerName);
+
+      const updatedProf: Profile = {
+        ...currentProf,
+        matches: (currentProf.matches || 0) + 1,
+        wins: (currentProf.wins || 0) + (isWinner ? 1 : 0),
+        dartsThrown: (currentProf.dartsThrown || 0) + (player.matchDarts || 0),
+        pointsScored: (currentProf.pointsScored || 0) + (player.matchPts || 0),
+        sixtyPlus: (currentProf.sixtyPlus || 0) + (player.sixtyPlus || 0),
+        hundredPlus: (currentProf.hundredPlus || 0) + (player.hundredPlus || 0),
+        oneFortyPlus: (currentProf.oneFortyPlus || 0) + (player.oneFortyPlus || 0),
+        oneEighty: (currentProf.oneEighty || 0) + (player.oneEighty || 0),
+        checkoutAttempts: (currentProf.checkoutAttempts || 0) + (player.checkoutAttempts || 0),
+        checkoutSuccesses: (currentProf.checkoutSuccesses || 0) + (player.checkoutSuccesses || 0),
+        first9Pts: (currentProf.first9Pts || 0) + (player.matchFirst9Pts || 0),
+        first9Darts: (currentProf.first9Darts || 0) + (player.matchFirst9Darts || 0),
+        triplesHit: (currentProf.triplesHit || 0) + (player.triplesHit || 0),
+        highestCheckout: Math.max(currentProf.highestCheckout || 0, player.highestCheckout || 0),
+        lastSyncedAt: new Date().toISOString()
+      };
+
+      if (player.bestMatchLeg && (!currentProf.bestLegDarts || player.bestMatchLeg < currentProf.bestLegDarts)) {
+        updatedProf.bestLegDarts = player.bestMatchLeg;
+      }
+
+      if (player.segmentHits) {
+        if (!updatedProf.segmentHits) updatedProf.segmentHits = {};
+        Object.entries(player.segmentHits).forEach(([seg, hits]) => {
+          updatedProf.segmentHits![seg] = (updatedProf.segmentHits![seg] || 0) + hits;
+        });
+      }
+
+      guestProfiles[profKey] = updatedProf;
+      await saveProfiles(guestProfiles, linkedUserId);
+
+      syncedGuests.push(linkedUsername);
+    } catch (guestErr: any) {
+      console.error(`Error syncing for guest ${linkedUsername}`, guestErr);
+      errors.push(`${linkedUsername}: ${guestErr?.message || 'Sync-Fehler'}`);
+    }
+  }
+
+  return { syncedGuests, errors };
 }

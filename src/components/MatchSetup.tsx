@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { GameConfig, Profile } from '../types';
 import { useAuthStore } from '../store/useAuthStore';
+import { redeemSyncCode, saveProfiles } from '../db/database';
 
 interface MatchSetupProps {
   profiles: Record<string, Profile>;
@@ -26,6 +27,14 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
 }) => {
   const { user } = useAuthStore();
   const isGuest = !user;
+
+  // 📱 Gast-Cloud-Sync State
+  const [showGuestSyncModal, setShowGuestSyncModal] = useState(false);
+  const [guestSyncCode, setGuestSyncCode] = useState('');
+  const [guestSyncLoading, setGuestSyncLoading] = useState(false);
+  const [guestSyncError, setGuestSyncError] = useState<string | null>(null);
+  const [guestSyncSuccess, setGuestSyncSuccess] = useState<string | null>(null);
+  const [importedGuestData, setImportedGuestData] = useState<{ profile: Profile; username: string } | null>(null);
 
   const [savedMatch, setSavedMatch] = useState<SavedMatchSummary | null>(() => {
     try {
@@ -268,6 +277,61 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
         setIsShuffling(false);
       }
     }, 50);
+  };
+
+  const handleCheckGuestSyncCode = async () => {
+    setGuestSyncError(null);
+    setGuestSyncSuccess(null);
+    setImportedGuestData(null);
+
+    const clean = guestSyncCode.replace(/\s+/g, '').trim();
+    if (clean.length < 6) {
+      setGuestSyncError("Bitte gib den 6-stelligen Sync-Code ein.");
+      return;
+    }
+
+    setGuestSyncLoading(true);
+    let hostId = localStorage.getItem('dartcounter_host_device_id');
+    if (!hostId) {
+      hostId = `host_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+      localStorage.setItem('dartcounter_host_device_id', hostId);
+    }
+    const hostName = user?.user_metadata?.username || user?.email || 'Host-Gerät';
+
+    const res = await redeemSyncCode(clean, hostId, hostName);
+    setGuestSyncLoading(false);
+
+    if (!res.success || !res.profile || !res.username) {
+      setGuestSyncError(res.error || "Code konnte nicht eingelöst werden.");
+    } else {
+      setImportedGuestData({ profile: res.profile, username: res.username });
+    }
+  };
+
+  const handleConfirmGuestImport = () => {
+    if (!importedGuestData || !setProfiles) return;
+    const newProfiles = { ...profiles, [importedGuestData.username]: importedGuestData.profile };
+    setProfiles(newProfiles);
+    if (user?.id) {
+      saveProfiles(newProfiles, user.id);
+    }
+    // Setze neu importierten Gast direkt in ersten freien oder nächsten Slot
+    setSelectedPlayers(prev => {
+      const next = [...prev];
+      const emptyOrBotIdx = next.findIndex(p => !p || profiles[p]?.isBot);
+      if (emptyOrBotIdx >= 0) {
+        next[emptyOrBotIdx] = importedGuestData.username;
+      }
+      return next;
+    });
+
+    setGuestSyncSuccess(`Gastkonto @${importedGuestData.username} erfolgreich hinzugefügt!`);
+    setTimeout(() => {
+      setShowGuestSyncModal(false);
+      setGuestSyncCode('');
+      setImportedGuestData(null);
+      setGuestSyncSuccess(null);
+    }, 1200);
   };
 
   const executeStartGame = () => {
@@ -727,15 +791,19 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
                       onChange={(e) => handlePlayerChange(i, e.target.value)}
                       style={{ flex: 1, padding: '12px', border: 'none', background: 'transparent', color: 'var(--text)', fontSize: '16px', outline: 'none' }}
                     >
-                      {profileNames.map(name => (
-                        <option 
-                          key={name} 
-                          value={name} 
-                          style={{ color: '#000', background: '#fff' }}
-                        >
-                          {name} {profiles[name]?.isBot ? '(Bot)' : ''}
-                        </option>
-                      ))}
+                      {profileNames.map(name => {
+                        const isCloudGuest = profiles[name]?.isLinkedCloudGuest;
+                        const isBot = profiles[name]?.isBot;
+                        return (
+                          <option 
+                            key={name} 
+                            value={name} 
+                            style={{ color: '#000', background: '#fff' }}
+                          >
+                            {isCloudGuest ? '🔗 ' : (isBot ? '🤖 ' : '👤 ')}{name}{isCloudGuest ? ' (Cloud-Gast)' : (isBot ? ' (Bot)' : '')}
+                          </option>
+                        );
+                      })}
                     </select>
                   )}
                 </div>
@@ -743,6 +811,19 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
             );
           })}
         </div>
+
+        {!isGuest && (
+          <div style={{ marginTop: '10px', display: 'flex', justifyContent: 'flex-end' }}>
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={() => setShowGuestSyncModal(true)}
+              style={{ padding: '6px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              ☁️ Cloud-Gast via Sync-Code hinzufügen
+            </button>
+          </div>
+        )}
 
         {errorMsg && (
           <div style={{
@@ -1019,6 +1100,147 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
                 Abbrechen
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ☁️ Modal: Gast via Sync-Code importieren */}
+      {showGuestSyncModal && (
+        <div className="modal-overlay" style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0,0,0,0.8)',
+          backdropFilter: 'blur(8px)',
+          zIndex: 10000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '16px'
+        }}>
+          <div className="modal-content card" style={{
+            maxWidth: '440px',
+            width: '100%',
+            background: 'var(--card)',
+            border: '1px solid var(--primary, #00ff88)',
+            padding: '24px',
+            boxShadow: '0 10px 40px rgba(0,0,0,0.6)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ margin: 0, fontSize: '1.25rem' }}>☁️ Gast via Sync-Code hinzufügen</h3>
+              <button 
+                className="btn-ghost" 
+                onClick={() => {
+                  setShowGuestSyncModal(false);
+                  setGuestSyncError(null);
+                  setImportedGuestData(null);
+                }}
+                style={{ fontSize: '1.2rem', padding: '2px 8px' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)', marginBottom: '16px', lineHeight: 1.4 }}>
+              Gib den 6-stelligen Code ein, den dein Freund auf seinem Smartphone im Profil-Tab anzeigt:
+            </p>
+
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+              <input 
+                type="text" 
+                maxLength={7}
+                placeholder="z.B. 482 195" 
+                value={guestSyncCode}
+                onChange={(e) => setGuestSyncCode(e.target.value)}
+                style={{ 
+                  fontSize: '1.3rem', 
+                  textAlign: 'center', 
+                  letterSpacing: '0.1em', 
+                  fontWeight: 800,
+                  fontFamily: 'var(--font-mono)' 
+                }}
+                onKeyDown={(e) => e.key === 'Enter' && handleCheckGuestSyncCode()}
+              />
+              <button 
+                className="btn-primary" 
+                onClick={handleCheckGuestSyncCode}
+                disabled={guestSyncLoading || guestSyncCode.trim().length < 6}
+                style={{ padding: '0 16px', whiteSpace: 'nowrap' }}
+              >
+                {guestSyncLoading ? 'Prüfe...' : 'Suchen'}
+              </button>
+            </div>
+
+            {guestSyncError && (
+              <div style={{ 
+                background: 'rgba(239, 68, 68, 0.15)', 
+                border: '1px solid rgba(239, 68, 68, 0.3)', 
+                color: 'var(--red)', 
+                padding: '10px 12px', 
+                borderRadius: '8px', 
+                fontSize: '0.85rem', 
+                marginBottom: '14px' 
+              }}>
+                ⚠️ {guestSyncError}
+              </div>
+            )}
+
+            {guestSyncSuccess && (
+              <div style={{ 
+                background: 'rgba(16, 185, 129, 0.15)', 
+                border: '1px solid rgba(16, 185, 129, 0.3)', 
+                color: 'var(--green, #10B981)', 
+                padding: '10px 12px', 
+                borderRadius: '8px', 
+                fontSize: '0.85rem', 
+                marginBottom: '14px' 
+              }}>
+                ✅ {guestSyncSuccess}
+              </div>
+            )}
+
+            {importedGuestData && (
+              <div style={{
+                background: 'rgba(0, 0, 0, 0.3)',
+                border: '1px solid var(--card-border)',
+                borderRadius: '10px',
+                padding: '14px',
+                marginBottom: '16px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+                  <div style={{
+                    width: '38px',
+                    height: '38px',
+                    borderRadius: '50%',
+                    background: importedGuestData.profile.color || 'var(--blue)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 900,
+                    color: '#fff'
+                  }}>
+                    {importedGuestData.username.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <strong style={{ fontSize: '1.05rem', color: 'var(--text)' }}>
+                      @{importedGuestData.username}
+                    </strong>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
+                      {importedGuestData.profile.matches || 0} Matches · Ø {importedGuestData.profile.dartsThrown > 0 ? (((importedGuestData.profile.pointsScored || 0) / importedGuestData.profile.dartsThrown) * 3).toFixed(1) : '0.0'}
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                  <button 
+                    className="btn-primary" 
+                    onClick={handleConfirmGuestImport}
+                    style={{ flex: 1, padding: '10px' }}
+                  >
+                    ➕ Als Mitspieler hinzufügen
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -22,6 +22,29 @@ export interface Profile {
   powerScoring?: { bestScore: number; matchesPlayed: number; wins: number; totalScore?: number };
   splitScore?: { bestScore: number; matchesPlayed: number; wins: number; totalScore?: number };
   checkoutTraining?: { bestCheckout: number; roundsCompleted: number; matchesPlayed: number; wins: number; totalAttempts?: number; totalDartsUsed?: number };
+  // Cloud Guest Sync metadata
+  linkedUserId?: string;
+  linkedUsername?: string;
+  isLinkedCloudGuest?: boolean;
+  syncAuthToken?: string;
+  lastSyncedAt?: string;
+}
+
+export interface ActiveHostConnection {
+  hostId: string;
+  hostName: string;
+  linkedAt: string;
+  lastMatchAt?: string;
+}
+
+export interface GuestSyncTokenDoc {
+  code: string;
+  userId: string;
+  username: string;
+  authToken: string;
+  createdAt: string;
+  expiresAt: string;
+  activeHosts?: ActiveHostConnection[];
 }
 
 export interface GameConfig {
@@ -63,6 +86,10 @@ export interface Player {
   color?: string;
   bestMatchLeg?: number;
   team?: 1 | 2;
+  linkedUserId?: string;
+  linkedUsername?: string;
+  isLinkedCloudGuest?: boolean;
+  syncAuthToken?: string;
 }
 
 export interface Dart {
@@ -93,6 +120,9 @@ export interface PlayerStats {
   segmentHits?: Record<string, number>;
   triplesHit?: number;
   team?: 1 | 2;
+  linkedUserId?: string;
+  linkedUsername?: string;
+  isLinkedCloudGuest?: boolean;
   
   // Minigame specific
   score?: number;
@@ -111,6 +141,8 @@ export interface MatchHistory {
   date: string;
   winner: string;
   players: PlayerStats[];
+  isGuestMatch?: boolean;
+  hostName?: string;
 }
 
 export interface TeamContext {

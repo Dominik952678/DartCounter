@@ -209,6 +209,41 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
           <button className="btn-close" onClick={onClose} title="Schließen" style={{ fontSize: '1.2em', cursor: 'pointer' }}>✕</button>
         </div>
 
+        {/* Linked Cloud Guest Banner */}
+        {profile.isLinkedCloudGuest && (
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.15))',
+            border: '1px solid rgba(59, 130, 246, 0.4)',
+            borderRadius: '12px',
+            padding: '12px 14px',
+            marginBottom: '18px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '10px'
+          }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '1.1em' }}>🔗</span>
+                <strong style={{ color: 'var(--blue)' }}>Cloud-Gastkonto: @{profile.linkedUsername || profileName}</strong>
+              </div>
+              <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginTop: '2px' }}>
+                Gespielte Matches auf diesem Gerät werden automatisch mit dem Cloud-Profil synchronisiert.
+              </div>
+            </div>
+            {onDeleteProfile && (
+              <button 
+                className="btn-danger" 
+                onClick={() => onDeleteProfile(profileName)}
+                style={{ padding: '4px 10px', fontSize: '0.78rem', minHeight: '30px' }}
+              >
+                ⛔ Verknüpfung trennen
+              </button>
+            )}
+          </div>
+        )}
+
         {/* Profile Settings */}
         {onUpdateProfile && profile && (
           <div className="dash-settings" style={{ marginBottom: '20px' }}>
