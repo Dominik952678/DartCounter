@@ -119,9 +119,10 @@ export const OnlineGameWrapper: React.FC = () => {
      }
 
      if (isHost) {
-        if (roomSettings && hostEngine.gameState.players.length === 0 && !syncedState) {
-            const playerNames = players.map(p => p.username);
-            hostEngine.startGame(playerNames, roomSettings);
+        if (hostEngine.gameState.players.length === 0 && !syncedState) {
+            const config = roomSettings || { startScore: 501, outMode: 'DO', setsToWin: 1, legsToWin: 3 };
+            const playerNames = players.length > 0 ? players.map(p => p.username) : [myUsername];
+            hostEngine.startGame(playerNames, config);
         }
 
         const sub = roomChannel
@@ -135,6 +136,20 @@ export const OnlineGameWrapper: React.FC = () => {
           .on('broadcast', { event: 'client_submit_checkout' }, (payload) => {
              const data = payload?.payload ?? payload;
              hostEngine.submitCheckoutPrompt(data.darts);
+          })
+          .on('broadcast', { event: 'client_request_state' }, () => {
+             if (hostEngine.gameState.players.length > 0) {
+                 roomChannel.send({
+                     type: 'broadcast',
+                     event: 'state_update',
+                     payload: { 
+                       state: hostEngine.gameState,
+                       celebration: hostEngine.celebration,
+                       roundBust: hostEngine.roundBust,
+                       checkoutPrompt: hostEngine.checkoutPrompt
+                     }
+                 });
+             }
           });
         
         return () => { sub.unsubscribe(); };
@@ -152,9 +167,28 @@ export const OnlineGameWrapper: React.FC = () => {
              setStatsData(data.statsData);
           });
         
-        return () => { sub.unsubscribe(); };
+        // Immediately request current state from host
+        roomChannel.send({
+          type: 'broadcast',
+          event: 'client_request_state',
+          payload: {}
+        });
+
+        // Request state periodically until syncedState is received
+        const interval = setInterval(() => {
+          roomChannel.send({
+            type: 'broadcast',
+            event: 'client_request_state',
+            payload: {}
+          });
+        }, 1200);
+
+        return () => { 
+          clearInterval(interval);
+          sub.unsubscribe(); 
+        };
      }
-  }, [roomChannel, isHost, players, navigate]);
+  }, [roomChannel, isHost, players, roomSettings, myUsername, navigate, syncedState]);
 
   // Host broadcasts state, celebrations, busts, and checkout prompts
   useEffect(() => {
@@ -201,7 +235,24 @@ export const OnlineGameWrapper: React.FC = () => {
   }
 
   if (!syncedState || syncedState.players.length === 0) {
-      return <div>Lade Spiel...</div>;
+    return (
+      <div className="screen active-screen app-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '80vh', gap: '16px', textAlign: 'center', padding: '24px' }}>
+        <div style={{ fontSize: '3rem', animation: 'spin 2s linear infinite' }}>🎯</div>
+        <h3 style={{ margin: 0, fontSize: '1.4rem' }}>{isHost ? 'Initialisiere Online-Match...' : 'Warte auf Spielstart vom Host...'}</h3>
+        <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem', maxWidth: '320px', lineHeight: 1.4 }}>
+          {isHost 
+            ? 'Das Match wird vorbereitet und an alle Spieler übertragen.' 
+            : 'Verbindung zum Host wird synchronisiert. Einen Moment bitte...'}
+        </p>
+        <button
+          className="btn-secondary"
+          onClick={() => { leaveRoom(); navigate('/online'); }}
+          style={{ marginTop: '16px', padding: '10px 20px' }}
+        >
+          Raum verlassen
+        </button>
+      </div>
+    );
   }
 
   const activePlayer = syncedState.players[syncedState.activePlayer];

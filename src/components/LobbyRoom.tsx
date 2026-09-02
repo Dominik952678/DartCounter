@@ -24,6 +24,11 @@ export const LobbyRoom: React.FC = () => {
     return () => { sub.unsubscribe(); };
   }, [roomChannel, navigate]);
 
+  const handleStartGame = () => {
+    startGame();
+    navigate('/online-game');
+  };
+
   if (!roomCode) return <div>Lade...</div>;
 
   return (
@@ -171,7 +176,7 @@ export const LobbyRoom: React.FC = () => {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '24px', position: 'relative', zIndex: 1 }}>
         {isHost && (
-           <button className="btn-success btn-large" onClick={startGame} disabled={players.length < 1}>
+           <button className="btn-success btn-large" onClick={handleStartGame} disabled={players.length < 1}>
              🎯 Spiel starten
            </button>
         )}
