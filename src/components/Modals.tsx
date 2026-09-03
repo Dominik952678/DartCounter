@@ -1,34 +1,7 @@
 import React from 'react';
+import { useModalA11y } from '../hooks/useModalA11y';
 import type { Player, MatchHistory } from '../types';
 import { DartboardHeatmap } from './DartboardHeatmap';
-
-export const Toast: React.FC<{
-  message: string;
-  type: 'success' | 'error' | 'info';
-  visible: boolean;
-}> = ({ message, type, visible }) => {
-  return (
-    <div
-      style={{
-        position: 'fixed',
-        top: visible ? '20px' : '-100px',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        backgroundColor: type === 'error' ? 'var(--red, #ff4444)' : type === 'success' ? 'var(--green, #00C851)' : 'var(--blue, #33b5e5)',
-        color: '#fff',
-        padding: '12px 24px',
-        borderRadius: 'var(--radius, 8px)',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-        transition: 'top 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-        zIndex: 9999,
-        fontWeight: 'bold',
-        pointerEvents: 'none',
-      }}
-    >
-      {message}
-    </div>
-  );
-};
 
 const bottomSheetStyles = `
   .bottom-sheet-overlay {
@@ -130,15 +103,29 @@ export const StatsModal: React.FC<{
   onRematch?: () => void;
   onUndoLastDart?: () => void;
 }> = ({ isOpen, winnerIndex, players, matchData, onClose, onRematch, onUndoLastDart }) => {
-  if (!isOpen || winnerIndex === null || !matchData) return null;
-  
+  const isReady = isOpen && winnerIndex !== null && !!matchData;
+  // Escape is deliberately not wired: closing this dialog books the match and
+  // navigates away, which is not what a stray key press should do.
+  const dialogRef = useModalA11y<HTMLDivElement>({ isOpen: isReady });
+
+  if (!isReady || winnerIndex === null || !matchData) return null;
+
   const winnerName = players[winnerIndex]?.name || matchData.winner;
 
   return (
     <>
       <style>{bottomSheetStyles}</style>
-      <div className="bottom-sheet-overlay" onClick={onClose} role="dialog" aria-modal="true" aria-labelledby="stats-modal-title" onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }} tabIndex={-1}>
-        <div className="bottom-sheet-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '540px' }}>
+      {/* No backdrop-click close either: it commits the match and leaves the board. */}
+      <div className="bottom-sheet-overlay">
+        <div
+          ref={dialogRef}
+          className="bottom-sheet-content"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="stats-modal-title"
+          tabIndex={-1}
+          style={{ maxWidth: '540px' }}
+        >
           <div className="drag-handle" />
           
           <div style={{ textAlign: 'center', marginBottom: '20px' }}>

@@ -148,7 +148,6 @@ export const useGuestSync = (
 
   const abortRemoteMatch = async () => {
     if (!user?.id) return;
-    if (!window.confirm('Möchtest du das laufende Match auf dem Host-Gerät wirklich abbrechen und die Verbindung trennen?')) return;
     setLoading(true);
     await abortGuestMatchRemote(user.id);
     await reload();

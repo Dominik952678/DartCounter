@@ -4,6 +4,7 @@ import { reconstructProfileFromMatches, getCachedGuestMatches } from '../db';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Cell } from 'recharts';
 import { HeadToHead } from './HeadToHead';
 import { DartboardHeatmap } from './DartboardHeatmap';
+import { ConfirmModal } from './ConfirmModal';
 
 interface ProfileDashboardProps {
   profileName: string;
@@ -26,6 +27,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
 }) => {
   const [compareWith, setCompareWith] = useState<string>('');
   const [selectedMode, setSelectedMode] = useState<string>('Alle (Standard)');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const effectiveProfile = useMemo(() => {
     return reconstructProfileFromMatches(profileName, profile, matches);
@@ -613,15 +615,26 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
         {onDeleteProfile && !profile?.isLinkedCloudGuest && (
           <button 
             className="btn-delete-profile"
-            onClick={() => {
-              if (window.confirm(`„${profileName}" unwiderruflich löschen?`)) {
-                onDeleteProfile(profileName);
-                onClose();
-              }
-            }}
+            onClick={() => setShowDeleteConfirm(true)}
           >
             Profil löschen
           </button>
+        )}
+
+        {showDeleteConfirm && onDeleteProfile && (
+          <ConfirmModal
+            title="Profil unwiderruflich löschen?"
+            message={`„${profileName}“ und alle daraus berechneten Statistiken werden entfernt.`}
+            confirmLabel="Endgültig löschen"
+            destructive
+            icon="🗑️"
+            onConfirm={() => {
+              setShowDeleteConfirm(false);
+              onDeleteProfile(profileName);
+              onClose();
+            }}
+            onCancel={() => setShowDeleteConfirm(false)}
+          />
         )}
       </div>
     </div>

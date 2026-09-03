@@ -1,9 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { APP_VERSION, BUILD_TIME } from '../version';
+import { AppReloadPrompt } from './AppReloadPrompt';
 
 export const MainMenu: React.FC = () => {
+  const [showReloadPrompt, setShowReloadPrompt] = useState(false);
   const navigate = useNavigate();
   const { user, initialize, signOut } = useAuthStore();
 
@@ -719,11 +721,7 @@ export const MainMenu: React.FC = () => {
               userSelect: 'none',
               cursor: 'pointer'
             }}
-            onClick={() => {
-              if (window.confirm(`DartCounter ${APP_VERSION}\nBuild: ${BUILD_TIME}\n\nMöchtest du die App neu laden und den Zwischenspeicher aktualisieren?`)) {
-                window.location.reload();
-              }
-            }}
+            onClick={() => setShowReloadPrompt(true)}
             title="Klicken zum Neuladen / Cache leeren"
           >
             <span>v{APP_VERSION}</span>
@@ -732,6 +730,8 @@ export const MainMenu: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {showReloadPrompt && <AppReloadPrompt onCancel={() => setShowReloadPrompt(false)} />}
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { GuestSync } from './useGuestSync';
+import { ConfirmModal } from '../ConfirmModal';
 
 interface GuestSyncCardProps {
   sync: GuestSync;
@@ -11,6 +12,7 @@ interface GuestSyncCardProps {
  */
 export const GuestSyncCard: React.FC<GuestSyncCardProps> = ({ sync }) => {
   const [copiedCode, setCopiedCode] = useState(false);
+  const [confirmAbort, setConfirmAbort] = useState(false);
   const { info, isEnabled, loading } = sync;
 
   const handleCopyCode = () => {
@@ -74,13 +76,29 @@ export const GuestSyncCard: React.FC<GuestSyncCardProps> = ({ sync }) => {
           <button
             type="button"
             className="btn-danger"
-            onClick={sync.abortRemoteMatch}
+            onClick={() => setConfirmAbort(true)}
             disabled={loading}
             style={{ padding: '8px 16px', fontSize: '0.85rem', fontWeight: 800 }}
           >
             🛑 Match remote abbrechen & Trennen
           </button>
         </div>
+      )}
+
+      {confirmAbort && (
+        <ConfirmModal
+          title="Match remote abbrechen?"
+          message={`Das laufende Match auf ${info?.liveMatch?.hostName ?? 'dem Host-Gerät'} wird beendet und die Verbindung getrennt.`}
+          confirmLabel="Abbrechen & trennen"
+          cancelLabel="Weiterlaufen lassen"
+          destructive
+          icon="🛑"
+          onConfirm={async () => {
+            setConfirmAbort(false);
+            await sync.abortRemoteMatch();
+          }}
+          onCancel={() => setConfirmAbort(false)}
+        />
       )}
 
       <p style={{ fontSize: '0.86rem', color: 'var(--text-dim)', margin: '0 0 14px 0', lineHeight: 1.5 }}>

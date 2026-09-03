@@ -3,6 +3,7 @@ import { Scoreboard } from './Scoreboard';
 import { Keypad } from './Keypad';
 import type { Player, GameConfig, Dart } from '../types';
 import { isSoundEnabled, setSoundEnabled } from '../utils/audio';
+import { ConfirmModal } from './ConfirmModal';
 
 interface GameScreenProps {
   players: Player[];
@@ -104,34 +105,18 @@ export const GameScreen: React.FC<GameScreenProps> = (props) => {
       </div>
 
       {showAbortConfirm && (
-        <div className="modal-overlay" onClick={() => setShowAbortConfirm(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '380px', textAlign: 'center', padding: '28px 20px' }}>
-            <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>⚠️</div>
-            <h3 style={{ marginBottom: '8px', fontSize: '1.3em' }}>Spiel beenden?</h3>
-            <p style={{ color: 'var(--text-dim)', fontSize: '0.9em', lineHeight: '1.4', marginBottom: '22px' }}>
-              Möchtest du das aktuelle Match wirklich abbrechen?
-            </p>
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button 
-                className="btn-secondary" 
-                onClick={() => setShowAbortConfirm(false)}
-                style={{ flex: 1 }}
-              >
-                Weiterspielen
-              </button>
-              <button 
-                className="btn-danger" 
-                onClick={() => {
-                  setShowAbortConfirm(false);
-                  props.abortGame();
-                }}
-                style={{ flex: 1 }}
-              >
-                Beenden
-              </button>
-            </div>
-          </div>
-        </div>
+        <ConfirmModal
+          title="Spiel beenden?"
+          message="Möchtest du das aktuelle Match wirklich abbrechen?"
+          confirmLabel="Beenden"
+          cancelLabel="Weiterspielen"
+          destructive
+          onConfirm={() => {
+            setShowAbortConfirm(false);
+            props.abortGame();
+          }}
+          onCancel={() => setShowAbortConfirm(false)}
+        />
       )}
 
       {props.checkoutPrompt && (

@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { Profile } from '../../types';
+import { ConfirmModal } from '../ConfirmModal';
 
 interface ProfileListProps {
   profiles: Record<string, Profile>;
@@ -18,6 +19,7 @@ export const ProfileList: React.FC<ProfileListProps> = ({
   onShowHistory
 }) => {
   const profileNames = Object.keys(profiles);
+  const [pendingDeletion, setPendingDeletion] = useState<string | null>(null);
 
   return (
     <div className="card">
@@ -75,9 +77,7 @@ export const ProfileList: React.FC<ProfileListProps> = ({
                     type="button"
                     onClick={e => {
                       e.stopPropagation();
-                      if (window.confirm(`Profil „${name}“ wirklich löschen?`)) {
-                        onDeleteProfile(name);
-                      }
+                      setPendingDeletion(name);
                     }}
                     title={`Profil „${name}“ löschen`}
                     style={{
@@ -112,6 +112,21 @@ export const ProfileList: React.FC<ProfileListProps> = ({
       <button className="btn-secondary" onClick={onShowHistory} style={{ marginTop: '16px', width: '100%' }}>
         📜 Match Historie ansehen
       </button>
+
+      {pendingDeletion && (
+        <ConfirmModal
+          title="Profil löschen?"
+          message={`„${pendingDeletion}“ wird mit allen Statistiken entfernt.\nDie gespielten Matches bleiben in der Historie.`}
+          confirmLabel="Löschen"
+          destructive
+          icon="🗑️"
+          onConfirm={() => {
+            onDeleteProfile(pendingDeletion);
+            setPendingDeletion(null);
+          }}
+          onCancel={() => setPendingDeletion(null)}
+        />
+      )}
     </div>
   );
 };

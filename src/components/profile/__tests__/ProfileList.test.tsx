@@ -27,13 +27,7 @@ const renderList = (overrides: Partial<React.ComponentProps<typeof ProfileList>>
 };
 
 describe('ProfileList', () => {
-  // happy-dom ships no window.confirm; the component's guard needs one.
-  const answerConfirm = (answer: boolean) => vi.stubGlobal('confirm', vi.fn(() => answer));
-
-  afterEach(() => {
-    vi.unstubAllGlobals();
-    vi.restoreAllMocks();
-  });
+  afterEach(() => vi.restoreAllMocks());
 
   it('lists every profile and counts them', () => {
     renderList();
@@ -52,22 +46,24 @@ describe('ProfileList', () => {
   });
 
   it('asks before deleting, and does not open the profile behind the button', () => {
-    answerConfirm(true);
     const { onDeleteProfile, onOpenProfile } = renderList();
 
     fireEvent.click(screen.getByTitle('Profil „Dominik“ löschen'));
-
-    expect(onDeleteProfile).toHaveBeenCalledWith('Dominik');
+    expect(onDeleteProfile).not.toHaveBeenCalled();
     expect(onOpenProfile).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByText('Löschen'));
+    expect(onDeleteProfile).toHaveBeenCalledWith('Dominik');
   });
 
   it('keeps the profile when the question is declined', () => {
-    answerConfirm(false);
     const { onDeleteProfile } = renderList();
 
     fireEvent.click(screen.getByTitle('Profil „Dominik“ löschen'));
+    fireEvent.click(screen.getByText('Abbrechen'));
 
     expect(onDeleteProfile).not.toHaveBeenCalled();
+    expect(screen.queryByText('Profil löschen?')).not.toBeInTheDocument();
   });
 
   /** A cloud guest's profile belongs to their account; the link is cut instead. */
