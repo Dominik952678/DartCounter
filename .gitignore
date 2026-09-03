@@ -23,3 +23,8 @@ coverage
 *.njsproj
 *.sln
 *.sw?
+
+# Local environment overrides
+.env
+.env.local
+.env.*.local

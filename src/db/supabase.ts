@@ -1,7 +1,17 @@
 import { createClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = 'https://pdbycflxxokbwfsfrmwu.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_vkBLAop52YK5pN6JrIAjfQ__Q9dvli0';
+/**
+ * The project this build talks to.
+ *
+ * Hardcoded before, which meant there was no way to point a development build
+ * at anything but the live database. `VITE_SUPABASE_URL` / `VITE_SUPABASE_KEY`
+ * override it (see `.env.example`); the fallbacks are the production project,
+ * so existing deployments keep working without new configuration. The key is
+ * the publishable one — it is meant to ship to the browser, and row-level
+ * security is what actually guards the data.
+ */
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://pdbycflxxokbwfsfrmwu.supabase.co';
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY || 'sb_publishable_vkBLAop52YK5pN6JrIAjfQ__Q9dvli0';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 

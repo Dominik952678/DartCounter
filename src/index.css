@@ -53,6 +53,27 @@
   --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
 }
 
+/* ── Breakpoint scale ──
+   Media queries cannot read custom properties, so these are the documented
+   names for the widths this stylesheet uses. Write new rules against one of
+   them rather than inventing a thirteenth number.
+
+     380px   small phone      (iPhone SE and narrower)
+     440px   phone            (most phones in portrait)
+     600px   large phone      (phablets, small tablets in portrait)
+     768px   tablet           (iPad portrait; the app's two-column threshold)
+     900px   wide tablet      (iPad landscape)
+    1180px   desktop
+    1400px   wide desktop
+
+   Landscape is a separate question from width, and asking by width alone is
+   what broke the iPad in landscape: it is 1180px wide and fell into the same
+   rules as a desktop, though its height is that of a phone. Orientation rules
+   pair `(orientation: landscape)` with a `max-height`, not a width.
+
+   Still off the scale, each needing a look in a browser before it moves:
+   360px, 420px, 500px and 560px. */
+
 *, *::before, *::after { 
   box-sizing: border-box; 
   margin: 0; 
@@ -171,7 +192,7 @@ h3 { font-size: 1.05em; color: var(--text-dim); font-weight: 600; }
 }
 
 /* iPad Air portrait (820pt) and up. */
-@media (min-width: 601px) {
+@media (min-width: 600px) {
   .app-container { --dock-offset: 12px; }
 }
 
@@ -1276,7 +1297,7 @@ button:active, .btn:active {
   z-index: 1000;
 }
 
-@media (min-width: 601px) {
+@media (min-width: 600px) {
   .bottom-nav {
     bottom: 12px;
     height: var(--dock-height);

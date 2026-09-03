@@ -724,7 +724,7 @@ export const MainMenu: React.FC = () => {
             onClick={() => setShowReloadPrompt(true)}
             title="Klicken zum Neuladen / Cache leeren"
           >
-            <span>v{APP_VERSION}</span>
+            <span>{APP_VERSION}</span>
             <span>•</span>
             <span>Build {BUILD_TIME}</span>
           </div>
