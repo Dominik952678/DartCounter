@@ -512,20 +512,35 @@ export const MainMenu: React.FC = () => {
             gap: 8px !important;
           }
 
+          .menu-training-container {
+            display: flex !important;
+            flex-direction: column !important;
+            height: 100% !important;
+          }
+
           .training-chips-grid {
             display: flex !important;
             flex-direction: column !important;
             flex: 1 !important;
-            gap: 6px !important;
+            gap: clamp(8px, 1.6vh, 14px) !important;
           }
 
           .training-chip {
             flex: 1 !important;
             flex-direction: row !important;
-            justify-content: flex-start !important;
-            gap: 10px !important;
-            padding: 8px 14px !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 14px !important;
+            padding: 8px 16px !important;
             min-height: 0 !important;
+          }
+
+          .training-chip-icon {
+            font-size: clamp(1.6rem, 3vh, 2.1rem) !important;
+          }
+
+          .training-chip-title {
+            font-size: clamp(0.95em, 1.8vh, 1.15em) !important;
           }
         }
       `}</style>
