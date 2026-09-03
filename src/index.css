@@ -301,6 +301,86 @@ select:focus, input:focus {
 .input-row > div { flex: 1; text-align: left; }
 .input-row label { font-size: 0.85em; color: var(--text-dim); margin-bottom: 6px; display: block; }
 
+/* ── Match setup screen ──
+   These rules used to be injected by a <style> tag inside MatchSetup, which
+   meant .avatar-circle only existed while that screen was mounted — the
+   training screen uses the same class and lost its avatars whenever the setup
+   screen was not on. */
+.hero-glow-bg-setup {
+  position: absolute;
+  top: -80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 500px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.1) 0%, rgba(59, 130, 246, 0.06) 50%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.match-setup-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+@media (min-width: 768px) {
+  .match-setup-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+}
+
+@keyframes pulse-soft {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+  50% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+}
+
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.player-slot {
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+.player-slot.entering {
+  animation: slide-down 0.3s ease forwards;
+}
+
+/* Named apart from the bottom sheet's own .drag-handle. */
+.player-drag-handle {
+  cursor: grab;
+  opacity: 0.5;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+}
+.player-drag-handle:hover {
+  opacity: 1;
+}
+.player-drag-handle:active {
+  cursor: grabbing;
+}
+
+.avatar-circle {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 14px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
 /* ── Symmetrical Distance & Stepper Controls ── */
 .distance-grid {
   display: grid;
