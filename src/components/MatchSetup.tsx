@@ -3,6 +3,7 @@ import type { GameConfig, Profile } from '../types';
 import { useAuthStore } from '../store/useAuthStore';
 import { getActiveUserSyncInfo, redeemSyncCode, removeLinkedGuestProfiles, saveProfiles, validateGuestSyncTokens } from '../db';
 import { reportPersistenceError } from '../store/useNotificationStore';
+import { readBoolean, readInt, readJson, readOneOf, remove as removeStored, resolveHostDeviceId, write } from '../utils/storage';
 
 interface MatchSetupProps {
   profiles: Record<string, Profile>;
@@ -32,6 +33,12 @@ function buildDefaultLineup(profiles: Record<string, Profile>): string[] {
   return lineup;
 }
 
+const START_SCORES = [301, 501, 701];
+const OUT_MODES: readonly ('SO' | 'DO' | 'MO')[] = ['SO', 'DO', 'MO'];
+
+/** The player count last chosen for singles; 2v2 is always four. */
+const readSinglesPlayerCount = (): number => readInt('x01PlayerCount', 2, { min: 1, max: 4 });
+
 export const MatchSetup: React.FC<MatchSetupProps> = ({ 
   profiles, 
   onStartGame, 
@@ -52,70 +59,32 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
   const [importedGuestData, setImportedGuestData] = useState<{ profile: Profile; username: string } | null>(null);
 
   const [savedMatch, setSavedMatch] = useState<SavedMatchSummary | null>(() => {
-    try {
-      const raw = localStorage.getItem('dartcounter_saved_game');
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed && parsed.players && parsed.config) {
-          return { players: parsed.players, config: parsed.config };
-        }
-      }
-    } catch (e) {
-      console.error("Error reading saved match in MatchSetup", e);
-    }
-    return null;
+    const parsed = readJson<SavedMatchSummary | null>('savedGame', null);
+    return parsed?.players && parsed.config ? { players: parsed.players, config: parsed.config } : null;
   });
 
   const [isSavedBannerDismissed, setIsSavedBannerDismissed] = useState(false);
   const [showOverwriteModal, setShowOverwriteModal] = useState(false);
 
-  const [setsToWin, setSetsToWin] = useState<number | ''>(() => {
-    const saved = localStorage.getItem('dart_x01_sets');
-    if (saved !== null) {
-      const parsed = parseInt(saved, 10);
-      if (!isNaN(parsed) && parsed >= 1) return parsed;
-    }
-    return 1;
-  });
+  const [setsToWin, setSetsToWin] = useState<number | ''>(() => readInt('x01Sets', 1, { min: 1 }));
 
-  const [legsToWin, setLegsToWin] = useState<number | ''>(() => {
-    const saved = localStorage.getItem('dart_x01_legs');
-    if (saved !== null) {
-      const parsed = parseInt(saved, 10);
-      if (!isNaN(parsed) && parsed >= 1) return parsed;
-    }
-    return 1;
-  });
+  const [legsToWin, setLegsToWin] = useState<number | ''>(() => readInt('x01Legs', 1, { min: 1 }));
 
   const [startScore, setStartScore] = useState<number>(() => {
-    const saved = localStorage.getItem('dart_x01_startScore');
-    if (saved !== null) {
-      const parsed = parseInt(saved, 10);
-      if (!isNaN(parsed) && [301, 501, 701].includes(parsed)) return parsed;
-    }
-    return 501;
+    const saved = readInt('x01StartScore', 501);
+    return START_SCORES.includes(saved) ? saved : 501;
   });
 
-  const [outMode, setOutMode] = useState<'SO' | 'DO' | 'MO'>(() => {
-    const saved = localStorage.getItem('dart_x01_outMode');
-    if (saved && ['SO', 'DO', 'MO'].includes(saved)) return saved as 'SO' | 'DO' | 'MO';
-    return 'DO';
-  });
+  const [outMode, setOutMode] = useState<'SO' | 'DO' | 'MO'>(
+    () => readOneOf('x01OutMode', OUT_MODES, 'DO')
+  );
 
-  const [is2v2, setIs2v2] = useState<boolean>(() => {
-    return localStorage.getItem('dart_x01_is2v2') === 'true';
-  });
+  const [is2v2, setIs2v2] = useState<boolean>(() => readBoolean('x01Is2v2', false));
 
-  const [playerCount, setPlayerCount] = useState<number>(() => {
-    const saved2v2 = localStorage.getItem('dart_x01_is2v2') === 'true';
-    if (saved2v2) return 4;
-    const saved = localStorage.getItem('dart_x01_playerCount');
-    if (saved !== null) {
-      const parsed = parseInt(saved, 10);
-      if (!isNaN(parsed) && parsed >= 1 && parsed <= 4) return parsed;
-    }
-    return 2;
-  });
+  // 2v2 always fills four slots; singles restores the count last chosen there.
+  const [playerCount, setPlayerCount] = useState<number>(
+    () => (readBoolean('x01Is2v2', false) ? 4 : readSinglesPlayerCount())
+  );
 
   /**
    * Only the slots the user actually touched are stored; everything else is
@@ -168,33 +137,28 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
   const profileNames = Object.keys(profiles);
 
   useEffect(() => {
-    localStorage.setItem('dart_x01_is2v2', is2v2 ? 'true' : 'false');
+    write('x01Is2v2', is2v2);
   }, [is2v2]);
 
   useEffect(() => {
-    if (typeof setsToWin === 'number' && setsToWin >= 1) {
-      localStorage.setItem('dart_x01_sets', setsToWin.toString());
-    }
+    if (typeof setsToWin === 'number' && setsToWin >= 1) write('x01Sets', setsToWin);
   }, [setsToWin]);
 
   useEffect(() => {
-    if (typeof legsToWin === 'number' && legsToWin >= 1) {
-      localStorage.setItem('dart_x01_legs', legsToWin.toString());
-    }
+    if (typeof legsToWin === 'number' && legsToWin >= 1) write('x01Legs', legsToWin);
   }, [legsToWin]);
 
   useEffect(() => {
-    localStorage.setItem('dart_x01_startScore', startScore.toString());
+    write('x01StartScore', startScore);
   }, [startScore]);
 
   useEffect(() => {
-    localStorage.setItem('dart_x01_outMode', outMode);
+    write('x01OutMode', outMode);
   }, [outMode]);
 
   useEffect(() => {
-    if (!is2v2) {
-      localStorage.setItem('dart_x01_playerCount', playerCount.toString());
-    }
+    // The stored count is the singles one; 2v2's four slots are implied by the mode.
+    if (!is2v2) write('x01PlayerCount', playerCount);
   }, [playerCount, is2v2]);
 
   const handlePlayerChange = (index: number, name: string) => {
@@ -297,11 +261,7 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
     }
 
     setGuestSyncLoading(true);
-    let hostId = localStorage.getItem('dartcounter_host_device_id');
-    if (!hostId) {
-      hostId = `host_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-      localStorage.setItem('dartcounter_host_device_id', hostId);
-    }
+    const hostId = resolveHostDeviceId();
     const hostName = user?.user_metadata?.username || user?.email || 'Host-Gerät';
 
     const res = await redeemSyncCode(clean, hostId, hostName);
@@ -354,7 +314,7 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
     if (onDiscardSavedGame) {
       onDiscardSavedGame();
     } else {
-      localStorage.removeItem('dartcounter_saved_game');
+      removeStored('savedGame');
     }
     setSavedMatch(null);
 
@@ -622,7 +582,7 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
               className="btn-secondary" 
               onClick={() => {
                 if (onDiscardSavedGame) onDiscardSavedGame();
-                else localStorage.removeItem('dartcounter_saved_game');
+                else removeStored('savedGame');
                 setSavedMatch(null);
               }} 
               style={{ 
@@ -672,10 +632,7 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
                   checked={!is2v2}
                   onChange={() => {
                     setIs2v2(false);
-                    // 2v2 forces four slots; going back to singles restores the
-                    // player count the user last chose there.
-                    const saved = parseInt(localStorage.getItem('dart_x01_playerCount') || '2', 10);
-                    setPlayerCount(!isNaN(saved) && saved >= 1 && saved <= 4 ? saved : 2);
+                    setPlayerCount(readSinglesPlayerCount());
                   }}
                 />
                 <span>👤 Einzel</span>

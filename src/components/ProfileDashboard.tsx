@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import type { Profile, MatchHistory } from '../types';
-import { reconstructProfileFromMatches } from '../db';
+import { reconstructProfileFromMatches, getCachedGuestMatches } from '../db';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Cell } from 'recharts';
 import { HeadToHead } from './HeadToHead';
 import { DartboardHeatmap } from './DartboardHeatmap';
@@ -50,22 +50,10 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
   } = useMemo(() => {
     const safeMatches = Array.isArray(matches) ? [...matches] : [];
     if (profile?.linkedUserId) {
-      try {
-        const guestRaw = localStorage.getItem(`guest_matches_${profile.linkedUserId}`);
-        if (guestRaw) {
-          const guestMatches = JSON.parse(guestRaw);
-          if (Array.isArray(guestMatches)) {
-            const existingIds = new Set(safeMatches.map(m => m._id || m.date));
-            guestMatches.forEach(gm => {
-              if (!existingIds.has(gm._id || gm.date)) {
-                safeMatches.push(gm);
-              }
-            });
-          }
-        }
-      } catch (e) {
-        console.error("Error merging guest matches", e);
-      }
+      const existingIds = new Set(safeMatches.map(m => m._id || m.date));
+      getCachedGuestMatches(profile.linkedUserId).forEach(gm => {
+        if (!existingIds.has(gm._id || gm.date)) safeMatches.push(gm);
+      });
     }
 
     const playerMatchesTotal = safeMatches.filter(m => m && Array.isArray(m.players) && m.players.some(p => p && p.name === profileName));

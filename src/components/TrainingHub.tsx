@@ -2,8 +2,11 @@ import React, { useState, useEffect } from 'react';
 import type { Profile } from '../types';
 import { useAuthStore } from '../store/useAuthStore';
 import { getActiveUserSyncInfo } from '../db';
+import { readInt, readOneOf, write } from '../utils/storage';
 
 export type MiniGameMode = 'checkout' | 'powerscoring' | 'splitscore';
+
+const MINI_GAME_MODES: readonly MiniGameMode[] = ['checkout', 'powerscoring', 'splitscore'];
 
 interface TrainingHubProps {
   profiles: Record<string, Profile>;
@@ -18,47 +21,25 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
   const profileNames = Object.keys(profiles);
 
   const [selectedMode, setSelectedMode] = useState<MiniGameMode>(() => {
-    if (initialMode && ['checkout', 'powerscoring', 'splitscore'].includes(initialMode)) return initialMode;
-    const saved = localStorage.getItem('dart_training_mode');
-    if (saved && ['checkout', 'powerscoring', 'splitscore'].includes(saved)) return saved as MiniGameMode;
-    return 'checkout';
+    if (initialMode && MINI_GAME_MODES.includes(initialMode)) return initialMode;
+    return readOneOf('trainingMode', MINI_GAME_MODES, 'checkout');
   });
 
-  const [playerCount, setPlayerCount] = useState<number>(() => {
-    const saved = localStorage.getItem('dart_training_playerCount');
-    if (saved !== null) {
-      const parsed = parseInt(saved, 10);
-      if (!isNaN(parsed) && parsed >= 1 && parsed <= 4) return parsed;
-    }
-    return 1;
-  });
+  const [playerCount, setPlayerCount] = useState<number>(
+    () => readInt('trainingPlayerCount', 1, { min: 1, max: 4 })
+  );
 
-  const [powerScoringRounds, setPowerScoringRounds] = useState<number>(() => {
-    const saved = localStorage.getItem('dart_powerscoring_rounds');
-    if (saved !== null) {
-      const parsed = parseInt(saved, 10);
-      if (!isNaN(parsed) && parsed >= 1) return parsed;
-    }
-    return 10;
-  });
+  const [powerScoringRounds, setPowerScoringRounds] = useState<number>(
+    () => readInt('powerScoringRounds', 10, { min: 1 })
+  );
 
-  const [checkoutRounds, setCheckoutRounds] = useState<number>(() => {
-    const saved = localStorage.getItem('dart_checkout_rounds');
-    if (saved !== null) {
-      const parsed = parseInt(saved, 10);
-      if (!isNaN(parsed) && parsed >= 1) return parsed;
-    }
-    return 1;
-  });
+  const [checkoutRounds, setCheckoutRounds] = useState<number>(
+    () => readInt('checkoutRounds', 1, { min: 1 })
+  );
 
-  const [checkoutTargets, setCheckoutTargets] = useState<number>(() => {
-    const saved = localStorage.getItem('dart_checkout_targets');
-    if (saved !== null) {
-      const parsed = parseInt(saved, 10);
-      if (!isNaN(parsed) && parsed >= 1) return parsed;
-    }
-    return 10;
-  });
+  const [checkoutTargets, setCheckoutTargets] = useState<number>(
+    () => readInt('checkoutTargets', 10, { min: 1 })
+  );
 
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>(() => {
     if (isGuest) return ['Gast 1', 'Gast 2', 'Gast 3', 'Gast 4'];
@@ -86,23 +67,23 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
-    localStorage.setItem('dart_training_mode', selectedMode);
+    write('trainingMode', selectedMode);
   }, [selectedMode]);
 
   useEffect(() => {
-    localStorage.setItem('dart_training_playerCount', playerCount.toString());
+    write('trainingPlayerCount', playerCount);
   }, [playerCount]);
 
   useEffect(() => {
-    localStorage.setItem('dart_powerscoring_rounds', powerScoringRounds.toString());
+    write('powerScoringRounds', powerScoringRounds);
   }, [powerScoringRounds]);
 
   useEffect(() => {
-    localStorage.setItem('dart_checkout_rounds', checkoutRounds.toString());
+    write('checkoutRounds', checkoutRounds);
   }, [checkoutRounds]);
 
   useEffect(() => {
-    localStorage.setItem('dart_checkout_targets', checkoutTargets.toString());
+    write('checkoutTargets', checkoutTargets);
   }, [checkoutTargets]);
 
   const handlePlayerChange = (index: number, name: string) => {

@@ -1,3 +1,5 @@
+import type { MatchHistory } from '../types';
+
 /**
  * The names the browser cache is kept under.
  *
@@ -40,9 +42,28 @@ export function clearCachedUserData(userId?: string | null): void {
     // Guest caches are keyed by the linked guest's id, not by the host's, so
     // they have to be found by prefix.
     Object.keys(localStorage)
-      .filter(key => key.startsWith('guest_matches_'))
+      .filter(key => key.startsWith(GUEST_MATCHES_PREFIX))
       .forEach(key => localStorage.removeItem(key));
   } catch (e) {
     console.error('Could not clear cached user data', e);
   }
 }
+
+/**
+ * The matches a linked cloud guest played on this device.
+ *
+ * They are cached under the guest's own user id so their dashboard can show a
+ * full picture while they are borrowed here, and the screen that reads them
+ * used to reach into localStorage itself, key spelling and all.
+ */
+export const getCachedGuestMatches = (linkedUserId?: string | null): MatchHistory[] => {
+  if (!linkedUserId) return [];
+  try {
+    const raw = localStorage.getItem(`${GUEST_MATCHES_PREFIX}${linkedUserId}`);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    console.error('Could not read cached guest matches', e);
+    return [];
+  }
+};

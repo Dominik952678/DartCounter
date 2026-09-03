@@ -13,6 +13,7 @@ import type { GameState, MatchHistory, Profile, StatsModalData } from '../types'
 import { StatsModal } from './Modals';
 import { DisconnectOverlay } from './DisconnectOverlay';
 import { LoadingScreen } from './LoadingScreen';
+import { readString } from '../utils/storage';
 import { recordMatchForSelf } from '../db';
 import { reportPersistenceError } from '../store/useNotificationStore';
 
@@ -73,7 +74,7 @@ export const OnlineGameWrapper: React.FC = () => {
 
   const myUsername = useMemo(() => {
     const fromAuth = user ? (user.user_metadata?.username || user.email) : null;
-    return fromAuth || localStorage.getItem('dart_guest_online_name') || 'Gast';
+    return fromAuth || readString('guestOnlineName', '') || 'Gast';
   }, [user]);
 
   const hostEngine = useGameEngine({

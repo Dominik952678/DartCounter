@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { useOnlineStore } from '../store/useOnlineStore';
 import type { GameConfig } from '../types';
+import { readString, write } from '../utils/storage';
 
 type Mode = 'standard' | 'powerscoring' | 'splitscore' | 'checkout';
 
@@ -34,7 +35,7 @@ export const LobbyBrowser: React.FC = () => {
   const [checkoutRounds, setCheckoutRounds] = useState(1);
 
   const [guestName, setGuestName] = useState<string>(
-    () => localStorage.getItem('dart_guest_online_name') || `Gast ${Math.floor(100 + Math.random() * 900)}`
+    () => readString('guestOnlineName', '') || `Gast ${Math.floor(100 + Math.random() * 900)}`
   );
 
   useEffect(() => {
@@ -45,7 +46,7 @@ export const LobbyBrowser: React.FC = () => {
 
   const handleGuestNameChange = (val: string) => {
     setGuestName(val);
-    localStorage.setItem('dart_guest_online_name', val);
+    write('guestOnlineName', val);
   };
 
   const handleJoin = async (code: string) => {

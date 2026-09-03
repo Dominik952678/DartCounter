@@ -1,16 +1,15 @@
 // src/utils/haptics.ts
 
-const HAPTICS_KEY = 'dart_haptics_enabled';
+import { readBoolean, write } from './storage';
 
 export function isHapticsEnabled(): boolean {
   if (typeof window === 'undefined') return false;
-  const stored = localStorage.getItem(HAPTICS_KEY);
-  return stored === null ? true : stored === 'true';
+  return readBoolean('hapticsEnabled', true);
 }
 
 export function setHapticsEnabled(enabled: boolean): void {
   if (typeof window === 'undefined') return;
-  localStorage.setItem(HAPTICS_KEY, enabled.toString());
+  write('hapticsEnabled', enabled);
 }
 
 export type HapticType = 'click' | 'single' | 'double' | 'triple' | '180' | 'bust' | 'victory';

@@ -10,6 +10,7 @@ import { generateUserSyncCode, readUserSyncDoc, redeemSyncCode, revokeHostAccess
 import { SAMPLE_PROFILES, SAMPLE_MATCHES, SAMPLE_PROFILE_KEYS } from '../utils/sampleData';
 import { APP_VERSION, BUILD_TIME } from '../version';
 import { reportPersistenceError } from '../store/useNotificationStore';
+import { resolveHostDeviceId } from '../utils/storage';
 
 interface ProfileTabProps {
   profiles: Record<string, Profile>;
@@ -264,11 +265,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
     }
 
     setImportLoading(true);
-    let hostId = localStorage.getItem('dartcounter_host_device_id');
-    if (!hostId) {
-      hostId = `host_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-      localStorage.setItem('dartcounter_host_device_id', hostId);
-    }
+    const hostId = resolveHostDeviceId();
     const hostName = user?.user_metadata?.username || user?.email || 'Host-Gerät';
 
     const res = await redeemSyncCode(clean, hostId, hostName);

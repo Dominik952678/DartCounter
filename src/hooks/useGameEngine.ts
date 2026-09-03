@@ -5,6 +5,7 @@ import { getBotDart, type TeamContext } from '../utils/bot';
 import { playSciFiHitSound, play180Sound, playBustSound, playHighFinishSound, speak, playDartHitSound, announceScore, announceGameShot } from '../utils/audio';
 import { triggerHaptic } from '../utils/haptics';
 import { reportPersistenceError } from '../store/useNotificationStore';
+import { has as hasStored, readJson, remove as removeStored, writeJson } from '../utils/storage';
 
 export const get2v2FreezeStatus = (players: Player[], activePlayerIndex: number): {
   is2v2: boolean;
@@ -51,8 +52,6 @@ interface UseGameEngineProps {
   user?: { id: string } | null;
 }
 
-const SAVED_GAME_KEY = 'dartcounter_saved_game';
-
 /**
  * How far back undo can reach. Each entry is a deep clone of the full state, so
  * an uncapped list grows with every dart of the match for a feature nobody uses
@@ -77,7 +76,7 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
     history: []
   });
 
-  const [hasSavedGame, setHasSavedGame] = useState(() => typeof window !== 'undefined' && !!localStorage.getItem(SAVED_GAME_KEY));
+  const [hasSavedGame, setHasSavedGame] = useState(() => typeof window !== 'undefined' && hasStored('savedGame'));
   const [roundBust, setRoundBust] = useState(false);
   const [celebration, setCelebration] = useState<{ type: string, playerIndex: number } | null>(null);
   /** Set when a linked cloud guest revokes the session from their own device. */
@@ -154,18 +153,15 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
     if (!gameState.players.some(p => p.legs > 0 || p.sets > 0 || p.matchDarts > 0)) return;
 
     const timer = setTimeout(() => {
-      try {
-        const snapshot: GameState = {
-          ...gameState,
-          history: gameState.history.slice(-PERSISTED_HISTORY_LIMIT)
-        };
-        localStorage.setItem(SAVED_GAME_KEY, JSON.stringify(snapshot));
-      } catch (err) {
+      const snapshot: GameState = {
+        ...gameState,
+        history: gameState.history.slice(-PERSISTED_HISTORY_LIMIT)
+      };
+      if (!writeJson('savedGame', snapshot)) {
         reportPersistenceError(
           new PersistenceError(
             'Der Spielstand konnte nicht zwischengespeichert werden. Bei einem Neuladen geht das laufende Match verloren.',
-            'local',
-            { cause: err }
+            'local'
           )
         );
       }
@@ -181,7 +177,7 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
   };
 
   const discardSavedGame = useCallback(() => {
-    localStorage.removeItem(SAVED_GAME_KEY);
+    removeStored('savedGame');
     setHasSavedGame(false);
   }, []);
 
@@ -268,7 +264,7 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
         setGuestLiveMatchStatus(p.linkedUserId, p.syncAuthToken, '', null);
       }
     });
-    localStorage.removeItem(SAVED_GAME_KEY);
+    removeStored('savedGame');
     setHasSavedGame(false);
     setCelebration(null);
     setCheckoutPrompt(null);
@@ -346,20 +342,18 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
   }, [gameState.players, abortGame, dropLinkedGuestProfile]);
 
   const resumeGame = useCallback(() => {
-    const saved = localStorage.getItem(SAVED_GAME_KEY);
-    if (!saved) return;
-    try {
-      const parsed = JSON.parse(saved) as GameState;
-      if (!parsed?.players?.length || !parsed.config) throw new Error('Unvollständiger Spielstand');
-      applyState({ ...parsed, isProcessing: false, history: parsed.history || [] });
-      setRoundBust(false);
-      setCelebration(null);
-      setScreen('game');
-    } catch (e) {
-      console.error('Gespeichertes Spiel konnte nicht geladen werden', e);
-      localStorage.removeItem(SAVED_GAME_KEY);
+    const parsed = readJson<GameState | null>('savedGame', null);
+    if (!parsed) return;
+    if (!parsed.players?.length || !parsed.config) {
+      console.error('Gespeichertes Spiel ist unvollständig und wird verworfen');
+      removeStored('savedGame');
       setHasSavedGame(false);
+      return;
     }
+    applyState({ ...parsed, isProcessing: false, history: parsed.history || [] });
+    setRoundBust(false);
+    setCelebration(null);
+    setScreen('game');
   }, [applyState, setScreen]);
 
   const isOnCheckout = (score: number, outMode: 'DO' | 'SO' | 'MO'): boolean => {
@@ -518,7 +512,7 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
 
       if (newPlayers[winnerIndex].sets >= currentState.config.setsToWin) {
         const finalState: GameState = { ...currentState, players: newPlayers, isProcessing: true };
-        localStorage.removeItem(SAVED_GAME_KEY);
+        removeStored('savedGame');
         setHasSavedGame(false);
         showMatchStats(finalState, winnerIndex, newPlayers);
         return finalState;

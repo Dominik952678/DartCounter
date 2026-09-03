@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import type { GameConfig, Profile } from '../types';
 import { MatchSetup } from './MatchSetup';
 import { TrainingHub, type MiniGameMode } from './TrainingHub';
+import { readOneOf, write } from '../utils/storage';
 
 interface HomeContainerProps {
   profiles: Record<string, Profile>;
@@ -14,6 +15,8 @@ interface HomeContainerProps {
   setProfiles: (profiles: Record<string, Profile>) => void;
   defaultTab?: 'match' | 'training';
 }
+
+const OFFLINE_SUBTABS: readonly ('match' | 'training')[] = ['match', 'training'];
 
 export const HomeContainer: React.FC<HomeContainerProps> = ({
   profiles,
@@ -33,13 +36,11 @@ export const HomeContainer: React.FC<HomeContainerProps> = ({
   // the switcher whenever the screen was opened from a quickstart link.
   const [effectiveSubTab, setActiveSubTab] = useState<'match' | 'training'>(() => {
     if (tabParam === 'training' || tabParam === 'match') return tabParam;
-    const saved = localStorage.getItem('dart_offline_subtab');
-    if (saved === 'training' || saved === 'match') return saved;
-    return defaultTab;
+    return readOneOf('offlineSubtab', OFFLINE_SUBTABS, defaultTab);
   });
 
   useEffect(() => {
-    localStorage.setItem('dart_offline_subtab', effectiveSubTab);
+    write('offlineSubtab', effectiveSubTab);
   }, [effectiveSubTab]);
 
   return (

@@ -8,6 +8,7 @@ export {
   profilesCacheKey,
   matchesCacheKey,
   clearCachedUserData,
+  getCachedGuestMatches,
   ACTIVE_SYNC_CODE_KEY,
   GUEST_MATCHES_PREFIX
 } from './localCache';

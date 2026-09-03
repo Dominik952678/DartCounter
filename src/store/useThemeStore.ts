@@ -1,6 +1,9 @@
 import { create } from 'zustand';
+import { readBoolean, readOneOf, write } from '../utils/storage';
 
 export type AppTheme = 'classic' | 'vaporwave' | 'cyberpunk';
+
+const THEMES: readonly AppTheme[] = ['classic', 'vaporwave', 'cyberpunk'];
 
 interface ThemeState {
   theme: AppTheme;
@@ -13,26 +16,7 @@ interface ThemeState {
   toggleGlitchEffects: () => void;
 }
 
-const getInitialTheme = (): AppTheme => {
-  const saved = localStorage.getItem('dartcounter_theme');
-  if (saved === 'vaporwave' || saved === 'cyberpunk' || saved === 'classic') return saved as AppTheme;
-  return 'classic';
-};
-
-const getInitialScanlines = (): boolean => {
-  const saved = localStorage.getItem('dartcounter_scanlines');
-  return saved !== null ? saved === 'true' : true;
-};
-
-const getInitialGrid = (): boolean => {
-  const saved = localStorage.getItem('dartcounter_grid');
-  return saved !== null ? saved === 'true' : true;
-};
-
-const getInitialGlitch = (): boolean => {
-  const saved = localStorage.getItem('dartcounter_glitch');
-  return saved !== null ? saved === 'true' : true;
-};
+const getInitialTheme = (): AppTheme => readOneOf('theme', THEMES, 'classic');
 
 // Initial sync with DOM
 if (typeof document !== 'undefined') {
@@ -42,12 +26,12 @@ if (typeof document !== 'undefined') {
 
 export const useThemeStore = create<ThemeState>((set) => ({
   theme: getInitialTheme(),
-  scanlines: getInitialScanlines(),
-  gridAnimation: getInitialGrid(),
-  glitchEffects: getInitialGlitch(),
+  scanlines: readBoolean('scanlines', true),
+  gridAnimation: readBoolean('gridAnimation', true),
+  glitchEffects: readBoolean('glitchEffects', true),
 
   setTheme: (theme: AppTheme) => {
-    localStorage.setItem('dartcounter_theme', theme);
+    write('theme', theme);
     if (typeof document !== 'undefined') {
       document.documentElement.setAttribute('data-theme', theme);
     }
@@ -57,7 +41,7 @@ export const useThemeStore = create<ThemeState>((set) => ({
   toggleScanlines: () => {
     set((state) => {
       const next = !state.scanlines;
-      localStorage.setItem('dartcounter_scanlines', String(next));
+      write('scanlines', next);
       return { scanlines: next };
     });
   },
@@ -65,7 +49,7 @@ export const useThemeStore = create<ThemeState>((set) => ({
   toggleGridAnimation: () => {
     set((state) => {
       const next = !state.gridAnimation;
-      localStorage.setItem('dartcounter_grid', String(next));
+      write('gridAnimation', next);
       return { gridAnimation: next };
     });
   },
@@ -73,7 +57,7 @@ export const useThemeStore = create<ThemeState>((set) => ({
   toggleGlitchEffects: () => {
     set((state) => {
       const next = !state.glitchEffects;
-      localStorage.setItem('dartcounter_glitch', String(next));
+      write('glitchEffects', next);
       return { glitchEffects: next };
     });
   }

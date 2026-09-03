@@ -1,27 +1,13 @@
-let audioCtx: AudioContext | null = null;
-let soundEnabled = true;
+import { readBoolean, write } from './storage';
 
-// Wir versuchen, den Zustand aus localStorage zu lesen (falls vorhanden)
-try {
-  const saved = localStorage.getItem('dart_sound_enabled');
-  if (saved !== null) {
-    soundEnabled = saved === 'true';
-  } else {
-    soundEnabled = true;
-  }
-} catch (e) {
-  console.error(e);
-}
+let audioCtx: AudioContext | null = null;
+let soundEnabled = readBoolean('soundEnabled', true);
 
 export const isSoundEnabled = () => soundEnabled;
 
 export const setSoundEnabled = (enabled: boolean) => {
   soundEnabled = enabled;
-  try {
-    localStorage.setItem('dart_sound_enabled', enabled.toString());
-  } catch (e) {
-    console.error(e);
-  }
+  write('soundEnabled', enabled);
   if (enabled && !audioCtx) {
     initAudio();
   }
