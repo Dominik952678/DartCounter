@@ -45,17 +45,24 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
+        /**
+         * Only the libraries every screen needs are pinned to a stable chunk,
+         * so they stay cached across deploys. recharts is deliberately absent:
+         * naming a chunk for it made rolldown park Vite's preload helper inside
+         * it, and the entry's import of that helper pulled all 400 kB of
+         * charting into the first paint — the very thing the lazy stats and
+         * profile routes exist to avoid. Unnamed, it rides along with them.
+         */
         manualChunks(id: string) {
-          if (id.includes('node_modules')) {
-            if (id.includes('recharts')) {
-              return 'vendor-charts';
-            }
-            if (id.includes('@supabase')) {
-              return 'vendor-supabase';
-            }
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
-              return 'vendor-react';
-            }
+          if (!id.includes('node_modules')) return;
+          // Matched on the package directory rather than anywhere in the path:
+          // `id.includes('react')` also caught recharts' react-smooth and hauled
+          // it into the eager chunk.
+          if (/node_modules\/(react|react-dom|react-router|react-router-dom|scheduler)\//.test(id)) {
+            return 'vendor-react';
+          }
+          if (id.includes('node_modules/@supabase/')) {
+            return 'vendor-supabase';
           }
         }
       }

@@ -12,6 +12,7 @@ import { useGameEngine } from '../hooks/useGameEngine';
 import type { GameState, MatchHistory, Profile, StatsModalData } from '../types';
 import { StatsModal } from './Modals';
 import { DisconnectOverlay } from './DisconnectOverlay';
+import { LoadingScreen } from './LoadingScreen';
 import { recordMatchForSelf } from '../db/database';
 import { reportPersistenceError } from '../store/useNotificationStore';
 
@@ -354,20 +355,16 @@ export const OnlineGameWrapper: React.FC = () => {
 
   if (!effectiveGameState || effectiveGameState.players.length === 0) {
     return (
-      <div className="screen active-screen app-container center-stage">
-        <div className="loading-orb">🎯</div>
-        <h3 className="center-stage-title">
-          {isHost ? 'Match wird vorbereitet…' : 'Warte auf den Host…'}
-        </h3>
-        <p className="center-stage-text">
-          {isHost
-            ? 'Alle verbundenen Geräte erhalten gleich das Spielfeld.'
-            : 'Dein Gerät synchronisiert sich mit dem Board des Hosts.'}
-        </p>
+      <LoadingScreen
+        title={isHost ? 'Match wird vorbereitet…' : 'Warte auf den Host…'}
+        message={isHost
+          ? 'Alle verbundenen Geräte erhalten gleich das Spielfeld.'
+          : 'Dein Gerät synchronisiert sich mit dem Board des Hosts.'}
+      >
         <button className="btn-secondary" onClick={() => { leaveRoom(); navigate('/online'); }}>
           Raum verlassen
         </button>
-      </div>
+      </LoadingScreen>
     );
   }
 

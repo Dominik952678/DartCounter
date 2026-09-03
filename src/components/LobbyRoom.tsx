@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { LoadingScreen } from './LoadingScreen';
 import { useOnlineStore } from '../store/useOnlineStore';
 
 const modeLabel = (mode?: string) => {
@@ -83,10 +84,7 @@ export const LobbyRoom: React.FC = () => {
 
   if (!roomCode) {
     return (
-      <div className="screen active-screen app-container center-stage">
-        <div className="loading-orb">🎯</div>
-        <p className="text-dim">Verbinde…</p>
-      </div>
+      <LoadingScreen message="Verbinde…" />
     );
   }
 

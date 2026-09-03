@@ -1,9 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { Routes, Route, useNavigate, Navigate, useLocation } from 'react-router-dom';
 import { HomeContainer } from './components/HomeContainer';
 import { MainMenu } from './components/MainMenu';
-import { StatsPage } from './components/StatsPage';
-import { ProfileTab } from './components/ProfileTab';
 import { BottomNav } from './components/BottomNav';
 import { AuthScreen } from './components/AuthScreen';
 import { LobbyBrowser } from './components/LobbyBrowser';
@@ -14,6 +12,16 @@ import { PowerScoring } from './components/PowerScoring';
 import { SplitScore } from './components/SplitScore';
 import { CheckoutTraining } from './components/CheckoutTraining';
 import { StatsModal } from './components/Modals';
+import { LoadingScreen } from './components/LoadingScreen';
+
+/**
+ * The two screens that pull recharts — the only route to it in the whole app —
+ * and, through the profile screen, html2canvas. Loading them eagerly meant a
+ * player who just wanted to start a leg downloaded the entire charting library
+ * first. They are fetched when their route is opened instead.
+ */
+const StatsPage = lazy(() => import('./components/StatsPage').then(m => ({ default: m.StatsPage })));
+const ProfileTab = lazy(() => import('./components/ProfileTab').then(m => ({ default: m.ProfileTab })));
 import type { Player, MatchHistory, Profile } from './types';
 import { saveMatch, getMatchPage, syncMatchesAndProfilesForGuests, reconstructAllProfilesFromMatches, MATCH_PAGE_SIZE } from './db/database';
 import { reportPersistenceError, useNotificationStore } from './store/useNotificationStore';
@@ -255,98 +263,101 @@ export default function App() {
 
   return (
     <div className={`app-container ${isMatchActive ? 'app-container-match' : ''}`}>
-      <Routes>
-        <Route path="/" element={<MainMenu />} />
-        <Route path="/auth" element={<AuthScreen />} />
-        <Route path="/stats" element={<StatsPage />} />
-        <Route path="/online" element={<LobbyBrowser />} />
-        <Route path="/lobby/:code" element={<LobbyRoom />} />
-        <Route path="/online-game" element={<OnlineGameWrapper />} />
+      {/* Inside the container, so the dock below stays put while a route loads. */}
+      <Suspense fallback={<LoadingScreen message="Wird geladen…" />}>
+        <Routes>
+          <Route path="/" element={<MainMenu />} />
+          <Route path="/auth" element={<AuthScreen />} />
+          <Route path="/stats" element={<StatsPage />} />
+          <Route path="/online" element={<LobbyBrowser />} />
+          <Route path="/lobby/:code" element={<LobbyRoom />} />
+          <Route path="/online-game" element={<OnlineGameWrapper />} />
 
-        <Route path="/offline" element={
-          <HomeContainer
-            profiles={profiles}
-            setProfiles={setProfiles}
-            onStartGame={gameEngine.startGame}
-            hasSavedGame={gameEngine.hasSavedGame}
-            onResumeGame={gameEngine.resumeGame}
-            onDiscardSavedGame={gameEngine.discardSavedGame}
-            onStartMiniGame={(mode, players, settings) => {
-              setMiniGameConfig({ players, settings });
-              setMatchSessionId(prev => prev + 1);
-              setScreen(mode as string);
-            }}
-          />
-        } />
+          <Route path="/offline" element={
+            <HomeContainer
+              profiles={profiles}
+              setProfiles={setProfiles}
+              onStartGame={gameEngine.startGame}
+              hasSavedGame={gameEngine.hasSavedGame}
+              onResumeGame={gameEngine.resumeGame}
+              onDiscardSavedGame={gameEngine.discardSavedGame}
+              onStartMiniGame={(mode, players, settings) => {
+                setMiniGameConfig({ players, settings });
+                setMatchSessionId(prev => prev + 1);
+                setScreen(mode as string);
+              }}
+            />
+          } />
 
-        <Route path="/game" element={
-          <GameScreen
-            players={gameEngine.gameState.players}
-            activePlayer={gameEngine.gameState.activePlayer}
-            startingPlayerOfLeg={gameEngine.gameState.startingPlayerOfLeg}
-            config={gameEngine.gameState.config}
-            currentRoundDarts={gameEngine.gameState.currentRoundDarts}
-            currentMultiplier={gameEngine.gameState.currentMultiplier}
-            isProcessing={gameEngine.gameState.isProcessing}
-            roundBust={gameEngine.roundBust}
-            addDart={gameEngine.addDart}
-            toggleMultiplier={gameEngine.toggleMultiplier}
-            undoSingleDart={gameEngine.undoSingleDart}
-            abortGame={gameEngine.abortGame}
-            checkoutPrompt={gameEngine.checkoutPrompt}
-            submitCheckoutPrompt={gameEngine.submitCheckoutPrompt}
-            celebration={gameEngine.celebration}
-            canUndo={gameEngine.gameState.history.length > 0 || gameEngine.gameState.currentRoundDarts.length > 0}
-          />
-        } />
+          <Route path="/game" element={
+            <GameScreen
+              players={gameEngine.gameState.players}
+              activePlayer={gameEngine.gameState.activePlayer}
+              startingPlayerOfLeg={gameEngine.gameState.startingPlayerOfLeg}
+              config={gameEngine.gameState.config}
+              currentRoundDarts={gameEngine.gameState.currentRoundDarts}
+              currentMultiplier={gameEngine.gameState.currentMultiplier}
+              isProcessing={gameEngine.gameState.isProcessing}
+              roundBust={gameEngine.roundBust}
+              addDart={gameEngine.addDart}
+              toggleMultiplier={gameEngine.toggleMultiplier}
+              undoSingleDart={gameEngine.undoSingleDart}
+              abortGame={gameEngine.abortGame}
+              checkoutPrompt={gameEngine.checkoutPrompt}
+              submitCheckoutPrompt={gameEngine.submitCheckoutPrompt}
+              celebration={gameEngine.celebration}
+              canUndo={gameEngine.gameState.history.length > 0 || gameEngine.gameState.currentRoundDarts.length > 0}
+            />
+          } />
 
-        <Route path="/powerscoring" element={
-          <PowerScoring
-            key={matchSessionId}
-            players={effectiveMiniGamePlayers}
-            profiles={profiles}
-            rounds={(miniGameConfig.settings.rounds as number) || 10}
-            onAbort={() => setScreen('start')}
-            onFinish={results => finishMiniGame(results, 'powerScoring')}
-          />
-        } />
+          <Route path="/powerscoring" element={
+            <PowerScoring
+              key={matchSessionId}
+              players={effectiveMiniGamePlayers}
+              profiles={profiles}
+              rounds={(miniGameConfig.settings.rounds as number) || 10}
+              onAbort={() => setScreen('start')}
+              onFinish={results => finishMiniGame(results, 'powerScoring')}
+            />
+          } />
 
-        <Route path="/splitscore" element={
-          <SplitScore
-            key={matchSessionId}
-            players={effectiveMiniGamePlayers}
-            profiles={profiles}
-            onAbort={() => setScreen('start')}
-            onFinish={results => finishMiniGame(results, 'splitScore')}
-          />
-        } />
+          <Route path="/splitscore" element={
+            <SplitScore
+              key={matchSessionId}
+              players={effectiveMiniGamePlayers}
+              profiles={profiles}
+              onAbort={() => setScreen('start')}
+              onFinish={results => finishMiniGame(results, 'splitScore')}
+            />
+          } />
 
-        <Route path="/checkout" element={
-          <CheckoutTraining
-            key={matchSessionId}
-            players={effectiveMiniGamePlayers}
-            profiles={profiles}
-            checkoutRounds={(miniGameConfig.settings.checkoutRounds as number) || 1}
-            checkoutTargets={(miniGameConfig.settings.checkoutTargets as number) || 10}
-            onAbort={() => setScreen('start')}
-            onFinish={results => finishMiniGame(results, 'checkoutTraining')}
-          />
-        } />
+          <Route path="/checkout" element={
+            <CheckoutTraining
+              key={matchSessionId}
+              players={effectiveMiniGamePlayers}
+              profiles={profiles}
+              checkoutRounds={(miniGameConfig.settings.checkoutRounds as number) || 1}
+              checkoutTargets={(miniGameConfig.settings.checkoutTargets as number) || 10}
+              onAbort={() => setScreen('start')}
+              onFinish={results => finishMiniGame(results, 'checkoutTraining')}
+            />
+          } />
 
-        <Route path="/profile" element={
-          <ProfileTab
-            profiles={profiles}
-            matches={savedMatches}
-            hasMoreMatches={savedMatches.length < totalMatches}
-            onLoadMoreMatches={() => setMatchWindow(w => w + MATCH_PAGE_SIZE)}
-            onCreateProfile={handleCreateProfile}
-            onUpdateProfile={handleUpdateProfile}
-            onDeleteProfile={handleDeleteProfile}
-          />
-        } />
+          <Route path="/profile" element={
+            <ProfileTab
+              profiles={profiles}
+              matches={savedMatches}
+              hasMoreMatches={savedMatches.length < totalMatches}
+              onLoadMoreMatches={() => setMatchWindow(w => w + MATCH_PAGE_SIZE)}
+              onCreateProfile={handleCreateProfile}
+              onUpdateProfile={handleUpdateProfile}
+              onDeleteProfile={handleDeleteProfile}
+            />
+          } />
 
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
 
       {!hideBottomNav && <BottomNav />}
 

@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import type { Profile, MatchHistory, GuestSyncTokenDoc } from '../types';
 import { ProfileDashboard } from './ProfileDashboard';
 import { DartboardHeatmap } from './DartboardHeatmap';
-import { exportElementAsImage } from '../utils/exportImage';
 import { MatchImageExport } from './MatchImageExport';
 import { useAuthStore } from '../store/useAuthStore';
 import { useThemeStore } from '../store/useThemeStore';
@@ -56,6 +55,35 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
   const [importSuccess, setImportSuccess] = useState<string | null>(null);
   const [importedGuestData, setImportedGuestData] = useState<{ profile: Profile; username: string } | null>(null);
   const [sampleDataStatus, setSampleDataStatus] = useState<string | null>(null);
+  /** Index of the match whose share image is being rendered, if any. */
+  const [exportingMatch, setExportingMatch] = useState<number | null>(null);
+
+  /**
+   * Renders the share image once its off-screen node is in the DOM.
+   *
+   * Two things used to be paid for on every visit to the history: html2canvas
+   * came down with the screen although most visits never export anything, and
+   * an export node was mounted for every match in the list. The library is now
+   * fetched on the first share, and only the match being shared gets a node.
+   */
+  useEffect(() => {
+    if (exportingMatch === null) return;
+
+    const label = matches[exportingMatch]?.date.replace(/[^a-zA-Z0-9]/g, '-') ?? 'Export';
+    let cancelled = false;
+    (async () => {
+      try {
+        const { exportElementAsImage } = await import('../utils/exportImage');
+        await exportElementAsImage(`export-node-${exportingMatch}`, `Dartcounter-Match-${label}.png`);
+      } catch (err) {
+        console.error('Bild-Export fehlgeschlagen', err);
+      } finally {
+        if (!cancelled) setExportingMatch(null);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [exportingMatch, matches]);
   const hasSampleProfiles = SAMPLE_PROFILE_KEYS.some(key => !!profiles[key]);
 
   const handleLoadSampleData = async () => {
@@ -344,13 +372,16 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                   <button 
                     className="btn-ghost" 
                     style={{ fontSize: '0.85em', padding: '4px 8px' }}
-                    onClick={() => exportElementAsImage(`export-node-${i}`, `Dartcounter-Match-${m.date.replace(/[^a-zA-Z0-9]/g, '-')}.png`)}
+                    disabled={exportingMatch !== null}
+                    onClick={() => setExportingMatch(i)}
                   >
-                    📸 Als Bild teilen
+                    {exportingMatch === i ? '⏳ Wird erstellt…' : '📸 Als Bild teilen'}
                   </button>
-                  <div style={{ position: 'absolute', left: '-15000px', top: 0 }}>
-                    <MatchImageExport matchData={m} profiles={profiles} exportId={`export-node-${i}`} />
-                  </div>
+                  {exportingMatch === i && (
+                    <div style={{ position: 'absolute', left: '-15000px', top: 0 }}>
+                      <MatchImageExport matchData={m} profiles={profiles} exportId={`export-node-${i}`} />
+                    </div>
+                  )}
                 </div>
               </div>
             ))
