@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import type { GameState, Profile, MatchHistory, GameConfig, Player, StatsModalData, Dart } from '../types';
-import { saveProfiles, setGuestLiveMatchStatus, getGuestSyncStatus } from '../db/database';
+import { saveProfiles, setGuestLiveMatchStatus, getGuestSyncStatus, PersistenceError } from '../db/database';
 import { getBotDart, type TeamContext } from '../utils/bot';
 import { playSciFiHitSound, play180Sound, playBustSound, playHighFinishSound, speak, playDartHitSound, announceScore, announceGameShot } from '../utils/audio';
 import { triggerHaptic } from '../utils/haptics';
+import { reportPersistenceError } from '../store/useNotificationStore';
 
 export const get2v2FreezeStatus = (players: Player[], activePlayerIndex: number): {
   is2v2: boolean;
@@ -51,6 +52,18 @@ interface UseGameEngineProps {
 }
 
 const SAVED_GAME_KEY = 'dartcounter_saved_game';
+
+/**
+ * How far back undo can reach. Each entry is a deep clone of the full state, so
+ * an uncapped list grows with every dart of the match for a feature nobody uses
+ * beyond the last few throws.
+ */
+const HISTORY_LIMIT = 50;
+
+/** How much of that history survives into localStorage. */
+const PERSISTED_HISTORY_LIMIT = 5;
+
+const AUTO_SAVE_DEBOUNCE_MS = 400;
 
 export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSavedMatches, setScreen, setStatsModalData, isOnline = false, user }: UseGameEngineProps) {
   const [gameState, setGameState] = useState<GameState>({
@@ -125,16 +138,40 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
 
   useEffect(() => clearTimers, [clearTimers]);
 
-  // Live auto-save so a reload or an accidental close never loses a match.
+  /**
+   * Live auto-save so a reload or an accidental close never loses a match.
+   *
+   * Only a short tail of the undo history is written. Every dart pushes a deep
+   * clone of the whole state onto `history`, so serialising the state verbatim
+   * on every change made each write proportional to the darts thrown so far —
+   * quadratic over a match, and large enough late in a set to hit the storage
+   * quota, at which point the only symptom was a console line and a resume
+   * feature that had silently stopped working.
+   */
   useEffect(() => {
     if (isOnline) return;
     if (gameState.players.length === 0) return;
     if (!gameState.players.some(p => p.legs > 0 || p.sets > 0 || p.matchDarts > 0)) return;
-    try {
-      localStorage.setItem(SAVED_GAME_KEY, JSON.stringify(gameState));
-    } catch (e) {
-      console.error('Auto-save error', e);
-    }
+
+    const timer = setTimeout(() => {
+      try {
+        const snapshot: GameState = {
+          ...gameState,
+          history: gameState.history.slice(-PERSISTED_HISTORY_LIMIT)
+        };
+        localStorage.setItem(SAVED_GAME_KEY, JSON.stringify(snapshot));
+      } catch (err) {
+        reportPersistenceError(
+          new PersistenceError(
+            'Der Spielstand konnte nicht zwischengespeichert werden. Bei einem Neuladen geht das laufende Match verloren.',
+            'local',
+            { cause: err }
+          )
+        );
+      }
+    }, AUTO_SAVE_DEBOUNCE_MS);
+
+    return () => clearTimeout(timer);
   }, [gameState, isOnline]);
 
   const saveStateToHistory = (currentState: GameState): GameState => {
@@ -150,7 +187,7 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
 
   const persistProfiles = useCallback((next: Record<string, Profile>) => {
     setProfiles(next);
-    saveProfiles(next, userIdRef.current).catch(err => console.error('Could not persist profiles', err));
+    saveProfiles(next, userIdRef.current).catch(err => reportPersistenceError(err, 'Profile konnten nicht gespeichert werden'));
   }, [setProfiles]);
 
   const startGame = useCallback((playerNames: string[], config: GameConfig) => {
@@ -727,7 +764,7 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
       ...prev,
       currentRoundDarts: [...prev.currentRoundDarts, newDart],
       currentMultiplier: 1,
-      history: [...prev.history, saveStateToHistory(prev)]
+      history: [...prev.history, saveStateToHistory(prev)].slice(-HISTORY_LIMIT)
     };
 
     applyState(newState);

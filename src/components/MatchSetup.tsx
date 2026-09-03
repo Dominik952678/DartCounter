@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import type { GameConfig, Profile } from '../types';
 import { useAuthStore } from '../store/useAuthStore';
 import { getActiveUserSyncInfo, redeemSyncCode, removeLinkedGuestProfiles, saveProfiles, validateGuestSyncTokens } from '../db/database';
+import { reportPersistenceError } from '../store/useNotificationStore';
 
 interface MatchSetupProps {
   profiles: Record<string, Profile>;
@@ -318,7 +319,7 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
     const newProfiles = { ...profiles, [importedGuestData.username]: importedGuestData.profile };
     setProfiles(newProfiles);
     if (user?.id) {
-      saveProfiles(newProfiles, user.id);
+      saveProfiles(newProfiles, user.id).catch(err => reportPersistenceError(err, 'Gastprofil konnte nicht gespeichert werden'));
     }
     // Setze neu importierten Gast direkt in ersten freien oder nächsten Slot
     setSelectedPlayers(prev => {
@@ -414,7 +415,7 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
         const { profiles: cleaned, removed } = removeLinkedGuestProfiles(profiles, check.revokedGuests);
         if (removed.length > 0 && setProfiles) {
           setProfiles(cleaned);
-          saveProfiles(cleaned, user?.id).catch(err => console.error('Could not persist profiles', err));
+          saveProfiles(cleaned, user?.id).catch(err => reportPersistenceError(err, 'Profile konnten nicht gespeichert werden'));
           setPlayerOverrides(prev => prev.map(slot => (slot && removed.includes(slot) ? null : slot)));
         }
         setErrorMsg(`⚠️ Die Verbindung zu @${check.revokedGuests.join(', @')} wurde getrennt. Das Gastprofil wurde entfernt — bitte einen neuen Sync-Code anfordern.`);
@@ -438,7 +439,7 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
             };
       });
       setProfiles(nextProfiles);
-      saveProfiles(nextProfiles, null).catch(err => console.error('Could not persist guest profiles', err));
+      saveProfiles(nextProfiles, null).catch(err => reportPersistenceError(err, 'Gastprofile konnten nicht gespeichert werden'));
     }
 
     if (hasSavedGame && savedMatch && !isSavedBannerDismissed) {

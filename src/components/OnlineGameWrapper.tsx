@@ -11,7 +11,8 @@ import { useGameEngine } from '../hooks/useGameEngine';
 import type { GameState, MatchHistory, Profile, StatsModalData } from '../types';
 import { StatsModal } from './Modals';
 import { DisconnectOverlay } from './DisconnectOverlay';
-import { recordMatchForSelf, saveProfiles } from '../db/database';
+import { recordMatchForSelf } from '../db/database';
+import { reportPersistenceError } from '../store/useNotificationStore';
 
 /**
  * The undo history is a deep clone of the whole game state per dart. Sending it
@@ -38,7 +39,7 @@ export const OnlineGameWrapper: React.FC = () => {
     sendRoomEvent
   } = useOnlineStore();
   const { user } = useAuthStore();
-  const { profiles, setProfiles } = useProfiles(user);
+  const { profiles, setProfiles, applyProfiles } = useProfiles(user);
 
   const [syncedState, setSyncedState] = useState<(GameState & { historyLength?: number }) | null>(null);
   const [statsData, setStatsData] = useState<StatsModalData>({
@@ -77,63 +78,67 @@ export const OnlineGameWrapper: React.FC = () => {
     engineRef.current = hostEngine;
   });
 
+  /**
+   * Books a finished online mini-game.
+   *
+   * The profile set is derived up front and handed to `applyProfiles` as a
+   * finished object. It used to be assembled inside a `setProfiles` updater and
+   * then persisted through the variable that updater assigned — a value React
+   * is under no obligation to have produced yet, which could send an empty
+   * profile map to the cloud.
+   */
   const handleMinigameFinish = async (
     results: { name: string; score: number; attempts?: number; dartsUsed?: number; roundsCompleted?: number }[],
     gameType: string
   ) => {
-    let newProfiles: Record<string, Profile> = {};
-    setProfiles(prev => {
-      newProfiles = { ...prev };
+    const nextProfiles: Record<string, Profile> = { ...profiles };
 
-      const bump = (name: string, apply: (p: Profile) => void) => {
-        if (!newProfiles[name]) return;
-        newProfiles[name] = { ...newProfiles[name] };
-        apply(newProfiles[name]);
-      };
+    const bump = (name: string, apply: (p: Profile) => void) => {
+      if (!nextProfiles[name]) return;
+      nextProfiles[name] = { ...nextProfiles[name] };
+      apply(nextProfiles[name]);
+    };
 
-      if (gameType === 'powerScoring') {
-        for (const r of results) {
-          bump(r.name, p => {
-            p.powerScoring = { ...(p.powerScoring || { bestScore: 0, matchesPlayed: 0, wins: 0, totalScore: 0 }) };
-            p.powerScoring.bestScore = Math.max(p.powerScoring.bestScore, r.score);
-            p.powerScoring.matchesPlayed += 1;
-            p.powerScoring.totalScore = (p.powerScoring.totalScore || 0) + r.score;
-          });
-        }
-        const maxScore = Math.max(...results.map(r => r.score));
-        for (const r of results) {
-          if (r.score === maxScore) bump(r.name, p => { p.powerScoring!.wins += 1; });
-        }
-      } else if (gameType === 'splitScore') {
-        for (const r of results) {
-          bump(r.name, p => {
-            p.splitScore = { ...(p.splitScore || { bestScore: 0, matchesPlayed: 0, wins: 0, totalScore: 0 }) };
-            p.splitScore.bestScore = Math.max(p.splitScore.bestScore, r.score);
-            p.splitScore.matchesPlayed += 1;
-            p.splitScore.totalScore = (p.splitScore.totalScore || 0) + r.score;
-          });
-        }
-        const maxScore = Math.max(...results.map(r => r.score));
-        for (const r of results) {
-          if (r.score === maxScore) bump(r.name, p => { p.splitScore!.wins += 1; });
-        }
-      } else if (gameType === 'checkoutTraining') {
-        for (const r of results) {
-          bump(r.name, p => {
-            p.checkoutTraining = { ...(p.checkoutTraining || { bestCheckout: 0, roundsCompleted: 0, matchesPlayed: 0, wins: 0, totalAttempts: 0, totalDartsUsed: 0 }) };
-            p.checkoutTraining.bestCheckout = Math.max(p.checkoutTraining.bestCheckout, r.score);
-            p.checkoutTraining.roundsCompleted += r.roundsCompleted || 0;
-            p.checkoutTraining.matchesPlayed += 1;
-            p.checkoutTraining.totalAttempts = (p.checkoutTraining.totalAttempts || 0) + (r.attempts || 0);
-            p.checkoutTraining.totalDartsUsed = (p.checkoutTraining.totalDartsUsed || 0) + (r.dartsUsed || 0);
-          });
-        }
+    if (gameType === 'powerScoring') {
+      for (const r of results) {
+        bump(r.name, p => {
+          p.powerScoring = { ...(p.powerScoring || { bestScore: 0, matchesPlayed: 0, wins: 0, totalScore: 0 }) };
+          p.powerScoring.bestScore = Math.max(p.powerScoring.bestScore, r.score);
+          p.powerScoring.matchesPlayed += 1;
+          p.powerScoring.totalScore = (p.powerScoring.totalScore || 0) + r.score;
+        });
       }
+      const maxScore = Math.max(...results.map(r => r.score));
+      for (const r of results) {
+        if (r.score === maxScore) bump(r.name, p => { p.powerScoring!.wins += 1; });
+      }
+    } else if (gameType === 'splitScore') {
+      for (const r of results) {
+        bump(r.name, p => {
+          p.splitScore = { ...(p.splitScore || { bestScore: 0, matchesPlayed: 0, wins: 0, totalScore: 0 }) };
+          p.splitScore.bestScore = Math.max(p.splitScore.bestScore, r.score);
+          p.splitScore.matchesPlayed += 1;
+          p.splitScore.totalScore = (p.splitScore.totalScore || 0) + r.score;
+        });
+      }
+      const maxScore = Math.max(...results.map(r => r.score));
+      for (const r of results) {
+        if (r.score === maxScore) bump(r.name, p => { p.splitScore!.wins += 1; });
+      }
+    } else if (gameType === 'checkoutTraining') {
+      for (const r of results) {
+        bump(r.name, p => {
+          p.checkoutTraining = { ...(p.checkoutTraining || { bestCheckout: 0, roundsCompleted: 0, matchesPlayed: 0, wins: 0, totalAttempts: 0, totalDartsUsed: 0 }) };
+          p.checkoutTraining.bestCheckout = Math.max(p.checkoutTraining.bestCheckout, r.score);
+          p.checkoutTraining.roundsCompleted += r.roundsCompleted || 0;
+          p.checkoutTraining.matchesPlayed += 1;
+          p.checkoutTraining.totalAttempts = (p.checkoutTraining.totalAttempts || 0) + (r.attempts || 0);
+          p.checkoutTraining.totalDartsUsed = (p.checkoutTraining.totalDartsUsed || 0) + (r.dartsUsed || 0);
+        });
+      }
+    }
 
-      return newProfiles;
-    });
-
-    await saveProfiles(newProfiles, user?.id);
+    await applyProfiles(nextProfiles);
 
     const matchData: MatchHistory = {
       date: new Date().toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' }),
@@ -145,7 +150,11 @@ export const OnlineGameWrapper: React.FC = () => {
         score: r.score, attempts: r.attempts, dartsUsed: r.dartsUsed
       }))
     };
-    await recordMatchForSelf(matchData, myUsername, user?.id, user?.user_metadata?.username);
+    try {
+      await recordMatchForSelf(matchData, myUsername, user?.id, user?.user_metadata?.username);
+    } catch (err) {
+      reportPersistenceError(err, 'Trainingsergebnis konnte nicht gespeichert werden');
+    }
 
     leaveRoom();
     navigate('/online');
@@ -161,7 +170,7 @@ export const OnlineGameWrapper: React.FC = () => {
       const updated = await recordMatchForSelf(match, myUsername, user?.id, user?.user_metadata?.username);
       if (updated) setProfiles(updated);
     } catch (err) {
-      console.error('Could not persist own online match result', err);
+      reportPersistenceError(err, 'Match-Ergebnis konnte nicht gespeichert werden');
     }
   }, [myUsername, user, setProfiles]);
 

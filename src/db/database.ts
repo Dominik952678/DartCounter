@@ -6,6 +6,25 @@ const SUPABASE_KEY = 'sb_publishable_vkBLAop52YK5pN6JrIAjfQ__Q9dvli0';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+/**
+ * Raised when a write did not reach its destination.
+ *
+ * The write paths used to swallow these and only `console.error` them: a
+ * player could finish a 40-minute match, have the cloud reject the insert, and
+ * still be shown the full statistics for data that no longer existed anywhere.
+ * Callers are now forced to decide what to tell the user.
+ */
+export class PersistenceError extends Error {
+  /** `local` is the browser cache (usually the storage quota); `cloud` is Supabase. */
+  readonly scope: 'local' | 'cloud';
+
+  constructor(message: string, scope: 'local' | 'cloud', options?: { cause?: unknown }) {
+    super(message, options);
+    this.name = 'PersistenceError';
+    this.scope = scope;
+  }
+}
+
 export function getGuestDefaultProfiles(): Record<string, Profile> {
   return {
     "Gast 1": { wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0, color: 'var(--blue)' },
@@ -360,52 +379,70 @@ export async function saveProfiles(
   if (!options?.skipLocalCache) {
     try {
       localStorage.setItem(docId, JSON.stringify(profiles));
-    } catch (e) {
-      console.error(e);
+    } catch (err) {
+      throw new PersistenceError(
+        'Profile konnten nicht lokal gespeichert werden. Der Speicher des Browsers ist voll.',
+        'local',
+        { cause: err }
+      );
     }
   }
 
   if (!userId) return; // Guests do not write to persistent cloud database
 
-  try {
-    const docData = { profiles, userId, type: 'profiles' };
-    const { error } = await supabase
-      .from('documents')
-      .upsert({ id: docId, data: docData });
+  const docData = { profiles, userId, type: 'profiles' };
+  const { error } = await supabase
+    .from('documents')
+    .upsert({ id: docId, data: docData });
 
-    if (error) throw error;
-  } catch (err) {
-    console.error("Error saving profiles to Supabase", err);
+  if (error) {
+    throw new PersistenceError(
+      `Profile konnten nicht in die Cloud gespeichert werden: ${error.message || 'Unbekannter Serverfehler'}`,
+      'cloud',
+      { cause: error }
+    );
   }
 }
 
 export async function saveMatch(match: MatchHistory, userId?: string | null): Promise<void> {
   const localKey = userId ? `matches_${userId}` : 'matches_guest';
   const matchId = `match_${userId || 'guest'}_${Date.now()}`;
-  match.type = 'match';
-  match._id = matchId;
-  if (userId) (match as MatchHistory & { userId?: string }).userId = userId;
+
+  // A copy, not the caller's object: this used to stamp `type`/`_id`/`userId`
+  // onto the match the caller still held a reference to.
+  const stored: MatchHistory & { userId?: string } = {
+    ...match,
+    type: 'match',
+    _id: matchId,
+    ...(userId ? { userId } : {})
+  };
 
   // Update local cache of matches
   try {
     const existing = localStorage.getItem(localKey);
     const list: MatchHistory[] = existing ? JSON.parse(existing) : [];
-    list.unshift(match);
+    list.unshift(stored);
     localStorage.setItem(localKey, JSON.stringify(list.slice(0, 100)));
-  } catch (e) {
-    console.error(e);
+  } catch (err) {
+    throw new PersistenceError(
+      'Das Match konnte nicht lokal gespeichert werden. Der Speicher des Browsers ist voll.',
+      'local',
+      { cause: err }
+    );
   }
 
   if (!userId) return; // Guests do not save to cloud
 
-  try {
-    const { error } = await supabase
-      .from('documents')
-      .insert({ id: matchId, data: match });
+  const { error } = await supabase
+    .from('documents')
+    .insert({ id: matchId, data: stored });
 
-    if (error) throw error;
-  } catch (err) {
-    console.error("Error saving match to Supabase", err);
+  if (error) {
+    throw new PersistenceError(
+      `Das Match konnte nicht in die Cloud gespeichert werden: ${error.message || 'Unbekannter Serverfehler'}`,
+      'cloud',
+      { cause: error }
+    );
   }
 }
 

@@ -15,7 +15,8 @@ import { SplitScore } from './components/SplitScore';
 import { CheckoutTraining } from './components/CheckoutTraining';
 import { StatsModal } from './components/Modals';
 import type { Player, MatchHistory, Profile } from './types';
-import { saveProfiles, saveMatch, getMatches, syncMatchesAndProfilesForGuests, reconstructAllProfilesFromMatches } from './db/database';
+import { saveMatch, getMatches, syncMatchesAndProfilesForGuests, reconstructAllProfilesFromMatches } from './db/database';
+import { reportPersistenceError, useNotificationStore } from './store/useNotificationStore';
 
 import { useProfiles } from './hooks/useProfiles';
 import { useGameEngine } from './hooks/useGameEngine';
@@ -44,8 +45,10 @@ export default function App() {
   const location = useLocation();
   const { user, initialize } = useAuthStore();
   const { theme, scanlines, gridAnimation } = useThemeStore();
+  const notifications = useNotificationStore(s => s.notifications);
+  const dismissNotification = useNotificationStore(s => s.dismiss);
 
-  const { profiles, setProfiles, loadedForUserId, handleCreateProfile, handleUpdateProfile, handleDeleteProfile } = useProfiles(user);
+  const { profiles, setProfiles, applyProfiles, loadedForUserId, handleCreateProfile, handleUpdateProfile, handleDeleteProfile } = useProfiles(user);
 
   const [savedMatches, setSavedMatches] = useState<MatchHistory[]>([]);
   const [miniGameConfig, setMiniGameConfig] = useState<{ players: string[], settings: Record<string, unknown> }>({ players: [], settings: {} });
@@ -107,17 +110,20 @@ export default function App() {
       if (loadedForUserId !== (user?.id ?? null)) return;
 
       const username = user?.user_metadata?.username;
-      setProfiles(prev => {
+      // `applyProfiles` resolves this against the live profile set and persists
+      // the result itself. The reconciliation used to run inside a `setProfiles`
+      // updater with the save call in its body — a side effect in a function
+      // React may invoke twice, and whose result the save could not observe.
+      applyProfiles(prev => {
         if (Object.keys(prev).length === 0) return prev;
         const updated = reconstructAllProfilesFromMatches(prev, matches, username ? [username] : []);
         if (JSON.stringify(updated) === JSON.stringify(prev)) return prev;
-        saveProfiles(updated, user?.id).catch(console.error);
         return updated;
       });
     });
 
     return () => { cancelled = true; };
-  }, [user?.id, user?.user_metadata?.username, loadedForUserId, setProfiles]);
+  }, [user?.id, user?.user_metadata?.username, loadedForUserId, applyProfiles]);
 
   /**
    * Books a finished mini-game. The profile update is computed from the current
@@ -157,8 +163,7 @@ export default function App() {
       updatedProfiles[r.name] = p;
     }
 
-    setProfiles(updatedProfiles);
-    await saveProfiles(updatedProfiles, user?.id);
+    await applyProfiles(updatedProfiles);
 
     const winner = results.reduce((prev, current) => (prev.score > current.score ? prev : current));
     const matchData: MatchHistory = {
@@ -171,7 +176,11 @@ export default function App() {
         ...(gameType === 'checkoutTraining' ? { attempts: r.attempts, dartsUsed: r.dartsUsed } : {})
       }))
     };
-    await saveMatch(matchData, user?.id);
+    try {
+      await saveMatch(matchData, user?.id);
+    } catch (err) {
+      reportPersistenceError(err, 'Trainingsergebnis konnte nicht gespeichert werden');
+    }
     getMatches(user?.id).then(setSavedMatches);
 
     const winnerIdx = results.findIndex(r => r.name === winner.name);
@@ -181,13 +190,16 @@ export default function App() {
       players: results.map(toModalPlayer),
       matchData
     });
-  }, [profiles, setProfiles, user?.id]);
+  }, [profiles, applyProfiles, user]);
 
   const commitPendingMatch = useCallback(async () => {
     if (!statsModalData.pendingProfiles || !statsModalData.pendingMatchData) return;
-    setProfiles(statsModalData.pendingProfiles);
-    await saveProfiles(statsModalData.pendingProfiles, user?.id);
-    await saveMatch(statsModalData.pendingMatchData, user?.id);
+    await applyProfiles(statsModalData.pendingProfiles);
+    try {
+      await saveMatch(statsModalData.pendingMatchData, user?.id);
+    } catch (err) {
+      reportPersistenceError(err, 'Match konnte nicht gespeichert werden');
+    }
     getMatches(user?.id).then(setSavedMatches);
 
     // Push each linked cloud guest's share of the match to their own account.
@@ -199,7 +211,7 @@ export default function App() {
       user?.id,
       hostName
     ).catch(err => console.error('Guest sync error in background', err));
-  }, [statsModalData, setProfiles, user]);
+  }, [statsModalData, applyProfiles, user]);
 
   const themeOverlays = useMemo(() => {
     if (theme === 'vaporwave') {
@@ -327,6 +339,19 @@ export default function App() {
           <button className="btn-close" onClick={gameEngine.dismissRemoteAbortNotice} aria-label="Hinweis schließen">✕</button>
         </div>
       )}
+
+      {/* Failed writes used to be console-only; the player kept scoring against
+          data that was no longer being saved anywhere. */}
+      {notifications.map(n => (
+        <div key={n.id} className="global-toast" role="alert">
+          <span aria-hidden="true">{n.type === 'error' ? '⚠️' : n.type === 'success' ? '✅' : 'ℹ️'}</span>
+          <div className="global-toast-body">
+            <strong>{n.title}</strong>
+            <span>{n.message}</span>
+          </div>
+          <button className="btn-close" onClick={() => dismissNotification(n.id)} aria-label="Hinweis schließen">✕</button>
+        </div>
+      ))}
 
       <StatsModal
         isOpen={statsModalData.isOpen}

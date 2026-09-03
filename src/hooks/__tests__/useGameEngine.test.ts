@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useGameEngine, get2v2FreezeStatus } from '../useGameEngine';
 import { supabase } from '../../db/database';
-import type { Profile, GameConfig, Player } from '../../types';
+import type { Profile, GameConfig, Player, GameState } from '../../types';
 
 describe('useGameEngine Hook & Undo Logic', () => {
   const dummyProfiles: Record<string, Profile> = {
@@ -257,5 +257,57 @@ describe('linked cloud guest revoking mid-match', () => {
     expect(result.current.remoteAbortNotice).toBeNull();
     expect(result.current.gameState.players).toHaveLength(2);
     expect(setProfiles).not.toHaveBeenCalled();
+  });
+});
+
+describe('auto-save size', () => {
+  const config: GameConfig = { startScore: 501, outMode: 'DO', setsToWin: 1, legsToWin: 3 };
+  const profiles: Record<string, Profile> = {
+    Dominik: { wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0 },
+    Gegner: { wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0 }
+  };
+  const baseProps = {
+    profiles,
+    setProfiles: vi.fn(),
+    setScreen: vi.fn(),
+    setStatsModalData: vi.fn()
+  };
+
+  beforeEach(() => {
+    localStorage.clear();
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  /**
+   * Every dart pushes a deep clone of the whole state onto `history`. Writing
+   * that verbatim on every change made each save proportional to the darts
+   * thrown so far, so a long match could exhaust the storage quota and kill the
+   * resume feature with nothing but a console line to show for it.
+   */
+  it('keeps the persisted snapshot small no matter how many darts were thrown', () => {
+    const { result } = renderHook(() => useGameEngine({ ...baseProps }));
+
+    act(() => { result.current.startGame(['Dominik', 'Gegner'], config); });
+
+    // 90 single-1 darts: enough to run well past both history limits.
+    for (let i = 0; i < 90; i++) {
+      act(() => { result.current.addDart(1, 1); });
+      act(() => { vi.advanceTimersByTime(900); });
+    }
+    act(() => { vi.advanceTimersByTime(1000); });
+
+    const raw = localStorage.getItem('dartcounter_saved_game');
+    expect(raw).toBeTruthy();
+
+    const saved = JSON.parse(raw!) as GameState;
+    expect(saved.history.length).toBeLessThanOrEqual(5);
+    expect(result.current.gameState.history.length).toBeLessThanOrEqual(50);
+    // The board itself still round-trips.
+    expect(saved.players).toHaveLength(2);
+    expect(saved.config.startScore).toBe(501);
   });
 });

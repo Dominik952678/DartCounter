@@ -10,6 +10,7 @@ import { useThemeStore } from '../store/useThemeStore';
 import { generateUserSyncCode, readUserSyncDoc, redeemSyncCode, revokeHostAccess, toggleUserSync, abortGuestMatchRemote, saveMatch, supabase } from '../db/database';
 import { SAMPLE_PROFILES, SAMPLE_MATCHES, SAMPLE_PROFILE_KEYS } from '../utils/sampleData';
 import { APP_VERSION, BUILD_TIME } from '../version';
+import { reportPersistenceError } from '../store/useNotificationStore';
 
 interface ProfileTabProps {
   profiles: Record<string, Profile>;
@@ -57,8 +58,13 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
     Object.entries(SAMPLE_PROFILES).forEach(([name, prof]) => {
       onUpdateProfile(name, prof);
     });
-    for (const m of SAMPLE_MATCHES) {
-      await saveMatch(m, user?.id);
+    try {
+      for (const m of SAMPLE_MATCHES) {
+        await saveMatch(m, user?.id);
+      }
+    } catch (err) {
+      reportPersistenceError(err, 'Testdaten konnten nicht gespeichert werden');
+      return;
     }
     setSampleDataStatus("✅ 4 Testprofile & 4 Demospiele erfolgreich geladen! (Deine eigenen Profile bleiben unverändert)");
     setTimeout(() => setSampleDataStatus(null), 4000);
