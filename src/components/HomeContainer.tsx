@@ -1,15 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import type { GameConfig, Profile, MatchHistory } from '../types';
+import type { GameConfig, Profile } from '../types';
 import { MatchSetup } from './MatchSetup';
 import { TrainingHub, type MiniGameMode } from './TrainingHub';
 
 interface HomeContainerProps {
   profiles: Record<string, Profile>;
-  matches: MatchHistory[];
-  onCreateProfile: (name: string, isBot?: boolean, targetAverage?: number) => void;
-  onUpdateProfile: (name: string, updates: Partial<Profile>) => void;
-  onDeleteProfile: (name: string) => void;
   onStartGame: (players: string[], config: GameConfig) => void;
   hasSavedGame?: boolean;
   onResumeGame?: () => void;

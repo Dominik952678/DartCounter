@@ -13,9 +13,9 @@ import { GameScreen } from './components/GameScreen';
 import { PowerScoring } from './components/PowerScoring';
 import { SplitScore } from './components/SplitScore';
 import { CheckoutTraining } from './components/CheckoutTraining';
-import { StatsModal, HistoryModal } from './components/Modals';
+import { StatsModal } from './components/Modals';
 import type { Player, MatchHistory, Profile } from './types';
-import { startSync, saveProfiles, saveMatch, getMatches, syncMatchesAndProfilesForGuests, reconstructAllProfilesFromMatches } from './db/database';
+import { saveProfiles, saveMatch, getMatches, syncMatchesAndProfilesForGuests, reconstructAllProfilesFromMatches } from './db/database';
 
 import { useProfiles } from './hooks/useProfiles';
 import { useGameEngine } from './hooks/useGameEngine';
@@ -49,7 +49,6 @@ export default function App() {
 
   const [savedMatches, setSavedMatches] = useState<MatchHistory[]>([]);
   const [miniGameConfig, setMiniGameConfig] = useState<{ players: string[], settings: Record<string, unknown> }>({ players: [], settings: {} });
-  const [showHistory, setShowHistory] = useState(false);
   const [matchSessionId, setMatchSessionId] = useState<number>(1);
 
   // Two different things, previously conflated: a live board takes over the
@@ -93,7 +92,6 @@ export default function App() {
   }, [initialize]);
 
   useEffect(() => {
-    startSync(window.location.hostname);
     let cancelled = false;
 
     getMatches(user?.id).then(matches => {
@@ -238,10 +236,6 @@ export default function App() {
           <HomeContainer
             profiles={profiles}
             setProfiles={setProfiles}
-            matches={savedMatches}
-            onCreateProfile={handleCreateProfile}
-            onUpdateProfile={handleUpdateProfile}
-            onDeleteProfile={handleDeleteProfile}
             onStartGame={gameEngine.startGame}
             hasSavedGame={gameEngine.hasSavedGame}
             onResumeGame={gameEngine.resumeGame}
@@ -368,12 +362,6 @@ export default function App() {
             navigate('/game');
           }
         }}
-      />
-
-      <HistoryModal
-        isOpen={showHistory}
-        history={savedMatches}
-        onClose={() => setShowHistory(false)}
       />
 
       {themeOverlays}

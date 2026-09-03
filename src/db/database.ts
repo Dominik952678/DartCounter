@@ -6,10 +6,6 @@ const SUPABASE_KEY = 'sb_publishable_vkBLAop52YK5pN6JrIAjfQ__Q9dvli0';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-export function startSync(_lokaleIp: string) {
-  console.log("Connected to Supabase Cloud.");
-}
-
 export function getGuestDefaultProfiles(): Record<string, Profile> {
   return {
     "Gast 1": { wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0, color: 'var(--blue)' },
