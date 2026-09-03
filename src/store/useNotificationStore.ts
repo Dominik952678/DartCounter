@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { PersistenceError } from '../db/database';
+import { PersistenceError } from '../db';
 
 export type NotificationType = 'error' | 'success' | 'info';
 

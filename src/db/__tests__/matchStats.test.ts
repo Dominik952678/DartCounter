@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { applyMatchStatsToProfile, recordMatchForSelf, removeLinkedGuestProfiles, isMatchWinner } from '../database';
+import { applyMatchStatsToProfile, recordMatchForSelf, removeLinkedGuestProfiles, isMatchWinner } from '../index';
 import type { PlayerStats, Profile, MatchHistory } from '../../types';
 
 const basePlayerStat = (overrides: Partial<PlayerStats> = {}): PlayerStats => ({

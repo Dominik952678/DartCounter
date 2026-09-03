@@ -4,7 +4,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { useProfiles } from '../hooks/useProfiles';
 import { StatsWidget } from './StatsWidget';
 import type { MatchHistory } from '../types';
-import { getMatches } from '../db/database';
+import { getMatches } from '../db';
 
 export const StatsPage: React.FC = () => {
   const navigate = useNavigate();

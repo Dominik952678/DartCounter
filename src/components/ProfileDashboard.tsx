@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import type { Profile, MatchHistory } from '../types';
-import { reconstructProfileFromMatches } from '../db/database';
+import { reconstructProfileFromMatches } from '../db';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, PieChart, Pie, Cell } from 'recharts';
 import { HeadToHead } from './HeadToHead';
 import { DartboardHeatmap } from './DartboardHeatmap';

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { GameConfig, Profile } from '../types';
 import { useAuthStore } from '../store/useAuthStore';
-import { getActiveUserSyncInfo, redeemSyncCode, removeLinkedGuestProfiles, saveProfiles, validateGuestSyncTokens } from '../db/database';
+import { getActiveUserSyncInfo, redeemSyncCode, removeLinkedGuestProfiles, saveProfiles, validateGuestSyncTokens } from '../db';
 import { reportPersistenceError } from '../store/useNotificationStore';
 
 interface MatchSetupProps {

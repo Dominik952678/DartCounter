@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { supabase, clearCachedUserData } from '../db/database';
+import { supabase, clearCachedUserData } from '../db';
 import type { User, Session } from '@supabase/supabase-js';
 
 interface AuthState {

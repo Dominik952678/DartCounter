@@ -23,7 +23,7 @@ import { LoadingScreen } from './components/LoadingScreen';
 const StatsPage = lazy(() => import('./components/StatsPage').then(m => ({ default: m.StatsPage })));
 const ProfileTab = lazy(() => import('./components/ProfileTab').then(m => ({ default: m.ProfileTab })));
 import type { Player, MatchHistory, Profile } from './types';
-import { saveMatch, getMatchPage, syncMatchesAndProfilesForGuests, reconstructAllProfilesFromMatches, MATCH_PAGE_SIZE } from './db/database';
+import { saveMatch, getMatchPage, syncMatchesAndProfilesForGuests, reconstructAllProfilesFromMatches, MATCH_PAGE_SIZE } from './db';
 import { reportPersistenceError, useNotificationStore } from './store/useNotificationStore';
 
 import { useProfiles } from './hooks/useProfiles';

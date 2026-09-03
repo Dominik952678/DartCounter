@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useLayoutEffect, useRef } from 'react';
 import type { Profile } from '../types';
-import { getProfiles, saveProfiles } from '../db/database';
+import { getProfiles, saveProfiles } from '../db';
 import { reportPersistenceError } from '../store/useNotificationStore';
 
 export function useProfiles(user?: { id: string; user_metadata?: { username?: string } } | null) {

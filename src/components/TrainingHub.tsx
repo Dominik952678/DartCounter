@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Profile } from '../types';
 import { useAuthStore } from '../store/useAuthStore';
-import { getActiveUserSyncInfo } from '../db/database';
+import { getActiveUserSyncInfo } from '../db';
 
 export type MiniGameMode = 'checkout' | 'powerscoring' | 'splitscore';
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { supabase } from '../../db/database';
+import { supabase } from '../../db';
 import { useOnlineStore, isFromActiveSeat } from '../useOnlineStore';
 
 /**

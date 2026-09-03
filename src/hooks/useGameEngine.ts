@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import type { GameState, Profile, MatchHistory, GameConfig, Player, StatsModalData, Dart } from '../types';
-import { saveProfiles, setGuestLiveMatchStatus, getGuestSyncStatus, PersistenceError } from '../db/database';
+import { saveProfiles, setGuestLiveMatchStatus, getGuestSyncStatus, PersistenceError } from '../db';
 import { getBotDart, type TeamContext } from '../utils/bot';
 import { playSciFiHitSound, play180Sound, playBustSound, playHighFinishSound, speak, playDartHitSound, announceScore, announceGameShot } from '../utils/audio';
 import { triggerHaptic } from '../utils/haptics';

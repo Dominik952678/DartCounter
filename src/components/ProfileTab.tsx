@@ -6,7 +6,7 @@ import { DartboardHeatmap } from './DartboardHeatmap';
 import { MatchImageExport } from './MatchImageExport';
 import { useAuthStore } from '../store/useAuthStore';
 import { useThemeStore } from '../store/useThemeStore';
-import { generateUserSyncCode, readUserSyncDoc, redeemSyncCode, revokeHostAccess, toggleUserSync, abortGuestMatchRemote, saveMatch, supabase } from '../db/database';
+import { generateUserSyncCode, readUserSyncDoc, redeemSyncCode, revokeHostAccess, toggleUserSync, abortGuestMatchRemote, saveMatch, supabase } from '../db';
 import { SAMPLE_PROFILES, SAMPLE_MATCHES, SAMPLE_PROFILE_KEYS } from '../utils/sampleData';
 import { APP_VERSION, BUILD_TIME } from '../version';
 import { reportPersistenceError } from '../store/useNotificationStore';

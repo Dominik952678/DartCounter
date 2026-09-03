@@ -6,7 +6,7 @@ import {
   syncMatchesAndProfilesForGuests,
   validateGuestSyncTokens,
   supabase
-} from '../database';
+} from '../index';
 import type { Player, MatchHistory, Profile, GuestSyncTokenDoc } from '../../types';
 
 describe('📱 Guest-Cloud-Sync System (Multi-User & Anti-Stat-Washing)', () => {
@@ -240,7 +240,7 @@ describe('📱 Guest-Cloud-Sync System (Multi-User & Anti-Stat-Washing)', () => 
       })
     } as unknown as ReturnType<typeof supabase.from>);
 
-    const { toggleUserSync } = await import('../database');
+    const { toggleUserSync } = await import('../index');
 
     // 1. Toggle OFF
     const disabledDoc = await toggleUserSync('user_123', 'Alex', false);
@@ -303,7 +303,7 @@ describe('📱 Guest-Cloud-Sync System (Multi-User & Anti-Stat-Washing)', () => 
       upsert: mockUpsert
     } as unknown as ReturnType<typeof supabase.from>);
 
-    const { abortGuestMatchRemote } = await import('../database');
+    const { abortGuestMatchRemote } = await import('../index');
     const abortRes = await abortGuestMatchRemote('user_123');
     expect(abortRes.success).toBe(true);
 
@@ -350,7 +350,7 @@ describe('sync code persistence and read failures', () => {
   });
 
   it('distinguishes a missing sync document from a failed read', async () => {
-    const { readUserSyncDoc } = await import('../database');
+    const { readUserSyncDoc } = await import('../index');
 
     // No rows: the user genuinely has no sync document.
     vi.spyOn(supabase, 'from').mockReturnValue({
@@ -374,7 +374,7 @@ describe('sync code persistence and read failures', () => {
   });
 
   it('returns the stored document when the read succeeds', async () => {
-    const { readUserSyncDoc } = await import('../database');
+    const { readUserSyncDoc } = await import('../index');
     vi.spyOn(supabase, 'from').mockReturnValue({
       select: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({

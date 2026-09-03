@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { reconstructAllProfilesFromMatches, getGuestDefaultProfiles } from '../database';
+import { reconstructAllProfilesFromMatches, getGuestDefaultProfiles } from '../index';
 import type { MatchHistory, Profile } from '../../types';
 
 const matchWith = (names: string[]): MatchHistory => ({

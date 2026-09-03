@@ -5,7 +5,7 @@ import type { Profile } from '../../types';
 const getProfiles = vi.fn();
 const saveProfiles = vi.fn();
 
-vi.mock('../../db/database', () => ({
+vi.mock('../../db', () => ({
   getProfiles: (...args: unknown[]) => getProfiles(...args),
   saveProfiles: (...args: unknown[]) => saveProfiles(...args),
   PersistenceError: class PersistenceError extends Error {

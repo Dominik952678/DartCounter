@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { getMatchPage, matchTimestamp, clearCachedUserData, MATCH_PAGE_SIZE, supabase } from '../database';
+import { getMatchPage, matchTimestamp, clearCachedUserData, MATCH_PAGE_SIZE, supabase } from '../index';
 import type { MatchHistory } from '../../types';
 
 const match = (overrides: Partial<MatchHistory> = {}): MatchHistory => ({

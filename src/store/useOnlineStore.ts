@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { supabase } from '../db/database';
+import { supabase } from '../db';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import type { GameConfig } from '../types';
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { reconstructProfileFromMatches, reconstructAllProfilesFromMatches } from '../database';
+import { reconstructProfileFromMatches, reconstructAllProfilesFromMatches } from '../index';
 import type { Profile, MatchHistory } from '../../types';
 
 describe('Profile Reconstruction from MatchHistory', () => {

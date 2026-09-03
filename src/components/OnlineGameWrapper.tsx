@@ -13,7 +13,7 @@ import type { GameState, MatchHistory, Profile, StatsModalData } from '../types'
 import { StatsModal } from './Modals';
 import { DisconnectOverlay } from './DisconnectOverlay';
 import { LoadingScreen } from './LoadingScreen';
-import { recordMatchForSelf } from '../db/database';
+import { recordMatchForSelf } from '../db';
 import { reportPersistenceError } from '../store/useNotificationStore';
 
 /**

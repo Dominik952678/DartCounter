@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useGameEngine, get2v2FreezeStatus } from '../useGameEngine';
-import { supabase } from '../../db/database';
+import { supabase } from '../../db';
 import type { Profile, GameConfig, Player, GameState } from '../../types';
 
 describe('useGameEngine Hook & Undo Logic', () => {
