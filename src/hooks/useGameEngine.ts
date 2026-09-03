@@ -419,6 +419,7 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
     });
 
     const matchData: MatchHistory = {
+      createdAt: new Date().toISOString(),
       date: new Date().toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' }),
       winner: winnerName,
       gameType: 'standard',

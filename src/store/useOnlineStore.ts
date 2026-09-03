@@ -50,8 +50,28 @@ const ROOM_EVENTS: RoomEvent[] = [
   'client_request_state'
 ];
 
-type RoomEventPayload = Record<string, unknown>;
+export type RoomEventPayload = Record<string, unknown>;
 type RoomEventHandler = (payload: RoomEventPayload) => void;
+
+/**
+ * Whether a room command really came from the seat that is on throw.
+ *
+ * The host applied every `client_throw` it received; the "is it my turn" check
+ * lived only in the sending client's own button handler, so anything that put a
+ * message on the channel could score, undo or check out for somebody else. The
+ * roster is built from presence in the same order the engine seats its players,
+ * which is what makes the index comparison meaningful.
+ */
+export const isFromActiveSeat = (
+  payload: RoomEventPayload,
+  players: OnlinePlayer[],
+  activePlayer: number
+): boolean => {
+  const seatId = payload.seatId;
+  if (typeof seatId !== 'string') return false;
+  const seatIndex = players.findIndex(p => p.id === seatId);
+  return seatIndex >= 0 && seatIndex === activePlayer;
+};
 
 /**
  * Central handler registry for the currently joined room channel.
@@ -125,6 +145,61 @@ const generateRoomCode = (length = 4): string => {
   return Array.from(bytes)
     .map(b => CODE_ALPHABET[b % CODE_ALPHABET.length])
     .join('');
+};
+
+/** How long a collision probe waits for presence to sync before giving up. */
+const CODE_PROBE_TIMEOUT_MS = 1500;
+
+/** Codes probed before the last one is used regardless. */
+const CODE_ATTEMPTS = 5;
+
+/**
+ * Whether `room_<code>` is unoccupied.
+ *
+ * A code is four characters out of a 32-symbol alphabet and was handed out
+ * without any check, so two hosts could land on the same channel — where each
+ * saw the other's players in its roster and applied the other's throws to its
+ * own game. Presence answers the question without needing a room registry:
+ * subscribe read-only, wait for the sync, look for a host.
+ *
+ * A probe that errors or times out counts as free. An unreachable channel is
+ * the caller's problem to report a moment later, and refusing to open a room
+ * because the probe was slow would be the worse failure of the two.
+ */
+const isRoomCodeFree = (code: string): Promise<boolean> =>
+  new Promise(resolve => {
+    const probe = supabase.channel(`room_${code}`, { config: { broadcast: { self: false } } });
+    let settled = false;
+
+    const finish = async (free: boolean) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      // Removed, not just unsubscribed: the real channel joins this very topic
+      // next, and the socket refuses a second join while the first is open.
+      await supabase.removeChannel(probe);
+      resolve(free);
+    };
+
+    const timeout = setTimeout(() => finish(true), CODE_PROBE_TIMEOUT_MS);
+
+    probe.on('presence', { event: 'sync' }, () => {
+      finish(!collectPlayers(probe).some(p => p.isHost));
+    });
+
+    probe.subscribe(status => {
+      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') finish(true);
+    });
+  });
+
+/** A room code no other host is currently sitting on. */
+const reserveRoomCode = async (): Promise<string> => {
+  let code = generateRoomCode();
+  for (let attempt = 1; attempt < CODE_ATTEMPTS; attempt++) {
+    if (await isRoomCodeFree(code)) return code;
+    code = generateRoomCode();
+  }
+  return code;
 };
 
 /**
@@ -227,7 +302,7 @@ export const useOnlineStore = create<OnlineState>((set, get) => ({
     if (existing) existing.unsubscribe();
     resetRegistry();
 
-    const code = generateRoomCode();
+    const code = await reserveRoomCode();
     const channel = supabase.channel(`room_${code}`, { config: { broadcast: { self: false } } });
     const myId = resolveUserId();
 

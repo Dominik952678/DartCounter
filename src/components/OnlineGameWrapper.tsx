@@ -4,7 +4,8 @@ import { GameScreen } from './GameScreen';
 import { PowerScoring } from './PowerScoring';
 import { SplitScore } from './SplitScore';
 import { CheckoutTraining } from './CheckoutTraining';
-import { useOnlineStore } from '../store/useOnlineStore';
+import { useOnlineStore, isFromActiveSeat } from '../store/useOnlineStore';
+import type { RoomEventPayload } from '../store/useOnlineStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { useProfiles } from '../hooks/useProfiles';
 import { useGameEngine } from '../hooks/useGameEngine';
@@ -54,6 +55,20 @@ export const OnlineGameWrapper: React.FC = () => {
   const [clientRoundBust, setClientRoundBust] = useState(false);
 
   const savedMatchRef = useRef<string | null>(null);
+
+  /**
+   * The roster and the outbound state counter, held behind refs so the realtime
+   * subscriptions below stay mounted for the whole match instead of being torn
+   * down and rebuilt whenever a player joins or a dart lands.
+   */
+  const playersRef = useRef(players);
+  const outboundSeqRef = useRef(0);
+  /** Highest state version this guest has rendered; older arrivals are stale. */
+  const appliedSeqRef = useRef(-1);
+
+  useLayoutEffect(() => {
+    playersRef.current = players;
+  });
 
   const myUsername = useMemo(() => {
     const fromAuth = user ? (user.user_metadata?.username || user.email) : null;
@@ -141,6 +156,7 @@ export const OnlineGameWrapper: React.FC = () => {
     await applyProfiles(nextProfiles);
 
     const matchData: MatchHistory = {
+      createdAt: new Date().toISOString(),
       date: new Date().toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' }),
       winner: results.reduce((prev, current) => (prev.score > current.score ? prev : current)).name,
       gameType: gameType as MatchHistory['gameType'],
@@ -178,16 +194,26 @@ export const OnlineGameWrapper: React.FC = () => {
   useEffect(() => {
     if (!roomChannel || !isHost) return;
 
+    // A command is only honoured from the seat that is on throw; the roster and
+    // the engine are read through refs so this subscription can stay mounted.
+    const fromActiveSeat = (payload: RoomEventPayload) =>
+      isFromActiveSeat(payload, playersRef.current, engineRef.current.gameState.activePlayer);
+
     const unsubs = [
       onRoomEvent('client_throw', payload => {
+        if (!fromActiveSeat(payload)) return;
         const base = payload.base;
         const mult = payload.mult;
         if (typeof base === 'number') {
           engineRef.current.addDart(base, typeof mult === 'number' ? mult : undefined);
         }
       }),
-      onRoomEvent('client_undo', () => engineRef.current.undoSingleDart()),
+      onRoomEvent('client_undo', payload => {
+        if (!fromActiveSeat(payload)) return;
+        engineRef.current.undoSingleDart();
+      }),
       onRoomEvent('client_submit_checkout', payload => {
+        if (!fromActiveSeat(payload)) return;
         if (typeof payload.darts === 'number') {
           engineRef.current.submitCheckoutPrompt(payload.darts);
         }
@@ -196,6 +222,7 @@ export const OnlineGameWrapper: React.FC = () => {
         const engine = engineRef.current;
         if (engine.gameState.players.length === 0) return;
         sendRoomEvent('state_update', {
+          seq: ++outboundSeqRef.current,
           state: toWireState(engine.gameState),
           celebration: engine.celebration,
           roundBust: engine.roundBust,
@@ -232,6 +259,14 @@ export const OnlineGameWrapper: React.FC = () => {
 
     const unsubs = [
       onRoomEvent('state_update', payload => {
+        // Broadcasts carry no ordering guarantee. Without this, a late-arriving
+        // older state could overwrite a newer one and roll the board back.
+        const seq = typeof payload.seq === 'number' ? payload.seq : null;
+        if (seq !== null) {
+          if (seq <= appliedSeqRef.current) return;
+          appliedSeqRef.current = seq;
+        }
+
         if (payload.state) setSyncedState(payload.state as GameState & { historyLength?: number });
         if (payload.celebration !== undefined) setClientCelebration(payload.celebration as { type: string; playerIndex: number } | null);
         if (payload.roundBust !== undefined) setClientRoundBust(!!payload.roundBust);
@@ -260,6 +295,7 @@ export const OnlineGameWrapper: React.FC = () => {
   useEffect(() => {
     if (!isHost || !roomChannel || hostEngine.gameState.players.length === 0) return;
     sendRoomEvent('state_update', {
+      seq: ++outboundSeqRef.current,
       state: toWireState(hostEngine.gameState),
       celebration: hostEngine.celebration,
       roundBust: hostEngine.roundBust,
@@ -350,7 +386,7 @@ export const OnlineGameWrapper: React.FC = () => {
     if (isHost) {
       hostEngine.addDart(baseValue, overrideMult);
     } else {
-      sendRoomEvent('client_throw', { base: baseValue, mult: overrideMult ?? clientMultiplier });
+      sendRoomEvent('client_throw', { seatId: myPlayerId, base: baseValue, mult: overrideMult ?? clientMultiplier });
       setClientMultiplier(1);
     }
   };
@@ -358,14 +394,14 @@ export const OnlineGameWrapper: React.FC = () => {
   const handleUndo = () => {
     if (!isMyTurn) return;
     if (isHost) hostEngine.undoSingleDart();
-    else sendRoomEvent('client_undo');
+    else sendRoomEvent('client_undo', { seatId: myPlayerId });
   };
 
   const handleSubmitCheckout = (darts: number) => {
     if (isHost) {
       hostEngine.submitCheckoutPrompt(darts);
     } else {
-      sendRoomEvent('client_submit_checkout', { darts });
+      sendRoomEvent('client_submit_checkout', { seatId: myPlayerId, darts });
       setClientCheckoutPrompt(null);
     }
   };

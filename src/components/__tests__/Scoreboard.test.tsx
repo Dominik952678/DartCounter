@@ -95,6 +95,39 @@ describe('Scoreboard Component', () => {
     expect(screen.getByText('D20')).toBeInTheDocument();
   });
 
+  /**
+   * The scoreboard gated the pill on a hard `<= 170`, so the Master Out
+   * finishes from 171 to 180 — which the suggestion table knows — were never
+   * shown to the player they applied to.
+   */
+  it('shows a Master Out finish above 170', () => {
+    render(
+      <Scoreboard
+        players={[{ ...dummyPlayers[0], score: 171 }]}
+        activePlayer={0}
+        startingPlayerOfLeg={0}
+        config={{ ...dummyConfig, outMode: 'MO' }}
+        currentRoundDarts={[]}
+      />
+    );
+
+    expect(screen.getByText('T20 T20 T17')).toBeInTheDocument();
+  });
+
+  it('shows no finish above 170 in Double Out, where none exists', () => {
+    render(
+      <Scoreboard
+        players={[{ ...dummyPlayers[0], score: 171 }]}
+        activePlayer={0}
+        startingPlayerOfLeg={0}
+        config={dummyConfig}
+        currentRoundDarts={[]}
+      />
+    );
+
+    expect(screen.queryByText(/T20 T20/)).not.toBeInTheDocument();
+  });
+
   it('renders 2v2 team header and indicators when in 2v2 mode', () => {
     const teamPlayers: Player[] = [
       { ...dummyPlayers[0], name: 'Dominik', score: 300, team: 1 },

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { Player, GameConfig } from '../types';
-import { getCheckoutSuggestion } from '../utils/checkouts';
+import { getCheckoutSuggestion, checkoutRange } from '../utils/checkouts';
 
 interface ScoreboardProps {
   players: Player[];
@@ -495,7 +495,8 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
           
           const currentRoundTotal = isActive ? currentRoundDarts.reduce((sum, d) => sum + d.value, 0) : 0;
           const liveScore = liveScores[i];
-          const isCheckoutRange = liveScore <= 170 && (config.outMode === 'SO' ? liveScore >= 1 : liveScore >= 2);
+          const { min: checkoutMin, max: checkoutMax } = checkoutRange(config.outMode);
+          const isCheckoutRange = liveScore >= checkoutMin && liveScore <= checkoutMax;
           
           let celebrationClass = '';
           if (celebration && celebration.playerIndex === i) {

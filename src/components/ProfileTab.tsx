@@ -15,6 +15,9 @@ import { reportPersistenceError } from '../store/useNotificationStore';
 interface ProfileTabProps {
   profiles: Record<string, Profile>;
   matches: MatchHistory[];
+  /** Whether the account has matches beyond the loaded window. */
+  hasMoreMatches?: boolean;
+  onLoadMoreMatches?: () => void;
   onCreateProfile: (name: string, isBot?: boolean, targetAverage?: number) => void;
   onUpdateProfile: (name: string, updates: Partial<Profile>) => void;
   onDeleteProfile: (name: string) => void;
@@ -23,6 +26,8 @@ interface ProfileTabProps {
 export const ProfileTab: React.FC<ProfileTabProps> = ({
   profiles,
   matches,
+  hasMoreMatches = false,
+  onLoadMoreMatches,
   onCreateProfile,
   onUpdateProfile,
   onDeleteProfile
@@ -308,7 +313,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
               <p>Noch keine Matches gespeichert.</p>
             </div>
           ) : (
-            [...matches].reverse().map((m, i) => (
+            matches.map((m, i) => (
               <div key={i} id={`history-item-${i}`} className="history-item card" style={{ marginBottom: '10px' }}>
                 <div className="history-header" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                   <span className="history-winner" style={{ fontWeight: 'bold', color: profiles[m.winner]?.color || 'var(--blue)' }}>🏆 {m.winner}</span>
@@ -349,6 +354,14 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
                 </div>
               </div>
             ))
+          )}
+
+          {hasMoreMatches && onLoadMoreMatches && (
+            <div style={{ textAlign: 'center', marginTop: '16px' }}>
+              <button className="btn-ghost" onClick={onLoadMoreMatches}>
+                Mehr laden
+              </button>
+            </div>
           )}
         </div>
       </div>

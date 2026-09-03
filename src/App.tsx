@@ -15,7 +15,7 @@ import { SplitScore } from './components/SplitScore';
 import { CheckoutTraining } from './components/CheckoutTraining';
 import { StatsModal } from './components/Modals';
 import type { Player, MatchHistory, Profile } from './types';
-import { saveMatch, getMatches, syncMatchesAndProfilesForGuests, reconstructAllProfilesFromMatches } from './db/database';
+import { saveMatch, getMatchPage, syncMatchesAndProfilesForGuests, reconstructAllProfilesFromMatches, MATCH_PAGE_SIZE } from './db/database';
 import { reportPersistenceError, useNotificationStore } from './store/useNotificationStore';
 
 import { useProfiles } from './hooks/useProfiles';
@@ -51,6 +51,11 @@ export default function App() {
   const { profiles, setProfiles, applyProfiles, loadedForUserId, handleCreateProfile, handleUpdateProfile, handleDeleteProfile } = useProfiles(user);
 
   const [savedMatches, setSavedMatches] = useState<MatchHistory[]>([]);
+  // How many matches are held in memory, and how many the account has. The
+  // history used to be fetched whole on every launch — full documents for every
+  // match ever played, before the first screen could render.
+  const [matchWindow, setMatchWindow] = useState(MATCH_PAGE_SIZE);
+  const [totalMatches, setTotalMatches] = useState(0);
   const [miniGameConfig, setMiniGameConfig] = useState<{ players: string[], settings: Record<string, unknown> }>({ players: [], settings: {} });
   const [matchSessionId, setMatchSessionId] = useState<number>(1);
 
@@ -97,10 +102,17 @@ export default function App() {
   useEffect(() => {
     let cancelled = false;
 
-    getMatches(user?.id).then(matches => {
+    getMatchPage(user?.id, matchWindow).then(({ matches, total }) => {
       if (cancelled) return;
       setSavedMatches(matches);
+      setTotalMatches(total);
       if (matches.length === 0) return;
+
+      // Reconstruction recomputes wins, best leg and segment distribution by
+      // walking the whole history, so a partial window would book fewer than
+      // the profile already has. It stays idle until every match is loaded;
+      // the per-match totals are accumulated as matches are played anyway.
+      if (matches.length < total) return;
 
       // Reconciliation writes back to the cloud, so it must never run against a
       // profile set that belongs to someone else. This effect and the loader in
@@ -123,7 +135,7 @@ export default function App() {
     });
 
     return () => { cancelled = true; };
-  }, [user?.id, user?.user_metadata?.username, loadedForUserId, applyProfiles]);
+  }, [user?.id, user?.user_metadata?.username, loadedForUserId, applyProfiles, matchWindow]);
 
   /**
    * Books a finished mini-game. The profile update is computed from the current
@@ -167,6 +179,7 @@ export default function App() {
 
     const winner = results.reduce((prev, current) => (prev.score > current.score ? prev : current));
     const matchData: MatchHistory = {
+      createdAt: new Date().toISOString(),
       date: new Date().toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' }),
       winner: winner.name,
       gameType,
@@ -181,7 +194,10 @@ export default function App() {
     } catch (err) {
       reportPersistenceError(err, 'Trainingsergebnis konnte nicht gespeichert werden');
     }
-    getMatches(user?.id).then(setSavedMatches);
+    getMatchPage(user?.id, matchWindow).then(({ matches, total }) => {
+      setSavedMatches(matches);
+      setTotalMatches(total);
+    });
 
     const winnerIdx = results.findIndex(r => r.name === winner.name);
     setStatsModalData({
@@ -190,7 +206,7 @@ export default function App() {
       players: results.map(toModalPlayer),
       matchData
     });
-  }, [profiles, applyProfiles, user]);
+  }, [profiles, applyProfiles, user, matchWindow]);
 
   const commitPendingMatch = useCallback(async () => {
     if (!statsModalData.pendingProfiles || !statsModalData.pendingMatchData) return;
@@ -200,7 +216,10 @@ export default function App() {
     } catch (err) {
       reportPersistenceError(err, 'Match konnte nicht gespeichert werden');
     }
-    getMatches(user?.id).then(setSavedMatches);
+    getMatchPage(user?.id, matchWindow).then(({ matches, total }) => {
+      setSavedMatches(matches);
+      setTotalMatches(total);
+    });
 
     // Push each linked cloud guest's share of the match to their own account.
     const hostName = user?.user_metadata?.username || user?.email || 'Host';
@@ -211,7 +230,7 @@ export default function App() {
       user?.id,
       hostName
     ).catch(err => console.error('Guest sync error in background', err));
-  }, [statsModalData, applyProfiles, user]);
+  }, [statsModalData, applyProfiles, user, matchWindow]);
 
   const themeOverlays = useMemo(() => {
     if (theme === 'vaporwave') {
@@ -318,6 +337,8 @@ export default function App() {
           <ProfileTab
             profiles={profiles}
             matches={savedMatches}
+            hasMoreMatches={savedMatches.length < totalMatches}
+            onLoadMoreMatches={() => setMatchWindow(w => w + MATCH_PAGE_SIZE)}
             onCreateProfile={handleCreateProfile}
             onUpdateProfile={handleUpdateProfile}
             onDeleteProfile={handleDeleteProfile}

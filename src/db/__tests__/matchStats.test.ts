@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { applyMatchStatsToProfile, recordMatchForSelf, removeLinkedGuestProfiles } from '../database';
+import { applyMatchStatsToProfile, recordMatchForSelf, removeLinkedGuestProfiles, isMatchWinner } from '../database';
 import type { PlayerStats, Profile, MatchHistory } from '../../types';
 
 const basePlayerStat = (overrides: Partial<PlayerStats> = {}): PlayerStats => ({
@@ -163,5 +163,60 @@ describe('removeLinkedGuestProfiles', () => {
     const { profiles: next } = removeLinkedGuestProfiles(profiles, ['Unbekannt']);
     expect(next).toBe(profiles);
     expect(Object.keys(profiles)).toHaveLength(3);
+  });
+});
+
+describe('isMatchWinner', () => {
+  const team2v2 = (overrides: Partial<MatchHistory> = {}): MatchHistory => ({
+    date: '01.09.26, 20:00',
+    winner: 'Team 1 (Anna & Tommy)',
+    is2v2: true,
+    players: [
+      { name: 'Anna', sets: 1, legs: 3, avg: '60.0', first9: '65.0', team: 1 },
+      { name: 'Tom', sets: 0, legs: 1, avg: '55.0', first9: '58.0', team: 2 },
+      { name: 'Tommy', sets: 1, legs: 3, avg: '61.0', first9: '66.0', team: 1 },
+      { name: 'Bea', sets: 0, legs: 1, avg: '52.0', first9: '54.0', team: 2 }
+    ],
+    ...overrides
+  });
+
+  it('credits the win to the members of the winning team', () => {
+    const match = team2v2();
+    expect(isMatchWinner(match, 'Anna')).toBe(true);
+    expect(isMatchWinner(match, 'Tommy')).toBe(true);
+  });
+
+  /**
+   * The regression: `winner.includes('Tom')` is true for "Team 1 (Anna &
+   * Tommy)", so a losing "Tom" was booked a win whenever a "Tommy" won.
+   */
+  it('does not credit a losing player whose name is a prefix of a winner', () => {
+    expect(isMatchWinner(team2v2(), 'Tom')).toBe(false);
+    expect(isMatchWinner(team2v2(), 'Bea')).toBe(false);
+  });
+
+  it('falls back to whole-name matching when the rows carry no team', () => {
+    const legacy = team2v2({
+      players: [
+        { name: 'Anna', sets: 1, legs: 3, avg: '60.0', first9: '65.0' },
+        { name: 'Tom', sets: 0, legs: 1, avg: '55.0', first9: '58.0' }
+      ],
+      winner: '(Anna & Tommy)'
+    });
+    expect(isMatchWinner(legacy, 'Anna')).toBe(true);
+    expect(isMatchWinner(legacy, 'Tom')).toBe(false);
+  });
+
+  it('uses exact equality for singles matches', () => {
+    const singles: MatchHistory = {
+      date: '01.09.26, 20:00',
+      winner: 'Tommy',
+      players: [
+        { name: 'Tom', sets: 0, legs: 1, avg: '55.0', first9: '58.0' },
+        { name: 'Tommy', sets: 1, legs: 3, avg: '61.0', first9: '66.0' }
+      ]
+    };
+    expect(isMatchWinner(singles, 'Tommy')).toBe(true);
+    expect(isMatchWinner(singles, 'Tom')).toBe(false);
   });
 });

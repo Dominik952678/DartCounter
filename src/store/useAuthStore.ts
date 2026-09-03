@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { supabase } from '../db/database';
+import { supabase, clearCachedUserData } from '../db/database';
 import type { User, Session } from '@supabase/supabase-js';
 
 interface AuthState {
@@ -69,7 +69,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   signOut: async () => {
     set({ loading: true });
+    const previousUserId = get().user?.id;
     await supabase.auth.signOut();
+    // The cache is per account: leaving it behind showed the next person on
+    // this device the previous user's profiles, matches and sync code.
+    clearCachedUserData(previousUserId);
     set({ user: null, session: null, loading: false });
   },
 

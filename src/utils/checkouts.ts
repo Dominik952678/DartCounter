@@ -195,8 +195,25 @@ export const MASTER_OUT_EXTRAS: Record<number, string> = {
   90: 'T20 T10',
 };
 
+/**
+ * The score band a checkout can be suggested for.
+ *
+ * Master Out reaches to 180 (T20 T20 T20 is a legal finish) while the other
+ * modes top out at 170; Master Out cannot finish on 1. Callers that decide
+ * whether to show the suggestion pill share this so the pill and the
+ * suggestion can never disagree — the scoreboard used to gate on a hard 170
+ * and hid the finishes from 171 to 180 that this function knows.
+ */
+export function checkoutRange(outMode: 'SO' | 'DO' | 'MO'): { min: number; max: number } {
+  return {
+    min: outMode === 'SO' ? 1 : 2,
+    max: outMode === 'MO' ? 180 : 170
+  };
+}
+
 export function getCheckoutSuggestion(score: number, outMode: 'SO' | 'DO' | 'MO', dartsThrown: number = 0): string | null {
-  if (score < 1 || (outMode === 'MO' ? score > 180 : score > 170)) {
+  const { min, max } = checkoutRange(outMode);
+  if (score < min || score > max) {
     return null;
   }
 

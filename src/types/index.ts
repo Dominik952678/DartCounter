@@ -152,6 +152,13 @@ export interface MatchHistory {
   gameType?: 'standard' | 'powerScoring' | 'splitScore' | 'checkoutTraining';
   config?: GameConfig;
   is2v2?: boolean;
+  /**
+   * When the match ended, as ISO 8601. `date` next to it is a localised string
+   * for display only — it cannot be sorted or filtered, which is why matches
+   * used to be ordered by their document id instead.
+   */
+  createdAt?: string;
+  /** @deprecated Display only; use `createdAt` for anything comparable. */
   date: string;
   winner: string;
   players: PlayerStats[];
