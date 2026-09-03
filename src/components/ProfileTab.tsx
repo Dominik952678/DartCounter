@@ -5,6 +5,7 @@ import { ProfileDashboard } from './ProfileDashboard';
 import { GuestSyncRedeemModal } from './GuestSyncRedeemModal';
 import { AppInfoCard } from './profile/AppInfoCard';
 import { CreateProfileCard } from './profile/CreateProfileCard';
+import { DataExportCard } from './profile/DataExportCard';
 import { GuestSyncCard } from './profile/GuestSyncCard';
 import { HeatmapPreview } from './profile/HeatmapPreview';
 import { MatchHistoryView } from './profile/MatchHistoryView';
@@ -23,6 +24,9 @@ interface ProfileTabProps {
   onCreateProfile: (name: string, isBot?: boolean, targetAverage?: number) => void;
   onUpdateProfile: (name: string, updates: Partial<Profile>) => void;
   onDeleteProfile: (name: string) => void;
+  /** Writes a whole profile set at once — for restoring a backup. */
+  onImportProfiles?: (next: Record<string, Profile>) => Promise<void> | void;
+  onMatchesChanged?: () => void;
 }
 
 /**
@@ -36,7 +40,9 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
   onLoadMoreMatches,
   onCreateProfile,
   onUpdateProfile,
-  onDeleteProfile
+  onDeleteProfile,
+  onImportProfiles,
+  onMatchesChanged
 }) => {
   const { user } = useAuthStore();
   const navigate = useNavigate();
@@ -152,6 +158,15 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
         onUpdateProfile={onUpdateProfile}
         onDeleteProfile={onDeleteProfile}
       />
+
+      {onImportProfiles && (
+        <DataExportCard
+          profiles={profiles}
+          matches={matches}
+          onImportProfiles={onImportProfiles}
+          onMatchesChanged={onMatchesChanged}
+        />
+      )}
 
       <AppInfoCard />
 

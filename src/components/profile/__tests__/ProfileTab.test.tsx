@@ -8,11 +8,11 @@ const profile = (over: Partial<Profile> = {}): Profile => ({
   wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0, ...over
 });
 
-const match = (winner: string): MatchHistory => ({
+const match = (winner: string, legHistory?: string[]): MatchHistory => ({
   createdAt: '2026-09-01T18:15:00.000Z',
   date: '01.09.26, 20:15',
   winner,
-  players: [{ name: winner, sets: 1, legs: 3, avg: '61.0', first9: '70.0' }]
+  players: [{ name: winner, sets: 1, legs: 3, avg: '61.0', first9: '70.0', legHistory }]
 });
 
 const renderTab = (props: Partial<React.ComponentProps<typeof ProfileTab>> = {}) =>
@@ -79,5 +79,17 @@ describe('ProfileTab', () => {
     renderTab({ hasMoreMatches: true, onLoadMoreMatches: vi.fn() });
     fireEvent.click(screen.getByText(/Match Historie ansehen/));
     expect(screen.getByText('Mehr laden')).toBeInTheDocument();
+  });
+
+  /** Mini games record no per-leg averages, so there is nothing to plot. */
+  it('offers the leg chart only for matches that recorded legs', () => {
+    const { unmount } = renderTab();
+    fireEvent.click(screen.getByText(/Match Historie ansehen/));
+    expect(screen.queryByText(/Leg-Verlauf/)).not.toBeInTheDocument();
+    unmount();
+
+    renderTab({ matches: [match('Dominik', ['60.1', '58.4'])] });
+    fireEvent.click(screen.getByText(/Match Historie ansehen/));
+    expect(screen.getByText('📈 Leg-Verlauf')).toBeInTheDocument();
   });
 });

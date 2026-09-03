@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 
+type AuthMode = 'login' | 'signup' | 'reset';
+
 export const AuthScreen: React.FC = () => {
-  const [isLogin, setIsLogin] = useState(true);
+  const [mode, setMode] = useState<AuthMode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
@@ -11,34 +13,58 @@ export const AuthScreen: React.FC = () => {
   const [successMsg, setSuccessMsg] = useState('');
   const navigate = useNavigate();
 
-  const { signIn, signUp, loading, error, clearError } = useAuthStore();
+  const { signIn, signUp, requestPasswordReset, loading, error, clearError } = useAuthStore();
+
+  const isLogin = mode === 'login';
+  const isSignup = mode === 'signup';
+  const isReset = mode === 'reset';
+
+  const switchTo = (next: AuthMode) => {
+    clearError();
+    setLocalError('');
+    setSuccessMsg('');
+    setMode(next);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     clearError();
     setLocalError('');
     setSuccessMsg('');
-    
+
+    if (isReset) {
+      const res = await requestPasswordReset(email);
+      if (!res.error) {
+        setSuccessMsg('Wenn es ein Konto zu dieser Adresse gibt, ist die E-Mail mit dem Link unterwegs.');
+      }
+      return;
+    }
+
     if (isLogin) {
       const res = await signIn(email, password);
       if (!res.error) navigate('/online');
-    } else {
-      if (!username.trim()) {
-         setLocalError("Bitte gib einen Benutzernamen ein.");
-         return;
-      }
-      const res = await signUp(email, password, username);
-      if (!res.error) {
-         setSuccessMsg("Erfolgreich registriert! Du kannst dich nun einloggen.");
-         setIsLogin(true);
-      }
+      return;
+    }
+
+    if (!username.trim()) {
+      setLocalError("Bitte gib einen Benutzernamen ein.");
+      return;
+    }
+    const res = await signUp(email, password, username);
+    if (!res.error) {
+      // Which of the two it is depends on the project's e-mail settings, and
+      // promising a login that then fails is worse than saying nothing.
+      setSuccessMsg(res.needsConfirmation
+        ? 'Fast geschafft: Bestätige den Link in deiner E-Mail, dann kannst du dich anmelden.'
+        : 'Erfolgreich registriert! Du kannst dich nun einloggen.');
+      setMode('login');
     }
   };
 
   const displayError = localError || error;
 
   return (
-    <div className="screen active-screen" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '20px', position: 'relative', overflowX: 'hidden' }}>
+    <div className="screen active-screen" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100dvh', padding: '20px', position: 'relative', overflowX: 'hidden' }}>
       <div style={{
         position: 'absolute',
         top: '-80px',
@@ -65,14 +91,18 @@ export const AuthScreen: React.FC = () => {
           marginBottom: '12px',
           fontSize: '1.8rem'
         }}>
-          {isLogin ? '🔑' : '✨'}
+          {isReset ? '📧' : isLogin ? '🔑' : '✨'}
         </div>
 
         <h2 style={{ textAlign: 'center', marginBottom: '8px', fontSize: '1.7em', fontWeight: 800 }}>
-          {isLogin ? 'Willkommen zurück' : 'Account erstellen'}
+          {isReset ? 'Passwort zurücksetzen' : isLogin ? 'Willkommen zurück' : 'Account erstellen'}
         </h2>
         <p style={{ color: 'var(--text-dim)', fontSize: '0.9em', marginBottom: '24px' }}>
-          {isLogin ? 'Melde dich an, um deine Statistiken & Profile zu laden' : 'Sichere deine Averages und Match-Historie dauerhaft in der Cloud'}
+          {isReset
+            ? 'Wir schicken dir einen Link, mit dem du ein neues Passwort setzen kannst'
+            : isLogin
+              ? 'Melde dich an, um deine Statistiken & Profile zu laden'
+              : 'Sichere deine Averages und Match-Historie dauerhaft in der Cloud'}
         </p>
         
         {displayError && (
@@ -88,42 +118,58 @@ export const AuthScreen: React.FC = () => {
         )}
         
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          {!isLogin && (
+          {isSignup && (
             <input
               type="text"
               placeholder="Benutzername (z.B. Dominik)"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
+              autoComplete="nickname"
               required
             />
           )}
-          
+
           <input
             type="email"
             placeholder="E-Mail Adresse"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
             required
           />
-          
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <input
-              type="password"
-              placeholder="Passwort"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-            {!isLogin && (
-              <small style={{ color: 'var(--text-dim)', fontSize: '0.8em', textAlign: 'left', marginLeft: '4px' }}>
-                Mindestens 6 Zeichen erforderlich.
-              </small>
-            )}
-          </div>
+
+          {!isReset && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <input
+                type="password"
+                placeholder="Passwort"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete={isLogin ? 'current-password' : 'new-password'}
+                required
+              />
+              {isSignup && (
+                <small style={{ color: 'var(--text-dim)', fontSize: '0.8em', textAlign: 'left', marginLeft: '4px' }}>
+                  Mindestens 6 Zeichen erforderlich.
+                </small>
+              )}
+            </div>
+          )}
 
           <button type="submit" className="btn-primary btn-large" disabled={loading} style={{ marginTop: '8px' }}>
-            {loading ? 'Lade...' : (isLogin ? 'Einloggen' : 'Kostenlos Registrieren')}
+            {loading ? 'Lade...' : isReset ? 'Link anfordern' : isLogin ? 'Einloggen' : 'Kostenlos Registrieren'}
           </button>
+
+          {isLogin && (
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={() => switchTo('reset')}
+              style={{ fontSize: '0.85em', minHeight: 'auto', padding: '2px' }}
+            >
+              Passwort vergessen?
+            </button>
+          )}
         </form>
 
         <div style={{ marginTop: '24px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -132,15 +178,10 @@ export const AuthScreen: React.FC = () => {
             <span style={{ position: 'relative', background: '#16161a', padding: '0 15px', color: 'var(--text-dim)', fontSize: '0.85em' }}>Oder</span>
           </div>
 
-          <button 
+          <button
             type="button"
-            className="btn-secondary" 
-            onClick={() => {
-                clearError();
-                setLocalError('');
-                setSuccessMsg('');
-                setIsLogin(!isLogin);
-            }}
+            className="btn-secondary"
+            onClick={() => switchTo(isLogin ? 'signup' : 'login')}
           >
             {isLogin ? 'Jetzt neuen Account erstellen' : 'Bereits einen Account? Login'}
           </button>

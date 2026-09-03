@@ -460,11 +460,19 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
                     {p.currentScore}
                   </div>
 
-                  {i === activePlayer && p.currentScore <= 170 && getCheckoutSuggestion(p.currentScore, 'DO', currentRoundDarts.length) && (
-                    <div className="checkout-hint" style={{ marginBottom: '10px' }}>
-                      {getCheckoutSuggestion(p.currentScore, 'DO', currentRoundDarts.length)}
-                    </div>
-                  )}
+                  {i === activePlayer && (() => {
+                    // Double Out is the mode by definition here — a target only
+                    // counts when it is finished on a double. The suggestion
+                    // wore a `.checkout-hint` class that has no CSS anywhere, so
+                    // it showed up unstyled; `.checkout-pill` is the scoreboard's
+                    // own, themes included.
+                    const suggestion = getCheckoutSuggestion(p.currentScore, 'DO', currentRoundDarts.length);
+                    return suggestion ? (
+                      <div className="checkout-pill" style={{ marginBottom: '10px' }}>
+                        {suggestion}
+                      </div>
+                    ) : null;
+                  })()}
 
                   <div style={{ fontSize: '0.9em', color: '#999', display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center' }}>
                      <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>

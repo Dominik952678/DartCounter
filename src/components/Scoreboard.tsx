@@ -622,9 +622,15 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
               </div>
               
               <div style={{ minHeight: '22px', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                {!isThisPlayerBlockedFromFinishing && checkoutSuggestion ? (
-                  <div className="checkout-pill">
-                    {checkoutSuggestion}
+                {/* A frozen player still gets to see the finish, marked as blocked:
+                    hiding it looked like there was none, and `.checkout-pill-frozen`
+                    had been styled for this since the freeze rule was written. */}
+                {checkoutSuggestion ? (
+                  <div
+                    className={isThisPlayerBlockedFromFinishing ? 'checkout-pill-frozen' : 'checkout-pill'}
+                    title={isThisPlayerBlockedFromFinishing ? 'Freeze: Dein Team darf noch nicht auschecken' : undefined}
+                  >
+                    {isThisPlayerBlockedFromFinishing ? `❄️ ${checkoutSuggestion}` : checkoutSuggestion}
                   </div>
                 ) : (
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-dim, #888)' }}>

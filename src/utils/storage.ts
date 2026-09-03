@@ -176,6 +176,40 @@ export const remove = (name: StorageKeyName): void => {
 };
 
 /**
+ * Every stored setting that is worth carrying to another device.
+ *
+ * The match in progress, the schema version and this device's host id are
+ * deliberately left out: the first belongs to the device it is being played on,
+ * the others describe the installation rather than the player's preferences.
+ */
+const PORTABLE_KEYS: readonly StorageKeyName[] = [
+  'theme', 'scanlines', 'gridAnimation', 'glitchEffects', 'soundEnabled', 'hapticsEnabled',
+  'x01StartScore', 'x01OutMode', 'x01Sets', 'x01Legs', 'x01PlayerCount', 'x01Is2v2',
+  'trainingMode', 'trainingPlayerCount', 'powerScoringRounds', 'checkoutRounds', 'checkoutTargets',
+  'offlineSubtab', 'guestOnlineName'
+];
+
+/** The portable settings, by registry name, for a backup file. */
+export const exportSettings = (): Partial<Record<StorageKeyName, string>> => {
+  const out: Partial<Record<StorageKeyName, string>> = {};
+  PORTABLE_KEYS.forEach(name => {
+    const value = readRaw(name);
+    if (value !== null) out[name] = value;
+  });
+  return out;
+};
+
+/** Restores what `exportSettings` wrote, ignoring anything it does not know. */
+export const importSettings = (settings: unknown): void => {
+  if (!settings || typeof settings !== 'object') return;
+  Object.entries(settings as Record<string, unknown>).forEach(([name, value]) => {
+    if (typeof value !== 'string') return;
+    if (!PORTABLE_KEYS.includes(name as StorageKeyName)) return;
+    writeRaw(name as StorageKeyName, value);
+  });
+};
+
+/**
  * This device's id as a host for cloud guests, created the first time it hosts.
  *
  * Both places that redeem a sync code used to inline the same "read it, invent

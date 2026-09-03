@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import type { MatchHistory, Profile } from '../../types';
 import { MatchImageExport } from '../MatchImageExport';
+import { LegProgressChart } from './LegProgressChart';
+import { hasLegProgress } from './legProgress';
 
 interface MatchHistoryViewProps {
   matches: MatchHistory[];
@@ -20,6 +22,8 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
 }) => {
   /** Index of the match whose share image is being rendered, if any. */
   const [exportingMatch, setExportingMatch] = useState<number | null>(null);
+  /** Which match has its leg-by-leg chart open. */
+  const [expandedMatch, setExpandedMatch] = useState<number | null>(null);
 
   /**
    * Renders the share image once its off-screen node is in the DOM.
@@ -94,7 +98,19 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
                   </div>
                 ))}
               </div>
-              <div style={{ marginTop: '10px', textAlign: 'right' }}>
+              {expandedMatch === i && <LegProgressChart match={m} profiles={profiles} />}
+
+              <div style={{ marginTop: '10px', textAlign: 'right', display: 'flex', justifyContent: 'flex-end', gap: '4px' }}>
+                {hasLegProgress(m) && (
+                  <button
+                    className="btn-ghost"
+                    style={{ fontSize: '0.85em', padding: '4px 8px' }}
+                    aria-expanded={expandedMatch === i}
+                    onClick={() => setExpandedMatch(expandedMatch === i ? null : i)}
+                  >
+                    {expandedMatch === i ? '📈 Verlauf ausblenden' : '📈 Leg-Verlauf'}
+                  </button>
+                )}
                 <button
                   className="btn-ghost"
                   style={{ fontSize: '0.85em', padding: '4px 8px' }}

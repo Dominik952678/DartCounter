@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { supabase, clearCachedUserData } from '../db';
+import { translateAuthError } from './authErrors';
 import type { User, Session } from '@supabase/supabase-js';
 
 interface AuthState {
@@ -11,8 +12,13 @@ interface AuthState {
   
   initialize: () => void;
   signIn: (email: string, pass: string) => Promise<{ error: string | null }>;
-  signUp: (email: string, pass: string, username: string) => Promise<{ error: string | null }>;
+  /** `needsConfirmation` when the project has e-mail confirmation switched on. */
+  signUp: (email: string, pass: string, username: string) => Promise<{ error: string | null; needsConfirmation?: boolean }>;
   signOut: () => Promise<void>;
+  /** Sends the reset link; the mail lands on `/auth/reset`. */
+  requestPasswordReset: (email: string) => Promise<{ error: string | null }>;
+  /** Sets the new password for the session the reset link opened. */
+  updatePassword: (password: string) => Promise<{ error: string | null }>;
   clearError: () => void;
 }
 
@@ -41,8 +47,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ loading: true, error: null });
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
-      set({ error: error.message, loading: false });
-      return { error: error.message };
+      const message = translateAuthError(error.message);
+      set({ error: message, loading: false });
+      return { error: message };
     }
     set({ loading: false });
     return { error: null };
@@ -50,7 +57,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   signUp: async (email, password, username) => {
     set({ loading: true, error: null });
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -60,11 +67,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       }
     });
     if (error) {
-      set({ error: error.message, loading: false });
-      return { error: error.message };
+      const message = translateAuthError(error.message);
+      set({ error: message, loading: false });
+      return { error: message };
     }
     set({ loading: false });
-    return { error: null };
+    // With e-mail confirmation on, Supabase returns no session and logging in
+    // fails until the link is clicked — the UI used to promise the opposite.
+    return { error: null, needsConfirmation: !data.session };
   },
 
   signOut: async () => {
@@ -75,6 +85,32 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     // this device the previous user's profiles, matches and sync code.
     clearCachedUserData(previousUserId);
     set({ user: null, session: null, loading: false });
+  },
+
+  requestPasswordReset: async email => {
+    set({ loading: true, error: null });
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/reset`
+    });
+    set({ loading: false });
+    if (error) {
+      const message = translateAuthError(error.message);
+      set({ error: message });
+      return { error: message };
+    }
+    return { error: null };
+  },
+
+  updatePassword: async password => {
+    set({ loading: true, error: null });
+    const { error } = await supabase.auth.updateUser({ password });
+    set({ loading: false });
+    if (error) {
+      const message = translateAuthError(error.message);
+      set({ error: message });
+      return { error: message };
+    }
+    return { error: null };
   },
 
   clearError: () => set({ error: null })

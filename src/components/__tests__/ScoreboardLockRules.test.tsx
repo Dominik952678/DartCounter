@@ -38,6 +38,31 @@ describe('2v2 Freeze Lock & Block Display Rules', () => {
     expect(screen.queryByText(/Blockt mit/i)).not.toBeInTheDocument();
   });
 
+  /**
+   * The finish used to be hidden outright while a player was frozen, which
+   * reads as "there is no checkout from here". `.checkout-pill-frozen` had been
+   * styled for exactly this case and used nowhere.
+   */
+  it('RULE 2b: A frozen player still sees the finish, marked as blocked', () => {
+    // T1 is at 40 + 400, T2 at 2 + 2: P0's partner is far above the opponents,
+    // so P0 may not check out yet.
+    const players = createPlayers([40, 2, 400, 2]);
+    const { container } = render(
+      <Scoreboard
+        players={players}
+        activePlayer={0}
+        startingPlayerOfLeg={0}
+        config={baseConfig}
+        currentRoundDarts={[]}
+      />
+    );
+
+    const frozen = container.querySelector('.checkout-pill-frozen');
+    expect(frozen).not.toBeNull();
+    expect(frozen?.textContent).toContain('D20');
+    expect(container.querySelector('.checkout-pill')).toBeNull();
+  });
+
   it('RULE 3: Only the person who must throw points has a number display, blocked player shows Geblockt, opponents clean', () => {
     // Team 1: P0 (40), P2 (200). Partner P2 has 200.
     // Team 2: P1 (50), P3 (50). Total = 100.

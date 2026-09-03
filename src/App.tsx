@@ -4,6 +4,7 @@ import { HomeContainer } from './components/HomeContainer';
 import { MainMenu } from './components/MainMenu';
 import { BottomNav } from './components/BottomNav';
 import { AuthScreen } from './components/AuthScreen';
+import { PasswordResetScreen } from './components/PasswordResetScreen';
 import { LobbyBrowser } from './components/LobbyBrowser';
 import { LobbyRoom } from './components/LobbyRoom';
 import { OnlineGameWrapper } from './components/OnlineGameWrapper';
@@ -87,6 +88,14 @@ export default function App() {
     pendingProfiles?: Record<string, Profile>;
     pendingMatchData?: MatchHistory;
   }>({ isOpen: false, winnerIndex: null, players: [], matchData: null });
+
+  /** Reloads the match window after something wrote to it. */
+  const refreshMatches = useCallback(() => {
+    getMatchPage(user?.id, matchWindow).then(({ matches, total }) => {
+      setSavedMatches(matches);
+      setTotalMatches(total);
+    });
+  }, [user?.id, matchWindow]);
 
   // Bridges the hook's legacy `screen` strings onto the router.
   const setScreen = useCallback((screen: string) => {
@@ -202,10 +211,7 @@ export default function App() {
     } catch (err) {
       reportPersistenceError(err, 'Trainingsergebnis konnte nicht gespeichert werden');
     }
-    getMatchPage(user?.id, matchWindow).then(({ matches, total }) => {
-      setSavedMatches(matches);
-      setTotalMatches(total);
-    });
+    refreshMatches();
 
     const winnerIdx = results.findIndex(r => r.name === winner.name);
     setStatsModalData({
@@ -214,7 +220,7 @@ export default function App() {
       players: results.map(toModalPlayer),
       matchData
     });
-  }, [profiles, applyProfiles, user, matchWindow]);
+  }, [profiles, applyProfiles, user, refreshMatches]);
 
   const commitPendingMatch = useCallback(async () => {
     if (!statsModalData.pendingProfiles || !statsModalData.pendingMatchData) return;
@@ -224,10 +230,7 @@ export default function App() {
     } catch (err) {
       reportPersistenceError(err, 'Match konnte nicht gespeichert werden');
     }
-    getMatchPage(user?.id, matchWindow).then(({ matches, total }) => {
-      setSavedMatches(matches);
-      setTotalMatches(total);
-    });
+    refreshMatches();
 
     // Push each linked cloud guest's share of the match to their own account.
     const hostName = user?.user_metadata?.username || user?.email || 'Host';
@@ -238,7 +241,7 @@ export default function App() {
       user?.id,
       hostName
     ).catch(err => console.error('Guest sync error in background', err));
-  }, [statsModalData, applyProfiles, user, matchWindow]);
+  }, [statsModalData, applyProfiles, user, refreshMatches]);
 
   const themeOverlays = useMemo(() => {
     if (theme === 'vaporwave') {
@@ -268,6 +271,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<MainMenu />} />
           <Route path="/auth" element={<AuthScreen />} />
+          <Route path="/auth/reset" element={<PasswordResetScreen />} />
           <Route path="/stats" element={<StatsPage />} />
           <Route path="/online" element={<LobbyBrowser />} />
           <Route path="/lobby/:code" element={<LobbyRoom />} />
