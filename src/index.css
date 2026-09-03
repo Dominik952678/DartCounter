@@ -301,6 +301,32 @@ select:focus, input:focus {
 .input-row > div { flex: 1; text-align: left; }
 .input-row label { font-size: 0.85em; color: var(--text-dim); margin-bottom: 6px; display: block; }
 
+/* Profile screen; moved out of a <style> tag inside ProfileTab. */
+.hero-glow-bg-profile {
+  position: absolute;
+  top: -80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 500px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, rgba(59, 130, 246, 0.06) 50%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.profile-tab-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+@media (min-width: 768px) {
+  .profile-tab-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+}
+
 /* ── Match setup screen ──
    These rules used to be injected by a <style> tag inside MatchSetup, which
    meant .avatar-circle only existed while that screen was mounted — the

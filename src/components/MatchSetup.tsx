@@ -5,7 +5,7 @@ import { getActiveUserSyncInfo, removeLinkedGuestProfiles, saveProfiles, validat
 import { reportPersistenceError } from '../store/useNotificationStore';
 import { readJson, remove as removeStored } from '../utils/storage';
 import { GameConfigPanel } from './matchSetup/GameConfigPanel';
-import { GuestSyncRedeem } from './matchSetup/GuestSyncRedeem';
+import { GuestSyncRedeemModal } from './GuestSyncRedeemModal';
 import { PlayerSelection } from './matchSetup/PlayerSelection';
 import { OverwriteSavedGameModal, SavedGameCard } from './matchSetup/SavedGameCard';
 import type { SavedMatchSummary } from './matchSetup/SavedGameCard';
@@ -156,8 +156,16 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
     executeStartGame();
   };
 
-  /** Seats a freshly imported cloud guest in the first free or bot-held slot. */
-  const seatImportedGuest = (username: string) => {
+  /** Lists a freshly redeemed cloud guest and seats them in the first free slot. */
+  const addImportedGuest = (username: string, profile: Profile) => {
+    if (setProfiles) {
+      const nextProfiles = { ...profiles, [username]: profile };
+      setProfiles(nextProfiles);
+      if (user?.id) {
+        saveProfiles(nextProfiles, user.id)
+          .catch(err => reportPersistenceError(err, 'Gastprofil konnte nicht gespeichert werden'));
+      }
+    }
     lineup.setSelectedPlayers(prev => {
       const next = [...prev];
       const freeSlot = next.findIndex(p => !p || profiles[p]?.isBot);
@@ -233,10 +241,8 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
       )}
 
       {showGuestSyncModal && (
-        <GuestSyncRedeem
-          profiles={profiles}
-          setProfiles={setProfiles}
-          onGuestAdded={seatImportedGuest}
+        <GuestSyncRedeemModal
+          onImported={addImportedGuest}
           onClose={() => setShowGuestSyncModal(false)}
         />
       )}

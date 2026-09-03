@@ -1,27 +1,30 @@
 import React, { useState } from 'react';
-import type { Profile } from '../../types';
-import { redeemSyncCode, saveProfiles } from '../../db';
-import { reportPersistenceError } from '../../store/useNotificationStore';
-import { useAuthStore } from '../../store/useAuthStore';
-import { resolveHostDeviceId } from '../../utils/storage';
+import type { Profile } from '../types';
+import { redeemSyncCode } from '../db';
+import { useAuthStore } from '../store/useAuthStore';
+import { resolveHostDeviceId } from '../utils/storage';
 
-interface GuestSyncRedeemProps {
-  profiles: Record<string, Profile>;
-  setProfiles?: (profiles: Record<string, Profile>) => void;
-  /** Seats the imported guest; called once their profile is in the list. */
-  onGuestAdded: (username: string) => void;
+interface GuestSyncRedeemModalProps {
+  /** What the caller does with the redeemed guest: seat them, list them, both. */
+  onImported: (username: string, profile: Profile) => void;
   onClose: () => void;
+  title?: string;
+  confirmLabel?: string;
 }
 
 /**
  * Redeems a cloud guest's six-digit sync code so they can play on this device
  * with their own account's statistics.
+ *
+ * The match setup and the profile screen each had their own copy of this modal,
+ * identical down to the placeholder, differing only in what they did with the
+ * guest afterwards — which is what `onImported` is for.
  */
-export const GuestSyncRedeem: React.FC<GuestSyncRedeemProps> = ({
-  profiles,
-  setProfiles,
-  onGuestAdded,
-  onClose
+export const GuestSyncRedeemModal: React.FC<GuestSyncRedeemModalProps> = ({
+  onImported,
+  onClose,
+  title = '☁️ Gast via Sync-Code hinzufügen',
+  confirmLabel = '➕ Als Mitspieler hinzufügen'
 }) => {
   const { user } = useAuthStore();
   const [code, setCode] = useState('');
@@ -54,16 +57,8 @@ export const GuestSyncRedeem: React.FC<GuestSyncRedeemProps> = ({
   };
 
   const handleConfirmImport = () => {
-    if (!found || !setProfiles) return;
-
-    const nextProfiles = { ...profiles, [found.username]: found.profile };
-    setProfiles(nextProfiles);
-    if (user?.id) {
-      saveProfiles(nextProfiles, user.id)
-        .catch(err => reportPersistenceError(err, 'Gastprofil konnte nicht gespeichert werden'));
-    }
-    onGuestAdded(found.username);
-
+    if (!found) return;
+    onImported(found.username, found.profile);
     setSuccess(`Gastkonto @${found.username} erfolgreich hinzugefügt!`);
     setTimeout(onClose, 1200);
   };
@@ -89,7 +84,7 @@ export const GuestSyncRedeem: React.FC<GuestSyncRedeemProps> = ({
         boxShadow: '0 10px 40px rgba(0,0,0,0.6)'
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h3 style={{ margin: 0, fontSize: '1.25rem' }}>☁️ Gast via Sync-Code hinzufügen</h3>
+          <h3 style={{ margin: 0, fontSize: '1.25rem' }}>{title}</h3>
           <button className="btn-ghost" onClick={onClose} style={{ fontSize: '1.2rem', padding: '2px 8px' }}>
             ✕
           </button>
@@ -189,7 +184,7 @@ export const GuestSyncRedeem: React.FC<GuestSyncRedeemProps> = ({
 
             <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
               <button className="btn-primary" onClick={handleConfirmImport} style={{ flex: 1, padding: '10px' }}>
-                ➕ Als Mitspieler hinzufügen
+                {confirmLabel}
               </button>
             </div>
           </div>
