@@ -169,3 +169,74 @@ describe('Profile Reconstruction from MatchHistory', () => {
     expect(result.Sarah).toBeUndefined();
   });
 });
+
+describe('Reconstruction is idempotent', () => {
+  /**
+   * Reconstruction runs on every profile load and again from App's match
+   * effect, so it has to be a fixed point: the same matches must produce the
+   * same profile no matter how often they are walked. The mini-game totals
+   * added onto the stored value instead of recomputing it, so a single 600
+   * point session read as 1200 after the second launch and 3000 after the
+   * fifth.
+   */
+  const baseProfile: Profile = {
+    wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0
+  };
+
+  const miniGameMatches: MatchHistory[] = [
+    {
+      date: '01.09.2026, 18:00',
+      winner: 'Dominik',
+      gameType: 'powerScoring',
+      players: [{ name: 'Dominik', sets: 0, legs: 0, avg: '0.0', first9: '0.0', score: 600 }]
+    },
+    {
+      date: '01.09.2026, 19:00',
+      winner: 'Dominik',
+      gameType: 'splitScore',
+      players: [{ name: 'Dominik', sets: 0, legs: 0, avg: '0.0', first9: '0.0', score: 240 }]
+    },
+    {
+      date: '01.09.2026, 20:00',
+      winner: 'Dominik',
+      gameType: 'checkoutTraining',
+      players: [{
+        name: 'Dominik', sets: 0, legs: 0, avg: '0.0', first9: '0.0',
+        score: 96, attempts: 12, dartsUsed: 30
+      }]
+    }
+  ];
+
+  it('produces the same totals however often it runs', () => {
+    const once = reconstructProfileFromMatches('Dominik', baseProfile, miniGameMatches);
+    const twice = reconstructProfileFromMatches('Dominik', once, miniGameMatches);
+    const fiveTimes = [2, 3, 4, 5].reduce(
+      acc => reconstructProfileFromMatches('Dominik', acc, miniGameMatches),
+      twice
+    );
+
+    expect(once.powerScoring?.totalScore).toBe(600);
+    expect(once.splitScore?.totalScore).toBe(240);
+    expect(once.checkoutTraining?.totalAttempts).toBe(12);
+    expect(once.checkoutTraining?.totalDartsUsed).toBe(30);
+
+    expect(twice).toEqual(once);
+    expect(fiveTimes).toEqual(once);
+  });
+
+  it('leaves an unrelated standard profile untouched on a second pass', () => {
+    const matches: MatchHistory[] = [{
+      date: '02.09.2026, 12:00',
+      winner: 'Dominik',
+      gameType: 'standard',
+      players: [{
+        name: 'Dominik', sets: 1, legs: 3, avg: '80.0', first9: '85.0',
+        matchPts: 1503, matchDarts: 56, checkoutAttempts: 4, checkoutSuccesses: 3
+      }]
+    }];
+
+    const once = reconstructProfileFromMatches('Dominik', baseProfile, matches);
+    const twice = reconstructProfileFromMatches('Dominik', once, matches);
+    expect(twice).toEqual(once);
+  });
+});

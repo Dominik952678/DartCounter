@@ -4,6 +4,7 @@ import { saveProfiles, setGuestLiveMatchStatus, getGuestSyncStatus, PersistenceE
 import { getBotDart, type TeamContext } from '../utils/bot';
 import { playSciFiHitSound, play180Sound, playBustSound, playHighFinishSound, speak, playDartHitSound, announceScore, announceGameShot } from '../utils/audio';
 import { triggerHaptic } from '../utils/haptics';
+import { threeDartAverage } from '../utils/stats';
 import { reportPersistenceError } from '../store/useNotificationStore';
 import { has as hasStored, readJson, remove as removeStored, writeJson } from '../utils/storage';
 
@@ -138,6 +139,18 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
   useEffect(() => clearTimers, [clearTimers]);
 
   /**
+   * Schedules a caller announcement, replacing any that has not spoken yet.
+   *
+   * Assigning the handle directly orphaned the previous one, so a fast visit
+   * left an announcement queued that named a score which was no longer current,
+   * and `clearTimers` could only ever cancel the most recent.
+   */
+  const scheduleCall = useCallback((speakFn: () => void, delayMs: number) => {
+    if (callerTimeoutRef.current) clearTimeout(callerTimeoutRef.current);
+    callerTimeoutRef.current = setTimeout(speakFn, delayMs);
+  }, []);
+
+  /**
    * Live auto-save so a reload or an accidental close never loses a match.
    *
    * Only a short tail of the undo history is written. Every dart pushes a deep
@@ -182,6 +195,11 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
   }, []);
 
   const persistProfiles = useCallback((next: Record<string, Profile>) => {
+    // Mirrored synchronously for the same reason `applyState` does it: the
+    // match-winning visit writes a personal best here and `showMatchStats` runs
+    // in the same call stack. Waiting for the layout effect meant that best was
+    // read back stale and then written over by the pending profile set.
+    profilesRef.current = next;
     setProfiles(next);
     saveProfiles(next, userIdRef.current).catch(err => reportPersistenceError(err, 'Profile konnten nicht gespeichert werden'));
   }, [setProfiles]);
@@ -424,8 +442,8 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
         name: p.name,
         sets: p.sets,
         legs: p.legs,
-        avg: p.matchDarts > 0 ? ((p.matchPts / p.matchDarts) * 3).toFixed(1) : '0.0',
-        first9: p.matchFirst9Darts > 0 ? ((p.matchFirst9Pts / p.matchFirst9Darts) * 3).toFixed(1) : '0.0',
+        avg: threeDartAverage(p.matchPts, p.matchDarts, 1),
+        first9: threeDartAverage(p.matchFirst9Pts, p.matchFirst9Darts, 1),
         matchPts: p.matchPts,
         matchDarts: p.matchDarts,
         first9Pts: p.matchFirst9Pts,
@@ -507,9 +525,12 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
       newPlayers.forEach((p, i) => {
         const pTeam = p.team || (i % 2 === 0 ? 1 : 2);
         if (is2v2 ? pTeam === winningTeam : i === winnerIndex) p.sets += 1;
-        p.legs = 0;
       });
 
+      // The leg counters survive until it is clear that another set follows.
+      // Resetting them before the match-end check wrote every match to history
+      // as `0 legs`: with the default one-set match that is every match ever
+      // played, and the scoreline is not recoverable from anything else.
       if (newPlayers[winnerIndex].sets >= currentState.config.setsToWin) {
         const finalState: GameState = { ...currentState, players: newPlayers, isProcessing: true };
         removeStored('savedGame');
@@ -517,11 +538,13 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
         showMatchStats(finalState, winnerIndex, newPlayers);
         return finalState;
       }
+
+      newPlayers.forEach(p => { p.legs = 0; });
     }
 
     const nextStarter = (currentState.startingPlayerOfLeg + 1) % currentState.players.length;
     if (!newPlayers[nextStarter].isBot) {
-      callerTimeoutRef.current = setTimeout(() => speak('Game on'), 1500);
+      scheduleCall(() => speak('Game on'), 1500);
     }
 
     setRoundBust(false);
@@ -534,7 +557,7 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
       currentRoundDarts: [],
       isProcessing: false
     };
-  }, [persistProfiles, showMatchStats]);
+  }, [persistProfiles, scheduleCall, showMatchStats]);
 
   const continueProcessRoundEnd = useCallback((stateAfterDart: GameState, isWin: boolean, currentPlayerIndex: number, highestThrow: number): GameState => {
     if (isWin) {
@@ -560,14 +583,14 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
     const nextP = nextState.players[nextState.activePlayer];
     const bogeys = [169, 168, 166, 165, 163, 162, 159];
     if (!nextP.isBot && nextP.score <= 170 && !bogeys.includes(nextP.score)) {
-      callerTimeoutRef.current = setTimeout(() => {
+      scheduleCall(() => {
         speak(`${nextP.name}, you require ${nextP.score}`);
       }, 1200);
     }
 
     setRoundBust(false);
     return nextState;
-  }, [handleLegWin, persistProfiles]);
+  }, [handleLegWin, persistProfiles, scheduleCall]);
 
   const processRoundEnd = useCallback((bust: boolean, isWin: boolean, roundTotal: number) => {
     const prevState = stateRef.current;
@@ -585,8 +608,6 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
         wasOnDouble = true;
       }
     }
-    if (bust) wasOnDouble = false;
-
     const newPlayers = prevState.players.map(pl => ({ ...pl }));
     const currentPlayerIndex = prevState.activePlayer;
     const updatedPlayer = newPlayers[currentPlayerIndex];
@@ -638,7 +659,11 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
 
     const stateAfterDart: GameState = { ...prevState, players: newPlayers };
 
-    if (!bust && (isWin || wasOnDouble)) {
+    // Darts thrown from a checkout position are attempts whether or not the
+    // visit ended in a bust. Excluding busted visits took the misses out of the
+    // denominator and left the quote reading 100 % for a player who had missed
+    // three darts at a double and then hit one.
+    if (isWin || wasOnDouble) {
       let checkoutDarts = 0;
       let needsPrompt = false;
       let tScore = p.score;
@@ -652,7 +677,8 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
         tScore -= dart.value;
       }
 
-      if (needsPrompt) {
+      // A busted visit is never a finish, so there is nothing to ask about.
+      if (needsPrompt && !bust) {
         setCheckoutPrompt({
           isOpen: true,
           maxDarts: dartsThrown,

@@ -2,6 +2,7 @@ import React from 'react';
 import { useModalA11y } from '../hooks/useModalA11y';
 import type { Player, MatchHistory } from '../types';
 import { DartboardHeatmap } from './DartboardHeatmap';
+import { checkoutQuote } from '../utils/stats';
 
 const bottomSheetStyles = `
   .bottom-sheet-overlay {
@@ -138,9 +139,7 @@ export const StatsModal: React.FC<{
             {matchData.players.map((pData, i) => {
               const isWinner = pData.name === matchData.winner;
               const playerObj = players[i];
-              const coQuote = (pData.checkoutAttempts && pData.checkoutAttempts > 0)
-                ? (((pData.checkoutSuccesses || 0) / pData.checkoutAttempts) * 100).toFixed(1) + '%'
-                : '–';
+              const coQuote = checkoutQuote(pData.checkoutSuccesses || 0, pData.checkoutAttempts || 0);
               const tripleQuote = (pData.triplesHit && pData.matchDarts && pData.matchDarts > 0)
                 ? (((pData.triplesHit || 0) / pData.matchDarts) * 100).toFixed(1) + '%'
                 : '–';

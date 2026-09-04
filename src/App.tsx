@@ -165,6 +165,10 @@ export default function App() {
   ) => {
     const updatedProfiles: Record<string, Profile> = { ...profiles };
     const maxScore = results.length > 0 ? Math.max(...results.map(r => r.score)) : 0;
+    // Nobody wins a session in which nobody scored: with `maxScore` at 0 the
+    // comparison below credited every participant with a win, so two players
+    // who both failed every target each got one.
+    const hasWinner = maxScore > 0;
 
     for (const r of results) {
       const existing = updatedProfiles[r.name];
@@ -176,7 +180,7 @@ export default function App() {
         stats.bestScore = Math.max(stats.bestScore, r.score);
         stats.matchesPlayed += 1;
         stats.totalScore = (stats.totalScore || 0) + r.score;
-        if (r.score === maxScore) stats.wins += 1;
+        if (hasWinner && r.score === maxScore) stats.wins += 1;
         p[gameType] = stats;
       } else {
         const stats = { ...(p.checkoutTraining || { bestCheckout: 0, roundsCompleted: 0, matchesPlayed: 0, wins: 0, totalAttempts: 0, totalDartsUsed: 0 }) };
@@ -185,7 +189,7 @@ export default function App() {
         stats.matchesPlayed += 1;
         stats.totalAttempts = (stats.totalAttempts || 0) + (r.attempts || 0);
         stats.totalDartsUsed = (stats.totalDartsUsed || 0) + (r.dartsUsed || 0);
-        if (r.score === maxScore) stats.wins += 1;
+        if (hasWinner && r.score === maxScore) stats.wins += 1;
         p.checkoutTraining = stats;
       }
 

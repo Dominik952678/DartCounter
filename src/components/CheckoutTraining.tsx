@@ -29,6 +29,12 @@ interface PlayerState {
   currentScore: number;
   scoreAtStartOfRound: number;
   roundsOnCurrentTarget: number;
+  /**
+   * Darts actually spent on the current target. `roundsOnCurrentTarget * 3`
+   * was used instead, which over-reports every round that ended early on a
+   * bust — those raise the round counter without costing three darts.
+   */
+  dartsOnCurrentTarget: number;
   dartsUsed: number;
   roundsCompleted: number;
   attempts: number;
@@ -59,6 +65,7 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
             currentScore: target,
             scoreAtStartOfRound: target,
             roundsOnCurrentTarget: 0,
+            dartsOnCurrentTarget: 0,
             dartsUsed: 0,
             roundsCompleted: 0,
             attempts: 0,
@@ -122,7 +129,7 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
 
     const st = stateRef.current;
     const p = st.gameState[st.activePlayer];
-    const totalDartsForThisTarget = (p.roundsOnCurrentTarget * 3) + dartsInThisTurn;
+    const totalDartsForThisTarget = p.dartsOnCurrentTarget + dartsInThisTurn;
     const newAttempts = p.attempts + 1;
     const newCompleted = p.roundsCompleted + 1;
     const newBestCheckout = Math.max(p.bestCheckout, p.targetScore);
@@ -142,7 +149,8 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
       targetScore: nextTarget,
       currentScore: nextTarget,
       scoreAtStartOfRound: nextTarget,
-      roundsOnCurrentTarget: 0
+      roundsOnCurrentTarget: 0,
+      dartsOnCurrentTarget: 0
     };
 
     const nextGameState = [...st.gameState];
@@ -165,7 +173,7 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
     if (nextRoundOnTarget >= checkoutRounds) {
       // All allowed rounds on this target used -> target failed
       const newAttempts = p.attempts + 1;
-      const totalDartsForThisTarget = (p.roundsOnCurrentTarget * 3) + dartsInThisTurn;
+      const totalDartsForThisTarget = p.dartsOnCurrentTarget + dartsInThisTurn;
       let nextTarget = p.targetScore;
       if (newAttempts < checkoutTargets) {
         nextTarget = generateRandomScore();
@@ -178,14 +186,16 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
         targetScore: nextTarget,
         currentScore: nextTarget,
         scoreAtStartOfRound: nextTarget,
-        roundsOnCurrentTarget: 0
+        roundsOnCurrentTarget: 0,
+        dartsOnCurrentTarget: 0
       };
     } else {
       // Has remaining round attempts for this target -> reset score back to scoreAtStartOfRound
       updatedPlayer = {
         ...p,
         currentScore: p.scoreAtStartOfRound,
-        roundsOnCurrentTarget: nextRoundOnTarget
+        roundsOnCurrentTarget: nextRoundOnTarget,
+        dartsOnCurrentTarget: p.dartsOnCurrentTarget + dartsInThisTurn
       };
     }
 
@@ -211,7 +221,7 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
     if (nextRoundOnTarget >= checkoutRounds) {
       // All allowed rounds on this target used -> target failed
       const newAttempts = p.attempts + 1;
-      const totalDartsForThisTarget = nextRoundOnTarget * 3;
+      const totalDartsForThisTarget = p.dartsOnCurrentTarget + darts.length;
       let nextTarget = p.targetScore;
       if (newAttempts < checkoutTargets) {
         nextTarget = generateRandomScore();
@@ -224,7 +234,8 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
         targetScore: nextTarget,
         currentScore: nextTarget,
         scoreAtStartOfRound: nextTarget,
-        roundsOnCurrentTarget: 0
+        roundsOnCurrentTarget: 0,
+        dartsOnCurrentTarget: 0
       };
     } else {
       // Keep remaining score for next attempt at this target
@@ -232,7 +243,8 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
         ...p,
         currentScore: remainingScore,
         scoreAtStartOfRound: remainingScore,
-        roundsOnCurrentTarget: nextRoundOnTarget
+        roundsOnCurrentTarget: nextRoundOnTarget,
+        dartsOnCurrentTarget: p.dartsOnCurrentTarget + darts.length
       };
     }
 

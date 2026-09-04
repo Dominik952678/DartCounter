@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import type { Profile } from '../types';
+import { totalSegmentHits } from '../utils/segmentStats';
 
 interface DartboardHeatmapProps {
   profile?: Profile;
@@ -32,13 +33,7 @@ export const DartboardHeatmap: React.FC<DartboardHeatmapProps> = ({ profile, cus
 
   const segmentHits = customHits || profile?.segmentHits || EMPTY_HITS;
 
-  const keys = Object.keys(segmentHits);
-  const hasDetailedKeys = keys.some(k => k.startsWith('T') || k.startsWith('D') || k.startsWith('S') || k === 'DB' || k === 'SB');
-  const totalRecordedHits = hasDetailedKeys
-    ? keys
-        .filter(k => k.startsWith('T') || k.startsWith('D') || k.startsWith('S') || k === 'DB' || k === 'SB' || k === 'Miss')
-        .reduce((sum, k) => sum + (segmentHits[k] || 0), 0)
-    : Object.values(segmentHits).reduce((sum, count) => sum + (count || 0), 0);
+  const totalRecordedHits = totalSegmentHits(segmentHits);
 
   let maxHits = 1;
   SECTORS.forEach(s => {

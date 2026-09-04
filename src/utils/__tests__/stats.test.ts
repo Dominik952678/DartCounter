@@ -1,24 +1,13 @@
 import { describe, it, expect } from 'vitest';
+import { threeDartAverage, dartsPerLeg, checkoutQuote, winRate } from '../stats';
 
-export function calculate3DartAverage(points: number, darts: number): string {
-  if (darts <= 0) return '0.00';
-  return ((points / darts) * 3).toFixed(2);
-}
+// These formulas used to be redefined at the top of this file and tested in
+// place, so the suite passed without touching a line of application code.
 
-export function calculateDartsPerLeg(targetScore: number, overallAvg: number): string {
-  if (overallAvg <= 0) return '–';
-  return ((targetScore * 3) / overallAvg).toFixed(1);
-}
-
-export function calculateCheckoutQuote(successes: number, attempts: number): string {
-  if (attempts <= 0) return '–';
-  return ((successes / attempts) * 100).toFixed(1) + '%';
-}
-
-export function calculateWinRate(wins: number, matches: number): string {
-  if (matches <= 0) return '0%';
-  return Math.round((wins / matches) * 100) + '%';
-}
+const calculate3DartAverage = (points: number, darts: number) => threeDartAverage(points, darts);
+const calculateDartsPerLeg = dartsPerLeg;
+const calculateCheckoutQuote = checkoutQuote;
+const calculateWinRate = winRate;
 
 describe('Statistics Calculations and Formulas', () => {
   describe('3-Dart Average', () => {

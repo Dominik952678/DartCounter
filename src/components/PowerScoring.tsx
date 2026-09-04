@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import type { Profile, Dart } from '../types';
 import { Keypad } from './Keypad';
@@ -54,15 +54,24 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
   const [history, setHistory] = useState<HistorySnapshot[]>([]);
 
   const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const finishTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const activeP = gameState[activePlayer];
   const isMyTurn = isOnline ? (activeP.name === myUsername) : true;
 
   const stateRef = React.useRef({ gameState, activePlayer, currentRound, currentRoundDarts, isProcessing, currentMultiplier });
 
-  useEffect(() => {
+  // Before paint, so the `isProcessing` guard in `handleDart` cannot be passed
+  // twice by two taps inside one frame.
+  useLayoutEffect(() => {
     stateRef.current = { gameState, activePlayer, currentRound, currentRoundDarts, isProcessing, currentMultiplier };
   }, [gameState, activePlayer, currentRound, currentRoundDarts, isProcessing, currentMultiplier]);
+
+  // Aborting inside the 500 ms result delay must not still book the session.
+  useEffect(() => () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    if (finishTimeoutRef.current) clearTimeout(finishTimeoutRef.current);
+  }, []);
 
   const processRoundEnd = React.useCallback((darts: Dart[]) => {
     const roundScore = darts.reduce((sum, d) => sum + d.value, 0);
@@ -70,22 +79,23 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
     else speak(roundScore.toString());
     
     const st = stateRef.current;
-    
-    setGameState(prev => {
-      const newState = [...prev];
-      newState[st.activePlayer].score += roundScore;
-      return newState;
-    });
+
+    // Built outside the updater and without touching `prev`: `[...prev]` shares
+    // the player objects, so `score +=` inside the updater also edited the
+    // previous state, and StrictMode's second invocation booked the round
+    // twice. The final results are read from this same value, which is why the
+    // last round used to be counted once more on top.
+    const nextState = st.gameState.map((p, i) =>
+      i === st.activePlayer ? { ...p, score: p.score + roundScore } : p
+    );
+    setGameState(nextState);
 
     if (st.activePlayer === players.length - 1) {
       if (st.currentRound === rounds) {
         setCurrentRoundDarts([]);
         setIsProcessing(true);
-        const finalResults = st.gameState.map((p, i) => ({
-           name: p.name,
-           score: p.score + (i === st.activePlayer ? roundScore : 0)
-        }));
-        setTimeout(() => onFinish(finalResults), 500);
+        const finalResults = nextState.map(p => ({ name: p.name, score: p.score }));
+        finishTimeoutRef.current = setTimeout(() => onFinish(finalResults), 500);
         return;
       } else {
         setCurrentRound(prev => prev + 1);
@@ -173,15 +183,19 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
     }
   }, [gameState, activePlayer, currentRound, currentRoundDarts, isProcessing, currentMultiplier, isOnline, isHost, roomChannel]);
 
+  // `currentRoundDarts.length` is what makes the bot throw more than once:
+  // nothing else in this list changes between darts of the same visit, so the
+  // effect never re-ran and the bot stopped after its first dart with no way
+  // for the player to continue.
   useEffect(() => {
     if (activeP.isBot && !isProcessing && currentRound <= rounds && (!isOnline || isHost)) {
       const timer = setTimeout(() => {
-        const botThrow = getBotDart(activeP.targetAverage, 501, 'DO'); 
+        const botThrow = getBotDart(activeP.targetAverage, 501, 'DO');
         handleDart(botThrow.base, botThrow.mult);
       }, 800);
       return () => clearTimeout(timer);
     }
-  }, [activeP.isBot, activeP.targetAverage, currentRound, isProcessing, isOnline, isHost, rounds, handleDart]);
+  }, [activeP.isBot, activeP.targetAverage, currentRound, currentRoundDarts.length, isProcessing, isOnline, isHost, rounds, handleDart]);
   const undoSingleDart = () => {
     if (isOnline && !isHost) return;
     if (timeoutRef.current) {

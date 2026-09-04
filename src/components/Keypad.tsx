@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import type { Dart } from '../types';
 import { triggerHaptic } from '../utils/haptics';
 
@@ -25,12 +25,6 @@ export const Keypad: React.FC<KeypadProps> = ({
   abortGame,
   canUndo
 }) => {
-  useEffect(() => {
-    if (roundBust) {
-      triggerHaptic('bust');
-    }
-  }, [roundBust]);
-
   const handleAddDartClick = (baseValue: number) => {
     if (baseValue === 0) {
       triggerHaptic('click');

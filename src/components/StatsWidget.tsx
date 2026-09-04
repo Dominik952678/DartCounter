@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import type { MatchHistory, Profile } from '../types';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
 import { DartboardHeatmap } from './DartboardHeatmap';
+import { countedSegmentHits, totalSegmentHits } from '../utils/segmentStats';
 
 interface StatsWidgetProps {
   title: string;
@@ -151,11 +152,14 @@ export const StatsWidget: React.FC<StatsWidgetProps> = ({ title, mode, isOnline,
     const pieData: { name: string, value: number }[] = [];
     let restHits = 0;
     
-    // Calculate total hits
-    const totalHits = Object.values(displaySegmentHits).reduce((sum, val) => sum + val, 0);
+    // Only the detailed keys. Every dart is also recorded under its bare number
+    // for the radar chart below, so summing the record whole counted each dart
+    // twice and split the distribution between 'T20' and '20'.
+    const pieHits = countedSegmentHits(displaySegmentHits);
+    const totalHits = totalSegmentHits(displaySegmentHits);
 
     if (totalHits > 0) {
-       Object.entries(displaySegmentHits).forEach(([seg, hits]) => {
+       Object.entries(pieHits).forEach(([seg, hits]) => {
           if (hits === 0) return;
           const percent = (hits / totalHits) * 100;
           
