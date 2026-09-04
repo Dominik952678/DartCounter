@@ -17,6 +17,7 @@ export {
   isMatchWinner,
   parseWinningTeam,
   matchTimestamp,
+  matchFingerprint,
   saveMatch,
   getCachedMatches,
   getMatchPage,

@@ -58,19 +58,21 @@ type RoomEventHandler = (payload: RoomEventPayload) => void;
  *
  * The host applied every `client_throw` it received; the "is it my turn" check
  * lived only in the sending client's own button handler, so anything that put a
- * message on the channel could score, undo or check out for somebody else. The
- * roster is built from presence in the same order the engine seats its players,
- * which is what makes the index comparison meaningful.
+ * message on the channel could score, undo or check out for somebody else.
+ *
+ * `seatOrder` is the seat ids in the order the engine seated them — taken once,
+ * when the match starts. The live roster is sorted by seat id, so a device that
+ * joins mid-match would shift the positions of everybody after it and the
+ * comparison would then be against the wrong seat.
  */
 export const isFromActiveSeat = (
   payload: RoomEventPayload,
-  players: OnlinePlayer[],
+  seatOrder: readonly string[],
   activePlayer: number
 ): boolean => {
   const seatId = payload.seatId;
   if (typeof seatId !== 'string') return false;
-  const seatIndex = players.findIndex(p => p.id === seatId);
-  return seatIndex >= 0 && seatIndex === activePlayer;
+  return seatOrder.indexOf(seatId) === activePlayer;
 };
 
 /**

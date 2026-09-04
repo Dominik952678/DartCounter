@@ -85,6 +85,49 @@ describe('getMatchPage', () => {
     expect(matches).toHaveLength(1);
     expect(total).toBe(412);
   });
+
+  /**
+   * The guest-sync snapshot asks for 15 matches. Writing that page over the
+   * cache left the offline history with 15 rows out of the hundred it had.
+   */
+  it('merges a small page into the cache instead of shrinking it', async () => {
+    const cachedRows = [
+      match({ _id: 'match_user_1_1000000000000', winner: 'Alt 1' }),
+      match({ _id: 'match_user_1_1000000000001', winner: 'Alt 2' })
+    ];
+    localStorage.setItem('matches_user_1', JSON.stringify(cachedRows));
+
+    const range = vi.fn().mockResolvedValue({
+      data: [{ data: match({ _id: 'match_user_1_9000000000000', winner: 'Neu' }) }],
+      error: null,
+      count: 3
+    });
+    const order = vi.fn().mockReturnValue({ range });
+    const select = vi.fn().mockReturnValue({ ilike: vi.fn().mockReturnValue({ order }) });
+    vi.spyOn(supabase, 'from').mockReturnValue({ select } as unknown as ReturnType<typeof supabase.from>);
+
+    const { matches } = await getMatchPage('user_1', 1);
+
+    // The caller asked for one row and gets one row …
+    expect(matches).toHaveLength(1);
+    // … while the cache keeps everything it already had, newest first.
+    const cachedNow = JSON.parse(localStorage.getItem('matches_user_1')!) as MatchHistory[];
+    expect(cachedNow.map(m => m.winner)).toEqual(['Neu', 'Alt 2', 'Alt 1']);
+  });
+
+  it('does not duplicate a match that is both fetched and cached', async () => {
+    const shared = match({ _id: 'match_user_1_5000000000000', winner: 'Doppelt' });
+    localStorage.setItem('matches_user_1', JSON.stringify([shared]));
+
+    const range = vi.fn().mockResolvedValue({ data: [{ data: shared }], error: null, count: 1 });
+    const order = vi.fn().mockReturnValue({ range });
+    const select = vi.fn().mockReturnValue({ ilike: vi.fn().mockReturnValue({ order }) });
+    vi.spyOn(supabase, 'from').mockReturnValue({ select } as unknown as ReturnType<typeof supabase.from>);
+
+    await getMatchPage('user_1', 10);
+
+    expect(JSON.parse(localStorage.getItem('matches_user_1')!)).toHaveLength(1);
+  });
 });
 
 describe('clearCachedUserData', () => {

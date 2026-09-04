@@ -64,6 +64,8 @@ export const OnlineGameWrapper: React.FC = () => {
    * down and rebuilt whenever a player joins or a dart lands.
    */
   const playersRef = useRef(players);
+  /** The seat ids in the order the engine seated them, fixed at match start. */
+  const seatOrderRef = useRef<string[]>([]);
   const outboundSeqRef = useRef(0);
   /** Highest state version this guest has rendered; older arrivals are stale. */
   const appliedSeqRef = useRef(-1);
@@ -199,7 +201,11 @@ export const OnlineGameWrapper: React.FC = () => {
     // A command is only honoured from the seat that is on throw; the roster and
     // the engine are read through refs so this subscription can stay mounted.
     const fromActiveSeat = (payload: RoomEventPayload) =>
-      isFromActiveSeat(payload, playersRef.current, engineRef.current.gameState.activePlayer);
+      isFromActiveSeat(
+        payload,
+        seatOrderRef.current.length > 0 ? seatOrderRef.current : playersRef.current.map(p => p.id),
+        engineRef.current.gameState.activePlayer
+      );
 
     const unsubs = [
       onRoomEvent('client_throw', payload => {
@@ -252,6 +258,10 @@ export const OnlineGameWrapper: React.FC = () => {
     if (engineRef.current.gameState.players.length > 0) return;
     const config = roomSettings || { startScore: 501, outMode: 'DO' as const, setsToWin: 1, legsToWin: 3 };
     const playerNames = players.length > 0 ? players.map(p => p.username) : [myUsername];
+    // The seating the engine is given, kept as it was: the live roster is
+    // sorted by seat id, so a late joiner would shift everyone's position and
+    // the turn check below would then be comparing against the wrong seat.
+    seatOrderRef.current = players.map(p => p.id);
     engineRef.current.startGame(playerNames, config);
   }, [roomChannel, isHost, players, roomSettings, myUsername]);
 

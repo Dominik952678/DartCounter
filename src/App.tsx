@@ -356,6 +356,8 @@ export default function App() {
               onCreateProfile={handleCreateProfile}
               onUpdateProfile={handleUpdateProfile}
               onDeleteProfile={handleDeleteProfile}
+              onImportProfiles={applyProfiles}
+              onMatchesChanged={refreshMatches}
             />
           } />
 

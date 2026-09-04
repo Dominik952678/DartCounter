@@ -133,6 +133,15 @@ const withCreatedAt = (match: MatchHistory): MatchHistory => {
   return timestamp === null ? match : { ...match, createdAt: new Date(timestamp).toISOString() };
 };
 
+/**
+ * What a match is recognised by when asking whether it is already known.
+ *
+ * The document id where there is one; older rows and rows that never reached
+ * the cloud are identified by what they record instead.
+ */
+export const matchFingerprint = (m: MatchHistory): string =>
+  m._id || `${m.createdAt || m.date}|${m.winner}|${m.players?.map(p => p.name).join(',')}`;
+
 /** Newest first; matches with no discoverable date sink to the bottom. */
 const byNewestFirst = (a: MatchHistory, b: MatchHistory): number =>
   (matchTimestamp(b) ?? 0) - (matchTimestamp(a) ?? 0);
@@ -186,8 +195,16 @@ export async function getMatchPage(
     if (!data) return { matches: cached.slice(0, limit), total: cached.length };
 
     const matches = data.map(row => withCreatedAt(row.data as unknown as MatchHistory)).sort(byNewestFirst);
+
+    // Merged into the cache rather than written over it. A caller may ask for a
+    // small page — the guest-sync snapshot takes 15 — and overwriting would
+    // have thrown away the offline history down to those 15 rows.
+    const known = new Set(matches.map(matchFingerprint));
+    const mergedCache = [...matches, ...cached.filter(m => !known.has(matchFingerprint(m)))]
+      .sort(byNewestFirst)
+      .slice(0, MATCH_PAGE_SIZE);
     try {
-      localStorage.setItem(localKey, JSON.stringify(matches.slice(0, MATCH_PAGE_SIZE)));
+      localStorage.setItem(localKey, JSON.stringify(mergedCache));
     } catch (e) {
       console.error(e);
     }

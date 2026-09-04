@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import type { MatchHistory, Profile } from '../../types';
-import { saveMatch } from '../../db';
+import { getMatches, saveMatch } from '../../db';
 import { useAuthStore } from '../../store/useAuthStore';
 import { reportPersistenceError } from '../../store/useNotificationStore';
 import { importSettings } from '../../utils/storage';
@@ -15,6 +15,7 @@ import {
 
 interface DataExportCardProps {
   profiles: Record<string, Profile>;
+  /** The loaded window; the card reads the full history itself when it needs it. */
   matches: MatchHistory[];
   /** The one path that writes profiles; a loop of single updates is not it. */
   onImportProfiles: (next: Record<string, Profile>) => Promise<void> | void;
@@ -39,22 +40,44 @@ export const DataExportCard: React.FC<DataExportCardProps> = ({
   const { user } = useAuthStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<BackupFile | null>(null);
+  /**
+   * Every match the account has, not just the page the screen is showing.
+   *
+   * The card was handed the loaded window of 100, which would have written a
+   * "complete" backup that quietly ended at the hundredth match, and counted a
+   * re-import against those 100 alone.
+   */
+  const [allMatches, setAllMatches] = useState<MatchHistory[] | null>(null);
   const [pending, setPending] = useState<PendingImport | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  const handleExport = () => {
-    const blob = new Blob([JSON.stringify(buildBackup(profiles, matches), null, 2)], {
-      type: 'application/json'
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = backupFileName();
-    link.click();
-    URL.revokeObjectURL(url);
-    setStatus(`Sicherung erstellt: ${Object.keys(profiles).length} Profile, ${matches.length} Matches.`);
+  const handleExport = async () => {
+    setError(null);
+    setBusy(true);
+    try {
+      const history = await getMatches(user?.id);
+      setAllMatches(history);
+
+      const blob = new Blob([JSON.stringify(buildBackup(profiles, history), null, 2)], {
+        type: 'application/json'
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = backupFileName();
+      link.click();
+      // Released on the next tick: revoking it in the same one cancels the
+      // download in browsers that fetch the blob asynchronously.
+      setTimeout(() => URL.revokeObjectURL(url), 0);
+
+      setStatus(`Sicherung erstellt: ${Object.keys(profiles).length} Profile, ${history.length} Matches.`);
+    } catch (err) {
+      reportPersistenceError(err, 'Sicherung konnte nicht erstellt werden');
+    } finally {
+      setBusy(false);
+    }
   };
 
   const handleFile = async (file: File) => {
@@ -67,6 +90,8 @@ export const DataExportCard: React.FC<DataExportCardProps> = ({
       setError(result.error);
       return;
     }
+    // Loaded before the preview so its "already here" count is the true one.
+    setAllMatches(await getMatches(user?.id));
     setPreview(result.backup);
   };
 
@@ -78,7 +103,7 @@ export const DataExportCard: React.FC<DataExportCardProps> = ({
         : { ...profiles, ...backup.profiles };
       await onImportProfiles(nextProfiles);
 
-      const fresh = newMatchesFrom(backup, matches);
+      const fresh = newMatchesFrom(backup, allMatches ?? matches);
       for (const m of fresh) {
         await saveMatch(m, user?.id);
       }
@@ -94,7 +119,8 @@ export const DataExportCard: React.FC<DataExportCardProps> = ({
     }
   };
 
-  const previewMatches = preview ? newMatchesFrom(preview, matches).length : 0;
+  const known = allMatches ?? matches;
+  const previewMatches = preview ? newMatchesFrom(preview, known).length : 0;
 
   return (
     <div className="card" style={{ marginTop: '20px' }}>
@@ -185,6 +211,7 @@ export const DataExportCard: React.FC<DataExportCardProps> = ({
           type="button"
           className="btn-primary"
           onClick={handleExport}
+          disabled={busy}
           style={{ padding: '9px 16px', fontSize: '0.88rem', fontWeight: 700 }}
         >
           ⬇️ Daten exportieren
@@ -216,8 +243,8 @@ export const DataExportCard: React.FC<DataExportCardProps> = ({
         <ConfirmModal
           title={pending.mode === 'replace' ? 'Profile ersetzen?' : 'Sicherung zusammenführen?'}
           message={pending.mode === 'replace'
-            ? `Die ${Object.keys(profiles).length} Profile auf diesem Gerät werden durch die ${Object.keys(pending.backup.profiles).length} aus der Datei ersetzt.\nMatches werden nicht gelöscht — ${newMatchesFrom(pending.backup, matches).length} neue kommen hinzu.`
-            : `${Object.keys(pending.backup.profiles).length} Profile werden übernommen; gleichnamige Profile auf diesem Gerät werden dabei überschrieben.\n${newMatchesFrom(pending.backup, matches).length} neue Matches kommen hinzu.`}
+            ? `Die ${Object.keys(profiles).length} Profile auf diesem Gerät werden durch die ${Object.keys(pending.backup.profiles).length} aus der Datei ersetzt.\nMatches werden nicht gelöscht — ${previewMatches} neue kommen hinzu.`
+            : `${Object.keys(pending.backup.profiles).length} Profile werden übernommen; gleichnamige Profile auf diesem Gerät werden dabei überschrieben.\n${previewMatches} neue Matches kommen hinzu.`}
           confirmLabel={pending.mode === 'replace' ? 'Ersetzen' : 'Zusammenführen'}
           destructive={pending.mode === 'replace'}
           icon="💾"

@@ -1,4 +1,5 @@
 import type { MatchHistory, Profile } from '../../types';
+import { matchFingerprint } from '../../db';
 import { exportSettings } from '../../utils/storage';
 
 /** Bumped when the file's shape changes; older files stay readable. */
@@ -78,10 +79,6 @@ export const parseBackup = (raw: string): { backup: BackupFile } | { error: stri
     }
   };
 };
-
-/** What a match is recognised by when deciding whether it is already here. */
-export const matchFingerprint = (m: MatchHistory): string =>
-  m._id || `${m.createdAt || m.date}|${m.winner}|${m.players?.map(p => p.name).join(',')}`;
 
 /** The matches of a backup that this device does not already have. */
 export const newMatchesFrom = (backup: BackupFile, existing: MatchHistory[]): MatchHistory[] => {

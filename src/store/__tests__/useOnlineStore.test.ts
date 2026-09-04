@@ -249,13 +249,11 @@ describe('useOnlineStore room channel', () => {
 });
 
 describe('isFromActiveSeat', () => {
-  const roster = [
-    { id: 'seat_host', username: 'Dominik', isHost: true },
-    { id: 'seat_guest', username: 'Gast', isHost: false }
-  ];
+  /** The seating the engine was given, in its order. */
+  const seats = ['seat_host', 'seat_guest'];
 
   it('accepts the command of the seat that is on throw', () => {
-    expect(isFromActiveSeat({ seatId: 'seat_guest', base: 20 }, roster, 1)).toBe(true);
+    expect(isFromActiveSeat({ seatId: 'seat_guest', base: 20 }, seats, 1)).toBe(true);
   });
 
   /**
@@ -263,12 +261,22 @@ describe('isFromActiveSeat', () => {
    * button handler, so a crafted broadcast could score for the other player.
    */
   it('rejects a command from a seat that is not on throw', () => {
-    expect(isFromActiveSeat({ seatId: 'seat_host', base: 20 }, roster, 1)).toBe(false);
+    expect(isFromActiveSeat({ seatId: 'seat_host', base: 20 }, seats, 1)).toBe(false);
   });
 
   it('rejects a seat that is not in the room and a command with no seat at all', () => {
-    expect(isFromActiveSeat({ seatId: 'seat_nobody' }, roster, 1)).toBe(false);
-    expect(isFromActiveSeat({ base: 20 }, roster, 1)).toBe(false);
-    expect(isFromActiveSeat({ seatId: 42 }, roster, 1)).toBe(false);
+    expect(isFromActiveSeat({ seatId: 'seat_nobody' }, seats, 1)).toBe(false);
+    expect(isFromActiveSeat({ base: 20 }, seats, 1)).toBe(false);
+    expect(isFromActiveSeat({ seatId: 42 }, seats, 1)).toBe(false);
+  });
+
+  /**
+   * The live roster is sorted by seat id, so a device joining mid-match would
+   * shift the positions after it. The seating is taken once, at match start.
+   */
+  it('ignores a device that joined after the match started', () => {
+    expect(isFromActiveSeat({ seatId: 'seat_latecomer' }, seats, 1)).toBe(false);
+    // The seat that is on throw keeps its position whatever the roster does.
+    expect(isFromActiveSeat({ seatId: 'seat_guest' }, seats, 1)).toBe(true);
   });
 });

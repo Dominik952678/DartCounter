@@ -143,15 +143,23 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
     }
 
     if (isGuest && setProfiles) {
-       const fakeProfiles: Record<string, Profile> = {};
-       chosenPlayers.forEach(p => {
-          fakeProfiles[p] = {
-             wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0,
-             isBot: guestBots[p] || false,
-             targetAverage: 40
-          };
-       });
-       setProfiles(fakeProfiles);
+      // Merge, never replace. This used to hand over a map holding only the
+      // players of this session with zeroed records, so starting a training
+      // session dropped every other guest profile and reset the stats of the
+      // ones taking part — which the end-of-session booking then persisted.
+      // The match screen had the same bug and was fixed; this copy was missed.
+      const nextProfiles: Record<string, Profile> = { ...profiles };
+      chosenPlayers.forEach(p => {
+        const existing = nextProfiles[p];
+        nextProfiles[p] = existing
+          ? { ...existing, isBot: guestBots[p] || false }
+          : {
+              wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0,
+              targetAverage: 40,
+              isBot: guestBots[p] || false
+            };
+      });
+      setProfiles(nextProfiles);
     }
 
     if (randomOrderOnStart) {
