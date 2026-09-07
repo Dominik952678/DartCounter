@@ -40,8 +40,8 @@ export const StatsModal: React.FC<{
           
           <div style={{ textAlign: 'center', marginBottom: '20px' }}>
             <div className="confetti">🏆</div>
-            <h2 id="stats-modal-title" style={{ color: 'var(--green)', margin: '8px 0', fontSize: '1.8em' }}>{winnerName} gewinnt!</h2>
-            <p style={{ color: 'var(--text-dim)', margin: 0, fontSize: '0.95em' }}>Match-Statistik & Analyse</p>
+            <h2 id="stats-modal-title" className="result-winner">{winnerName} gewinnt!</h2>
+            <p className="result-subtitle">Match-Statistik &amp; Analyse</p>
           </div>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '20px' }}>
@@ -56,18 +56,18 @@ export const StatsModal: React.FC<{
               return (
                 <div key={i} style={{
                   background: isWinner ? 'color-mix(in srgb, var(--primary) 12%, transparent)' : 'var(--bg-surface)',
-                  border: `1.5px solid ${isWinner ? 'var(--green)' : 'var(--card-border)'}`,
+                  border: `1.5px solid ${isWinner ? 'var(--text-success)' : 'var(--card-border)'}`,
                   borderRadius: 'var(--radius, 12px)',
                   padding: '16px'
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span style={{ fontSize: '1.2em' }}>{playerObj?.isBot ? '🤖' : '👤'}</span>
-                      <strong style={{ fontSize: '1.2em', color: isWinner ? 'var(--green)' : 'var(--text)' }}>
+                      <strong className={`result-player ${isWinner ? 'is-winner' : ''}`}>
                         {pData.name} {isWinner ? '👑' : ''}
                       </strong>
                     </div>
-                    <span className="result-stat-card" style={{ fontSize: '1.1em', fontWeight: 800, padding: '4px 12px' }}>
+                    <span className="result-stat-card result-rank">
                       {matchData.gameType && matchData.gameType !== 'standard'
                         ? (pData.score !== undefined ? `${pData.score} Pkt` : '')
                         : (pData.sets !== undefined ? `${pData.sets}S : ${pData.legs}L` : `${pData.legs} Legs`)}
@@ -77,20 +77,20 @@ export const StatsModal: React.FC<{
                   {matchData.gameType && matchData.gameType !== 'standard' ? (
                     <div style={{ display: 'grid', gridTemplateColumns: matchData.gameType === 'checkoutTraining' ? '1fr 1fr 1fr' : '1fr', gap: '8px', marginBottom: '6px' }}>
                       <div className="result-stat-card" style={{ padding: '12px 8px', textAlign: 'center' }}>
-                        <div style={{ fontSize: '0.75em', color: 'var(--text-dim)', marginBottom: '2px' }}>
+                        <div className="stat-label">
                           {matchData.gameType === 'checkoutTraining' ? 'Bestes Checkout' : 'Punkte'}
                         </div>
-                        <div style={{ color: 'var(--green)', fontWeight: 800, fontSize: '1.4em' }}>{pData.score || 0}</div>
+                        <div className="stat-value">{pData.score || 0}</div>
                       </div>
                       {matchData.gameType === 'checkoutTraining' && (
                         <>
                           <div className="result-stat-card" style={{ padding: '12px 8px', textAlign: 'center' }}>
-                            <div style={{ fontSize: '0.75em', color: 'var(--text-dim)', marginBottom: '2px' }}>Versuche</div>
-                            <div style={{ color: 'var(--orange)', fontWeight: 800, fontSize: '1.4em' }}>{pData.attempts || 0}</div>
+                            <div className="stat-label">Versuche</div>
+                            <div className="stat-value">{pData.attempts || 0}</div>
                           </div>
                           <div className="result-stat-card" style={{ padding: '12px 8px', textAlign: 'center' }}>
-                            <div style={{ fontSize: '0.75em', color: 'var(--text-dim)', marginBottom: '2px' }}>Darts</div>
-                            <div style={{ color: 'var(--blue)', fontWeight: 800, fontSize: '1.4em' }}>{pData.dartsUsed || 0}</div>
+                            <div className="stat-label">Darts</div>
+                            <div className="stat-value">{pData.dartsUsed || 0}</div>
                           </div>
                         </>
                       )}
@@ -100,16 +100,16 @@ export const StatsModal: React.FC<{
                       {/* Primary Stats Grid */}
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '10px' }}>
                         <div className="result-stat-card" style={{ padding: '10px 8px', textAlign: 'center' }}>
-                          <div style={{ fontSize: '0.75em', color: 'var(--text-dim)', marginBottom: '2px' }}>Average</div>
-                          <div style={{ color: 'var(--green)', fontWeight: 800, fontSize: '1.1em' }}>{pData.avg}</div>
+                          <div className="stat-label">Average</div>
+                          <div className="stat-value stat-value-sm">{pData.avg}</div>
                         </div>
                         <div className="result-stat-card" style={{ padding: '10px 8px', textAlign: 'center' }}>
-                          <div style={{ fontSize: '0.75em', color: 'var(--text-dim)', marginBottom: '2px' }}>Erste 9</div>
-                          <div style={{ color: 'var(--orange)', fontWeight: 800, fontSize: '1.1em' }}>{pData.first9}</div>
+                          <div className="stat-label">Erste 9</div>
+                          <div className="stat-value stat-value-sm">{pData.first9}</div>
                         </div>
                         <div className="result-stat-card" style={{ padding: '10px 8px', textAlign: 'center' }}>
-                          <div style={{ fontSize: '0.75em', color: 'var(--text-dim)', marginBottom: '2px' }}>Bestes Leg</div>
-                          <div style={{ color: 'var(--blue)', fontWeight: 800, fontSize: '1.1em' }}>
+                          <div className="stat-label">Bestes Leg</div>
+                          <div className="stat-value stat-value-sm">
                             {pData.bestMatchLeg ? `${pData.bestMatchLeg} Darts` : '–'}
                           </div>
                         </div>
@@ -118,27 +118,27 @@ export const StatsModal: React.FC<{
                       {/* Secondary Quotas */}
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '10px' }}>
                         <div className="result-stat-card" style={{ padding: '8px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: '0.8em', color: 'var(--text-dim)' }}>Checkout-Quote:</span>
+                          <span className="stat-label">Checkout-Quote:</span>
                           <strong style={{ color: 'var(--text)' }}>{coQuote}</strong>
                         </div>
                         <div className="result-stat-card" style={{ padding: '8px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: '0.8em', color: 'var(--text-dim)' }}>Triple-Quote:</span>
+                          <span className="stat-label">Triple-Quote:</span>
                           <strong style={{ color: 'var(--text)' }}>{tripleQuote}</strong>
                         </div>
                       </div>
 
                       {/* Highlights Grid */}
                       <div className="result-stat-card" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', padding: '10px 6px', fontSize: '0.82em', textAlign: 'center' }}>
-                        <div><span style={{ color: 'var(--text-dim)' }}>180:</span> <strong style={{ color: 'var(--orange)' }}>{pData.oneEighty || 0}</strong></div>
+                        <div><span className="stat-label">180:</span> <strong>{pData.oneEighty || 0}</strong></div>
                         <div><span style={{ color: 'var(--text-dim)' }}>140+:</span> <strong>{pData.oneFortyPlus || 0}</strong></div>
                         <div><span style={{ color: 'var(--text-dim)' }}>100+:</span> <strong>{pData.hundredPlus || 0}</strong></div>
-                        <div><span style={{ color: 'var(--text-dim)' }}>Finish:</span> <strong style={{ color: 'var(--green)' }}>{pData.highestCheckout || '–'}</strong></div>
+                        <div><span className="stat-label">Finish:</span> <strong>{pData.highestCheckout || '–'}</strong></div>
                       </div>
 
                       {/* Leg Averages progression if available */}
                       {pData.legHistory && pData.legHistory.length > 0 && (
                         <div style={{ marginTop: '10px', display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
-                          <span style={{ fontSize: '0.75em', color: 'var(--text-dim)' }}>Legs:</span>
+                          <span className="stat-label">Legs:</span>
                           {pData.legHistory.map((avg, li) => (
                             <span key={li} className="result-stat-card" style={{ fontSize: '0.75em', padding: '2px 6px', borderRadius: '4px' }}>
                               L{li + 1}: Ø{avg}

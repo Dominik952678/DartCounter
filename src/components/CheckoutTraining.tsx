@@ -407,17 +407,17 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
   return (
     <div className="screen active-screen game-screen-layout">
       {isOnline && !isMyTurn && (
-         <div style={{ position: 'absolute', top: 10, left: '50%', transform: 'translateX(-50%)', background: 'rgba(255,0,0,0.8)', padding: '5px 15px', borderRadius: '15px', color: 'white', zIndex: 10 }}>
+         <div className="bust-flash">
             Warte auf {activeP.name}...
          </div>
       )}
       <div style={{ opacity: (!isOnline || isMyTurn) ? 1 : 0.6, height: '100%', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
         <div className="match-top-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden', minWidth: 0 }}>
-            <span style={{ fontWeight: 800, fontSize: '1.05em', color: 'var(--text)', whiteSpace: 'nowrap' }}>
+            <span className="match-title">
               🎯 Checkout Training
             </span>
-            <span style={{ fontSize: '0.78em', color: 'var(--text-dim)', background: 'rgba(255,255,255,0.06)', padding: '2px 8px', borderRadius: '6px', whiteSpace: 'nowrap' }}>
+            <span className="match-meta">
               Target {Math.min(activeP.attempts + 1, checkoutTargets)} / {checkoutTargets}
             </span>
           </div>
@@ -483,15 +483,15 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
                      </div>
                      
                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '5px', marginTop: '10px', width: '100%' }}>
-                       <div style={{ background: 'rgba(255,255,255,0.05)', padding: '5px', borderRadius: '4px' }}>
+                       <div className="mini-stat">
                          <div style={{ fontSize: '0.8em', color: '#888' }}>Target</div>
                          <div>{p.targetScore}</div>
                        </div>
-                       <div style={{ background: 'rgba(255,255,255,0.05)', padding: '5px', borderRadius: '4px' }}>
+                       <div className="mini-stat">
                          <div style={{ fontSize: '0.8em', color: '#888' }}>Erfolge</div>
                          <div>{p.roundsCompleted}/{p.attempts}</div>
                        </div>
-                       <div style={{ background: 'rgba(255,255,255,0.05)', padding: '5px', borderRadius: '4px' }}>
+                       <div className="mini-stat">
                          <div style={{ fontSize: '0.8em', color: '#888' }}>Runde</div>
                          <div>{Math.min(p.roundsOnCurrentTarget + 1, checkoutRounds)}/{checkoutRounds}</div>
                        </div>

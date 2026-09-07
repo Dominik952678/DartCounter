@@ -39,10 +39,10 @@ export const GameScreen: React.FC<GameScreenProps> = (props) => {
       {/* Top Match Header */}
       <div className="match-top-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden', minWidth: 0 }}>
-          <span style={{ fontWeight: 800, fontSize: '1.05em', color: 'var(--text)', whiteSpace: 'nowrap' }}>
+          <span className="match-title">
             🎯 {props.config.startScore} {props.config.outMode}
           </span>
-          <span style={{ fontSize: '0.78em', color: 'var(--text-dim)', background: 'rgba(255,255,255,0.06)', padding: '2px 8px', borderRadius: '6px', whiteSpace: 'nowrap' }}>
+          <span className="match-meta">
             Bis {props.config.legsToWin} Legs {props.config.setsToWin > 1 ? `· ${props.config.setsToWin} Sätze` : ''}
           </span>
         </div>

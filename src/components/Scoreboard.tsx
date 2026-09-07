@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { Player, GameConfig } from '../types';
 import { getCheckoutSuggestion, checkoutRange } from '../utils/checkouts';
+import { playerColorBySeat, teamColor } from '../utils/playerColors';
 
 interface ScoreboardProps {
   players: Player[];
@@ -10,6 +11,34 @@ interface ScoreboardProps {
   currentRoundDarts: import('../types').Dart[];
   celebration?: { type: string, playerIndex: number } | null;
 }
+
+interface TeamSideProps {
+  team: 1 | 2;
+  total: number;
+  justUnlocked: boolean;
+  /** Vorher zwei Zweige mit identischem Markup: `isBothBlocked` und `isTXBlocked`. */
+  blocked: boolean;
+}
+
+/** Eine Seite der 2v2-Leiste: Punkt, Name, Punktzahl und Sperrzustand. */
+const TeamSide: React.FC<TeamSideProps> = ({ team, total, justUnlocked, blocked }) => (
+  <div
+    className="team-bar-side"
+    style={{ '--player-color': teamColor(team) } as React.CSSProperties}
+  >
+    <span className="team-dot" />
+    <strong className="team-name">Team {team}:</strong>
+    <span className="team-total">{total} Pkt</span>
+    {justUnlocked ? (
+      <span className="lock-badge-bar unlocking" style={{ padding: '2px 8px', margin: 0 }}>
+        🔓 Entblockt!
+      </span>
+    ) : blocked ? (
+      <span className="lock-chip">🔒 Geblockt</span>
+    ) : null}
+  </div>
+);
+
 
 export const Scoreboard: React.FC<ScoreboardProps> = ({
   players,
@@ -79,87 +108,17 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', gap: '6px' }}>
       {is2v2 && (
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          background: 'rgba(15, 23, 42, 0.95)',
-          padding: '8px 12px',
-          borderRadius: '10px',
-          border: '1px solid rgba(255, 255, 255, 0.12)',
-          fontSize: '0.85rem',
-          flexWrap: 'wrap',
-          gap: '8px'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{
-              display: 'inline-block',
-              width: '10px',
-              height: '10px',
-              borderRadius: '50%',
-              background: 'var(--blue, #3B82F6)'
-            }} />
-            <strong style={{ color: 'var(--blue, #3B82F6)' }}>Team 1:</strong>
-            <span style={{ fontWeight: 800, color: '#fff' }}>{t1Total} Pkt</span>
-            {t1JustUnlocked ? (
-              <span className="lock-badge-bar unlocking" style={{ padding: '2px 8px', fontSize: '0.72rem', margin: 0 }}>
-                🔓 Entblockt!
-              </span>
-            ) : isBothBlocked ? (
-              <span style={{
-                fontSize: '0.72rem',
-                fontWeight: 800,
-                padding: '2px 6px',
-                borderRadius: '6px',
-                background: 'rgba(255, 30, 30, 0.25)',
-                color: '#ff4d4d',
-                border: '1px solid #ff3333',
-                boxShadow: '0 0 8px rgba(255, 30, 30, 0.35)'
-              }}>
-                🔒 Geblockt
-              </span>
-            ) : isT1Blocked ? (
-              <span style={{
-                fontSize: '0.72rem',
-                fontWeight: 800,
-                padding: '2px 6px',
-                borderRadius: '6px',
-                background: 'rgba(255, 30, 30, 0.25)',
-                color: '#ff4d4d',
-                border: '1px solid #ff3333',
-                boxShadow: '0 0 8px rgba(255, 30, 30, 0.35)'
-              }}>
-                🔒 Geblockt
-              </span>
-            ) : null}
-          </div>
+        <div className="team-bar">
+          <TeamSide
+            team={1}
+            total={t1Total}
+            justUnlocked={t1JustUnlocked}
+            blocked={isBothBlocked || isT1Blocked}
+          />
 
-          <div style={{
-            padding: '4px 12px',
-            borderRadius: '12px',
-            background: (t1JustUnlocked || t2JustUnlocked) 
-              ? 'linear-gradient(135deg, rgba(48, 209, 88, 0.35), rgba(52, 199, 89, 0.18))'
-              : isAnyBlocked 
-                ? 'linear-gradient(135deg, rgba(255, 30, 30, 0.28), rgba(180, 0, 0, 0.18))' 
-                : 'rgba(255, 255, 255, 0.05)',
-            border: (t1JustUnlocked || t2JustUnlocked)
-              ? '1px solid #30d158'
-              : isAnyBlocked 
-                ? '1px solid #ff3333' 
-                : '1px solid rgba(255, 255, 255, 0.1)',
-            color: (t1JustUnlocked || t2JustUnlocked) 
-              ? '#30d158' 
-              : isAnyBlocked 
-                ? '#ff4d4d' 
-                : 'var(--text-dim, #aaa)',
-            fontSize: '0.82rem',
-            fontWeight: 800,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            boxShadow: isAnyBlocked ? '0 0 16px rgba(255, 30, 30, 0.45)' : 'none',
-            textShadow: isAnyBlocked ? '0 0 8px rgba(255, 50, 50, 0.6)' : 'none'
-          }}>
+          <div className={`team-status ${
+            (t1JustUnlocked || t2JustUnlocked) ? 'is-unlocked' : isAnyBlocked ? 'is-blocked' : ''
+          }`}>
             {t1JustUnlocked ? (
               <span>🔓 Team 1 wurde entblockt!</span>
             ) : t2JustUnlocked ? (
@@ -173,48 +132,12 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
             )}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{
-              display: 'inline-block',
-              width: '10px',
-              height: '10px',
-              borderRadius: '50%',
-              background: 'var(--orange, #F97316)'
-            }} />
-            <strong style={{ color: 'var(--orange, #F97316)' }}>Team 2:</strong>
-            <span style={{ fontWeight: 800, color: '#fff' }}>{t2Total} Pkt</span>
-            {t2JustUnlocked ? (
-              <span className="lock-badge-bar unlocking" style={{ padding: '2px 8px', fontSize: '0.72rem', margin: 0 }}>
-                🔓 Entblockt!
-              </span>
-            ) : isBothBlocked ? (
-              <span style={{
-                fontSize: '0.72rem',
-                fontWeight: 800,
-                padding: '2px 6px',
-                borderRadius: '6px',
-                background: 'rgba(255, 30, 30, 0.25)',
-                color: '#ff4d4d',
-                border: '1px solid #ff3333',
-                boxShadow: '0 0 8px rgba(255, 30, 30, 0.35)'
-              }}>
-                🔒 Geblockt
-              </span>
-            ) : isT2Blocked ? (
-              <span style={{
-                fontSize: '0.72rem',
-                fontWeight: 800,
-                padding: '2px 6px',
-                borderRadius: '6px',
-                background: 'rgba(255, 30, 30, 0.25)',
-                color: '#ff4d4d',
-                border: '1px solid #ff3333',
-                boxShadow: '0 0 8px rgba(255, 30, 30, 0.35)'
-              }}>
-                🔒 Geblockt
-              </span>
-            ) : null}
-          </div>
+          <TeamSide
+            team={2}
+            total={t2Total}
+            justUnlocked={t2JustUnlocked}
+            blocked={isBothBlocked || isT2Blocked}
+          />
         </div>
       )}
 
@@ -244,7 +167,10 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
             ? ((p.checkoutSuccesses / p.checkoutAttempts) * 100).toFixed(0) 
             : "–";
 
-          const playerColor = p.color || (is2v2 ? (i % 2 === 0 ? 'var(--blue)' : 'var(--orange)') : 'var(--blue, #2196f3)');
+          // Eigene Farbe des Profils schlägt alles; sonst die Palette — in 2v2
+          // nach Team, sonst nach Sitzplatz.
+          const playerColor = p.color
+            || (is2v2 ? teamColor(i % 2 === 0 ? 1 : 2) : playerColorBySeat(i));
           const playerTeamNumber = p.team || (i % 2 === 0 ? 1 : 2);
 
           const partnerIdx = is2v2 ? (i + 2) % 4 : 0;
@@ -274,40 +200,19 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
                 borderLeftColor: isActive ? playerColor : undefined
               } as React.CSSProperties}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, overflow: 'hidden' }}>
-                  <span className="starter-dot" style={{ 
-                    backgroundColor: isStarter ? playerColor : 'transparent', 
-                    border: `2px solid ${playerColor}`, 
-                    width: '8px', 
-                    height: '8px', 
-                    borderRadius: '50%', 
-                    display: 'inline-block',
-                    flexShrink: 0,
-                    opacity: isStarter ? 1 : 0.2
-                  }}></span>
-                  <h3 className="player-name" style={{ margin: 0, fontSize: '0.95rem', color: isActive ? playerColor : 'inherit', fontWeight: isActive ? 800 : 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <div className="player-card-head">
+                <div className="player-card-ident">
+                  <span className={`starter-dot ${isStarter ? 'is-starter' : ''}`} />
+                  <h3
+                    className={`player-name ${isActive ? 'is-active' : ''}`}
+                    style={isActive ? { color: playerColor } : undefined}
+                  >
                     {p.isBot ? '🤖 ' : ''}{p.name}
                   </h3>
                 </div>
-                <div className="badge-container" style={{ display: 'flex', gap: '4px', flexShrink: 0, alignItems: 'center' }}>
+                <div className="badge-container">
                   {is2v2 && (
-                    <span className="badge" style={{ 
-                      background: isCardInvolvedInLock 
-                        ? 'rgba(239, 68, 68, 0.25)' 
-                        : (playerTeamNumber === 1 ? 'rgba(59, 130, 246, 0.25)' : 'rgba(249, 115, 22, 0.25)'), 
-                      color: isCardInvolvedInLock 
-                        ? '#ff4d4d' 
-                        : (playerTeamNumber === 1 ? 'var(--blue)' : 'var(--orange)'),
-                      border: `1px solid ${isCardInvolvedInLock ? '#ff3333' : (playerTeamNumber === 1 ? 'var(--blue)' : 'var(--orange)')}`,
-                      padding: '2px 6px', 
-                      borderRadius: '4px', 
-                      fontSize: '0.72rem', 
-                      fontWeight: 700,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '3px'
-                    }}>
+                    <span className={`badge-team ${isCardInvolvedInLock ? 'is-locked' : ''}`}>
                       {isMyTeamJustUnlocked ? (
                         <span>🔓</span>
                       ) : isCardInvolvedInLock ? (
@@ -317,9 +222,9 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
                     </span>
                   )}
                   {config.setsToWin > 1 && (
-                    <span className="badge" style={{ background: 'rgba(0,0,0,0.4)', padding: '2px 5px', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 600 }}>S: <strong style={{color: '#fff'}}>{p.sets}</strong></span>
+                    <span className="badge-count">S: <strong>{p.sets}</strong></span>
                   )}
-                  <span className="badge badge-legs" style={{ background: 'rgba(0,0,0,0.4)', padding: '2px 5px', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 600 }}>L: <strong style={{color: '#fff'}}>{p.legs}</strong></span>
+                  <span className="badge-count">L: <strong>{p.legs}</strong></span>
                 </div>
               </div>
 
@@ -356,7 +261,7 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
                 )}
               </div>
               
-              <div style={{ minHeight: '22px', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div className="checkout-slot">
                 {/* A frozen player still gets to see the finish, marked as blocked:
                     hiding it looked like there was none, and `.checkout-pill-frozen`
                     had been styled for this since the freeze rule was written. */}
@@ -368,7 +273,7 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
                     {isThisPlayerBlockedFromFinishing ? `❄️ ${checkoutSuggestion}` : checkoutSuggestion}
                   </div>
                 ) : (
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-dim, #888)' }}>
+                  <span className="player-darts-note">
                     {p.legDarts + (isActive ? currentRoundDarts.length : 0)} Darts im Leg
                   </span>
                 )}

@@ -297,17 +297,17 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
   return (
     <div className="screen active-screen game-screen-layout">
       {isOnline && !isMyTurn && (
-         <div style={{ position: 'absolute', top: 10, left: '50%', transform: 'translateX(-50%)', background: 'rgba(255,0,0,0.8)', padding: '5px 15px', borderRadius: '15px', color: 'white', zIndex: 10 }}>
+         <div className="bust-flash">
             Warte auf {activeP.name}...
          </div>
       )}
       <div style={{ opacity: (!isOnline || isMyTurn) ? 1 : 0.6, height: '100%', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
         <div className="match-top-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden', minWidth: 0 }}>
-            <span style={{ fontWeight: 800, fontSize: '1.05em', color: 'var(--text)', whiteSpace: 'nowrap' }}>
+            <span className="match-title">
               ➗ Split Score
             </span>
-            <span style={{ fontSize: '0.78em', color: 'var(--text-dim)', background: 'rgba(255,255,255,0.06)', padding: '2px 8px', borderRadius: '6px', whiteSpace: 'nowrap' }}>
+            <span className="match-meta">
               Ziel: {currentTarget?.label} ({currentRoundIndex + 1}/{TARGETS.length})
             </span>
           </div>
@@ -351,7 +351,7 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
                     {i === activePlayer ? getLiveScore() : p.score}
                   </div>
                   {i === activePlayer && (
-                     <div style={{ color: currentRoundDarts.length > 0 ? (getLiveScore() > p.score ? '#34c759' : '#ff3b30') : '#999', fontWeight: 'bold' }}>
+                     <div className={`round-delta ${currentRoundDarts.length === 0 ? 'is-idle' : getLiveScore() > p.score ? 'is-up' : 'is-down'}`}>
                        {currentRoundDarts.length === 3 && getLiveScore() === p.score ? 'Halbiert!' : 'Wurf…'}
                      </div>
                   )}
@@ -359,9 +359,9 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
               ))}
             </div>
             
-            <div style={{ textAlign: 'center', padding: '16px', background: '#1c1c1e', borderRadius: '12px', marginTop: '10px' }}>
+            <div className="training-score-panel">
                <div style={{ fontSize: '0.9em', color: '#999' }}>Aktuelles Ziel</div>
-               <div style={{ fontSize: '2.5em', fontWeight: 'bold', color: 'var(--blue)', margin: '4px 0' }}>
+               <div className="training-score-value">
                  {currentTarget?.label}
                </div>
                <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '10px' }}>
@@ -375,7 +375,7 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
                       alignItems: 'center', 
                       justifyContent: 'center',
                       background: currentRoundDarts[idx] ? '#333' : 'transparent',
-                      color: currentRoundDarts[idx]?.value > 0 ? '#34c759' : '#fff'
+                      color: currentRoundDarts[idx]?.value > 0 ? 'var(--text-success)' : 'var(--text-primary)'
                     }}>
                       {currentRoundDarts[idx] ? currentRoundDarts[idx].label : ''}
                     </div>
@@ -390,7 +390,7 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                   <button className="num-btn" onClick={() => handleDart(0, 1)} style={{ color: 'var(--red)', gridColumn: 'span 2' }}>Miss (0)</button>
                   <button className="num-btn" onClick={() => handleDart(currentTarget.val, 1)}>Single ({currentTarget.val})</button>
-                  <button className="num-btn" onClick={() => handleDart(currentTarget.val, 2)} style={{ color: 'var(--orange)' }}>Double ({currentTarget.val * 2})</button>
+                  <button className="num-btn" onClick={() => handleDart(currentTarget.val, 2)}>Double ({currentTarget.val * 2})</button>
                   <button className="num-btn" onClick={() => handleDart(currentTarget.val, 3)} style={{ color: 'var(--red)' }}>Triple ({currentTarget.val * 3})</button>
                 </div>
               )}
@@ -410,7 +410,7 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
                       key={num} 
                       className="num-btn" 
                       onClick={() => handleDart(num, currentTarget.val)}
-                      style={{ color: currentTarget.val === 2 ? 'var(--orange)' : 'var(--red)' }}
+
                     >
                       {num}
                     </button>
