@@ -1,12 +1,21 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useId, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { APP_VERSION, BUILD_TIME } from '../version';
 import { AppReloadPrompt } from './AppReloadPrompt';
+import { Button } from './ui';
+
+/** Die drei Trainings-Schnellstarts. §4 verlangt für sie mindestens 64pt. */
+const TRAINING_QUICKSTARTS = [
+  { mode: 'checkout', icon: '🎯', title: 'Checkout' },
+  { mode: 'powerscoring', icon: '🔥', title: 'Scoring' },
+  { mode: 'splitscore', icon: '➗', title: 'Split' }
+] as const;
 
 export const MainMenu: React.FC = () => {
   const [showReloadPrompt, setShowReloadPrompt] = useState(false);
   const navigate = useNavigate();
+  const trainingLabelId = useId();
   const { user, initialize, signOut } = useAuthStore();
 
   useEffect(() => {
@@ -41,103 +50,78 @@ export const MainMenu: React.FC = () => {
 
         {/* ── Command Center Body ── */}
         <div className="menu-middle-wrapper">
-          {/* 1. Hero CTA Button (Full width in Portrait / Col 1 in Landscape) */}
+          {/* 1. Die eine gefüllte Akzentfläche dieses Screens (§1). */}
           <button type="button" className="hero-cta-tile" onClick={() => navigate('/offline')}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', minWidth: 0 }}>
-              <div className="hero-cta-icon">
-                🎯
-              </div>
-              <div style={{ minWidth: 0, textAlign: 'left' }}>
-                <div className="hero-cta-title">
-                  {user ? 'NEUES SPIEL STARTEN' : 'SPIELEN ALS GAST'}
-                </div>
-                <div className="hero-cta-desc">
+            <span className="hero-cta-body">
+              <span className="hero-cta-icon" aria-hidden="true">🎯</span>
+              <span>
+                <span className="hero-cta-title">
+                  {user ? 'Neues Spiel starten' : 'Spielen als Gast'}
+                </span>
+                <span className="hero-cta-desc">
                   X01 · Sets/Legs · Training · Bots
-                </div>
-              </div>
-            </div>
-            <div className="hero-cta-arrow">
-              ➔
-            </div>
+                </span>
+              </span>
+            </span>
+            <span className="hero-cta-arrow" aria-hidden="true">➔</span>
           </button>
 
-          {/* 2. Secondary Grid (Col 2 in Landscape) */}
+          {/* 2. Kategorie steckt im Icon, nicht in der Fläche (§1). */}
           <div className="menu-secondary-grid">
-            {/* Online Multiplayer */}
             <button type="button" className="secondary-tile tile-online" onClick={handleOnlineClick}>
-              <div className="secondary-tile-top">
-                <div className="secondary-tile-icon" style={{ background: 'rgba(59, 130, 246, 0.15)' }}>
-                  🌍
-                </div>
-                <div className="secondary-tile-arrow" style={{ color: 'var(--blue)' }}>➔</div>
-              </div>
-              <div>
-                <div className="secondary-tile-title">Multiplayer</div>
-                <div className="secondary-tile-desc">Räume & Global</div>
-              </div>
+              <span className="secondary-tile-top">
+                <span className="secondary-tile-icon" aria-hidden="true">🌍</span>
+                <span className="secondary-tile-arrow" aria-hidden="true">➔</span>
+              </span>
+              <span>
+                <span className="secondary-tile-title">Multiplayer</span>
+                <span className="secondary-tile-desc">Räume & Global</span>
+              </span>
             </button>
 
-            {/* Stats or Auth */}
             {user ? (
               <button type="button" className="secondary-tile tile-stats" onClick={() => navigate('/stats')}>
-                <div className="secondary-tile-top">
-                  <div className="secondary-tile-icon" style={{ background: 'rgba(249, 115, 22, 0.15)' }}>
-                    📊
-                  </div>
-                  <div className="secondary-tile-arrow" style={{ color: 'var(--orange)' }}>➔</div>
-                </div>
-                <div>
-                  <div className="secondary-tile-title">Statistiken</div>
-                  <div className="secondary-tile-desc">Averages & Radar</div>
-                </div>
+                <span className="secondary-tile-top">
+                  <span className="secondary-tile-icon" aria-hidden="true">📊</span>
+                  <span className="secondary-tile-arrow" aria-hidden="true">➔</span>
+                </span>
+                <span>
+                  <span className="secondary-tile-title">Statistiken</span>
+                  <span className="secondary-tile-desc">Averages & Radar</span>
+                </span>
               </button>
             ) : (
               <button type="button" className="secondary-tile tile-auth" onClick={() => navigate('/auth')}>
-                <div className="secondary-tile-top">
-                  <div className="secondary-tile-icon" style={{ background: 'rgba(139, 92, 246, 0.15)' }}>
-                    🔑
-                  </div>
-                  <div className="secondary-tile-arrow" style={{ color: 'var(--purple)' }}>➔</div>
-                </div>
-                <div>
-                  <div className="secondary-tile-title">Account</div>
-                  <div className="secondary-tile-desc">Login & Cloud</div>
-                </div>
+                <span className="secondary-tile-top">
+                  <span className="secondary-tile-icon" aria-hidden="true">🔑</span>
+                  <span className="secondary-tile-arrow" aria-hidden="true">➔</span>
+                </span>
+                <span>
+                  <span className="secondary-tile-title">Account</span>
+                  <span className="secondary-tile-desc">Login & Cloud</span>
+                </span>
               </button>
             )}
           </div>
 
-          {/* 3. Training Quickstart (Col 3 in Landscape) */}
+          {/* 3. Schnellstart Training — die Kacheln, die §4 namentlich nennt. */}
           <div className="menu-training-col">
             <div className="menu-training-container">
-              <div className="training-section-label">
-                SCHNELLSTART TRAINING
-              </div>
-              <div className="training-chips-grid">
-                <button
-                  type="button"
-                  className="training-chip"
-                  onClick={() => navigate('/offline?tab=training&mode=checkout')}
-                >
-                  <span className="training-chip-icon">🎯</span>
-                  <span className="training-chip-title">Checkout</span>
-                </button>
-                <button
-                  type="button"
-                  className="training-chip"
-                  onClick={() => navigate('/offline?tab=training&mode=powerscoring')}
-                >
-                  <span className="training-chip-icon">🔥</span>
-                  <span className="training-chip-title">Scoring</span>
-                </button>
-                <button
-                  type="button"
-                  className="training-chip"
-                  onClick={() => navigate('/offline?tab=training&mode=splitscore')}
-                >
-                  <span className="training-chip-icon">➗</span>
-                  <span className="training-chip-title">Split</span>
-                </button>
+              <span className="training-section-label" id={trainingLabelId}>
+                Schnellstart Training
+              </span>
+              <div className="training-chips-grid" role="group" aria-labelledby={trainingLabelId}>
+                {TRAINING_QUICKSTARTS.map(({ mode, icon, title }) => (
+                  <button
+                    key={mode}
+                    type="button"
+                    className="training-chip"
+                    onClick={() => navigate(`/offline?tab=training&mode=${mode}`)}
+                  >
+                    <span className="training-chip-icon" aria-hidden="true">{icon}</span>
+                    <span className="training-chip-title">{title}</span>
+                  </button>
+                ))}
               </div>
             </div>
           </div>
@@ -146,67 +130,45 @@ export const MainMenu: React.FC = () => {
         {/* ── Docked User Status Bar & Version ── */}
         <div className="menu-footer-area">
           <div className="menu-status-bar">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, overflow: 'hidden' }}>
-              <span style={{ 
-                width: '7px', 
-                height: '7px', 
-                borderRadius: '50%', 
-                backgroundColor: user ? 'var(--primary)' : 'var(--text-muted)',
-                boxShadow: user ? '0 0 8px var(--primary-glow)' : 'none',
-                flexShrink: 0
-              }} />
+            <div className="menu-status-body">
+              <span className={`menu-status-dot ${user ? 'is-online' : ''}`} aria-hidden="true" />
               <span className="menu-status-text">
                 {user ? (
-                  <>Eingeloggt als <strong style={{ color: 'var(--primary)' }}>{user.user_metadata?.username || user.email}</strong></>
+                  <>Eingeloggt als <strong>{user.user_metadata?.username || user.email}</strong></>
                 ) : (
-                  <span style={{ color: 'var(--text-dim)' }}>Modus: <strong style={{ color: 'var(--text)' }}>Gast</strong></span>
+                  <>Modus: <strong>Gast</strong></>
                 )}
               </span>
             </div>
             {user ? (
-              <button 
+              // §5: „Abmelden" ist der Musterfall für Ghost/Destructive-Text.
+              <Button
+                variant="dangerText"
+                size="compact"
                 onClick={() => { signOut(); navigate('/'); }}
-                className="menu-status-btn"
-                style={{ background: 'transparent', border: 'none', color: 'var(--red)' }}
               >
                 Abmelden
-              </button>
+              </Button>
             ) : (
-              <button 
-                onClick={() => navigate('/auth')}
-                className="menu-status-btn"
-                style={{ background: 'rgba(59, 130, 246, 0.15)', border: '1px solid rgba(59, 130, 246, 0.3)', color: 'var(--blue)' }}
-              >
+              // Sekundär, nicht blau gefüllt — §1 lässt pro Screen genau eine
+              // Akzentfläche zu, und das ist der Hero-CTA.
+              <Button variant="secondary" size="compact" onClick={() => navigate('/auth')}>
                 Login
-              </button>
+              </Button>
             )}
           </div>
 
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="compact"
             className="menu-version"
-            style={{
-              padding: '2px 8px',
-              borderRadius: '8px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px',
-              fontSize: '0.68rem',
-              color: 'var(--text-muted)',
-              userSelect: 'none',
-              cursor: 'pointer',
-              background: 'transparent',
-              border: 'none',
-              minHeight: 'auto'
-            }}
             onClick={() => setShowReloadPrompt(true)}
             title="Klicken zum Neuladen / Cache leeren"
           >
             <span>{APP_VERSION}</span>
-            <span>•</span>
+            <span aria-hidden="true">•</span>
             <span>Build {BUILD_TIME}</span>
-          </button>
+          </Button>
         </div>
       </div>
 

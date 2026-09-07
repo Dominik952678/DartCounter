@@ -2778,6 +2778,12 @@ button:disabled, .btn:disabled {
 }
 
 /* ── Main Menu ─────────────────────────────── */
+/* Der Screen folgt allein der Breiten-Kette aus DESIGN.md §6. Die früheren
+   `orientation: landscape`-Regeln sind ersatzlos weg: sie gaben dem iPhone im
+   Querformat (874px) das Tablet-Layout und dem iPad 13" hochkant (1024px)
+   nicht, also genau verkehrt herum. Einzig der Live-Match-Screen behält eine
+   Querformat-Ausnahme, dort ist sie in §6 ausdrücklich vorgesehen. */
+
 .hero-glow-bg {
   position: absolute;
   top: -100px;
@@ -2785,13 +2791,13 @@ button:disabled, .btn:disabled {
   transform: translateX(-50%);
   width: min(500px, 90vw);
   height: 350px;
-  background: radial-gradient(circle, rgba(245, 158, 11, 0.1) 0%, rgba(59, 130, 246, 0.06) 50%, transparent 70%);
+  /* Nur noch ein Ton. Der zweite Farbstopp war Blau, und Blau hat seit §1
+     keine Rolle mehr. */
+  background: radial-gradient(circle, var(--bg-accent-muted) 0%, transparent 70%);
   pointer-events: none;
   z-index: 0;
 }
 
-/* The .shell-fill utility derives the exact height left between the safe
-   areas and the floating dock, so nothing slides under the nav. */
 .main-menu-screen {
   display: flex;
   flex-direction: column;
@@ -2801,21 +2807,21 @@ button:disabled, .btn:disabled {
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: min(520px, 100%);
+  max-width: 100%;
   flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  transition: all 0.2s ease;
-  gap: clamp(10px, 2vh, 20px);
+  gap: var(--space-4);
 }
 
+/* ── Wortmarke ──
+   Bewusst Versalien: §2 nimmt den Logo-Schriftzug von der Sentence-case-Regel
+   aus. Alles andere auf diesem Screen ist Sentence case. */
 .menu-header-area {
   flex-shrink: 0;
   width: 100%;
   text-align: center;
-  margin-top: clamp(2px, 0.8vh, 6px);
-  margin-bottom: clamp(2px, 0.6vh, 6px);
 }
 
 .menu-header-flex {
@@ -2829,133 +2835,156 @@ button:disabled, .btn:disabled {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: clamp(42px, 5.5vh, 56px);
-  height: clamp(42px, 5.5vh, 56px);
-  border-radius: clamp(12px, 1.8vh, 18px);
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(59, 130, 246, 0.15));
-  border: 1px solid rgba(245, 158, 11, 0.2);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-  margin-bottom: clamp(2px, 0.6vh, 8px);
-  font-size: clamp(1.3rem, 2.2vh, 1.8rem);
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+  border: 1px solid var(--card-border);
+  margin-bottom: var(--space-2);
+  font-size: 1.6rem;
 }
 
 .menu-header-title {
-  font-size: clamp(1.6rem, 2.8vh, 2.2rem);
-  font-weight: 900;
-  letter-spacing: -0.03em;
-  background: linear-gradient(135deg, var(--primary), #FBBF24);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  font-size: var(--text-display);
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.02em;
+  color: var(--accent-primary);
   margin: 0;
   line-height: 1.15;
 }
 
 .menu-header-subtitle {
-  color: var(--text-dim);
-  font-size: clamp(0.76em, 1.2vh, 0.88em);
-  margin-top: clamp(1px, 0.3vh, 3px);
-  font-weight: 500;
+  color: var(--text-secondary);
+  font-size: var(--text-body);
+  font-weight: var(--weight-regular);
+  margin-top: var(--space-1);
 }
 
 .menu-middle-wrapper {
   flex: 1;
-  min-height: 0;
+  /* Kein `min-height: 0` mehr: das gehörte zum früheren Querformat-Layout mit
+     fester Höhe und `overflow: hidden`. Ohne das würde der Inhalt hier
+     zusammengedrückt statt zu überlaufen — und überlaufen darf er, seit der
+     Screen nur noch der Breiten-Kette folgt. */
   width: 100%;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: clamp(8px, 1.4vh, 14px);
+  gap: var(--space-3);
 }
 
-/* ── 1. Hero CTA (Full width, dominant Amber gradient) ── */
+/* ── 1. Hero-CTA ──
+   Die eine gefüllte Akzentfläche dieses Screens (§1). Solide, kein Verlauf,
+   und der Text ist der dunkelste Ton derselben Farbfamilie statt Schwarz (§5). */
 .hero-cta-tile {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: clamp(14px, 2.2vh, 20px) clamp(16px, 2.2vw, 22px);
-  border-radius: var(--radius, 14px);
-  background: linear-gradient(135deg, var(--primary), #D97706);
-  color: #000;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-card);
+  background: var(--accent-primary);
+  color: var(--on-accent-primary);
+  border: none;
   cursor: pointer;
   transition: transform 0.15s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.2s ease;
   width: 100%;
+  /* §4: primäre Spielaktion, also mindestens 64pt statt der 44er Untergrenze. */
+  min-height: 72px;
   box-sizing: border-box;
+  text-align: left;
   animation: ctaPulse 3s infinite ease-in-out;
 }
 .hero-cta-tile:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(245, 158, 11, 0.5);
+  box-shadow: 0 8px 30px var(--primary-glow);
 }
-.hero-cta-tile:active {
-  transform: scale(0.98);
+.hero-cta-tile:active { transform: scale(0.98); }
+
+.hero-cta-body {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
 }
 
 .hero-cta-icon {
-  width: clamp(40px, 5.5vh, 48px);
-  height: clamp(40px, 5.5vh, 48px);
-  border-radius: 12px;
-  background: rgba(0, 0, 0, 0.15);
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-card);
+  /* Aus dem Kontrast-Token abgeleitet statt aus einem eigenen Schwarzwert —
+     so bleibt die Vertiefung an die Akzentfarbe gebunden (§5). */
+  background: color-mix(in srgb, var(--on-accent-primary) 14%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: clamp(1.4rem, 2.4vh, 1.8rem);
+  font-size: 1.6rem;
   flex-shrink: 0;
 }
 
 .hero-cta-title {
-  font-size: clamp(1.15em, 2vh, 1.35em);
-  font-weight: 900;
-  letter-spacing: -0.02em;
-  color: #000;
+  display: block;
+  font-size: var(--text-card-title);
+  font-weight: var(--weight-medium);
+  color: var(--on-accent-primary);
 }
 
 .hero-cta-desc {
-  font-size: clamp(0.76em, 1.2vh, 0.86em);
-  color: rgba(0, 0, 0, 0.7);
-  font-weight: 600;
+  display: block;
+  font-size: var(--text-body);
+  font-weight: var(--weight-regular);
+  /* Derselbe Ton wie der Titel, nur zurückgenommen — nicht rgba(0,0,0,…), das
+     wäre wieder Schwarz auf der Akzentfläche (§5). */
+  color: var(--on-accent-primary);
+  opacity: 0.75;
   margin-top: 2px;
 }
 
 .hero-cta-arrow {
-  font-size: clamp(1.3em, 2.2vh, 1.6em);
-  font-weight: 900;
-  color: #000;
+  font-size: var(--text-card-title);
+  color: var(--on-accent-primary);
   flex-shrink: 0;
 }
 
-/* ── 2. Secondary Grid (2-Column: Online & Stats/Auth) ── */
+/* ── 2. Sekundäre Kacheln ──
+   §1: alles außer der einen CTA ist --surface-card mit Icon-Akzent. Die
+   Kacheln tragen ihre Kategorie also im Icon, nicht in Fläche und Rand. */
 .menu-secondary-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: clamp(8px, 1.4vw, 12px);
+  gap: var(--space-3);
   width: 100%;
+  /* §3: Karten einer Reihe sind gleich hoch. */
+  align-items: stretch;
 }
 
 .secondary-tile {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  padding: clamp(12px, 1.8vh, 16px) clamp(12px, 1.8vw, 16px);
-  border-radius: var(--radius, 14px);
-  background: var(--card);
+  /* §3: kürzerer Inhalt wird zentriert, nicht der Container gestreckt.
+     Vorher stand hier space-between — das war das „Content-getriebene
+     Ungleichgewicht", das §3 an diesem Screen ausdrücklich benennt. */
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--card-padding);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
   border: 1px solid var(--card-border);
   cursor: pointer;
   transition: transform 0.15s ease, border-color 0.2s, box-shadow 0.2s;
-  color: var(--text);
+  color: var(--text-primary);
   box-sizing: border-box;
-  min-height: clamp(80px, 12vh, 105px);
+  min-height: 96px;
+  height: 100%;
   text-align: left;
   width: 100%;
 }
 
 .secondary-tile:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  border-color: var(--card-border-glow);
 }
-
-.secondary-tile:active {
-  transform: scale(0.98);
-}
+.secondary-tile:active { transform: scale(0.98); }
 
 .secondary-tile-top {
   display: flex;
@@ -2964,82 +2993,66 @@ button:disabled, .btn:disabled {
 }
 
 .secondary-tile-icon {
-  width: clamp(32px, 4.2vh, 38px);
-  height: clamp(32px, 4.2vh, 38px);
-  border-radius: 10px;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-card);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: clamp(1.2rem, 1.8vh, 1.5rem);
+  font-size: 1.3rem;
+  background: var(--surface-hover);
 }
 
 .secondary-tile-arrow {
-  font-size: 1.1em;
-  font-weight: 700;
+  font-size: var(--text-body-lg);
+  color: var(--text-secondary);
 }
 
 .secondary-tile-title {
-  font-size: clamp(0.92em, 1.5vh, 1.05em);
-  font-weight: 800;
-  color: var(--text);
-  margin-top: 6px;
+  display: block;
+  font-size: var(--text-body-lg);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
 }
 
 .secondary-tile-desc {
-  font-size: clamp(0.68em, 1.1vh, 0.76em);
-  color: var(--text-dim);
-  margin-top: 1px;
+  display: block;
+  font-size: var(--text-label);
+  color: var(--text-secondary);
+  margin-top: 2px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.tile-online {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(59, 130, 246, 0.02)), var(--card);
-  border-color: rgba(59, 130, 246, 0.35);
-}
-.tile-online:hover {
-  border-color: var(--blue);
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.2);
-}
+/* Kategorische Kennzeichnung nach §1 — ausschließlich am Icon.
+   `--accent-info` und `--accent-pro` sind dort mit genau diesen zwei
+   Beispielen belegt: Multiplayer-Icon und Statistik-Icon. */
+.tile-online .secondary-tile-icon,
+.tile-online .secondary-tile-arrow { color: var(--accent-info); }
+.tile-stats .secondary-tile-icon,
+.tile-stats .secondary-tile-arrow { color: var(--accent-pro); }
+/* Account hat in §1 keine kategorische Rolle und bleibt deshalb neutral —
+   lieber ohne Akzent als mit einem erfundenen. */
+.tile-auth .secondary-tile-icon,
+.tile-auth .secondary-tile-arrow { color: var(--text-secondary); }
 
-.tile-stats {
-  background: linear-gradient(135deg, rgba(249, 115, 22, 0.12), rgba(249, 115, 22, 0.02)), var(--card);
-  border-color: rgba(249, 115, 22, 0.35);
-}
-.tile-stats:hover {
-  border-color: var(--orange);
-  box-shadow: 0 6px 20px rgba(249, 115, 22, 0.2);
-}
-
-.tile-auth {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.12), rgba(139, 92, 246, 0.02)), var(--card);
-  border-color: rgba(139, 92, 246, 0.35);
-}
-.tile-auth:hover {
-  border-color: var(--purple);
-  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.2);
-}
-
-/* ── 3. Training Quickstart Chips (3-Column) ── */
-.menu-training-container {
-  width: 100%;
-}
+/* ── 3. Schnellstart Training ── */
+.menu-training-container { width: 100%; }
 
 .training-section-label {
-  font-size: clamp(0.74em, 1.2vh, 0.8em);
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  color: var(--text-dim);
-  margin-bottom: clamp(4px, 0.6vh, 6px);
-  font-weight: 700;
-  padding-left: 2px;
+  display: block;
+  font-size: var(--text-label);
+  color: var(--text-secondary);
+  font-weight: var(--weight-regular);
+  margin-bottom: var(--space-2);
 }
 
 .training-chips-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: clamp(6px, 1.2vw, 10px);
+  gap: var(--space-2);
+  align-items: stretch;
 }
 
 .training-chip {
@@ -3047,15 +3060,18 @@ button:disabled, .btn:disabled {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: clamp(3px, 0.6vh, 6px);
-  padding: clamp(12px, 1.8vh, 16px) clamp(6px, 1vw, 10px);
-  min-height: clamp(78px, 11vh, 100px);
-  background: var(--card);
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-2);
+  /* §4 nennt genau diese Kacheln als den konkreten Fehler: sie waren
+     Text+Icon-Pills um die 36px. Untergrenze ist hier 64pt, nicht 44. */
+  min-height: 72px;
+  height: 100%;
+  background: var(--surface-card);
   border: 1px solid var(--card-border);
-  border-radius: var(--radius, 14px);
+  border-radius: var(--radius-card);
   cursor: pointer;
-  transition: transform 0.15s ease, border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
-  color: var(--text);
+  transition: transform 0.15s ease, border-color 0.2s, background-color 0.2s;
+  color: var(--text-primary);
   box-sizing: border-box;
   text-align: center;
 }
@@ -3063,244 +3079,152 @@ button:disabled, .btn:disabled {
 .training-chip:hover {
   background: var(--surface-hover);
   transform: translateY(-2px);
-  border-color: var(--primary);
+  border-color: var(--card-border-glow);
 }
-
-.training-chip:active {
-  transform: scale(0.97);
-}
+.training-chip:active { transform: scale(0.97); }
 
 .training-chip-icon {
-  font-size: clamp(1.5rem, 2.6vh, 1.9rem);
+  font-size: 1.5rem;
   line-height: 1;
 }
 
 .training-chip-title {
-  font-weight: 800;
-  font-size: clamp(0.86em, 1.5vh, 1em);
-  letter-spacing: -0.01em;
+  font-size: var(--text-body);
+  font-weight: var(--weight-regular);
 }
 
-/* ── 4. User Status Bar (Docked bottom) ── */
+/* ── 4. Statusleiste ── */
 .menu-status-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: clamp(6px, 1vh, 8px) clamp(10px, 1.5vw, 14px);
-  background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-radius: var(--radius-sm, 10px);
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-card);
+  border-radius: var(--radius-card);
   border: 1px solid var(--card-border);
   width: 100%;
   box-sizing: border-box;
 }
 
+.menu-status-body {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.menu-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--text-secondary);
+}
+.menu-status-dot.is-online {
+  background: var(--accent-primary);
+  box-shadow: 0 0 8px var(--primary-glow);
+}
+
 .menu-status-text {
-  font-size: clamp(0.78em, 1.3vh, 0.85em);
-  color: var(--text);
+  font-size: var(--text-body);
+  color: var(--text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
-.menu-status-btn {
-  font-size: clamp(0.74em, 1.2vh, 0.8em);
-  font-weight: 700;
-  border-radius: 6px;
-  cursor: pointer;
-  padding: 2px 8px;
-  flex-shrink: 0;
-  transition: all 0.15s ease;
+.menu-status-text strong {
+  color: var(--text-primary);
+  font-weight: var(--weight-medium);
 }
 
 .menu-footer-area {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-2);
   width: 100%;
   align-items: center;
+  flex-shrink: 0;
 }
 
-/* Phone in landscape: ~400pt of height, so the chrome gets out of the way and
-   the three columns keep their content. */
-@media (orientation: landscape) and (max-height: 520px) {
-  .main-menu-card { gap: 6px !important; }
-  .menu-header-area { margin: 0 !important; }
-  .menu-header-icon { display: none !important; }
-  .menu-header-title { font-size: 1.2rem !important; }
-  .menu-header-subtitle { display: none !important; }
-  .hero-cta-icon { width: 38px !important; height: 38px !important; font-size: 1.3rem !important; }
-  .hero-cta-title { font-size: 1rem !important; }
-  .secondary-tile {
-    min-height: 0 !important;
-    padding: 8px 12px !important;
-    gap: 4px !important;
-  }
-  .secondary-tile-icon { width: 26px !important; height: 26px !important; font-size: 1rem !important; }
-  .secondary-tile-desc { display: none !important; }
-  .training-section-label { display: none !important; }
-  .training-chip { padding: 4px 12px !important; min-height: 0 !important; }
-  .menu-status-bar { padding: 4px 10px !important; }
-  .menu-version { display: none !important; }
+/* Der Ghost-Variant bringt einen Rahmen mit; für eine Versionszeile, die wie
+   Text aussehen soll, ist der zu viel. */
+.menu-version {
+  font-size: var(--text-label);
+  color: var(--text-secondary);
+  gap: var(--space-1);
+  border-color: transparent;
 }
 
-/* ── iPad in Portrait ── */
-@media (min-width: 768px) and (orientation: portrait) {
-  .main-menu-card {
-    max-width: 600px !important;
-    gap: 18px !important;
-  }
-  .hero-cta-tile {
-    padding: 22px 26px !important;
-  }
-  .secondary-tile {
-    min-height: 120px !important;
-    padding: 18px !important;
-  }
-}
-
-/* ── Landscape / Wide Mode (iPad & Desktop: 3-Column Layout) ── */
-@media (orientation: landscape) {
-  .main-menu-screen {
-    /* A hard height (not just min-height) is what lets the middle row shrink
-       on a phone in landscape, where ~400pt has to hold header, tiles and
-       status bar without anything sliding under the dock. */
-    height: calc(100dvh - var(--shell-pad-top) - var(--shell-pad-bottom));
-    min-height: 0;
-    overflow: hidden;
-    justify-content: center;
-    align-items: center;
-  }
-
-  .main-menu-card {
-    max-width: min(1080px, 94vw) !important;
-    gap: clamp(8px, 1.6vh, 14px) !important;
-  }
-
-  /* The tile stacks in landscape, where a trailing arrow on its own row reads
-     as a stray glyph rather than an affordance. */
-  .hero-cta-arrow {
-    display: none;
-  }
-
-  .menu-header-area {
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
-  }
+/* ── ≥900px: drei Spalten (§6) ──
+   Die Schwelle ist die Breite, nicht die Orientierung. Damit bekommt das
+   iPad Air 11" im Querformat (1180px) und das 13" hochkant (1024px) die drei
+   Spalten, und das iPhone im Querformat (874px) behält die gestapelte
+   Anordnung — vorher war beides genau andersherum. */
+@media (min-width: 900px) {
+  .main-menu-card { gap: var(--space-6); }
 
   .menu-header-flex {
-    display: inline-flex;
     flex-direction: row;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
+    gap: var(--space-3);
   }
-
-  .menu-header-icon {
-    width: 38px !important;
-    height: 38px !important;
-    font-size: 1.3rem !important;
-    margin-bottom: 0 !important;
-  }
-
-  .menu-header-title {
-    font-size: clamp(1.4rem, 3vh, 1.9rem) !important;
-  }
+  .menu-header-icon { margin-bottom: 0; }
 
   .menu-middle-wrapper {
-    display: grid !important;
-    grid-template-columns: 1.2fr 1fr 1fr !important;
-    gap: clamp(10px, 1.8vw, 18px) !important;
-    align-items: stretch !important;
-    /* Without a ceiling the three columns stretch to fill an iPad's full
-       height and the tiles turn into empty billboards. */
-    flex: 1 1 0 !important;
-    min-height: 0 !important;
-    overflow: hidden !important;
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1fr;
+    gap: var(--space-4);
+    align-items: stretch;
+    /* Hier darf gestaucht werden: die drei Spalten sollen die Höhe des
+       Screens teilen, nicht ihn sprengen. */
+    min-height: 0;
   }
 
-  .menu-header-area,
-  .menu-footer-area {
-    flex-shrink: 0 !important;
-  }
-
-  .main-menu-card {
-    min-height: 0 !important;
-  }
-
-  .secondary-tile {
-    justify-content: center !important;
-    gap: 10px !important;
-  }
-  .secondary-tile-title { margin-top: 0 !important; }
+  /* In der Spalte steht der Pfeil auf eigener Zeile und liest sich als
+     verirrtes Zeichen statt als Hinweis. */
+  .hero-cta-arrow { display: none; }
 
   .hero-cta-tile {
-    height: 100% !important;
-    flex-direction: column !important;
-    justify-content: center !important;
-    text-align: center !important;
-    padding: 16px !important;
-    gap: 8px !important;
+    height: 100%;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    gap: var(--space-3);
   }
-
-  .hero-cta-icon {
-    width: 52px !important;
-    height: 52px !important;
-    font-size: 2rem !important;
-  }
+  .hero-cta-body { flex-direction: column; text-align: center; }
+  .hero-cta-icon { width: 56px; height: 56px; font-size: 2rem; }
 
   .menu-secondary-grid {
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: space-between !important;
-    height: 100% !important;
-    gap: 10px !important;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    gap: var(--space-3);
   }
+  .secondary-tile { flex: 1; }
 
-  .secondary-tile {
-    flex: 1 !important;
-    min-height: 0 !important;
-  }
-
-  .menu-training-col {
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: space-between !important;
-    height: 100% !important;
-    gap: 8px !important;
-  }
-
+  .menu-training-col,
   .menu-training-container {
-    display: flex !important;
-    flex-direction: column !important;
-    height: 100% !important;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
   }
 
   .training-chips-grid {
-    display: flex !important;
-    flex-direction: column !important;
-    flex: 1 !important;
-    gap: clamp(8px, 1.6vh, 14px) !important;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: var(--space-3);
   }
 
+  /* Nebeneinander statt übereinander, wenn die Kachel breit und flach wird —
+     die 64pt aus §4 bleiben davon unberührt. */
   .training-chip {
-    flex: 1 !important;
-    flex-direction: row !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 14px !important;
-    padding: 8px 16px !important;
-    min-height: 0 !important;
+    flex: 1;
+    flex-direction: row;
+    gap: var(--space-3);
   }
-
-  .training-chip-icon {
-    font-size: clamp(1.6rem, 3vh, 2.1rem) !important;
-  }
-
-  .training-chip-title {
-    font-size: clamp(0.95em, 1.8vh, 1.15em) !important;
-  }
+  .training-chip-icon { font-size: 1.7rem; }
 }
 
 /* ── Results dialog stat cards & actions ─── */
