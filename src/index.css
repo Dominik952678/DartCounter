@@ -3141,3 +3141,32 @@ button:active, .btn:active {
     font-size: clamp(0.95em, 1.8vh, 1.15em) !important;
   }
 }
+
+/* ── Results dialog stat cards & actions ─── */
+/* The result dialog's stat tiles and its three action buttons used to
+   hardcode their own colors (#111827, rgba(15,23,42,...), a fixed green/
+   orange) instead of the theme tokens every other button already follows —
+   so the dialog every match ends on looked identical in all three themes. */
+.result-stat-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+}
+.result-btn-rematch {
+  padding: 15px 20px;
+  font-size: 1.08em;
+  gap: 8px;
+}
+.result-btn-undo {
+  background: color-mix(in srgb, var(--orange) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--orange) 40%, transparent);
+  color: var(--orange);
+  padding: 13px 12px;
+  font-size: 0.95em;
+  gap: 6px;
+}
+.result-btn-home {
+  padding: 13px 12px;
+  font-size: 0.95em;
+  gap: 6px;
+}

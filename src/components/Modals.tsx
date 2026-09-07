@@ -53,9 +53,9 @@ export const StatsModal: React.FC<{
                 : '–';
 
               return (
-                <div key={i} style={{ 
-                  background: isWinner ? 'rgba(245, 158, 11, 0.12)' : '#111827',
-                  border: `1.5px solid ${isWinner ? 'var(--green)' : 'rgba(255, 255, 255, 0.1)'}`,
+                <div key={i} style={{
+                  background: isWinner ? 'color-mix(in srgb, var(--primary) 12%, transparent)' : 'var(--bg-surface)',
+                  border: `1.5px solid ${isWinner ? 'var(--green)' : 'var(--card-border)'}`,
                   borderRadius: 'var(--radius, 12px)',
                   padding: '16px'
                 }}>
@@ -66,7 +66,7 @@ export const StatsModal: React.FC<{
                         {pData.name} {isWinner ? '👑' : ''}
                       </strong>
                     </div>
-                    <span style={{ fontSize: '1.1em', fontWeight: 800, background: '#111827', border: '1px solid rgba(148, 163, 184, 0.12)', padding: '4px 12px', borderRadius: '8px' }}>
+                    <span className="result-stat-card" style={{ fontSize: '1.1em', fontWeight: 800, padding: '4px 12px' }}>
                       {matchData.gameType && matchData.gameType !== 'standard'
                         ? (pData.score !== undefined ? `${pData.score} Pkt` : '')
                         : (pData.sets !== undefined ? `${pData.sets}S : ${pData.legs}L` : `${pData.legs} Legs`)}
@@ -75,7 +75,7 @@ export const StatsModal: React.FC<{
                   
                   {matchData.gameType && matchData.gameType !== 'standard' ? (
                     <div style={{ display: 'grid', gridTemplateColumns: matchData.gameType === 'checkoutTraining' ? '1fr 1fr 1fr' : '1fr', gap: '8px', marginBottom: '6px' }}>
-                      <div style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(148, 163, 184, 0.12)', padding: '12px 8px', borderRadius: '8px', textAlign: 'center' }}>
+                      <div className="result-stat-card" style={{ padding: '12px 8px', textAlign: 'center' }}>
                         <div style={{ fontSize: '0.75em', color: 'var(--text-dim)', marginBottom: '2px' }}>
                           {matchData.gameType === 'checkoutTraining' ? 'Bestes Checkout' : 'Punkte'}
                         </div>
@@ -83,11 +83,11 @@ export const StatsModal: React.FC<{
                       </div>
                       {matchData.gameType === 'checkoutTraining' && (
                         <>
-                          <div style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(148, 163, 184, 0.12)', padding: '12px 8px', borderRadius: '8px', textAlign: 'center' }}>
+                          <div className="result-stat-card" style={{ padding: '12px 8px', textAlign: 'center' }}>
                             <div style={{ fontSize: '0.75em', color: 'var(--text-dim)', marginBottom: '2px' }}>Versuche</div>
                             <div style={{ color: 'var(--orange)', fontWeight: 800, fontSize: '1.4em' }}>{pData.attempts || 0}</div>
                           </div>
-                          <div style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(148, 163, 184, 0.12)', padding: '12px 8px', borderRadius: '8px', textAlign: 'center' }}>
+                          <div className="result-stat-card" style={{ padding: '12px 8px', textAlign: 'center' }}>
                             <div style={{ fontSize: '0.75em', color: 'var(--text-dim)', marginBottom: '2px' }}>Darts</div>
                             <div style={{ color: 'var(--blue)', fontWeight: 800, fontSize: '1.4em' }}>{pData.dartsUsed || 0}</div>
                           </div>
@@ -98,16 +98,16 @@ export const StatsModal: React.FC<{
                     <>
                       {/* Primary Stats Grid */}
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '10px' }}>
-                        <div style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(148, 163, 184, 0.12)', padding: '10px 8px', borderRadius: '8px', textAlign: 'center' }}>
+                        <div className="result-stat-card" style={{ padding: '10px 8px', textAlign: 'center' }}>
                           <div style={{ fontSize: '0.75em', color: 'var(--text-dim)', marginBottom: '2px' }}>Average</div>
                           <div style={{ color: 'var(--green)', fontWeight: 800, fontSize: '1.1em' }}>{pData.avg}</div>
                         </div>
-                        <div style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(148, 163, 184, 0.12)', padding: '10px 8px', borderRadius: '8px', textAlign: 'center' }}>
-                          <div style={{ fontSize: '0.75em', color: 'var(--text-dim)', marginBottom: '2px' }}>First 9</div>
+                        <div className="result-stat-card" style={{ padding: '10px 8px', textAlign: 'center' }}>
+                          <div style={{ fontSize: '0.75em', color: 'var(--text-dim)', marginBottom: '2px' }}>Erste 9</div>
                           <div style={{ color: 'var(--orange)', fontWeight: 800, fontSize: '1.1em' }}>{pData.first9}</div>
                         </div>
-                        <div style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(148, 163, 184, 0.12)', padding: '10px 8px', borderRadius: '8px', textAlign: 'center' }}>
-                          <div style={{ fontSize: '0.75em', color: 'var(--text-dim)', marginBottom: '2px' }}>Best Leg</div>
+                        <div className="result-stat-card" style={{ padding: '10px 8px', textAlign: 'center' }}>
+                          <div style={{ fontSize: '0.75em', color: 'var(--text-dim)', marginBottom: '2px' }}>Bestes Leg</div>
                           <div style={{ color: 'var(--blue)', fontWeight: 800, fontSize: '1.1em' }}>
                             {pData.bestMatchLeg ? `${pData.bestMatchLeg} Darts` : '–'}
                           </div>
@@ -116,18 +116,18 @@ export const StatsModal: React.FC<{
 
                       {/* Secondary Quotas */}
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '10px' }}>
-                        <div style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(148, 163, 184, 0.12)', padding: '8px 10px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div className="result-stat-card" style={{ padding: '8px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span style={{ fontSize: '0.8em', color: 'var(--text-dim)' }}>Checkout-Quote:</span>
                           <strong style={{ color: 'var(--text)' }}>{coQuote}</strong>
                         </div>
-                        <div style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(148, 163, 184, 0.12)', padding: '8px 10px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div className="result-stat-card" style={{ padding: '8px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span style={{ fontSize: '0.8em', color: 'var(--text-dim)' }}>Triple-Quote:</span>
                           <strong style={{ color: 'var(--text)' }}>{tripleQuote}</strong>
                         </div>
                       </div>
 
                       {/* Highlights Grid */}
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(148, 163, 184, 0.12)', padding: '10px 6px', borderRadius: '8px', fontSize: '0.82em', textAlign: 'center' }}>
+                      <div className="result-stat-card" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', padding: '10px 6px', fontSize: '0.82em', textAlign: 'center' }}>
                         <div><span style={{ color: 'var(--text-dim)' }}>180:</span> <strong style={{ color: 'var(--orange)' }}>{pData.oneEighty || 0}</strong></div>
                         <div><span style={{ color: 'var(--text-dim)' }}>140+:</span> <strong>{pData.oneFortyPlus || 0}</strong></div>
                         <div><span style={{ color: 'var(--text-dim)' }}>100+:</span> <strong>{pData.hundredPlus || 0}</strong></div>
@@ -139,7 +139,7 @@ export const StatsModal: React.FC<{
                         <div style={{ marginTop: '10px', display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
                           <span style={{ fontSize: '0.75em', color: 'var(--text-dim)' }}>Legs:</span>
                           {pData.legHistory.map((avg, li) => (
-                            <span key={li} style={{ fontSize: '0.75em', background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(148, 163, 184, 0.12)', padding: '2px 6px', borderRadius: '4px' }}>
+                            <span key={li} className="result-stat-card" style={{ fontSize: '0.75em', padding: '2px 6px', borderRadius: '4px' }}>
                               L{li + 1}: Ø{avg}
                             </span>
                           ))}
@@ -162,26 +162,9 @@ export const StatsModal: React.FC<{
           {/* Action Buttons: Start Again, Undo last throw, Back to Menu */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '12px' }}>
             {onRematch && (
-              <button 
-                className="btn-success" 
-                onClick={onRematch} 
-                style={{ 
-                  width: '100%', 
-                  padding: '15px 20px', 
-                  fontSize: '1.08em', 
-                  borderRadius: 'var(--radius, 12px)', 
-                  border: 'none', 
-                  background: 'linear-gradient(135deg, var(--green, #00C851), #007E33)', 
-                  color: '#fff', 
-                  fontWeight: 800, 
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  boxShadow: '0 4px 15px rgba(0, 200, 81, 0.35)',
-                  transition: 'transform 0.1s ease'
-                }}
+              <button
+                className="btn-success result-btn-rematch"
+                onClick={onRematch}
               >
                 <span>🔄</span> <span>Nochmal spielen</span>
               </button>
@@ -189,47 +172,18 @@ export const StatsModal: React.FC<{
 
             <div style={{ display: 'grid', gridTemplateColumns: onUndoLastDart ? '1fr 1fr' : '1fr', gap: '10px' }}>
               {onUndoLastDart && (
-                <button 
-                  className="btn-secondary" 
-                  onClick={onUndoLastDart} 
-                  style={{ 
-                    padding: '13px 12px', 
-                    fontSize: '0.95em', 
-                    borderRadius: 'var(--radius, 10px)', 
-                    border: '1px solid rgba(249, 115, 22, 0.4)', 
-                    background: 'rgba(249, 115, 22, 0.14)', 
-                    color: 'var(--orange, #F97316)', 
-                    fontWeight: 700, 
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px',
-                    transition: 'all 0.15s ease'
-                  }}
+                <button
+                  className="result-btn-undo"
+                  onClick={onUndoLastDart}
                   title="Letzten Wurf rückgängig machen (falls verklickt)"
                 >
                   <span>↩</span> <span>Wurf zurücknehmen</span>
                 </button>
               )}
 
-              <button 
-                className="btn-ghost" 
-                onClick={onClose} 
-                style={{ 
-                  padding: '13px 12px', 
-                  fontSize: '0.95em', 
-                  borderRadius: 'var(--radius, 10px)', 
-                  border: '1px solid rgba(255, 255, 255, 0.14)', 
-                  background: 'rgba(255, 255, 255, 0.06)', 
-                  color: 'var(--text, #fff)', 
-                  fontWeight: 700, 
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px'
-                }}
+              <button
+                className="btn-ghost result-btn-home"
+                onClick={onClose}
               >
                 <span>🏠</span> <span>Zurück zum Menü</span>
               </button>
