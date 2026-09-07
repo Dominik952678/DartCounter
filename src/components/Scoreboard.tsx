@@ -228,7 +228,7 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
             50% { transform: scale(1.08); text-shadow: 0 0 16px var(--player-color, rgba(255,255,255,0.5)); }
             100% { transform: scale(1); }
           }
-          @keyframes fadeIn {
+          @keyframes scoreboardFadeInSlide {
             from { opacity: 0; transform: translateX(-6px); }
             to { opacity: 1; transform: translateX(0); }
           }
@@ -483,7 +483,7 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
             color: var(--text-dim, #777);
             margin-left: 8px;
             font-weight: 600;
-            animation: fadeIn 0.2s ease-out forwards;
+            animation: scoreboardFadeInSlide 0.2s ease-out forwards;
           }
         `}</style>
         

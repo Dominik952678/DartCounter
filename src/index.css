@@ -728,25 +728,6 @@ button:active, .btn:active {
   border-radius: var(--radius); 
   min-height: 54px;
 }
-.btn-close { 
-  background: var(--surface); 
-  width: 38px; 
-  height: 38px; 
-  border-radius: 50%; 
-  padding: 0; 
-  font-size: 1.1em; 
-  color: var(--text-dim); 
-  min-height: auto;
-}
-.btn-delete-profile { 
-  background: none; 
-  color: var(--red); 
-  width: 100%; 
-  margin-top: 24px; 
-  border: 1px solid var(--red-glow); 
-  font-size: 0.9em; 
-}
-
 /* ── App Header ────────────────────────── */
 .app-header { 
   text-align: center; 
@@ -768,30 +749,11 @@ button:active, .btn:active {
 }
 
 /* ── Scoreboard ────────────────────────── */
-.scoreboard { 
-  display: flex; 
-  flex-direction: column; 
-  gap: 10px; 
-  margin-bottom: 16px; 
-}
-.player {
-  background: rgba(22, 22, 26, 0.75);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius);
-  padding: 14px 18px;
-  opacity: 0.5;
-  transition: all 0.25s cubic-bezier(0.2, 0, 0, 1);
-  position: relative;
-}
-.player.active {
-  opacity: 1;
-  border-color: rgba(245, 158, 11, 0.5);
-  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  background: rgba(15, 23, 42, 0.95);
-}
-.player-name { 
+/* `.scoreboard`'s real layout rule lives further down (the orientation-aware
+   grid) — this block only still contributes `.player-name`'s type styles,
+   which real markup uses; `.scoreboard`/`.player`/`.player.active` above it
+   were an older flex-based layout no component renders any more. */
+.player-name {
   font-size: 1.1em; 
   font-weight: 700; 
   margin-bottom: 2px; 
@@ -1074,6 +1036,11 @@ button:active, .btn:active {
   box-shadow: var(--shadow-lg);
   color: var(--text);
 }
+.checkout-icon {
+  font-size: 3.5em;
+  line-height: 1;
+  margin-bottom: 4px;
+}
 
 /* ── Landscape & wide-desktop 2-column split screen ──
    Deliberately *not* `min-width: 960px` alone: a 13" iPad in portrait is 1024pt
@@ -1301,9 +1268,6 @@ button:active, .btn:active {
   .game-screen-layout {
     max-width: 1500px;
     padding: 20px 40px;
-  }
-  .game-screen-left .player .score {
-    font-size: 5.2em;
   }
   .game-screen-right {
     max-width: 540px;
@@ -1573,6 +1537,7 @@ button:active, .btn:active {
   width: 100%;
   padding: 14px;
   border-radius: 12px;
+  font-size: 0.9em;
   font-weight: 700;
   cursor: pointer;
   margin-top: 20px;
@@ -1647,15 +1612,7 @@ button:active, .btn:active {
     box-shadow: var(--shadow-md);
     padding: 6px 14px;
   }
-  .scoreboard { 
-    flex-direction: row; 
-    flex-wrap: wrap; 
-  }
-  .player { 
-    flex: 1; 
-    min-width: 260px; 
-  }
-  .score { 
+  .score {
     font-size: 3.6em; 
   }
   .modal-overlay { 
@@ -1702,6 +1659,7 @@ button:active, .btn:active {
   grid-template-columns: 1fr;
   gap: 8px;
   align-content: stretch;
+  margin-bottom: 16px;
 }
 .scoreboard[data-players="2"] { grid-template-columns: 1fr 1fr; }
 .scoreboard[data-players="3"] { grid-template-columns: repeat(3, 1fr); }
