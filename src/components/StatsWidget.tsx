@@ -4,6 +4,7 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, 
 import { DartboardHeatmap } from './DartboardHeatmap';
 import { countedSegmentHits, totalSegmentHits } from '../utils/segmentStats';
 import { Button, Card } from './ui';
+import { chartColor } from '../utils/chartColors';
 
 interface StatsWidgetProps {
   title: string;
@@ -199,14 +200,19 @@ export const StatsWidget: React.FC<StatsWidgetProps> = ({ title, mode, isOnline,
     };
   }, [matches, profileName, mode, isOnline, baseProfile]);
 
+  // §1 belegt --accent-info mit kategorischer Kennzeichnung und nennt das
+  // Multiplayer-Icon als Beispiel; Offline hat keine Kategorie und bleibt beim
+  // Akzent der App. Vorher war es Blau gegen Grün, also zwei rollenlose Farben.
+  const seriesColor = isOnline ? 'var(--accent-info)' : 'var(--accent-primary)';
+
   return (
-    <Card style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-       <h3 style={{ marginBottom: '15px', color: isOnline ? 'var(--blue)' : 'var(--green)' }}>{title}</h3>
+    <Card className="stats-widget">
+       <h3 className={`stats-widget-title ${isOnline ? 'is-online' : ''}`}>{title}</h3>
        
-       <div style={{ flex: 1 }}>
+       <div className="stats-widget-body">
          {matchesPlayed === 0 ? (
-           <div style={{ color: 'var(--text-dim)', padding: '30px 10px', textAlign: 'center', background: 'var(--surface)', borderRadius: '10px' }}>
-             <span style={{ fontSize: '2em', display: 'block', marginBottom: '8px' }}>🎯</span>
+           <div className="empty-state">
+             <span className="empty-state-icon" aria-hidden="true">🎯</span>
              Noch keine {isOnline ? 'Online' : 'Offline'}-Spiele in diesem Modus absolviert.
            </div>
          ) : (
@@ -262,12 +268,10 @@ export const StatsWidget: React.FC<StatsWidgetProps> = ({ title, mode, isOnline,
                   {chartData.length > 0 && (
                     <div style={{ marginTop: '20px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                        <span style={{ fontSize: '0.78em', color: 'var(--text-dim)', fontWeight: 600 }}>
+                        <span className="stat-label">
                           📈 {isMinigame ? 'Score-Entwicklung' : 'Average-Verlauf (3 Darts)'}
                         </span>
-                        <span style={{ fontSize: '0.72em', color: isOnline ? 'var(--blue)' : 'var(--green)' }}>
-                          Letzte Spiele
-                        </span>
+                        <span className="stat-label">Letzte Spiele</span>
                       </div>
                       <div style={{ height: '120px' }}>
                         <ResponsiveContainer width="100%" height="100%">
@@ -275,17 +279,18 @@ export const StatsWidget: React.FC<StatsWidgetProps> = ({ title, mode, isOnline,
                             <XAxis dataKey="name" hide />
                             <YAxis hide domain={['dataMin - 5', 'dataMax + 5']} />
                             <Tooltip 
-                              contentStyle={{ backgroundColor: '#111827', border: '1px solid rgba(148, 163, 184, 0.15)', borderRadius: '10px' }} 
-                              itemStyle={{ color: 'var(--text)' }}
+                              contentStyle={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--card-border)', borderRadius: 'var(--radius-card)' }}
+                              
+                              itemStyle={{ color: 'var(--text-primary)' }}
                               formatter={(value: unknown) => [value as React.ReactNode, isMinigame ? 'Punkte' : 'Average']}
                             />
                             <Line
                               type="monotone"
                               dataKey="val"
                               name={isMinigame ? "Punkte" : "Average"}
-                              stroke={isOnline ? "var(--blue)" : "var(--primary)"} 
-                              strokeWidth={2.5} 
-                              dot={{ fill: isOnline ? "var(--blue)" : "var(--primary)", r: 2.5, strokeWidth: 0 }} 
+                              stroke={seriesColor}
+                              strokeWidth={2.5}
+                              dot={{ fill: seriesColor, r: 2.5, strokeWidth: 0 }} 
                               activeDot={{ r: 5 }} 
                             />
                           </LineChart>
@@ -298,8 +303,8 @@ export const StatsWidget: React.FC<StatsWidgetProps> = ({ title, mode, isOnline,
                     <div style={{ marginTop: '20px', display: 'flex', gap: '16px', flexDirection: 'column' }}>
                       <h4 style={{ fontSize: '0.85em', color: 'var(--text-dim)', marginBottom: '0px', textAlign: 'center' }}>Segment-Verteilung</h4>
                       
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
-                          <div style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'var(--surface)', padding: '12px', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
+                      <div className="chart-row">
+                          <div className="chart-panel">
                             <div style={{ position: 'relative', width: '100%', height: '160px' }}>
                               <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
@@ -314,15 +319,14 @@ export const StatsWidget: React.FC<StatsWidgetProps> = ({ title, mode, isOnline,
                                     paddingAngle={3}
                                     stroke="none"
                                   >
-                                    {pieData.map((entry, index) => {
-                                       const colors = ['#F59E0B', '#3B82F6', '#10B981', '#F97316', '#8B5CF6', '#EF4444', '#06B6D4', '#EC4899', '#64748B'];
-                                       const fill = entry.name === 'Rest' ? '#475569' : colors[index % colors.length];
-                                       return <Cell key={`cell-${index}`} fill={fill} />;
-                                    })}
+                                    {pieData.map((entry, index) => (
+                                      <Cell key={`cell-${index}`} fill={chartColor(index, entry.name)} />
+                                    ))}
                                   </Pie>
                                   <Tooltip 
-                                    contentStyle={{ backgroundColor: '#111827', border: '1px solid rgba(148, 163, 184, 0.15)', borderRadius: '10px' }} 
-                                    itemStyle={{ color: 'var(--text)' }}
+                                    contentStyle={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--card-border)', borderRadius: 'var(--radius-card)' }}
+                              
+                                    itemStyle={{ color: 'var(--text-primary)' }}
                                     formatter={(value: unknown, name: unknown) => {
                                       const total = pieData.reduce((s, e) => s + e.value, 0);
                                       const pct = total > 0 ? ((Number(value) / total) * 100).toFixed(1) : '0';
@@ -332,12 +336,10 @@ export const StatsWidget: React.FC<StatsWidgetProps> = ({ title, mode, isOnline,
                                 </PieChart>
                               </ResponsiveContainer>
                               <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', pointerEvents: 'none' }}>
-                                <div style={{ fontSize: '1.1em', fontWeight: 800, color: 'var(--text)' }}>
+                                <div className="stat-value stat-value-sm">
                                   {pieData.reduce((s, e) => s + e.value, 0)}
                                 </div>
-                                <div style={{ fontSize: '0.65em', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                                  Hits
-                                </div>
+                                <div className="stat-label">Treffer</div>
                               </div>
                             </div>
 
@@ -346,27 +348,28 @@ export const StatsWidget: React.FC<StatsWidgetProps> = ({ title, mode, isOnline,
                               {pieData.map((entry, idx) => {
                                 const total = pieData.reduce((s, e) => s + e.value, 0);
                                 const pct = total > 0 ? Math.round((entry.value / total) * 100) : 0;
-                                const colors = ['#F59E0B', '#3B82F6', '#10B981', '#F97316', '#8B5CF6', '#EF4444', '#06B6D4', '#EC4899', '#64748B'];
-                                const color = entry.name === 'Rest' ? '#475569' : colors[idx % colors.length];
                                 return (
-                                  <div key={entry.name} style={{ display: 'flex', alignItems: 'center', gap: '5px', background: 'rgba(255,255,255,0.06)', padding: '3px 7px', borderRadius: '6px', fontSize: '0.78em' }}>
-                                    <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: color, display: 'inline-block' }} />
-                                    <span style={{ fontWeight: 600 }}>{entry.name}:</span>
-                                    <span style={{ color: 'var(--text-dim)' }}>{pct}%</span>
+                                  <div key={entry.name} className="chart-legend-item">
+                                    <span
+                                      className="chart-legend-dot"
+                                      style={{ backgroundColor: chartColor(idx, entry.name) }}
+                                    />
+                                    <span>{entry.name}:</span>
+                                    <span className="chart-legend-pct">{pct}%</span>
                                   </div>
                                 );
                               })}
                             </div>
                           </div>
 
-                          <div style={{ flex: '1 1 200px', display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'var(--surface)', padding: '12px', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
+                          <div className="chart-panel">
                             <div style={{ height: '200px', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                               <ResponsiveContainer width="100%" height="100%">
                                 <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
                                   <PolarGrid stroke="var(--card-border)" />
                                   <PolarAngleAxis dataKey="subject" tick={{ fill: 'var(--text-dim)', fontSize: 10 }} />
                                   <PolarRadiusAxis angle={30} domain={[0, maxRadarHits]} tick={false} axisLine={false} />
-                                  <Radar name="Hits" dataKey="hits" stroke={isOnline ? "var(--blue)" : "var(--green)"} fill={isOnline ? "var(--blue)" : "var(--green)"} fillOpacity={0.4} />
+                                  <Radar name="Hits" dataKey="hits" stroke={seriesColor} fill={seriesColor} fillOpacity={0.4} />
                                 </RadarChart>
                               </ResponsiveContainer>
                             </div>
@@ -385,10 +388,11 @@ export const StatsWidget: React.FC<StatsWidgetProps> = ({ title, mode, isOnline,
          )}
        </div>
 
-       {/* Der Zweig auf `isOnline` unterschied btn-primary von btn-success —
-           beides derselbe Amber-Verlauf, also nie ein sichtbarer Unterschied. */}
+       {/* Sekundär, nicht primär: die Offline- und die Online-Spalte tragen
+           denselben Button, und §1 lässt pro Screen nur eine gefüllte
+           Akzentfläche zu — zwei gleichrangige wären zwei zu viel. */}
        <Button
-         variant="primary"
+         variant="secondary"
          size="large"
          fullWidth
          onClick={onPlay}

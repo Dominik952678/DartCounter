@@ -52,6 +52,29 @@
   --player-3: #A9E95D;
   --player-4: #E95DA9;
 
+  /* ─────────────────────────────────────────────────────────────────────────
+     Diagrammfarben — zweite bewusste Erweiterung über §1 hinaus
+
+     Aus demselben Grund wie die Spielerpalette: eine Tortengrafik mit neun
+     Segmenten braucht neun unterscheidbare Töne, und §1 hat zwei kategorische
+     Rollen. Diese Farben stehen ausschließlich in Diagrammen und in deren
+     Legende; sie werden nie zur Fläche eines Bedienelements, und sie greifen
+     --accent-info und --accent-pro nicht an, die ihre eine Bedeutung behalten.
+
+     Reihenfolge ist Absicht: der erste Ton ist der Akzent der App, danach geht
+     es im Farbkreis weiter, damit benachbarte Segmente sich unterscheiden.
+     --chart-rest ist der Sammeleintrag für alles unter 5 %.
+     ───────────────────────────────────────────────────────────────────────── */
+  --chart-1: #F59E0B;
+  --chart-2: #5DCAA5;
+  --chart-3: #AFA9EC;
+  --chart-4: #E9A05D;
+  --chart-5: #5DA9E9;
+  --chart-6: #E95DA9;
+  --chart-7: #A9E95D;
+  --chart-8: #E9E15D;
+  --chart-rest: #64748B;
+
   /* Semantik — eng gefasst, siehe „NICHT verwenden für" in §1. */
   --text-success: #10B981;                   /* nur Erfolg, Sieg, positive Deltas */
   --text-danger: #EF4444;                    /* nur destruktiv, Hotspot-Segmente */

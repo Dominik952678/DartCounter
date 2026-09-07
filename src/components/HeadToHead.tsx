@@ -120,7 +120,7 @@ export const HeadToHead: React.FC<HeadToHeadProps> = ({ profileA, profileB, onCl
   ];
 
   return (
-    <div className="modal-overlay" onClick={onClose} style={styles.overlay}>
+    <div className="modal-overlay" onClick={onClose}>
       <div
         ref={dialogRef}
         className="modal-content"
@@ -129,14 +129,14 @@ export const HeadToHead: React.FC<HeadToHeadProps> = ({ profileA, profileB, onCl
         aria-labelledby={titleId}
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
-        style={styles.modal}
+        style={{ maxWidth: '450px' }}
       >
-        <div style={styles.header}>
-          <h2 id={titleId} style={{ margin: 0 }}>{profileA.name} ⚔️ {profileB.name}</h2>
+        <div className="h2h-header">
+          <h2 id={titleId}>{profileA.name} ⚔️ {profileB.name}</h2>
           <Button variant="ghost" className="btn-close" onClick={onClose} aria-label="Schließen">×</Button>
         </div>
         
-        <div style={styles.content}>
+        <div className="h2h-list">
           {stats.map((stat, i) => {
             const valA = stat.valA;
             const valB = stat.valB;
@@ -161,14 +161,12 @@ export const HeadToHead: React.FC<HeadToHeadProps> = ({ profileA, profileB, onCl
             }
 
             return (
-              <div key={stat.label} className="h2h-row" style={{ ...styles.row, backgroundColor: i % 2 === 0 ? 'var(--surface)' : 'transparent' }}>
-                <div className={`h2h-value ${aIsBetter ? 'h2h-winner' : ''}`} style={{ ...styles.value, color: aIsBetter ? 'var(--green)' : 'inherit' }}>
+              <div key={stat.label} className={`h2h-row ${i % 2 === 0 ? 'is-striped' : ''}`}>
+                <div className={`h2h-value ${aIsBetter ? 'h2h-winner' : ''}`}>
                   {stat.format(stat.valA)}
                 </div>
-                <div className="h2h-label" style={styles.label}>
-                  {stat.label}
-                </div>
-                <div className={`h2h-value ${bIsBetter ? 'h2h-winner' : ''}`} style={{ ...styles.value, color: bIsBetter ? 'var(--green)' : 'inherit' }}>
+                <div className="h2h-label">{stat.label}</div>
+                <div className={`h2h-value ${bIsBetter ? 'h2h-winner' : ''}`}>
                   {stat.format(stat.valB)}
                 </div>
               </div>
@@ -179,61 +177,4 @@ export const HeadToHead: React.FC<HeadToHeadProps> = ({ profileA, profileB, onCl
     </div>
   );
 };
-
-const styles = {
-  overlay: {
-    position: 'fixed' as const,
-    top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 'var(--z-overlay)',
-  },
-  modal: {
-    backgroundColor: 'var(--bg)',
-    color: 'var(--text)',
-    borderRadius: '12px',
-    width: '100%',
-    maxWidth: '450px',
-    padding: '20px',
-    maxHeight: '90vh',
-    overflowY: 'auto' as const,
-    boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '20px',
-    borderBottom: '1px solid var(--card-border)',
-    paddingBottom: '10px',
-  },
-  content: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '4px',
-  },
-  row: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: '10px',
-    borderRadius: '6px',
-  },
-  value: {
-    flex: 1,
-    textAlign: 'center' as const,
-    fontWeight: 'bold' as const,
-    fontSize: '16px',
-  },
-  label: {
-    flex: 2,
-    textAlign: 'center' as const,
-    fontSize: '14px',
-    color: 'var(--text-dim)',
-    fontWeight: 500,
-  },
-};
-
 export default HeadToHead;

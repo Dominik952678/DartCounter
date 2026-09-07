@@ -647,6 +647,17 @@ select:focus, input:focus {
   color: var(--text-primary);
   font-weight: var(--weight-medium);
 }
+/* Hinweis mit einer Aktion daneben. */
+.callout-action {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-4);
+}
+
+.stats-filter-bar { margin-bottom: var(--space-5); }
 
 /* ── Options-Schalter ──
    Ein An/Aus mit Erklärung. §5 gibt auch dafür den einen Selected-State vor;
@@ -1963,19 +1974,21 @@ button:disabled, .btn:disabled {
   border-color: rgba(255, 255, 255, 0.15);
   background: rgba(255, 255, 255, 0.06);
 }
+/* Das Stats-Karten-Muster aus §7 — kleines Label, große Zahl. Das Muster
+   bleibt, §2 gibt ihm die Werte: 12px, --text-secondary, Sentence case statt
+   uppercase, und Gewichte von 700/900 herunter auf 400/500. */
 .dash-stat-label {
-  font-size: 0.72em;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-dim);
-  font-weight: 700;
+  font-size: var(--text-label);
+  color: var(--text-secondary);
+  font-weight: var(--weight-regular);
 }
 .dash-stat-value {
   display: block;
-  font-size: 1.65em;
-  font-weight: 900;
-  margin: 4px 0 2px;
-  color: var(--text);
+  font-size: var(--text-screen-title);
+  font-weight: var(--weight-medium);
+  margin: var(--space-1) 0 2px;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
 }
 .dash-stat-detail {
   font-size: 0.78em;
@@ -2014,11 +2027,9 @@ button:disabled, .btn:disabled {
   border: 1px solid var(--card-border);
 }
 .curve-label {
-  font-size: 0.7em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  font-size: var(--text-label);
+  color: var(--text-secondary);
+  font-weight: var(--weight-regular);
 }
 .curve-value {
   font-size: 1.45em;
@@ -2943,6 +2954,126 @@ button:disabled, .btn:disabled {
   background: color-mix(in srgb, var(--text-danger) 25%, transparent);
   border-color: var(--text-danger);
   color: var(--text-danger);
+}
+
+/* ── Direktvergleich zweier Profile ──
+   Lag als `styles`-Objekt am Dateiende, inklusive eigenem Overlay, eigenem
+   12px-Radius und `fontWeight: 'bold'`. Der bessere Wert ist grün — das ist
+   ein positiver Vergleichswert und damit --text-success (§1). */
+.h2h-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+  border-bottom: 1px solid var(--card-border);
+  padding-bottom: var(--space-3);
+}
+.h2h-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.h2h-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-3);
+  border-radius: var(--radius-xs);
+}
+.h2h-row.is-striped { background: var(--surface-card); }
+.h2h-value {
+  flex: 1;
+  text-align: center;
+  font-weight: var(--weight-regular);
+  font-size: var(--text-body-lg);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.h2h-value.h2h-winner {
+  color: var(--text-success);
+  font-weight: var(--weight-medium);
+}
+.h2h-label {
+  flex: 2;
+  text-align: center;
+  font-size: var(--text-body);
+  color: var(--text-secondary);
+}
+
+/* ── Statistik-Screen (§6, 1200px-Stufe) ──
+   §6 zur breitesten Stufe: „Statistik-Screen kann Offline/Online-Stats echt
+   nebeneinander mit mehr Detail zeigen statt der aktuellen sehr leeren rechten
+   Spalte." Umgesetzt als Layout, nicht als neues Diagramm: die Kennzahlen
+   gehen von zwei auf drei Spalten, Torte und Radar rücken nebeneinander, und
+   beide Spalten stehen auf gleicher Höhe (§3). */
+.stats-columns {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-5);
+  align-items: stretch;
+}
+@media (min-width: 900px) {
+  .stats-columns { grid-template-columns: 1fr 1fr; }
+}
+
+.stats-widget {
+  display: flex;
+  flex-direction: column;
+  /* §3: Karten einer Reihe sind gleich hoch. */
+  height: 100%;
+  margin-bottom: 0;
+}
+.stats-widget-body { flex: 1; }
+
+/* Offline trägt den Akzent der App, Online die kategorische Kennzeichnung, die
+   §1 dem Multiplayer zuweist — vorher Grün gegen Blau, beides ohne Rolle. */
+.stats-widget-title {
+  margin-bottom: var(--space-4);
+  color: var(--accent-primary);
+}
+.stats-widget-title.is-online { color: var(--accent-info); }
+
+.chart-panel {
+  flex: 1 1 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--surface-card);
+  padding: var(--space-3);
+  border-radius: var(--radius-card);
+  border: 1px solid var(--card-border);
+}
+.chart-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.chart-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--surface-hover);
+  padding: 3px 7px;
+  border-radius: var(--radius-xs);
+  font-size: var(--text-label);
+  color: var(--text-primary);
+}
+.chart-legend-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.chart-legend-pct { color: var(--text-secondary); }
+
+/* Ab der breitesten Stufe passt das Kennzahlen-Raster dreispaltig, und die
+   beiden Diagramme stehen sicher nebeneinander statt umzubrechen. */
+@media (min-width: 1200px) {
+  .stats-widget .dash-stats-grid-6 { grid-template-columns: repeat(3, 1fr); }
+  .stats-widget .chart-row { flex-wrap: nowrap; }
 }
 
 /* ── Stats-Karten-Muster (§7) ──
