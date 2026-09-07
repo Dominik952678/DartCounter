@@ -7,7 +7,7 @@ import { DartboardHeatmap } from './DartboardHeatmap';
 import { ConfirmModal } from './ConfirmModal';
 import { Button } from './ui';
 import { chartColor } from '../utils/chartColors';
-import { DEFAULT_PLAYER_COLOR_HEX } from '../utils/playerColors';
+import { DEFAULT_PLAYER_COLOR_HEX, isHexColor } from '../utils/playerColors';
 
 interface ProfileDashboardProps {
   profileName: string;
@@ -243,7 +243,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                 value={selectedMode}
                 onChange={(e) => setSelectedMode(e.target.value)}
                 aria-label="Modus"
-                
+                className="select-compact"
               >
                 {availableModes.map((m: string) => (
                   <option key={m} value={m}>{m}</option>
@@ -311,7 +311,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
               <span style={{ fontSize: '0.9em', color: 'var(--text-dim)' }}>Spielerfarbe:</span>
               <input
                 type="color"
-                value={profile.color || DEFAULT_PLAYER_COLOR_HEX}
+                value={isHexColor(profile.color) ? profile.color : DEFAULT_PLAYER_COLOR_HEX}
                 onChange={(e) => onUpdateProfile(profileName, { color: e.target.value })}
                 aria-label="Spielerfarbe"
                 style={{ width: '32px', height: '32px', padding: '0', border: 'none', borderRadius: '50%', cursor: 'pointer', background: 'transparent' }}
@@ -330,7 +330,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                 value={compareWith}
                 onChange={(e) => setCompareWith(e.target.value)}
                 aria-label="Gegner für Head-to-Head-Vergleich"
-                
+                className="select-compact"
               >
                 <option value="">Wähle Gegner...</option>
                 {Object.keys(allProfiles).filter(p => p !== profileName).map(p => (
@@ -383,7 +383,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
               <div className="dash-stats-grid dash-stats-grid-4">
                 <div className="dash-stat-card">
                   <span className="dash-stat-label">180s</span>
-                  <span className="dash-stat-value accent-orange">{effectiveProfile?.oneEighty || 0}</span>
+                  <span className="dash-stat-value">{effectiveProfile?.oneEighty || 0}</span>
                 </div>
                 <div className="dash-stat-card">
                   <span className="dash-stat-label">Triple-Quote</span>

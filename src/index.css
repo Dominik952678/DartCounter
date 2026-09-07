@@ -301,7 +301,21 @@ h4 { font-size: var(--text-body); }
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: var(--space-3);
   margin-bottom: var(--space-4);
+}
+/* Icon plus Überschrift. Ohne diese Regel bräche das Emoji auf eine eigene
+   Zeile über den Titel, weil h2 ein Blockelement ist. */
+.card-header-heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.card-header-icon {
+  font-size: 1.3em;
+  line-height: 1;
+  flex-shrink: 0;
 }
 .card-badge { 
   background: var(--surface); 
@@ -2118,8 +2132,9 @@ button:disabled, .btn:disabled {
   padding: 6px 0;
 }
 
-/* .accent-orange ist entfallen: Orange hat seit §1 keine Rolle mehr, und die
-   Klasse wurde von keinem Markup mehr benutzt. */
+/* .accent-orange ist entfallen, weil Orange seit §1 keine Rolle mehr hat. Die
+   Klasse wurde dabei auch aus ProfileDashboard entfernt — die 180er-Zahl liest
+   sich jetzt wie jede andere Kennzahl. */
 .accent-green { color: var(--text-success) !important; }
 
 /* Der Dock in seiner letzten Ausbaustufe, bevor er zur Sidebar wird. Die obere
@@ -2384,6 +2399,16 @@ button:disabled, .btn:disabled {
 }
 .config-item { min-width: 0; }
 .config-item .section-label { margin-top: 0; }
+
+/* Select in einer engen Zeile — die globale select-Regel ist volle Breite mit
+   13px Padding und sprengt die Kopfzeile des Dashboards. */
+.select-compact {
+  width: auto;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-body);
+  min-height: 44px;
+}
 .room-code-card .section-label { margin-top: 0; }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -3006,29 +3031,26 @@ button:disabled, .btn:disabled {
   flex-direction: column;
   gap: var(--space-3);
 }
-/* Trennlinie mit Beschriftung. Das Label deckt die Linie mit der Kartenfarbe
-   ab, statt mit einem eigenen Hex — dadurch stimmt es auch, wenn sich der
-   Kartenhintergrund ändert. */
+/* Trennlinie mit Beschriftung. Bewusst OHNE Hintergrund-Maske hinter dem
+   Label: die Karte liegt auf --surface-card, einem durchscheinenden Weiß über
+   --bg-base, und deren Mischfarbe gibt es als Token gar nicht. Ein
+   deckendes --bg-base hätte einen dunklen Fleck auf der helleren Karte
+   hinterlassen — derselbe Fehler wie das #16161a davor, nur mit Variable.
+   Zwei wachsende Linien links und rechts brauchen keine Maske. */
 .auth-divider {
-  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
   margin: var(--space-2) 0;
-  text-align: center;
-}
-.auth-divider::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: var(--card-border);
-}
-.auth-divider span {
-  position: relative;
-  background: var(--bg-base);
-  padding: 0 var(--space-4);
   color: var(--text-secondary);
   font-size: var(--text-body);
+}
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--card-border);
 }
 
 /* ── Gast-Sync ──

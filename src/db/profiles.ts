@@ -2,12 +2,22 @@ import type { MatchHistory, Profile, PlayerStats } from '../types';
 import { supabase, PersistenceError } from './supabase';
 import { profilesCacheKey } from './localCache';
 import { getCachedMatches, isMatchWinner, saveMatch } from './matches';
+import { PLAYER_COLOR_HEX } from '../utils/playerColors';
 
+/**
+ * Neue Gastprofile bekommen Hex-Werte aus der Spielerpalette, keine
+ * `var(--…)`-Verweise.
+ *
+ * Der gespeicherte Wert landet unter anderem in einem `<input type="color">`,
+ * und das akzeptiert ausschließlich Hex — mit `var(--blue)` fiel das Feld
+ * stillschweigend auf Schwarz zurück. Bestehende Profile behalten ihre alten
+ * Werte; die Legacy-Tokens in tokens.css lösen sie weiterhin auf.
+ */
 export function getGuestDefaultProfiles(): Record<string, Profile> {
   return {
-    "Gast 1": { wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0, color: 'var(--blue)' },
-    "Gast 2": { wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0, color: 'var(--orange)' },
-    "Bot": { wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0, isBot: true, targetAverage: 45, color: 'var(--purple)' }
+    "Gast 1": { wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0, color: PLAYER_COLOR_HEX[0] },
+    "Gast 2": { wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0, color: PLAYER_COLOR_HEX[1] },
+    "Bot": { wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0, isBot: true, targetAverage: 45, color: PLAYER_COLOR_HEX[2] }
   };
 }
 
@@ -41,7 +51,7 @@ export function reconstructProfileFromMatches(
     segmentHits: { ...(baseProfile?.segmentHits || {}) },
     isBot: baseProfile?.isBot,
     targetAverage: baseProfile?.targetAverage,
-    color: baseProfile?.color || 'var(--blue)',
+    color: baseProfile?.color || PLAYER_COLOR_HEX[0],
     powerScoring: baseProfile?.powerScoring ? { ...baseProfile.powerScoring } : undefined,
     splitScore: baseProfile?.splitScore ? { ...baseProfile.splitScore } : undefined,
     checkoutTraining: baseProfile?.checkoutTraining ? { ...baseProfile.checkoutTraining } : undefined,
@@ -296,7 +306,7 @@ export async function getProfiles(
         // Document does not exist yet -> create initial profile with username
         const initialName = username || 'Spieler';
         let initialProfiles: Record<string, Profile> = {
-          [initialName]: { wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0, color: 'var(--blue)' }
+          [initialName]: { wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0, color: PLAYER_COLOR_HEX[0] }
         };
         if (localMatches.length > 0) {
           initialProfiles = reconstructAllProfilesFromMatches(initialProfiles, localMatches);
@@ -317,7 +327,7 @@ export async function getProfiles(
     if (Object.keys(fetchedProfiles).length === 0) {
       const initialName = username || 'Spieler';
       fetchedProfiles = {
-        [initialName]: { wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0, color: 'var(--blue)' }
+        [initialName]: { wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0, color: PLAYER_COLOR_HEX[0] }
       };
     }
 
@@ -345,7 +355,7 @@ export async function getProfiles(
     }
     const initialName = username || 'Spieler';
     let fallbackProfiles: Record<string, Profile> = {
-      [initialName]: { wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0, color: 'var(--blue)' }
+      [initialName]: { wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0, color: PLAYER_COLOR_HEX[0] }
     };
     if (localMatches.length > 0) {
       fallbackProfiles = reconstructAllProfilesFromMatches(fallbackProfiles, localMatches);

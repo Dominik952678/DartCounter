@@ -8,8 +8,6 @@ interface LegProgressChartProps {
   profiles: Record<string, Profile>;
 }
 
-/** The colours a player falls back to, in the order they were seated. */
-
 /**
  * How each player's average moved from leg to leg within one match.
  *

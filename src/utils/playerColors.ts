@@ -39,16 +39,24 @@ export const playerColorBySeat = (seat: number): string =>
 
 /**
  * Farbe nach Name, damit derselbe Spieler seinen Avatar behält, egal auf
- * welchem Platz er sitzt. Leere Namen bekommen den ersten Ton statt einer
- * Sonderbehandlung.
- */
-export const playerColorByName = (name: string): string => {
+ * welchem Platz er sitzt.
+ *
+ * Nimmt bewusst auch `undefined`: der Typ `MatchHistory.winner` ist zwar
+ * `string`, aber eingespielte Sicherungen werden nicht Feld für Feld geprüft
+ * (siehe parseBackup), und `parseWinningTeam` behandelt denselben Wert schon
+ * als optional. Ein fehlender Name darf die Match-Historie nicht abstürzen
+ * lassen — er bekommt den ersten Ton. */
+export const playerColorByName = (name: string | undefined): string => {
   let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  for (let i = 0; i < (name?.length ?? 0); i++) {
+    hash = name!.charCodeAt(i) + ((hash << 5) - hash);
   }
   return playerColorBySeat(Math.abs(hash));
 };
+
+/** Ob ein gespeicherter Farbwert von `<input type="color">` akzeptiert wird. */
+export const isHexColor = (value: string | undefined): value is string =>
+  typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value);
 
 /** In 2v2 tragen die beiden Teams die ersten zwei Töne der Palette. */
 export const teamColor = (team: 1 | 2): string => playerColorBySeat(team - 1);
