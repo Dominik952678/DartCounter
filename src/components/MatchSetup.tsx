@@ -4,6 +4,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { getActiveUserSyncInfo, removeLinkedGuestProfiles, saveProfiles, validateGuestSyncTokens } from '../db';
 import { reportPersistenceError } from '../store/useNotificationStore';
 import { readJson, remove as removeStored } from '../utils/storage';
+import { BullOffModal } from './matchSetup/BullOffModal';
 import { GameConfigPanel } from './matchSetup/GameConfigPanel';
 import { GuestSyncRedeemModal } from './GuestSyncRedeemModal';
 import { PlayerSelection } from './matchSetup/PlayerSelection';
@@ -14,7 +15,7 @@ import { toGameConfig, useMatchSetupConfig } from './matchSetup/useMatchSetupCon
 
 interface MatchSetupProps {
   profiles: Record<string, Profile>;
-  onStartGame: (players: string[], config: GameConfig) => void;
+  onStartGame: (players: string[], config: GameConfig, startingIndex?: number) => void;
   hasSavedGame?: boolean;
   onResumeGame?: () => void;
   onDiscardSavedGame?: () => void;
@@ -51,6 +52,7 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
   const [showOverwriteModal, setShowOverwriteModal] = useState(false);
   const [showGuestSyncModal, setShowGuestSyncModal] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [bullOffPlayers, setBullOffPlayers] = useState<string[] | null>(null);
 
   const discardSavedGame = () => {
     if (onDiscardSavedGame) onDiscardSavedGame();
@@ -58,19 +60,28 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
     setSavedMatch(null);
   };
 
-  const executeStartGame = () => {
-    let chosenPlayers = lineup.selectedPlayers.slice(0, config.playerCount);
+  const executeStartGame = (finalPlayers: string[], startingIndex = 0) => {
+    discardSavedGame();
+    onStartGame(finalPlayers, toGameConfig(config), startingIndex);
+  };
+
+  /** Resolves seat order (shuffle, if chosen), then either starts right away or runs a bull-off first. */
+  const proceedToStart = () => {
+    let finalPlayers = lineup.selectedPlayers.slice(0, config.playerCount);
     if (lineup.randomOrderOnStart) {
-      const shuffled = [...chosenPlayers];
+      const shuffled = [...finalPlayers];
       for (let i = shuffled.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
       }
-      chosenPlayers = shuffled;
+      finalPlayers = shuffled;
     }
 
-    discardSavedGame();
-    onStartGame(chosenPlayers, toGameConfig(config));
+    if (lineup.bullOffEnabled) {
+      setBullOffPlayers(finalPlayers);
+    } else {
+      executeStartGame(finalPlayers);
+    }
   };
 
   const handleStartGame = async () => {
@@ -153,7 +164,7 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
       return;
     }
 
-    executeStartGame();
+    proceedToStart();
   };
 
   /** Lists a freshly redeemed cloud guest and seats them in the first free slot. */
@@ -192,7 +203,11 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
         />
       )}
 
-      <div className="match-setup-grid">
+      {/* Bottom margin guarantees clearance for the sticky start button below —
+          without it, a short desktop two-column layout left too little page
+          height for the button's natural flow position, so it stuck early and
+          covered the last checkbox in this grid. */}
+      <div className="match-setup-grid" style={{ marginBottom: '76px' }}>
         <PlayerSelection
           profiles={profiles}
           isGuest={isGuest}
@@ -235,7 +250,7 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
           }}
           onOverwrite={() => {
             setShowOverwriteModal(false);
-            executeStartGame();
+            proceedToStart();
           }}
           onCancel={() => setShowOverwriteModal(false)}
         />
@@ -245,6 +260,19 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
         <GuestSyncRedeemModal
           onImported={addImportedGuest}
           onClose={() => setShowGuestSyncModal(false)}
+        />
+      )}
+
+      {bullOffPlayers && (
+        <BullOffModal
+          players={bullOffPlayers}
+          profiles={profiles}
+          onResolved={startingIndex => {
+            const players = bullOffPlayers;
+            setBullOffPlayers(null);
+            executeStartGame(players, startingIndex);
+          }}
+          onCancel={() => setBullOffPlayers(null)}
         />
       )}
     </div>

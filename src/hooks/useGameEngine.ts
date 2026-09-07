@@ -204,7 +204,7 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
     saveProfiles(next, userIdRef.current).catch(err => reportPersistenceError(err, 'Profile konnten nicht gespeichert werden'));
   }, [setProfiles]);
 
-  const startGame = useCallback((playerNames: string[], config: GameConfig) => {
+  const startGame = useCallback((playerNames: string[], config: GameConfig, startingIndex: number = 0) => {
     clearTimers();
 
     const hostLabel = `${config.startScore} ${config.outMode}`;
@@ -258,8 +258,8 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
 
     applyState({
       players: playerObjs,
-      activePlayer: 0,
-      startingPlayerOfLeg: 0,
+      activePlayer: startingIndex,
+      startingPlayerOfLeg: startingIndex,
       config,
       currentRoundDarts: [],
       currentMultiplier: 1,

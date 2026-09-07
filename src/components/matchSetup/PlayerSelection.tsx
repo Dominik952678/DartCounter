@@ -285,6 +285,41 @@ export const PlayerSelection: React.FC<PlayerSelectionProps> = ({
       )}
 
       <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {/* Mutually exclusive with "random order": both decide who starts leg 1,
+            so letting a user turn on both at once doesn't make sense. */}
+        <label style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          padding: '14px 16px',
+          background: lineup.bullOffEnabled ? 'rgba(10, 132, 255, 0.12)' : 'var(--surface)',
+          border: lineup.bullOffEnabled ? '1px solid var(--blue)' : '1px solid var(--card-border)',
+          borderRadius: 'var(--radius)',
+          cursor: 'pointer',
+          transition: 'all 0.2s',
+          userSelect: 'none'
+        }}>
+          <input
+            type="checkbox"
+            checked={lineup.bullOffEnabled}
+            onChange={e => {
+              lineup.setBullOffEnabled(e.target.checked);
+              if (e.target.checked) lineup.setRandomOrderOnStart(false);
+            }}
+            style={{ width: '20px', height: '20px', accentColor: 'var(--blue)', cursor: 'pointer' }}
+          />
+          <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+            <span style={{ fontWeight: 600, color: 'var(--text)', fontSize: '0.95em' }}>
+              🎯 Ausbullen
+            </span>
+            <span style={{ fontSize: '0.8em', color: 'var(--text-dim)' }}>
+              {lineup.bullOffEnabled
+                ? 'Aktiv: Wer den Bull am nächsten trifft, beginnt Leg 1'
+                : 'Inaktiv: Erster Spieler in der Reihenfolge beginnt'}
+            </span>
+          </div>
+        </label>
+
         <label style={{
           display: 'flex',
           alignItems: 'center',
@@ -300,7 +335,10 @@ export const PlayerSelection: React.FC<PlayerSelectionProps> = ({
           <input
             type="checkbox"
             checked={lineup.randomOrderOnStart}
-            onChange={e => lineup.setRandomOrderOnStart(e.target.checked)}
+            onChange={e => {
+              lineup.setRandomOrderOnStart(e.target.checked);
+              if (e.target.checked) lineup.setBullOffEnabled(false);
+            }}
             style={{ width: '20px', height: '20px', accentColor: 'var(--blue)', cursor: 'pointer' }}
           />
           <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>

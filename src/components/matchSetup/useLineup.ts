@@ -36,6 +36,8 @@ export interface Lineup {
   isShuffling: boolean;
   randomOrderOnStart: boolean;
   setRandomOrderOnStart: (value: boolean) => void;
+  bullOffEnabled: boolean;
+  setBullOffEnabled: (value: boolean) => void;
 }
 
 /**
@@ -56,6 +58,7 @@ export const useLineup = (
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [isShuffling, setIsShuffling] = useState(false);
   const [randomOrderOnStart, setRandomOrderOnStart] = useState(false);
+  const [bullOffEnabled, setBullOffEnabled] = useState(false);
   const shuffleIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => () => {
@@ -190,6 +193,8 @@ export const useLineup = (
     randomizeOrder,
     isShuffling,
     randomOrderOnStart,
-    setRandomOrderOnStart
+    setRandomOrderOnStart,
+    bullOffEnabled,
+    setBullOffEnabled
   };
 };
