@@ -30,6 +30,7 @@ import { reportPersistenceError, useNotificationStore, type NotificationType } f
 import { useProfiles } from './hooks/useProfiles';
 import { useGameEngine } from './hooks/useGameEngine';
 import { useAuthStore } from './store/useAuthStore';
+import { Button } from './components/ui';
 
 type MiniGameResult = {
   name: string;
@@ -66,7 +67,7 @@ const Toast = ({ type, title, message, onDismiss }: {
       <strong>{title}</strong>
       <span>{message}</span>
     </div>
-    <button className="btn-close" onClick={onDismiss} aria-label="Hinweis schließen">✕</button>
+    <Button variant="ghost" className="btn-close" onClick={onDismiss} aria-label="Hinweis schließen">✕</Button>
   </div>
 );
 

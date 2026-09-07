@@ -2,6 +2,7 @@ import React, { useEffect, useId, useState } from 'react';
 import type { Profile } from '../../types';
 import { useModalA11y } from '../../hooks/useModalA11y';
 import { throwAtTarget } from '../../utils/bot';
+import { Button } from '../ui';
 
 type BullResult = 0 | 25 | 50;
 
@@ -133,21 +134,21 @@ export const BullOffModal: React.FC<BullOffModalProps> = ({ players, profiles, o
 
         {currentIndex !== undefined && !isCurrentBot && (
           <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-            <button className="btn-primary" style={{ flex: 1 }} onClick={() => submitResult(currentIndex, 50)}>
+            <Button variant="primary" style={{ flex: 1 }} onClick={() => submitResult(currentIndex, 50)}>
               🎯 Bullseye
-            </button>
-            <button className="btn-primary" style={{ flex: 1 }} onClick={() => submitResult(currentIndex, 25)}>
+            </Button>
+            <Button variant="primary" style={{ flex: 1 }} onClick={() => submitResult(currentIndex, 25)}>
               🔴 Bull
-            </button>
-            <button className="btn-secondary" style={{ flex: 1 }} onClick={() => submitResult(currentIndex, 0)}>
+            </Button>
+            <Button variant="secondary" style={{ flex: 1 }} onClick={() => submitResult(currentIndex, 0)}>
               ⚪ Daneben
-            </button>
+            </Button>
           </div>
         )}
 
-        <button className="btn-secondary" style={{ width: '100%' }} onClick={onCancel}>
+        <Button variant="secondary" onClick={onCancel}>
           Abbrechen
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
+import { Button, Card } from './ui';
 
 type AuthMode = 'login' | 'signup' | 'reset';
 
@@ -77,7 +78,7 @@ export const AuthScreen: React.FC = () => {
         zIndex: 0
       }} />
 
-      <div className="card" style={{ maxWidth: '420px', width: '100%', padding: '36px 24px', position: 'relative', zIndex: 1, textAlign: 'center' }}>
+      <Card style={{ maxWidth: '420px', width: '100%', padding: '36px 24px', position: 'relative', zIndex: 1, textAlign: 'center' }}>
         <div style={{
           display: 'inline-flex',
           alignItems: 'center',
@@ -159,19 +160,18 @@ export const AuthScreen: React.FC = () => {
             </div>
           )}
 
-          <button type="submit" className="btn-primary btn-large" disabled={loading} style={{ marginTop: '8px' }}>
+          <Button type="submit" variant="primary" size="large" disabled={loading} style={{ marginTop: '8px' }}>
             {loading ? 'Lade…' : isReset ? 'Link anfordern' : isLogin ? 'Einloggen' : 'Kostenlos registrieren'}
-          </button>
+          </Button>
 
           {isLogin && (
-            <button
+            <Button
               type="button"
-              className="btn-ghost"
+              variant="ghost"
               onClick={() => switchTo('reset')}
-              style={{ fontSize: '0.85em', minHeight: 'auto', padding: '2px' }}
             >
               Passwort vergessen?
-            </button>
+            </Button>
           )}
         </form>
 
@@ -181,28 +181,28 @@ export const AuthScreen: React.FC = () => {
             <span style={{ position: 'relative', background: '#16161a', padding: '0 15px', color: 'var(--text-dim)', fontSize: '0.85em' }}>Oder</span>
           </div>
 
-          <button
+          <Button
             type="button"
-            className="btn-secondary"
+            variant="secondary"
             onClick={() => switchTo(isLogin ? 'signup' : 'login')}
           >
             {isLogin ? 'Jetzt neuen Account erstellen' : 'Bereits einen Account? Login'}
-          </button>
+          </Button>
           
-          <button 
-            type="button" 
-            className="btn-success btn-large" 
+          <Button
+            type="button"
+            variant="primary" size="large"
             onClick={() => navigate('/offline')}
-            style={{ fontSize: '1.05em', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
           >
             <span>🎯</span> Als Gast fortfahren
-          </button>
+          </Button>
 
-          <button type="button" className="btn-ghost" onClick={() => navigate('/')} style={{ marginTop: '4px' }}>
+          <Button type="button" variant="ghost" onClick={() => navigate('/')} style={{ marginTop: '4px' }}>
              Zurück zum Hauptmenü
-          </button>
+          </Button>
         </div>
-      </div>
+      </Card>
     </div>
   );
 };

@@ -16,6 +16,7 @@ import { LoadingScreen } from './LoadingScreen';
 import { readString } from '../utils/storage';
 import { recordMatchForSelf } from '../db';
 import { reportPersistenceError } from '../store/useNotificationStore';
+import { Button } from './ui';
 
 /**
  * The undo history is a deep clone of the whole game state per dart. Sending it
@@ -372,9 +373,9 @@ export const OnlineGameWrapper: React.FC = () => {
           ? 'Alle verbundenen Geräte erhalten gleich das Spielfeld.'
           : 'Dein Gerät synchronisiert sich mit dem Board des Hosts.'}
       >
-        <button className="btn-secondary" onClick={() => { leaveRoom(); navigate('/online'); }}>
+        <Button variant="secondary" onClick={() => { leaveRoom(); navigate('/online'); }}>
           Raum verlassen
-        </button>
+        </Button>
       </LoadingScreen>
     );
   }

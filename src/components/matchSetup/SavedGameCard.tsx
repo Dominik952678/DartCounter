@@ -1,6 +1,7 @@
 import React, { useId } from 'react';
 import type { GameConfig } from '../../types';
 import { useModalA11y } from '../../hooks/useModalA11y';
+import { Button } from '../ui';
 
 export interface SavedMatchSummary {
   players: { name: string; score: number; legs: number; sets: number; isBot?: boolean; team?: number }[];
@@ -82,49 +83,29 @@ export const SavedGameCard: React.FC<SavedGameCardProps> = ({ match, onResume, o
     </div>
 
     <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-      <button
-        className="btn-primary"
+      <Button
+        variant="primary"
         onClick={onResume}
-        style={{
-          flex: '1 1 160px',
-          fontWeight: 800,
-          padding: '11px 14px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '6px',
-          fontSize: '0.9rem'
-        }}
+        style={{ flex: '1 1 160px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
       >
         ▶️ Spiel fortsetzen
-      </button>
+      </Button>
 
-      <button
-        className="btn-secondary"
+      <Button
+        variant="secondary"
         onClick={onDiscard}
-        style={{
-          flex: '1 1 160px',
-          fontWeight: 700,
-          padding: '11px 14px',
-          borderColor: 'rgba(255, 69, 58, 0.45)',
-          color: '#ff453a',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '6px',
-          fontSize: '0.9rem'
-        }}
+        style={{ flex: '1 1 160px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
       >
         🗑️ Altes Spiel verwerfen
-      </button>
+      </Button>
 
-      <button
-        className="btn-secondary"
+      <Button
+        variant="secondary"
         onClick={onDismiss}
-        style={{ flex: '0 0 auto', fontWeight: 600, padding: '11px 14px', fontSize: '0.9rem' }}
+        style={{ flex: '0 0 auto' }}
       >
         Schließen
-      </button>
+      </Button>
     </div>
   </div>
 );
@@ -184,27 +165,24 @@ export const OverwriteSavedGameModal: React.FC<OverwriteSavedGameModalProps> = (
       </p>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        <button
-          className="btn-primary"
+        <Button
+          variant="primary"
           onClick={onResume}
-          style={{ padding: '13px', fontWeight: 800, fontSize: '0.95rem' }}
         >
           ▶️ Aktuelles Spiel fortsetzen
-        </button>
-        <button
-          className="btn-primary"
+        </Button>
+        <Button
+          variant="danger"
           onClick={onOverwrite}
-          style={{ background: 'linear-gradient(135deg, #ff3b30, #c70000)', borderColor: '#ff3b30', padding: '13px', fontWeight: 800, fontSize: '0.95rem' }}
         >
           🆕 Altes verwerfen & Neues Spiel starten
-        </button>
-        <button
-          className="btn-secondary"
+        </Button>
+        <Button
+          variant="secondary"
           onClick={onCancel}
-          style={{ padding: '11px', fontWeight: 600 }}
         >
           Abbrechen
-        </button>
+        </Button>
       </div>
     </div>
   </div>

@@ -1,5 +1,6 @@
 import React, { useId, useState } from 'react';
 import type { Profile } from '../../types';
+import { Button, Card, CardHeader } from '../ui';
 
 interface CreateProfileCardProps {
   profiles: Record<string, Profile>;
@@ -34,10 +35,8 @@ export const CreateProfileCard: React.FC<CreateProfileCardProps> = ({ profiles, 
   };
 
   return (
-    <div className="card">
-      <div className="card-header">
-        <h2>Neues Profil erstellen</h2>
-      </div>
+    <Card>
+      <CardHeader heading={"Neues Profil erstellen"} />
       <div style={{ display: 'flex', gap: '8px', marginBottom: error ? '6px' : '12px' }}>
         <label htmlFor={nameInputId} className="sr-only">Spielername</label>
         <input
@@ -51,7 +50,7 @@ export const CreateProfileCard: React.FC<CreateProfileCardProps> = ({ profiles, 
           }}
           onKeyDown={e => e.key === 'Enter' && handleCreate()}
         />
-        <button className="btn-primary" onClick={handleCreate} aria-label="Profil erstellen" style={{ padding: '0 20px' }}>+</button>
+        <Button variant="primary" onClick={handleCreate} aria-label="Profil erstellen">+</Button>
       </div>
 
       {error && (
@@ -82,6 +81,6 @@ export const CreateProfileCard: React.FC<CreateProfileCardProps> = ({ profiles, 
           />
         </div>
       )}
-    </div>
+    </Card>
   );
 };

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import type { Profile } from '../../types';
 import type { Lineup } from './useLineup';
+import { Button, Card, CardHeader, ChoiceGroup } from '../ui';
 
 interface PlayerSelectionProps {
   profiles: Record<string, Profile>;
@@ -47,32 +48,20 @@ export const PlayerSelection: React.FC<PlayerSelectionProps> = ({
   }, [errorMsg]);
 
   return (
-    <div className="card">
-      <div className="card-header">
-        <h2>Modus & Spieler</h2>
-      </div>
+    <Card>
+      <CardHeader heading="Modus & Spieler" />
 
-      <div style={{ marginBottom: '16px' }}>
-        <div className="segment-control" style={{ marginBottom: '10px' }}>
-          <label className={!is2v2 ? 'active' : ''}>
-            <input
-              type="radio"
-              name="matchMode2v2"
-              checked={!is2v2}
-              onChange={() => onModeChange(false)}
-            />
-            <span>👤 Einzel</span>
-          </label>
-          <label className={is2v2 ? 'active' : ''}>
-            <input
-              type="radio"
-              name="matchMode2v2"
-              checked={is2v2}
-              onChange={() => onModeChange(true)}
-            />
-            <span>👥 2v2 Doppel</span>
-          </label>
-        </div>
+      <div style={{ marginBottom: 'var(--space-4)' }}>
+        <ChoiceGroup
+          name="matchMode2v2"
+          value={is2v2 ? 'team' : 'single'}
+          options={[
+            { value: 'single', label: '👤 Einzel' },
+            { value: 'team', label: '👥 2v2 Doppel' }
+          ]}
+          onChange={value => onModeChange(value === 'team')}
+          ariaLabel="Spielmodus"
+        />
 
         {is2v2 ? (
           <div style={{
@@ -88,20 +77,13 @@ export const PlayerSelection: React.FC<PlayerSelectionProps> = ({
             ❄️ <strong>Freeze-Regel:</strong> Geworfen wird alternierend (T1 ➔ T2 ➔ T1 ➔ T2). Ein Team gewinnt bei 0 Rest nur, wenn die eigenen Teampunkte ≤ den Gegnerpunkten sind!
           </div>
         ) : (
-          <div className="segment-control" style={{ marginBottom: '15px' }}>
-            {[1, 2, 3, 4].map(count => (
-              <label key={count} className={playerCount === count ? 'active' : ''}>
-                <input
-                  type="radio"
-                  name="playerCount"
-                  value={count}
-                  checked={playerCount === count}
-                  onChange={() => onPlayerCountChange(count)}
-                />
-                <span>{count} Spieler</span>
-              </label>
-            ))}
-          </div>
+          <ChoiceGroup
+            name="playerCount"
+            value={playerCount}
+            options={[1, 2, 3, 4].map(count => ({ value: count, label: `${count} Spieler` }))}
+            onChange={onPlayerCountChange}
+            ariaLabel="Anzahl Spieler"
+          />
         )}
       </div>
 
@@ -251,14 +233,14 @@ export const PlayerSelection: React.FC<PlayerSelectionProps> = ({
 
       {!isGuest && (
         <div style={{ marginTop: '10px', display: 'flex', justifyContent: 'flex-end' }}>
-          <button
+          <Button
             type="button"
-            className="btn-secondary"
+            variant="secondary"
             onClick={onAddCloudGuest}
-            style={{ padding: '6px 12px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
           >
             ☁️ Cloud-Gast via Sync-Code hinzufügen
-          </button>
+          </Button>
         </div>
       )}
 
@@ -355,22 +337,20 @@ export const PlayerSelection: React.FC<PlayerSelectionProps> = ({
 
         {!lineup.randomOrderOnStart && (
           <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <button
-              className="btn-secondary"
+            <Button
+              variant="secondary"
+              size="compact"
               onClick={lineup.randomizeOrder}
               style={{
-                fontSize: '0.9em',
-                padding: '8px 16px',
-                minHeight: '40px',
-                transform: lineup.isShuffling ? 'scale(0.95)' : 'scale(1)',
-                transition: 'transform 0.1s'
+              transform: lineup.isShuffling ? 'scale(0.95)' : 'scale(1)',
+              transition: 'transform 0.1s'
               }}
             >
               🔀 Jetzt einmalig mischen
-            </button>
+            </Button>
           </div>
         )}
       </div>
-    </div>
+    </Card>
   );
 };

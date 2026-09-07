@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import type { GuestSync } from './useGuestSync';
 import { ConfirmModal } from '../ConfirmModal';
 import { useNotificationStore } from '../../store/useNotificationStore';
+import { Button, Card } from '../ui';
 
 interface GuestSyncCardProps {
   sync: GuestSync;
@@ -31,7 +32,7 @@ export const GuestSyncCard: React.FC<GuestSyncCardProps> = ({ sync }) => {
   const hasLiveCode = !!info?.code && new Date(info.expiresAt) > new Date();
 
   return (
-    <div className="card" style={{ marginTop: '20px' }}>
+    <Card style={{ marginTop: '20px' }}>
       <div className="card-header" style={{ marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '1.3em' }} aria-hidden="true">📱</span>
@@ -78,15 +79,14 @@ export const GuestSyncCard: React.FC<GuestSyncCardProps> = ({ sync }) => {
               Dein Profil wird gerade in einem {info.liveMatch.gameType || 'Standard'}-Spiel verwendet.
             </div>
           </div>
-          <button
+          <Button
             type="button"
-            className="btn-danger"
+            variant="dangerText"
             onClick={() => setConfirmAbort(true)}
             disabled={loading}
-            style={{ padding: '8px 16px', fontSize: '0.85rem', fontWeight: 800 }}
           >
             🛑 Match remote abbrechen & Trennen
-          </button>
+          </Button>
         </div>
       )}
 
@@ -145,15 +145,14 @@ export const GuestSyncCard: React.FC<GuestSyncCardProps> = ({ sync }) => {
             <p style={{ fontSize: '0.88rem', color: 'var(--text-dim)', marginBottom: '14px' }}>
               Gast-Sync ist aktuell deaktiviert. Dein Profil kann von keinem fremden Gerät verwendet werden.
             </p>
-            <button
+            <Button
               type="button"
-              className="btn-primary"
+              variant="primary"
               onClick={() => sync.setEnabled(true)}
               disabled={loading}
-              style={{ padding: '10px 22px', fontWeight: 800 }}
             >
               ⚡ Gast-Sync aktivieren
-            </button>
+            </Button>
           </div>
         ) : info && hasLiveCode ? (
           <div>
@@ -177,24 +176,22 @@ export const GuestSyncCard: React.FC<GuestSyncCardProps> = ({ sync }) => {
               </div>
 
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                <button
+                <Button
                   type="button"
-                  className="btn-primary"
+                  variant="primary"
                   onClick={handleCopyCode}
-                  style={{ padding: '8px 16px', fontSize: '0.85rem' }}
                 >
                   {copiedCode ? '✅ Kopiert!' : '📋 Code kopieren'}
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
-                  className="btn-secondary"
+                  variant="secondary"
                   onClick={sync.generateCode}
                   disabled={loading}
-                  style={{ padding: '8px 14px', fontSize: '0.85rem' }}
                   title="Generiert einen neuen Code und macht alte Codes ungültig, damit niemand mehr über sie auf dein Profil zugreifen kann"
                 >
                   🔄 Code erneuern
-                </button>
+                </Button>
               </div>
             </div>
 
@@ -204,15 +201,14 @@ export const GuestSyncCard: React.FC<GuestSyncCardProps> = ({ sync }) => {
                   Gekoppeltes Host-Gerät:
                 </span>
                 {host && (
-                  <button
+                  <Button
                     type="button"
-                    className="btn-danger"
+                    variant="dangerText"
                     onClick={() => sync.revokeHost()}
                     disabled={loading}
-                    style={{ padding: '3px 8px', fontSize: '0.74rem', minHeight: '26px' }}
                   >
                     ⛔ Entkoppeln
-                  </button>
+                  </Button>
                 )}
               </div>
 
@@ -233,15 +229,14 @@ export const GuestSyncCard: React.FC<GuestSyncCardProps> = ({ sync }) => {
                       (Gekoppelt {new Date(host.linkedAt).toLocaleDateString('de-DE')})
                     </span>
                   </div>
-                  <button
+                  <Button
                     type="button"
-                    className="btn-danger"
+                    variant="dangerText"
                     onClick={() => sync.revokeHost(host.hostId)}
                     disabled={loading}
-                    style={{ padding: '3px 10px', fontSize: '0.75rem', minHeight: '28px' }}
                   >
                     Trennen
-                  </button>
+                  </Button>
                 </div>
               ) : (
                 <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)' }}>
@@ -255,18 +250,17 @@ export const GuestSyncCard: React.FC<GuestSyncCardProps> = ({ sync }) => {
             <p style={{ fontSize: '0.88rem', color: 'var(--text-dim)', marginBottom: '12px' }}>
               Du hast aktuell keinen aktiven Sync-Code. Erstelle einen Code, um dein Profil auf dem Smartphone/iPad eines Freundes freizugeben.
             </p>
-            <button
+            <Button
               type="button"
-              className="btn-primary"
+              variant="primary"
               onClick={sync.generateCode}
               disabled={loading}
-              style={{ padding: '10px 20px', fontWeight: 800 }}
             >
               {loading ? 'Erzeuge Code…' : '⚡ 6-stelligen Sync-Code generieren'}
-            </button>
+            </Button>
           </div>
         )}
       </div>
-    </div>
+    </Card>
   );
 };

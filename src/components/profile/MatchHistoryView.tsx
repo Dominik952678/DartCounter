@@ -4,6 +4,7 @@ import { MatchImageExport } from '../MatchImageExport';
 import { LegProgressChart } from './LegProgressChart';
 import { hasLegProgress } from './legProgress';
 import { useNotificationStore } from '../../store/useNotificationStore';
+import { Button } from '../ui';
 
 interface MatchHistoryViewProps {
   matches: MatchHistory[];
@@ -60,9 +61,9 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
       <div className="hero-glow-bg-profile" />
 
       <div className="app-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', position: 'relative', zIndex: 1 }}>
-        <button className="btn-ghost" onClick={onBack} style={{ padding: '6px 14px', fontSize: '0.9em' }}>
+        <Button variant="ghost" onClick={onBack}>
           &larr; Zurück
-        </button>
+        </Button>
         <h2 style={{ margin: 0, fontSize: '1.5em' }}>📜 Match Historie</h2>
         <div style={{ width: '60px' }} />
       </div>
@@ -105,23 +106,21 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
 
               <div style={{ marginTop: '10px', textAlign: 'right', display: 'flex', justifyContent: 'flex-end', gap: '4px' }}>
                 {hasLegProgress(m) && (
-                  <button
-                    className="btn-ghost"
-                    style={{ fontSize: '0.85em', padding: '4px 8px' }}
+                  <Button
+                    variant="ghost"
                     aria-expanded={expandedMatch === i}
                     onClick={() => setExpandedMatch(expandedMatch === i ? null : i)}
                   >
                     {expandedMatch === i ? '📈 Verlauf ausblenden' : '📈 Leg-Verlauf'}
-                  </button>
+                  </Button>
                 )}
-                <button
-                  className="btn-ghost"
-                  style={{ fontSize: '0.85em', padding: '4px 8px' }}
+                <Button
+                  variant="ghost"
                   disabled={exportingMatch !== null}
                   onClick={() => setExportingMatch(i)}
                 >
                   {exportingMatch === i ? '⏳ Wird erstellt…' : '📸 Als Bild teilen'}
-                </button>
+                </Button>
                 {exportingMatch === i && (
                   <div style={{ position: 'absolute', left: '-15000px', top: 0 }}>
                     <MatchImageExport matchData={m} profiles={profiles} exportId={`export-node-${i}`} />
@@ -134,9 +133,9 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
 
         {hasMoreMatches && onLoadMoreMatches && (
           <div style={{ textAlign: 'center', marginTop: '16px' }}>
-            <button className="btn-ghost" onClick={onLoadMoreMatches}>
+            <Button variant="ghost" onClick={onLoadMoreMatches}>
               Mehr laden
-            </button>
+            </Button>
           </div>
         )}
       </div>

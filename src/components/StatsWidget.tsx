@@ -3,6 +3,7 @@ import type { MatchHistory, Profile } from '../types';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
 import { DartboardHeatmap } from './DartboardHeatmap';
 import { countedSegmentHits, totalSegmentHits } from '../utils/segmentStats';
+import { Button, Card } from './ui';
 
 interface StatsWidgetProps {
   title: string;
@@ -199,7 +200,7 @@ export const StatsWidget: React.FC<StatsWidgetProps> = ({ title, mode, isOnline,
   }, [matches, profileName, mode, isOnline, baseProfile]);
 
   return (
-    <div className="card" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+    <Card style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
        <h3 style={{ marginBottom: '15px', color: isOnline ? 'var(--blue)' : 'var(--green)' }}>{title}</h3>
        
        <div style={{ flex: 1 }}>
@@ -384,13 +385,17 @@ export const StatsWidget: React.FC<StatsWidgetProps> = ({ title, mode, isOnline,
          )}
        </div>
 
-       <button 
-         className={isOnline ? "btn-primary btn-large" : "btn-success btn-large"} 
+       {/* Der Zweig auf `isOnline` unterschied btn-primary von btn-success —
+           beides derselbe Amber-Verlauf, also nie ein sichtbarer Unterschied. */}
+       <Button
+         variant="primary"
+         size="large"
+         fullWidth
          onClick={onPlay}
-         style={{ marginTop: '20px', width: '100%' }}
+         style={{ marginTop: 'var(--space-5)' }}
        >
          {playLabel}
-       </button>
-    </div>
+       </Button>
+    </Card>
   );
 };

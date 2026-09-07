@@ -3,6 +3,7 @@ import { useModalA11y } from '../hooks/useModalA11y';
 import type { Player, MatchHistory } from '../types';
 import { DartboardHeatmap } from './DartboardHeatmap';
 import { checkoutQuote } from '../utils/stats';
+import { Button } from './ui';
 
 export const StatsModal: React.FC<{
   isOpen: boolean;
@@ -162,12 +163,12 @@ export const StatsModal: React.FC<{
           {/* Action Buttons: Start Again, Undo last throw, Back to Menu */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '12px' }}>
             {onRematch && (
-              <button
-                className="btn-success result-btn-rematch"
+              <Button
+                variant="primary" className="result-btn-rematch"
                 onClick={onRematch}
               >
                 <span>🔄</span> <span>Nochmal spielen</span>
-              </button>
+              </Button>
             )}
 
             <div style={{ display: 'grid', gridTemplateColumns: onUndoLastDart ? '1fr 1fr' : '1fr', gap: '10px' }}>
@@ -181,12 +182,12 @@ export const StatsModal: React.FC<{
                 </button>
               )}
 
-              <button
-                className="btn-ghost result-btn-home"
+              <Button
+                variant="ghost" className="result-btn-home"
                 onClick={onClose}
               >
                 <span>🏠</span> <span>Zurück zum Menü</span>
-              </button>
+              </Button>
             </div>
           </div>
         </div>

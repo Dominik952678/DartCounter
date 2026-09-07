@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { Profile } from '../../types';
 import { ConfirmModal } from '../ConfirmModal';
+import { Button, Card } from '../ui';
 
 interface ProfileListProps {
   profiles: Record<string, Profile>;
@@ -22,19 +23,18 @@ export const ProfileList: React.FC<ProfileListProps> = ({
   const [pendingDeletion, setPendingDeletion] = useState<string | null>(null);
 
   return (
-    <div className="card">
+    <Card>
       <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h2>Vorhandene Profile</h2>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <button
+          <Button
             type="button"
-            className="btn-primary"
+            variant="primary"
             onClick={onImportGuest}
-            style={{ padding: '4px 10px', fontSize: '0.8rem', minHeight: '32px' }}
             title="Gastspieler via Sync-Code importieren"
           >
             ☁️ Gast importieren
-          </button>
+          </Button>
           <span className="card-badge">{profileNames.length}</span>
         </div>
       </div>
@@ -119,9 +119,9 @@ export const ProfileList: React.FC<ProfileListProps> = ({
         </p>
       )}
 
-      <button className="btn-secondary" onClick={onShowHistory} style={{ marginTop: '16px', width: '100%' }}>
+      <Button variant="secondary" onClick={onShowHistory} style={{ marginTop: '16px' }}>
         📜 Match Historie ansehen
-      </button>
+      </Button>
 
       {pendingDeletion && (
         <ConfirmModal
@@ -137,6 +137,6 @@ export const ProfileList: React.FC<ProfileListProps> = ({
           onCancel={() => setPendingDeletion(null)}
         />
       )}
-    </div>
+    </Card>
   );
 };

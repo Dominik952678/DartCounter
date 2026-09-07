@@ -36,6 +36,7 @@
   /* Semantik — eng gefasst, siehe „NICHT verwenden für" in §1. */
   --text-success: #10B981;                   /* nur Erfolg, Sieg, positive Deltas */
   --text-danger: #EF4444;                    /* nur destruktiv, Hotspot-Segmente */
+  --text-danger-rgb: 239, 68, 68;
 
   /* Text */
   --text-primary: #F5F5F0;
@@ -46,6 +47,11 @@
      kein Gegenstück, weil §1 sie ausdrücklich auf Icon-/Text-Kennzeichnung
      begrenzt und nicht als Füllfläche vorsieht. */
   --on-accent-primary: #4A3A10;
+
+  /* Für die gefüllte Danger-Variante — die eine destruktive Fläche, die §5
+     nicht vorsieht: die Bestätigung im Dialog. Inline-Aktionen vom Typ
+     „Abmelden" bleiben Text auf transparent, wie in §5 beschrieben. */
+  --on-text-danger: #4A1010;
 
   /* ─────────────────────────────────────────────────────────────────────────
      2. Typografie (DESIGN.md §2)

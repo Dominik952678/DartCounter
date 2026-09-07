@@ -3,6 +3,7 @@ import type { RealtimeChannel } from '@supabase/supabase-js';
 import type { Profile, Dart } from '../types';
 import { playDartHitSound, playSciFiHitSound, speak, play180Sound, isSoundEnabled, setSoundEnabled } from '../utils/audio';
 import { ConfirmModal } from './ConfirmModal';
+import { Button } from './ui';
 
 interface SplitScoreProps {
   players: string[];
@@ -325,25 +326,14 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
               {soundOn ? '🔊' : '🔇'}
             </button>
 
-            <button 
-              className="btn-ghost" 
+            <Button
+              variant="dangerText"
+              size="compact"
               onClick={() => setShowAbortConfirm(true)}
-              style={{ 
-                fontSize: '0.85em', 
-                color: 'var(--red)', 
-                padding: '6px 12px', 
-                borderRadius: '8px', 
-                border: '1px solid rgba(255, 69, 58, 0.25)',
-                background: 'rgba(255, 69, 58, 0.08)',
-                minHeight: '36px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                cursor: 'pointer'
-              }}
+              style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}
             >
               ✕ <span className="btn-abort-text">Beenden</span>
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -433,9 +423,9 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
               )}
 
               <div style={{ marginTop: '15px' }}>
-                <button className="btn-secondary" onClick={undoSingleDart} disabled={(history.length === 0 && currentRoundDarts.length === 0) || isProcessing}>
+                <Button variant="secondary" onClick={undoSingleDart} disabled={(history.length === 0 && currentRoundDarts.length === 0) || isProcessing}>
                   ↩ Wurf zurücknehmen
-                </button>
+                </Button>
               </div>
             </div>
           </div>

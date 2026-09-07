@@ -4,6 +4,7 @@ import { saveMatch } from '../../db';
 import { useAuthStore } from '../../store/useAuthStore';
 import { reportPersistenceError } from '../../store/useNotificationStore';
 import { SAMPLE_MATCHES, SAMPLE_PROFILES, SAMPLE_PROFILE_KEYS } from '../../utils/sampleData';
+import { Button, Card } from '../ui';
 
 interface SampleDataCardProps {
   profiles: Record<string, Profile>;
@@ -45,7 +46,7 @@ export const SampleDataCard: React.FC<SampleDataCardProps> = ({ profiles, onUpda
   };
 
   return (
-    <div className="card" style={{ marginTop: '20px' }}>
+    <Card style={{ marginTop: '20px' }}>
       <div className="card-header" style={{ marginBottom: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '1.3em' }} aria-hidden="true">🧪</span>
@@ -73,26 +74,24 @@ export const SampleDataCard: React.FC<SampleDataCardProps> = ({ profiles, onUpda
       )}
 
       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-        <button
+        <Button
           type="button"
-          className="btn-primary"
+          variant="primary"
           onClick={handleLoad}
-          style={{ padding: '9px 16px', fontSize: '0.88rem', fontWeight: 700 }}
         >
           🧪 Testprofile & Demospiele laden
-        </button>
+        </Button>
 
         {hasSampleProfiles && (
-          <button
+          <Button
             type="button"
-            className="btn-secondary"
+            variant="dangerText"
             onClick={handleRemove}
-            style={{ padding: '9px 16px', fontSize: '0.88rem', borderColor: 'rgba(239, 68, 68, 0.4)', color: 'var(--red)' }}
           >
             🗑️ Testdaten wieder entfernen
-          </button>
+          </Button>
         )}
       </div>
-    </div>
+    </Card>
   );
 };

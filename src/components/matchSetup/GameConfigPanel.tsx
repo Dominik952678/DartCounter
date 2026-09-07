@@ -1,6 +1,7 @@
 import React, { useId } from 'react';
 import type { MatchSetupAction, MatchSetupConfig, OutMode } from './useMatchSetupConfig';
 import { MAX_LEGS, MAX_SETS, START_SCORES } from './useMatchSetupConfig';
+import { Card, CardHeader, ChoiceGroup } from '../ui';
 
 interface GameConfigPanelProps {
   config: MatchSetupConfig;
@@ -74,13 +75,14 @@ const DistanceStepper: React.FC<StepperProps> = ({ title, subtitle, value, max, 
 
 /** Distance, start score and out mode — everything except who is playing. */
 export const GameConfigPanel: React.FC<GameConfigPanelProps> = ({ config, dispatch }) => (
-  <div className="card">
-    <div className="card-header" style={{ marginBottom: '15px', borderBottom: '1px solid var(--card-border)', paddingBottom: '10px' }}>
-      <h2>Spieleinstellungen</h2>
-    </div>
+  <Card>
+    <CardHeader
+      heading="Spieleinstellungen"
+      style={{ borderBottom: '1px solid var(--card-border)', paddingBottom: 'var(--space-3)' }}
+    />
 
-    <div style={{ marginBottom: '25px' }}>
-      <h3 style={{ fontSize: '1.1em', marginBottom: '14px', color: 'var(--text)' }}>Distanz</h3>
+    <div style={{ marginBottom: 'var(--space-6)' }}>
+      <h3 className="field-label">Distanz</h3>
       <div className="distance-grid">
         <DistanceStepper
           title="Sets"
@@ -101,40 +103,26 @@ export const GameConfigPanel: React.FC<GameConfigPanelProps> = ({ config, dispat
       </div>
     </div>
 
-    <div style={{ marginBottom: '25px' }}>
-      <h3 style={{ fontSize: '1.1em', marginBottom: '15px', color: 'var(--text)' }}>Startpunktzahl</h3>
-      <div className="segment-control">
-        {START_SCORES.map(score => (
-          <label key={score} className={config.startScore === score ? 'active' : ''}>
-            <input
-              type="radio"
-              name="startScore"
-              value={score}
-              checked={config.startScore === score}
-              onChange={() => dispatch({ type: 'startScore', value: score })}
-            />
-            <span>{score}</span>
-          </label>
-        ))}
-      </div>
+    <div style={{ marginBottom: 'var(--space-6)' }}>
+      <h3 className="field-label">Startpunktzahl</h3>
+      <ChoiceGroup
+        name="startScore"
+        value={config.startScore}
+        options={START_SCORES.map(score => ({ value: score, label: score }))}
+        onChange={value => dispatch({ type: 'startScore', value })}
+        ariaLabel="Startpunktzahl"
+      />
     </div>
 
     <div>
-      <h3 style={{ fontSize: '1.1em', marginBottom: '15px', color: 'var(--text)' }}>Out-Modus</h3>
-      <div className="segment-control">
-        {OUT_MODE_LABELS.map(([value, label]) => (
-          <label key={value} className={config.outMode === value ? 'active' : ''}>
-            <input
-              type="radio"
-              name="outMode"
-              value={value}
-              checked={config.outMode === value}
-              onChange={() => dispatch({ type: 'outMode', value })}
-            />
-            <span>{label}</span>
-          </label>
-        ))}
-      </div>
+      <h3 className="field-label">Out-Modus</h3>
+      <ChoiceGroup
+        name="outMode"
+        value={config.outMode}
+        options={OUT_MODE_LABELS.map(([value, label]) => ({ value, label }))}
+        onChange={value => dispatch({ type: 'outMode', value })}
+        ariaLabel="Out-Modus"
+      />
     </div>
-  </div>
+  </Card>
 );

@@ -1,6 +1,7 @@
 import React, { useId } from 'react';
 import type { Profile } from '../types';
 import { useModalA11y } from '../hooks/useModalA11y';
+import { Button } from './ui';
 
 interface HeadToHeadProps {
   profileA: { name: string; profile: Profile };
@@ -132,7 +133,7 @@ export const HeadToHead: React.FC<HeadToHeadProps> = ({ profileA, profileB, onCl
       >
         <div style={styles.header}>
           <h2 id={titleId} style={{ margin: 0 }}>{profileA.name} ⚔️ {profileB.name}</h2>
-          <button className="btn-close" onClick={onClose} aria-label="Schließen" style={styles.closeBtn}>×</button>
+          <Button variant="ghost" className="btn-close" onClick={onClose} aria-label="Schließen">×</Button>
         </div>
         
         <div style={styles.content}>
@@ -207,15 +208,6 @@ const styles = {
     marginBottom: '20px',
     borderBottom: '1px solid var(--card-border)',
     paddingBottom: '10px',
-  },
-  closeBtn: {
-    background: 'none',
-    border: 'none',
-    fontSize: '28px',
-    lineHeight: '1',
-    cursor: 'pointer',
-    color: 'inherit',
-    padding: '0 5px',
   },
   content: {
     display: 'flex',

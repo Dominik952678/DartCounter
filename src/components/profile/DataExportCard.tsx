@@ -12,6 +12,7 @@ import {
   parseBackup,
   type BackupFile
 } from './dataBackup';
+import { Button, Card } from '../ui';
 
 interface DataExportCardProps {
   profiles: Record<string, Profile>;
@@ -123,7 +124,7 @@ export const DataExportCard: React.FC<DataExportCardProps> = ({
   const previewMatches = preview ? newMatchesFrom(preview, known).length : 0;
 
   return (
-    <div className="card" style={{ marginTop: '20px' }}>
+    <Card style={{ marginTop: '20px' }}>
       <div className="card-header" style={{ marginBottom: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontSize: '1.3em' }} aria-hidden="true">💾</span>
@@ -183,47 +184,45 @@ export const DataExportCard: React.FC<DataExportCardProps> = ({
           </div>
 
           <div style={{ display: 'flex', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
-            <button
-              className="btn-primary"
+            <Button
+              variant="primary"
               disabled={busy}
               onClick={() => setPending({ backup: preview, mode: 'merge' })}
-              style={{ flex: '1 1 150px', padding: '10px' }}
+              style={{ flex: '1 1 150px' }}
             >
               ➕ Zusammenführen
-            </button>
-            <button
-              className="btn-secondary"
+            </Button>
+            <Button
+              variant="dangerText"
               disabled={busy}
               onClick={() => setPending({ backup: preview, mode: 'replace' })}
-              style={{ flex: '1 1 150px', padding: '10px', borderColor: 'rgba(239, 68, 68, 0.4)', color: 'var(--red)' }}
+              style={{ flex: '1 1 150px' }}
             >
               ♻️ Profile ersetzen
-            </button>
-            <button className="btn-ghost" disabled={busy} onClick={() => setPreview(null)}>
+            </Button>
+            <Button variant="ghost" disabled={busy} onClick={() => setPreview(null)}>
               Abbrechen
-            </button>
+            </Button>
           </div>
         </div>
       )}
 
       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-        <button
+        <Button
           type="button"
-          className="btn-primary"
+          variant="primary"
           onClick={handleExport}
           disabled={busy}
-          style={{ padding: '9px 16px', fontSize: '0.88rem', fontWeight: 700 }}
         >
           ⬇️ Daten exportieren
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          className="btn-secondary"
+          variant="secondary"
           onClick={() => fileInputRef.current?.click()}
-          style={{ padding: '9px 16px', fontSize: '0.88rem' }}
         >
           ⬆️ Sicherung einspielen
-        </button>
+        </Button>
         <input
           ref={fileInputRef}
           type="file"
@@ -256,6 +255,6 @@ export const DataExportCard: React.FC<DataExportCardProps> = ({
           onCancel={() => setPending(null)}
         />
       )}
-    </div>
+    </Card>
   );
 };

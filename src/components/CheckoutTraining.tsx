@@ -6,6 +6,7 @@ import { getCheckoutSuggestion } from '../utils/checkouts';
 import { getBotDart } from '../utils/bot';
 import { playDartHitSound, playSciFiHitSound, speak, isSoundEnabled, setSoundEnabled } from '../utils/audio';
 import { ConfirmModal } from './ConfirmModal';
+import { Button } from './ui';
 
 interface CheckoutTrainingProps {
   players: string[];
@@ -435,25 +436,14 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
               {soundOn ? '🔊' : '🔇'}
             </button>
 
-            <button 
-              className="btn-ghost" 
+            <Button
+              variant="dangerText"
+              size="compact"
               onClick={() => setShowAbortConfirm(true)}
-              style={{ 
-                fontSize: '0.85em', 
-                color: 'var(--red)', 
-                padding: '6px 12px', 
-                borderRadius: '8px', 
-                border: '1px solid rgba(255, 69, 58, 0.25)',
-                background: 'rgba(255, 69, 58, 0.08)',
-                minHeight: '36px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                cursor: 'pointer'
-              }}
+              style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}
             >
               ✕ <span className="btn-abort-text">Beenden</span>
-            </button>
+            </Button>
           </div>
         </div>
 

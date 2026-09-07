@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ChoiceGroup } from './ui';
 import type { Profile } from '../types';
 import { totalSegmentHits } from '../utils/segmentStats';
 
@@ -117,54 +118,20 @@ export const DartboardHeatmap: React.FC<DartboardHeatmapProps> = ({ profile, cus
           🎯 {title}
         </h3>
 
-        {/* Filter Modes */}
-        <div style={{ display: 'flex', gap: '4px', background: 'rgba(255, 255, 255, 0.06)', padding: '3px', borderRadius: '10px' }}>
-          <button 
-            className={`btn-ghost ${filterMode === 'all' ? 'active' : ''}`}
-            onClick={() => setFilterMode('all')}
-            style={{
-              padding: '4px 10px',
-              fontSize: '0.75em',
-              fontWeight: 700,
-              borderRadius: '8px',
-              minHeight: '28px',
-              background: filterMode === 'all' ? 'var(--blue)' : 'transparent',
-              color: filterMode === 'all' ? '#fff' : 'var(--text-dim)'
-            }}
-          >
-            Alle
-          </button>
-          <button 
-            className={`btn-ghost ${filterMode === 'triples' ? 'active' : ''}`}
-            onClick={() => setFilterMode('triples')}
-            style={{
-              padding: '4px 10px',
-              fontSize: '0.75em',
-              fontWeight: 700,
-              borderRadius: '8px',
-              minHeight: '28px',
-              background: filterMode === 'triples' ? 'var(--blue)' : 'transparent',
-              color: filterMode === 'triples' ? '#fff' : 'var(--text-dim)'
-            }}
-          >
-            Triples
-          </button>
-          <button 
-            className={`btn-ghost ${filterMode === 'doubles' ? 'active' : ''}`}
-            onClick={() => setFilterMode('doubles')}
-            style={{
-              padding: '4px 10px',
-              fontSize: '0.75em',
-              fontWeight: 700,
-              borderRadius: '8px',
-              minHeight: '28px',
-              background: filterMode === 'doubles' ? 'var(--blue)' : 'transparent',
-              color: filterMode === 'doubles' ? '#fff' : 'var(--text-dim)'
-            }}
-          >
-            Doppel
-          </button>
-        </div>
+        {/* Filter (§5: ein Selected-State fuer alles). Vorher drei Kopien
+            desselben Chips mit blauer Vollflaeche, Inline-Farben und 28px
+            Hoehe — unter der 44pt-Grenze aus §4. */}
+        <ChoiceGroup
+          name="heatmapFilter"
+          value={filterMode}
+          options={[
+            { value: 'all', label: 'Alle' },
+            { value: 'triples', label: 'Triples' },
+            { value: 'doubles', label: 'Doppel' }
+          ]}
+          onChange={setFilterMode}
+          ariaLabel="Trefferfilter"
+        />
       </div>
 
       {totalRecordedHits === 0 ? (

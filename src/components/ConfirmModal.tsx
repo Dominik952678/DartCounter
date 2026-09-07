@@ -1,5 +1,6 @@
 import React, { useId, useState } from 'react';
 import { useModalA11y } from '../hooks/useModalA11y';
+import { Button } from './ui';
 
 interface ConfirmModalProps {
   title: string;
@@ -75,18 +76,18 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
         >
           {message}
         </p>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button className="btn-secondary" onClick={onCancel} disabled={busy} style={{ flex: 1 }}>
+        <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
+          <Button variant="secondary" onClick={onCancel} disabled={busy} style={{ flex: 1 }}>
             {cancelLabel}
-          </button>
-          <button
-            className={destructive ? 'btn-danger' : 'btn-primary'}
+          </Button>
+          <Button
+            variant={destructive ? 'danger' : 'primary'}
             onClick={handleConfirm}
             disabled={busy}
             style={{ flex: 1 }}
           >
             {busy ? 'Einen Moment…' : confirmLabel}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

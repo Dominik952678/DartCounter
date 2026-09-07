@@ -6,6 +6,7 @@ import { StatsWidget } from './StatsWidget';
 import type { MatchHistory } from '../types';
 import { getMatches } from '../db';
 import { reportPersistenceError } from '../store/useNotificationStore';
+import { Button, Card } from './ui';
 
 export const StatsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -81,25 +82,24 @@ export const StatsPage: React.FC = () => {
           <span style={{ fontSize: '0.82em', color: 'var(--text)' }}>
             💡 <strong>Gast-Modus:</strong> Deine Matches werden lokal im Browser gespeichert.
           </span>
-          <button 
-            className="btn-primary"
+          <Button
+            variant="primary"
             onClick={() => navigate('/auth')}
-            style={{ padding: '4px 12px', fontSize: '0.78em', minHeight: '30px' }}
           >
             🔑 Cloud-Login
-          </button>
+          </Button>
         </div>
       )}
       
       <div className="app-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', position: 'relative', zIndex: 1 }}>
-        <button className="btn-ghost" onClick={() => navigate('/')} style={{ padding: '6px 14px', fontSize: '0.9em' }}>
+        <Button variant="ghost" onClick={() => navigate('/')}>
           &larr; Menü
-        </button>
+        </Button>
         <h2 style={{ margin: 0, fontSize: '1.5em' }}>📊 Statistiken</h2>
         <div style={{ width: '60px' }} />
       </div>
 
-      <div className="card" style={{ marginBottom: '20px', display: 'flex', flexWrap: 'wrap', gap: '15px', alignItems: 'center' }}>
+      <Card style={{ marginBottom: '20px', display: 'flex', flexWrap: 'wrap', gap: '15px', alignItems: 'center' }}>
          <div style={{ display: 'flex', flex: 1, gap: '10px', minWidth: '200px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
                <label htmlFor="stats-profile" style={{ fontSize: '0.8em', color: 'var(--text-dim)', marginBottom: '4px' }}>Spieler</label>
@@ -128,7 +128,7 @@ export const StatsPage: React.FC = () => {
                </select>
             </div>
          </div>
-      </div>
+      </Card>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
          <StatsWidget 

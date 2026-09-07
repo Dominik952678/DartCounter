@@ -29,16 +29,20 @@ describe('DartboardHeatmap Component', () => {
     expect(screen.getByText('Doppel')).toBeInTheDocument();
   });
 
+  // Gefragt wird nach dem Auswahl-Zustand, nicht nach der CSS-Klasse, die ihn
+  // gerade darstellt — der Filter ist seit dem Umstieg auf ChoiceGroup eine
+  // echte Radio-Gruppe, und das ist es, was ein Screenreader auch hört.
   it('switches filter modes cleanly when clicking buttons', () => {
     render(<DartboardHeatmap profile={dummyProfileWithHits} />);
 
-    const triplesBtn = screen.getByText('Triples');
-    fireEvent.click(triplesBtn);
-    expect(triplesBtn).toHaveClass('active');
+    const triples = screen.getByRole('radio', { name: 'Triples' });
+    fireEvent.click(triples);
+    expect(triples).toBeChecked();
 
-    const doublesBtn = screen.getByText('Doppel');
-    fireEvent.click(doublesBtn);
-    expect(doublesBtn).toHaveClass('active');
+    const doubles = screen.getByRole('radio', { name: 'Doppel' });
+    fireEvent.click(doubles);
+    expect(doubles).toBeChecked();
+    expect(triples).not.toBeChecked();
   });
 
   it('displays empty state message when no hits are recorded', () => {

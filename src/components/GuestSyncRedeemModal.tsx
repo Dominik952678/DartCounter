@@ -4,6 +4,7 @@ import { redeemSyncCode } from '../db';
 import { useAuthStore } from '../store/useAuthStore';
 import { resolveHostDeviceId } from '../utils/storage';
 import { useModalA11y } from '../hooks/useModalA11y';
+import { Button } from './ui';
 
 interface GuestSyncRedeemModalProps {
   /** What the caller does with the redeemed guest: seat them, list them, both. */
@@ -108,9 +109,9 @@ export const GuestSyncRedeemModal: React.FC<GuestSyncRedeemModalProps> = ({
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <h3 id={titleId} style={{ margin: 0, fontSize: '1.25rem' }}>{title}</h3>
-          <button className="btn-ghost" onClick={onClose} aria-label="Schließen" style={{ fontSize: '1.2rem', padding: '2px 8px' }}>
+          <Button variant="ghost" onClick={onClose} aria-label="Schließen">
             ✕
-          </button>
+          </Button>
         </div>
 
         <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)', marginBottom: '16px', lineHeight: 1.4 }}>
@@ -135,14 +136,14 @@ export const GuestSyncRedeemModal: React.FC<GuestSyncRedeemModalProps> = ({
             }}
             onKeyDown={e => e.key === 'Enter' && handleCheckCode()}
           />
-          <button
-            className="btn-primary"
+          <Button
+            variant="primary"
             onClick={handleCheckCode}
             disabled={loading || cleanCode.length < 6}
-            style={{ padding: '0 16px', whiteSpace: 'nowrap' }}
+            style={{ whiteSpace: 'nowrap' }}
           >
             {loading ? 'Prüfe…' : 'Suchen'}
-          </button>
+          </Button>
         </div>
 
         {error && (
@@ -208,9 +209,9 @@ export const GuestSyncRedeemModal: React.FC<GuestSyncRedeemModalProps> = ({
             </div>
 
             <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-              <button className="btn-primary" onClick={handleConfirmImport} style={{ flex: 1, padding: '10px' }}>
+              <Button variant="primary" onClick={handleConfirmImport} style={{ flex: 1 }}>
                 {confirmLabel}
-              </button>
+              </Button>
             </div>
           </div>
         )}

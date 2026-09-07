@@ -14,6 +14,7 @@ import { SampleDataCard } from './profile/SampleDataCard';
 import { ThemeSettingsCard } from './profile/ThemeSettingsCard';
 import { useGuestSync } from './profile/useGuestSync';
 import { useAuthStore } from '../store/useAuthStore';
+import { Button } from './ui';
 
 interface ProfileTabProps {
   profiles: Record<string, Profile>;
@@ -111,13 +112,12 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
           <span style={{ fontSize: '0.82em', color: 'var(--text)' }}>
             💡 <strong>Gast-Modus:</strong> Profile & Statistiken werden lokal auf diesem Gerät gespeichert.
           </span>
-          <button
-            className="btn-primary"
+          <Button
+            variant="primary"
             onClick={() => navigate('/auth')}
-            style={{ padding: '4px 12px', fontSize: '0.78em', minHeight: '30px' }}
           >
             🔑 Cloud-Login
-          </button>
+          </Button>
         </div>
       )}
 

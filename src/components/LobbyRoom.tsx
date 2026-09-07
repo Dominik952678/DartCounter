@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { LoadingScreen } from './LoadingScreen';
 import { useOnlineStore } from '../store/useOnlineStore';
+import { Button, Card } from './ui';
 
 const modeLabel = (mode?: string) => {
   if (mode === 'powerscoring') return '🔥 Power Scoring';
@@ -95,9 +96,9 @@ export const LobbyRoom: React.FC = () => {
       <div className="ambient-glow" aria-hidden="true" />
 
       <header className="page-header">
-        <button className="btn-ghost btn-back" onClick={() => { leaveRoom(); navigate('/online'); }}>
+        <Button variant="ghost" className="btn-back" onClick={() => { leaveRoom(); navigate('/online'); }}>
           ← Verlassen
-        </button>
+        </Button>
         <h2 className="page-title">Warteraum</h2>
         <div className="page-header-spacer" />
       </header>
@@ -113,16 +114,16 @@ export const LobbyRoom: React.FC = () => {
           Deine Freunde geben diesen Code unter „Raum beitreten“ ein.
         </p>
         <div className="room-code-actions">
-          <button className="btn-secondary" onClick={handleCopyCode}>
+          <Button variant="secondary" onClick={handleCopyCode}>
             {copied ? '✓ Kopiert' : '⧉ Code kopieren'}
-          </button>
-          <button className="btn-secondary" onClick={handleShare}>
+          </Button>
+          <Button variant="secondary" onClick={handleShare}>
             ↗ Teilen
-          </button>
+          </Button>
         </div>
       </section>
 
-      <section className="card">
+      <Card as="section">
         <div className="card-header">
           <h3>Spieler am Board</h3>
           <span className="card-badge">{players.length}</span>
@@ -146,9 +147,9 @@ export const LobbyRoom: React.FC = () => {
             Es kann auch allein gestartet werden — weitere Spieler können bis zum Start beitreten.
           </p>
         )}
-      </section>
+      </Card>
 
-      <section className="card">
+      <Card as="section">
         <div className="card-header">
           <h3>Einstellungen</h3>
           <span className="card-badge">{modeLabel(settings?.mode)}</span>
@@ -258,22 +259,22 @@ export const LobbyRoom: React.FC = () => {
             <p className="hint-text">Nur der Host kann die Einstellungen ändern.</p>
           </>
         )}
-      </section>
+      </Card>
 
       <div className="lobby-actions">
         {isHost ? (
-          <button className="btn-success btn-large" onClick={handleStartGame}>
+          <Button variant="primary" size="large" onClick={handleStartGame}>
             🎯 Spiel starten
-          </button>
+          </Button>
         ) : (
           <div className="waiting-banner">
             <span className="waiting-dot" aria-hidden="true" />
             Warte auf den Start durch den Host…
           </div>
         )}
-        <button className="btn-secondary" onClick={() => { leaveRoom(); navigate('/online'); }}>
+        <Button variant="secondary" onClick={() => { leaveRoom(); navigate('/online'); }}>
           Raum verlassen
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -5,6 +5,7 @@ import type { Player, GameConfig, Dart } from '../types';
 import { isSoundEnabled, setSoundEnabled } from '../utils/audio';
 import { ConfirmModal } from './ConfirmModal';
 import { useModalA11y } from '../hooks/useModalA11y';
+import { Button } from './ui';
 
 interface GameScreenProps {
   players: Player[];
@@ -60,25 +61,14 @@ export const GameScreen: React.FC<GameScreenProps> = (props) => {
             {soundOn ? '🔊' : '🔇'}
           </button>
 
-          <button 
-            className="btn-ghost" 
+          <Button
+            variant="dangerText"
+            size="compact"
             onClick={() => setShowAbortConfirm(true)}
-            style={{ 
-              fontSize: '0.85em', 
-              color: 'var(--red)', 
-              padding: '6px 12px', 
-              borderRadius: '8px', 
-              border: '1px solid rgba(255, 69, 58, 0.25)',
-              background: 'rgba(255, 69, 58, 0.08)',
-              minHeight: '36px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              cursor: 'pointer'
-            }}
+            style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}
           >
             ✕ <span className="btn-abort-text">Beenden</span>
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -142,13 +132,13 @@ export const GameScreen: React.FC<GameScreenProps> = (props) => {
               Erkannte Darts auf Doppel: <strong style={{ color: '#fff' }}>{props.checkoutPrompt.autoDarts}</strong>
             </p>
             
-            <button 
-              className="btn-success" 
+            <Button
+              variant="primary"
               onClick={() => props.submitCheckoutPrompt(props.checkoutPrompt!.autoDarts)}
-              style={{ width: '100%', fontSize: '1.1em', padding: '16px', marginBottom: '20px' }}
+              style={{ marginBottom: '20px' }}
             >
               ✓ {props.checkoutPrompt.autoDarts} Dart(s) bestätigen
-            </button>
+            </Button>
 
             <p style={{ fontSize: '0.75em', color: '#666', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Manuell korrigieren</p>
             <div className="checkout-darts-select" style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>

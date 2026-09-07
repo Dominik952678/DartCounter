@@ -209,24 +209,44 @@ h3 { font-size: 1.05em; color: var(--text-dim); font-weight: 600; }
   z-index: var(--z-match-shell);
 }
 
-/* ── Cards & Glassmorphism ──────────────────────────────── */
+/* ── Karte (DESIGN.md §3) ───────────────────────────────── */
+/* Markup dazu: components/ui/Card.tsx. */
 .card {
-  background: var(--card);
+  background: var(--surface-card);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--card-border);
-  border-radius: var(--radius);
-  padding: 20px;
-  margin-bottom: 16px;
+  border-radius: var(--radius-card);
+  padding: var(--card-padding);
+  margin-bottom: var(--space-4);
   box-shadow: var(--shadow-md);
   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
 }
 
-.card-header { 
-  display: flex; 
-  justify-content: space-between; 
-  align-items: center; 
-  margin-bottom: 16px; 
+/* Karten in einer Reihe sind gleich hoch (§3). Die Höhe kommt vom Grid, die
+   Karte füllt sie — kürzerer Inhalt wird zentriert statt den Container zu
+   strecken, deshalb `justify-content: center` und nicht `stretch`. */
+.card-equal-height {
+  height: 100%;
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.card-flush { padding: 0; }
+
+.card-interactive {
+  cursor: pointer;
+  transition: transform 0.15s cubic-bezier(0.2, 0, 0, 1), border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.card-interactive:active { transform: scale(0.98); }
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
 }
 .card-badge { 
   background: var(--surface); 
@@ -275,15 +295,24 @@ select:focus, input:focus {
   background: rgba(148, 163, 184, 0.08);
   box-shadow: 0 0 0 3px var(--primary-glow);
 }
-.section-label { 
-  display: block; 
-  font-size: 0.72em; 
-  text-transform: uppercase; 
-  letter-spacing: 0.08em; 
-  color: var(--text-dim); 
-  font-weight: 700; 
-  margin-bottom: 8px; 
-  margin-top: 14px; 
+/* §2 regelt dieses Label-Pattern wörtlich: 12px, --text-secondary, Sentence
+   case, keine Caps. Vorher standen hier uppercase + letter-spacing + 700 —
+   §7 nennt das Muster zwar „Caps-Label", §2 hält es aber ausdrücklich bei und
+   nimmt ihm die Caps, und §2 ist der Abschnitt, der Typografie entscheidet. */
+.section-label {
+  display: block;
+  font-size: var(--text-label);
+  color: var(--text-secondary);
+  font-weight: var(--weight-regular);
+  margin-bottom: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+/* Erklärtext unter einem Eingabefeld oder einer Auswahl. */
+.form-hint {
+  font-size: var(--text-label);
+  color: var(--text-secondary);
+  margin-top: var(--space-2);
 }
 
 .input-row { display: flex; gap: 12px; }
@@ -531,6 +560,17 @@ select:focus, input:focus {
   margin-top: 1px;
 }
 
+/* Beschriftung über einem Eingabefeld oder einer Auswahlgruppe. Ersetzt das
+   inline wiederholte `fontSize: 1.1em; color: var(--text)` und hält sich an
+   die Skala aus §2 statt an einen em-Faktor. */
+.field-label {
+  font-size: var(--text-body-lg);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  letter-spacing: normal;
+  margin-bottom: var(--space-3);
+}
+
 /* ── Segment Controls (Radio Groups) ───── */
 .radio-group, .segment-control {
   display: flex;
@@ -545,12 +585,14 @@ select:focus, input:focus {
   flex: 1;
   text-align: center;
   padding: 11px 8px;
+  border: 2px solid transparent;
   border-radius: 10px;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
-  color: var(--text-dim);
-  font-size: 0.95em;
-  font-weight: 600;
+  transition: background-color 0.2s cubic-bezier(0.2, 0, 0, 1), border-color 0.2s, color 0.2s;
+  background: var(--surface-card);
+  color: var(--text-secondary);
+  font-size: var(--text-body);
+  font-weight: var(--weight-regular);
   margin: 0;
   display: flex;
   align-items: center;
@@ -571,14 +613,16 @@ select:focus, input:focus {
   clip: rect(0, 0, 0, 0);
   border: 0;
 }
+/* Der eine Selected-State aus §5 — 2px --accent-primary auf --bg-accent-muted.
+   Der Rahmen ist im nicht ausgewählten Zustand schon 2px breit und nur
+   transparent, sonst springt die Beschriftung beim Auswählen um einen Pixel. */
 .segment-control label.active,
 .radio-group label:has(input:checked),
 .segment-control label:has(input:checked) {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.06));
-  color: var(--text);
-  font-weight: 700;
-  border: 1px solid rgba(245, 158, 11, 0.35);
-  box-shadow: var(--shadow);
+  background: var(--bg-accent-muted);
+  color: var(--text-primary);
+  font-weight: var(--weight-medium);
+  border-color: var(--accent-primary);
 }
 .radio-group label:has(input:focus-visible),
 .segment-control label:has(input:focus-visible) {
@@ -587,88 +631,131 @@ select:focus, input:focus {
 }
 .segment-control span { pointer-events: none; }
 
-/* ── Buttons ───────────────────────────── */
+/* Einzelner Umschalter im selben Selected-State (§5) — für Chips, die keine
+   Radio-Gruppe bilden. Markup: components/ui/Choice.tsx. */
+.choice {
+  background: var(--surface-card);
+  border: 2px solid transparent;
+  border-radius: var(--radius-card);
+  color: var(--text-secondary);
+  font-size: var(--text-body);
+  font-weight: var(--weight-regular);
+  min-height: 44px;
+  padding: var(--space-2) var(--space-4);
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+}
+.choice.active {
+  background: var(--bg-accent-muted);
+  border-color: var(--accent-primary);
+  color: var(--text-primary);
+  font-weight: var(--weight-medium);
+}
+
+/* ── Buttons (DESIGN.md §5) ─────────────────────────────────
+   Markup dazu: components/ui/Button.tsx. Fünf Varianten, mehr gibt es nicht:
+   primary · secondary · ghost · danger · danger-text.
+
+   Weggefallen sind .btn-success (war ein amber-gefülltes Duplikat von
+   .btn-primary und überall der Haupt-CTA), .btn-warning und .btn-abort (beide
+   ohne eine einzige Verwendung im Markup).
+
+   Der nackte `button`-Selektor bleibt absichtlich stehen: Keypad, Dartboard und
+   Dock rendern <button> ohne Design-System-Klasse und würden sonst ihr Styling
+   verlieren. Er trägt nur noch Grundmaße, keine Farbentscheidung. */
 button, .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 14px 20px;
   border-radius: var(--radius-sm);
-  font-weight: 700;
-  font-size: 1em;
+  font-weight: var(--weight-medium);
+  font-size: var(--text-body-lg);
   font-family: inherit;
   border: none;
   cursor: pointer;
   transition: transform 0.1s ease-out, box-shadow 0.15s ease, background-color 0.15s, opacity 0.15s;
-  color: white;
-  background: var(--surface);
+  color: var(--text-primary);
+  background: var(--surface-card);
+  /* §4: kein tappbares Element unter 44pt. */
   min-height: 48px;
   user-select: none;
 }
-button:active, .btn:active { 
-  transform: scale(0.97); 
-  opacity: 0.9; 
+button:active, .btn:active {
+  transform: scale(0.97);
+  opacity: 0.9;
 }
-.btn-primary { 
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark)); 
-  color: #000;
-  font-weight: 800;
+button:disabled, .btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Gefüllt, genau ein Mal pro Screen (§1). Text ist der dunkelste Ton derselben
+   Farbfamilie, nie Schwarz (§5). */
+.btn-primary {
+  background: var(--accent-primary);
+  color: var(--on-accent-primary);
   box-shadow: 0 4px 16px var(--primary-glow);
 }
 .btn-primary:hover {
-  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
+  box-shadow: 0 6px 20px var(--primary-glow);
 }
-.btn-secondary { 
-  background: var(--surface); 
+
+/* §5: --surface-card, --text-primary, kein farbiger Rand. */
+.btn-secondary {
+  background: var(--surface-card);
   border: 1px solid var(--card-border);
-  color: var(--text); 
+  color: var(--text-primary);
 }
 .btn-secondary:hover {
   background: var(--surface-hover);
-  border-color: rgba(148, 163, 184, 0.2);
 }
-.btn-success { 
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark)); 
-  color: #000; 
-  width: 100%; 
-  font-weight: 800; 
-  box-shadow: 0 4px 16px var(--primary-glow);
-}
-.btn-success:hover {
-  box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
-}
-.btn-danger { 
-  background: linear-gradient(135deg, var(--red), #DC2626); 
-  box-shadow: 0 4px 16px var(--red-glow);
-}
-.btn-warning { 
-  background: linear-gradient(135deg, var(--orange), #EA580C); 
-  color: #000; 
-  width: 100%; 
-  box-shadow: 0 4px 16px var(--orange-glow);
-}
-.btn-abort { 
-  background: var(--surface); 
-  color: var(--text-dim); 
+
+/* Neutraler Textbutton — Zurück, Schließen, Mehr laden. */
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  width: auto;
   border: 1px solid var(--card-border);
 }
-.btn-ghost { 
-  background: transparent; 
-  color: var(--text-dim); 
-  width: auto; 
-  border: 1px solid var(--card-border); 
-}
 .btn-ghost:hover {
-  color: var(--text);
-  border-color: rgba(148, 163, 184, 0.2);
-  background: var(--surface);
+  color: var(--text-primary);
+  background: var(--surface-card);
 }
-.btn-large { 
-  padding: 16px 20px; 
-  font-size: 1.15em; 
-  border-radius: var(--radius); 
-  min-height: 54px;
+
+/* Die einzige destruktive Fläche: Bestätigung im Dialog. */
+.btn-danger {
+  background: var(--text-danger);
+  color: var(--on-text-danger);
+  box-shadow: 0 4px 16px var(--red-glow);
 }
+
+/* §5s „Ghost/Destructive-Text" — „Abmelden"-artige Aktionen inline. */
+.btn-danger-text {
+  background: transparent;
+  color: var(--text-danger);
+  border: 1px solid transparent;
+}
+.btn-danger-text:hover {
+  background: rgba(var(--text-danger-rgb), 0.1);
+}
+
+/* §4: primäre Spielaktionen bekommen mindestens 64pt, nicht nur die 44er
+   Untergrenze. */
+.btn-large {
+  padding: var(--space-5) var(--space-5);
+  font-size: var(--text-body-lg);
+  border-radius: var(--radius-card);
+  min-height: 64px;
+}
+
+/* Schmaler, aber nie unter der 44pt-Grenze aus §4. */
+.btn-compact {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-body);
+  min-height: 44px;
+}
+
+.btn-full { width: 100%; }
 /* ── App Header ────────────────────────── */
 .app-header { 
   text-align: center; 
@@ -1389,12 +1476,15 @@ button:active, .btn:active {
   font-size: 0.85em;
   color: var(--text-dim);
 }
+/* §4 nimmt Icon-only-Buttons ausdrücklich nicht von der 44×44-Regel aus —
+   das hier waren 36×36. */
 .btn-close {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--surface-card);
   border: 1px solid var(--card-border);
-  color: var(--text-dim);
-  width: 36px;
-  height: 36px;
+  color: var(--text-secondary);
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -1757,11 +1847,9 @@ button:active, .btn:active {
   color: var(--text);
 }
 .full-width { width: 100%; }
-.btn-compact {
-  padding: 8px 14px;
-  min-height: 40px;
-  font-size: 0.86em;
-}
+/* .btn-compact stand hier ein zweites Mal und gewann als spätere Regel — mit
+   min-height: 40px, also unter der 44pt-Grenze aus §4. Die eine gültige
+   Definition steht jetzt oben bei den übrigen Button-Klassen. */
 
 .pill {
   display: inline-flex;

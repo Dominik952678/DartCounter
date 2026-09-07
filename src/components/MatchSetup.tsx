@@ -12,6 +12,7 @@ import { OverwriteSavedGameModal, SavedGameCard } from './matchSetup/SavedGameCa
 import type { SavedMatchSummary } from './matchSetup/SavedGameCard';
 import { useLineup } from './matchSetup/useLineup';
 import { toGameConfig, useMatchSetupConfig } from './matchSetup/useMatchSetupConfig';
+import { Button } from './ui';
 
 interface MatchSetupProps {
   profiles: Record<string, Profile>;
@@ -226,18 +227,13 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
       {/* Sticks above the floating dock, not 20px above the viewport edge —
           which put the primary action behind the dock while scrolling. */}
       <div style={{ position: 'sticky', bottom: 'var(--dock-space)', zIndex: 'var(--z-sticky)', padding: '0 10px' }}>
-        <button
-          className="btn-success btn-large"
+        <Button
+          variant="primary" size="large"
           onClick={handleStartGame}
-          style={{
-            width: '100%',
-            minHeight: '56px',
-            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.4)',
-            fontSize: '1.2em'
-          }}
+          style={{ boxShadow: '0 4px 15px rgba(0, 0, 0, 0.4)' }}
         >
           🎯 Spiel starten
-        </button>
+        </Button>
       </div>
 
       {/* spacer for bottom nav */}

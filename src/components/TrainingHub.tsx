@@ -3,6 +3,7 @@ import type { Profile } from '../types';
 import { useAuthStore } from '../store/useAuthStore';
 import { getActiveUserSyncInfo } from '../db';
 import { readInt, readOneOf, write } from '../utils/storage';
+import { Button, Card, CardHeader, ChoiceGroup } from './ui';
 
 export type MiniGameMode = 'checkout' | 'powerscoring' | 'splitscore';
 
@@ -210,10 +211,8 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
 
       <div className="training-hub-grid">
         {/* Modes Column */}
-        <div className="card">
-          <div className="card-header">
-            <h2>Modus wählen</h2>
-          </div>
+        <Card>
+          <CardHeader heading={"Modus wählen"} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <button
               type="button"
@@ -254,28 +253,23 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
               </div>
             </button>
           </div>
-        </div>
+        </Card>
 
         {/* Settings Column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div className="card">
-            <div className="card-header">
-              <h2>Spieler</h2>
-            </div>
-            <div className="segment-control" style={{ marginBottom: '15px' }}>
-              {[1, 2, 3, 4].map(count => (
-                <label key={count} className={playerCount === count ? 'active' : ''}>
-                  <input 
-                    type="radio" 
-                    name="playerCount" 
-                    value={count} 
-                    checked={playerCount === count}
-                    onChange={() => setPlayerCount(count)}
-                  />
-                  <span>{count}</span>
-                </label>
-              ))}
-            </div>
+          <Card>
+            <CardHeader heading={"Spieler"} />
+            <ChoiceGroup
+              name="playerCount"
+              value={playerCount}
+              options={[1, 2, 3, 4].map(count => ({
+                value: count,
+                label: count,
+                ariaLabel: `${count} Spieler`
+              }))}
+              onChange={setPlayerCount}
+              ariaLabel="Anzahl Spieler"
+            />
 
             <div className="player-selects" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {Array.from({ length: playerCount }).map((_, i) => {
@@ -440,80 +434,64 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
                 </label>
               </div>
             )}
-          </div>
+          </Card>
 
           {selectedMode === 'powerscoring' && (
-            <div className="card">
-              <div className="card-header">
-                <h2>Rundenlimit</h2>
-              </div>
-              <div className="segment-control">
-                {[5, 10, 15, 20].map(r => (
-                  <label key={r} className={powerScoringRounds === r ? 'active' : ''}>
-                    <input 
-                      type="radio" 
-                      name="powerScoringRounds" 
-                      value={r} 
-                      checked={powerScoringRounds === r}
-                      onChange={() => setPowerScoringRounds(r)}
-                    />
-                    <span>{r}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
+            <Card>
+              <CardHeader heading={"Rundenlimit"} />
+              <ChoiceGroup
+                name="powerScoringRounds"
+                value={powerScoringRounds}
+                options={[5, 10, 15, 20].map(r => ({
+                  value: r,
+                  label: r,
+                  ariaLabel: `${r} Runden`
+                }))}
+                onChange={setPowerScoringRounds}
+                ariaLabel="Rundenlimit"
+              />
+            </Card>
           )}
 
           {selectedMode === 'checkout' && (
             <>
-            <div className="card">
-              <div className="card-header">
-                <h2>Anzahl Targets</h2>
-              </div>
-              <div className="segment-control">
-                {[5, 10, 15, 20].map(r => (
-                  <label key={r} className={checkoutTargets === r ? 'active' : ''}>
-                    <input 
-                      type="radio" 
-                      name="checkoutTargets" 
-                      value={r} 
-                      checked={checkoutTargets === r}
-                      onChange={() => setCheckoutTargets(r)}
-                    />
-                    <span>{r}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
+            <Card>
+              <CardHeader heading={"Anzahl Targets"} />
+              <ChoiceGroup
+                name="checkoutTargets"
+                value={checkoutTargets}
+                options={[5, 10, 15, 20].map(r => ({
+                  value: r,
+                  label: r,
+                  ariaLabel: `${r} Targets`
+                }))}
+                onChange={setCheckoutTargets}
+                ariaLabel="Anzahl Targets"
+              />
+            </Card>
 
-            <div className="card">
-              <div className="card-header">
-                <h2>Runden (Versuche pro Finish)</h2>
-              </div>
-              <div className="segment-control">
-                {[1, 2, 3, 5].map(r => (
-                  <label key={r} className={checkoutRounds === r ? 'active' : ''}>
-                    <input 
-                      type="radio" 
-                      name="checkoutRounds" 
-                      value={r} 
-                      checked={checkoutRounds === r}
-                      onChange={() => setCheckoutRounds(r)}
-                    />
-                    <span>{r} {r === 1 ? 'Runde' : 'Runden'}</span>
-                  </label>
-                ))}
-              </div>
+            <Card>
+              <CardHeader heading={"Runden (Versuche pro Finish)"} />
+              <ChoiceGroup
+                name="checkoutRounds"
+                value={checkoutRounds}
+                options={[1, 2, 3, 5].map(r => ({
+                  value: r,
+                  label: `${r} ${r === 1 ? 'Runde' : 'Runden'}`
+                }))}
+                onChange={setCheckoutRounds}
+                ariaLabel="Runden pro Finish"
+              />
               <p style={{ fontSize: '0.85em', color: 'var(--text-dim)', marginTop: '10px', textAlign: 'center' }}>
                 1 Runde = 3 Darts um das Finish zu checken.
               </p>
-            </div>
+            </Card>
             </>
           )}
 
-          <button className="btn-success btn-large" onClick={handleStart} style={{ marginTop: '5px' }}>
+          <Button variant="primary" size="large" fullWidth onClick={handleStart}>
             🚀 Training starten
-          </button>
+          </Button>
         </div>
       </div>
       

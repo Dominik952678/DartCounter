@@ -5,6 +5,7 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianG
 import { HeadToHead } from './HeadToHead';
 import { DartboardHeatmap } from './DartboardHeatmap';
 import { ConfirmModal } from './ConfirmModal';
+import { Button } from './ui';
 
 interface ProfileDashboardProps {
   profileName: string;
@@ -248,7 +249,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
               </select>
             </div>
           </div>
-          <button className="btn-close" onClick={onClose} title="Schließen" aria-label="Schließen" style={{ fontSize: '1.2em', cursor: 'pointer' }}>✕</button>
+          <Button variant="ghost" className="btn-close" onClick={onClose} title="Schließen" aria-label="Schließen">✕</Button>
         </div>
 
         {/* Linked Cloud Guest Banner */}
@@ -275,13 +276,12 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
               </div>
             </div>
             {onDeleteProfile && (
-              <button 
-                className="btn-danger" 
+              <Button
+                variant="dangerText"
                 onClick={() => onDeleteProfile(profileName)}
-                style={{ padding: '4px 10px', fontSize: '0.78rem', minHeight: '30px' }}
               >
                 ⛔ Verknüpfung trennen
-              </button>
+              </Button>
             )}
           </div>
         )}

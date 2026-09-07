@@ -4,6 +4,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { useOnlineStore } from '../store/useOnlineStore';
 import type { GameConfig } from '../types';
 import { readString, write } from '../utils/storage';
+import { Button, Card, CardHeader, ChoiceGroup } from './ui';
 
 type Mode = 'standard' | 'powerscoring' | 'splitscore' | 'checkout';
 
@@ -90,7 +91,7 @@ export const LobbyBrowser: React.FC = () => {
       <div className="ambient-glow ambient-glow-blue" aria-hidden="true" />
 
       <header className="page-header">
-        <button className="btn-ghost btn-back" onClick={() => navigate('/')}>← Menü</button>
+        <Button variant="ghost" className="btn-back" onClick={() => navigate('/')}>← Menü</Button>
         <h2 className="page-title">🌍 Multiplayer</h2>
         <div className="page-header-spacer" />
       </header>
@@ -117,7 +118,7 @@ export const LobbyBrowser: React.FC = () => {
           </div>
         )}
         {!user && (
-          <button className="btn-secondary btn-compact" onClick={() => navigate('/auth')}>Login</button>
+          <Button variant="secondary" size="compact" onClick={() => navigate('/auth')}>Login</Button>
         )}
       </div>
 
@@ -130,10 +131,8 @@ export const LobbyBrowser: React.FC = () => {
 
       {!showCreateForm ? (
         <>
-          <section className="card">
-            <div className="card-header">
-              <h3>Raum beitreten</h3>
-            </div>
+          <Card as="section">
+            <CardHeader heading={"Raum beitreten"} />
             <div className="join-row">
               <input
                 type="text"
@@ -149,22 +148,22 @@ export const LobbyBrowser: React.FC = () => {
                 maxLength={4}
                 className="join-code-input"
               />
-              <button
-                className="btn-primary"
+              <Button
+                variant="primary"
                 onClick={() => handleJoin(joinCode)}
                 disabled={joinCode.length !== 4 || busy !== null}
               >
                 {busy === 'join' ? 'Verbinde…' : 'Beitreten'}
-              </button>
+              </Button>
             </div>
-          </section>
+          </Card>
 
-          <section className="card">
+          <Card as="section">
             <div className="card-header">
               <h3>Öffentliche Räume</h3>
-              <button className="btn-primary btn-compact" onClick={() => setShowCreateForm(true)}>
+              <Button variant="primary" size="compact" onClick={() => setShowCreateForm(true)}>
                 + Raum erstellen
-              </button>
+              </Button>
             </div>
 
             {publicLobbies.length === 0 ? (
@@ -190,34 +189,34 @@ export const LobbyBrowser: React.FC = () => {
                     </div>
                     <div className="lobby-list-actions">
                       <span className="pill pill-muted">{lobby.code}</span>
-                      <button className="btn-secondary btn-compact" onClick={() => handleJoin(lobby.code)} disabled={busy !== null}>
+                      <Button variant="secondary" size="compact" onClick={() => handleJoin(lobby.code)} disabled={busy !== null}>
                         Beitreten
-                      </button>
+                      </Button>
                     </div>
                   </li>
                 ))}
               </ul>
             )}
-          </section>
+          </Card>
         </>
       ) : (
-        <section className="card">
+        <Card as="section">
           <div className="card-header">
             <h3>Raum erstellen</h3>
-            <button className="btn-close" onClick={() => setShowCreateForm(false)} aria-label="Schließen">✕</button>
+            <Button variant="ghost" className="btn-close" onClick={() => setShowCreateForm(false)} aria-label="Schließen">✕</Button>
           </div>
 
           <label className="section-label">Sichtbarkeit</label>
-          <div className="segment-control">
-            <label className={isPublic ? 'active' : ''}>
-              <input type="radio" name="visibility" checked={isPublic} onChange={() => setIsPublic(true)} />
-              <span>🌍 Öffentlich</span>
-            </label>
-            <label className={!isPublic ? 'active' : ''}>
-              <input type="radio" name="visibility" checked={!isPublic} onChange={() => setIsPublic(false)} />
-              <span>🔒 Nur per Code</span>
-            </label>
-          </div>
+          <ChoiceGroup
+            name="visibility"
+            value={isPublic ? 'public' : 'code'}
+            options={[
+              { value: 'public', label: '🌍 Öffentlich' },
+              { value: 'code', label: '🔒 Nur per Code' }
+            ]}
+            onChange={value => setIsPublic(value === 'public')}
+            ariaLabel="Sichtbarkeit"
+          />
 
           <label className="section-label">Spielmodus</label>
           <div className="mode-grid">
@@ -274,49 +273,48 @@ export const LobbyBrowser: React.FC = () => {
           {mode === 'powerscoring' && (
             <>
               <label className="section-label">Rundenlimit</label>
-              <div className="segment-control">
-                {[5, 10, 15, 20].map(r => (
-                  <label key={r} className={rounds === r ? 'active' : ''}>
-                    <input type="radio" name="rounds" checked={rounds === r} onChange={() => setRounds(r)} />
-                    <span>{r}</span>
-                  </label>
-                ))}
-              </div>
+              <ChoiceGroup
+                name="rounds"
+                value={rounds}
+                options={[5, 10, 15, 20].map(r => ({ value: r, label: r, ariaLabel: `${r} Runden` }))}
+                onChange={setRounds}
+                ariaLabel="Rundenlimit"
+              />
             </>
           )}
 
           {mode === 'checkout' && (
             <>
               <label className="section-label">Anzahl Targets</label>
-              <div className="segment-control">
-                {[5, 10, 15, 20].map(r => (
-                  <label key={r} className={checkoutTargets === r ? 'active' : ''}>
-                    <input type="radio" name="targets" checked={checkoutTargets === r} onChange={() => setCheckoutTargets(r)} />
-                    <span>{r}</span>
-                  </label>
-                ))}
-              </div>
+              <ChoiceGroup
+                name="targets"
+                value={checkoutTargets}
+                options={[5, 10, 15, 20].map(r => ({ value: r, label: r, ariaLabel: `${r} Targets` }))}
+                onChange={setCheckoutTargets}
+                ariaLabel="Anzahl Targets"
+              />
               <label className="section-label">Versuche pro Finish</label>
-              <div className="segment-control">
-                {[1, 2, 3, 5].map(r => (
-                  <label key={r} className={checkoutRounds === r ? 'active' : ''}>
-                    <input type="radio" name="attempts" checked={checkoutRounds === r} onChange={() => setCheckoutRounds(r)} />
-                    <span>{r}</span>
-                  </label>
-                ))}
-              </div>
+              <ChoiceGroup
+                name="attempts"
+                value={checkoutRounds}
+                options={[1, 2, 3, 5].map(r => ({ value: r, label: r, ariaLabel: `${r} Versuche` }))}
+                onChange={setCheckoutRounds}
+                ariaLabel="Versuche pro Finish"
+              />
             </>
           )}
 
-          <button
-            className="btn-success btn-large full-width"
+          <Button
+            variant="primary"
+            size="large"
+            fullWidth
             onClick={handleCreate}
             disabled={busy !== null}
-            style={{ marginTop: 20 }}
+            style={{ marginTop: 'var(--space-5)' }}
           >
             {busy === 'create' || connectionState === 'connecting' ? 'Erstelle Raum…' : 'Raum eröffnen'}
-          </button>
-        </section>
+          </Button>
+        </Card>
       )}
     </div>
   );

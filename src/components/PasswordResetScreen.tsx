@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
+import { Button, Card } from './ui';
 
 /**
  * Where the reset mail lands.
@@ -39,7 +40,7 @@ export const PasswordResetScreen: React.FC = () => {
 
   return (
     <div className="screen active-screen" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100dvh', padding: '20px' }}>
-      <div className="card" style={{ maxWidth: '420px', width: '100%', padding: '36px 24px', textAlign: 'center' }}>
+      <Card style={{ maxWidth: '420px', width: '100%', padding: '36px 24px', textAlign: 'center' }}>
         <div style={{ fontSize: '2rem', marginBottom: '10px' }} aria-hidden="true">🔒</div>
         <h2 style={{ marginBottom: '8px', fontSize: '1.6em', fontWeight: 800 }}>Neues Passwort</h2>
 
@@ -48,9 +49,9 @@ export const PasswordResetScreen: React.FC = () => {
             <p style={{ color: 'var(--text-dim)', fontSize: '0.9em', marginBottom: '24px' }}>
               Passwort geändert. Du bist angemeldet.
             </p>
-            <button className="btn-primary btn-large" onClick={() => navigate('/')}>
+            <Button variant="primary" size="large" onClick={() => navigate('/')}>
               Weiter zum Hauptmenü
-            </button>
+            </Button>
           </>
         ) : (
           <>
@@ -85,17 +86,17 @@ export const PasswordResetScreen: React.FC = () => {
                 autoComplete="new-password"
                 required
               />
-              <button type="submit" className="btn-primary btn-large" disabled={loading || !user}>
+              <Button type="submit" variant="primary" size="large" disabled={loading || !user}>
                 {loading ? 'Speichere…' : 'Passwort speichern'}
-              </button>
+              </Button>
             </form>
 
-            <button type="button" className="btn-ghost" onClick={() => navigate('/auth')} style={{ marginTop: '16px' }}>
+            <Button type="button" variant="ghost" onClick={() => navigate('/auth')} style={{ marginTop: '16px' }}>
               Zurück zum Login
-            </button>
+            </Button>
           </>
         )}
-      </div>
+      </Card>
     </div>
   );
 };
