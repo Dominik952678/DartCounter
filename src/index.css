@@ -128,8 +128,10 @@ h3 { font-size: 1.05em; color: var(--text-dim); font-weight: 600; }
    size themselves against the space actually left over between the safe areas
    and the floating bottom dock, instead of guessing with a hard-coded number. */
 .app-container {
-  /* Kept in sync with `.bottom-nav { --dock-height }` plus its offset from the
-     bottom edge, so no screen can end up hidden behind the floating dock. */
+  /* Kept in sync with `.app-nav { --dock-height }` plus its offset from the
+     bottom edge, so no screen can end up hidden behind the floating dock.
+     Ab 900px steht die Navigation links und diese Reservierung entfällt —
+     siehe den Sidebar-Block bei der Navigation. */
   --dock-height: 58px;
   --dock-offset: 0px;
   --dock-space: calc(var(--dock-height) + var(--dock-offset) + env(safe-area-inset-bottom) + 20px);
@@ -1237,14 +1239,13 @@ button:disabled, .btn:disabled {
     --dock-height: 46px;
     --dock-offset: 6px;
   }
-  .bottom-nav {
+  .app-nav {
     --dock-height: 46px;
     bottom: 6px;
     padding: 4px 10px;
   }
   .nav-item {
     padding: 2px 8px;
-    font-size: 0.62em;
     gap: 1px;
   }
   .nav-item .nav-icon { font-size: 1.05em; }
@@ -1374,11 +1375,15 @@ button:disabled, .btn:disabled {
   }
 }
 
-/* ── Bottom Navigation (Floating Dock) ──
-   The dock is a fixed overlay, so every scrollable screen has to reserve room
-   for it. `--dock-height` keeps that reservation and the dock's own box in
-   sync: change one and the shell padding follows. */
-.bottom-nav {
+/* ── Hauptnavigation (DESIGN.md §6) ──
+   Ein Markup, zwei Erscheinungsformen: unter 900px der schwebende Dock am
+   unteren Rand, ab 900px die linke Sidebar. Markup: components/AppNav.tsx,
+   der Eintrag selbst: components/ui/NavItem.tsx.
+
+   Der Dock ist ein fixes Overlay, jeder scrollende Screen muss Platz dafür
+   reservieren. `--dock-height` hält Reservierung und Dock-Box in Sync:
+   ändert man eins, folgt das Shell-Padding. */
+.app-nav {
   --dock-height: 58px;
   position: fixed;
   bottom: 0;
@@ -1394,41 +1399,42 @@ button:disabled, .btn:disabled {
   display: flex;
   align-items: center;
   justify-content: space-around;
-  gap: 4px;
-  padding: 6px 12px calc(6px + env(safe-area-inset-bottom)) 12px;
+  gap: var(--space-1);
+  padding: 6px var(--space-3) calc(6px + env(safe-area-inset-bottom)) var(--space-3);
   border-top: 1px solid var(--card-border);
   z-index: var(--z-dock);
 }
 
 @media (min-width: 600px) {
-  .bottom-nav {
+  .app-nav {
     bottom: 12px;
     height: var(--dock-height);
     border-radius: var(--radius-lg);
     border: 1px solid var(--card-border);
     box-shadow: var(--shadow-md);
-    padding: 6px 10px;
+    padding: 6px var(--space-3);
   }
 }
 
 .nav-item {
   background: transparent;
-  border: 1px solid transparent;
-  color: var(--text-dim);
+  border: 2px solid transparent;
+  color: var(--text-secondary);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 2px;
-  font-size: 0.7em;
-  font-weight: 700;
-  padding: 4px 10px;
+  font-size: var(--text-label);
+  font-weight: var(--weight-regular);
+  padding: var(--space-1) var(--space-2);
   flex: 1;
   max-width: 92px;
   height: 100%;
   border-radius: var(--radius-sm);
   transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
   cursor: pointer;
+  /* Der Dock gibt die Höhe vor; die 44pt aus §4 kommen aus --dock-height. */
   min-height: auto;
   position: relative;
 }
@@ -1440,17 +1446,83 @@ button:disabled, .btn:disabled {
   transition: filter 0.2s ease, transform 0.2s ease;
 }
 
-.nav-item:hover { color: var(--text); }
+.nav-item:hover { color: var(--text-primary); }
 
+/* Derselbe Selected-State wie überall sonst (§5). */
 .nav-item.active {
-  color: var(--text);
-  background: rgba(245, 158, 11, 0.12);
-  border-color: rgba(245, 158, 11, 0.28);
+  color: var(--text-primary);
+  background: var(--bg-accent-muted);
+  border-color: var(--accent-primary);
+  font-weight: var(--weight-medium);
 }
 
 .nav-item.active .nav-icon {
   filter: none;
   transform: scale(1.08);
+}
+
+/* ── Sidebar ab 900px (§6) ──
+   iPad Air in beiden Ausrichtungen und iPad 13" Hochformat. Der Dock wird zur
+   festen linken Spalte, Icon und Label rücken nebeneinander — das Icon+Label-
+   Konzept aus §7 bleibt, es wandert nur.
+
+   Den Platz schafft `body { padding-left }`, nicht ein Margin auf dem
+   Container: so bleibt `.app-container` mit seinem `margin: 0 auto` innerhalb
+   der Restbreite zentriert, wie §6 es für die ≥1200px-Stufe verlangt. */
+@media (min-width: 900px) {
+  /* Nur reservieren, wenn die Sidebar auch da ist: im laufenden Match und im
+     Lobby-Raum rendert App.tsx keine Navigation, und ohne das `:has()` stünde
+     der Inhalt dort grundlos um eine leere Spalte eingerückt. */
+  body:has(.app-nav) {
+    padding-left: calc(var(--nav-rail) + env(safe-area-inset-left));
+  }
+
+  .app-nav {
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: auto;
+    width: calc(var(--nav-rail) + env(safe-area-inset-left));
+    max-width: none;
+    height: 100%;
+    margin: 0;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: var(--space-2);
+    padding:
+      calc(env(safe-area-inset-top) + var(--space-6))
+      var(--space-3)
+      calc(env(safe-area-inset-bottom) + var(--space-4))
+      calc(env(safe-area-inset-left) + var(--space-3));
+    border-top: none;
+    border-right: 1px solid var(--card-border);
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .nav-item {
+    flex: 0 0 auto;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: var(--space-3);
+    width: 100%;
+    max-width: none;
+    height: auto;
+    /* Hier gibt nichts anderes die Höhe vor, also greift die 44pt-Regel aus
+       §4 direkt am Eintrag. */
+    min-height: 48px;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-body);
+    border-radius: var(--radius-card);
+  }
+
+  .nav-item .nav-icon { font-size: 1.15em; }
+  .nav-item.active .nav-icon { transform: none; }
+
+  /* Ohne Dock am unteren Rand braucht auch niemand mehr Platz dafür. */
+  .app-container {
+    --shell-pad-bottom: calc(env(safe-area-inset-bottom) + var(--space-6));
+  }
 }
 
 /* ── Profile Dashboard & Stats Styles ──── */
@@ -1701,9 +1773,11 @@ button:disabled, .btn:disabled {
 .accent-orange { color: var(--orange) !important; }
 .accent-green { color: var(--green) !important; }
 
-/* ── Responsive Optimizations: iPad Air & Tablet (>= 768px) ── */
-@media (min-width: 768px) {
-  .bottom-nav {
+/* Der Dock in seiner letzten Ausbaustufe, bevor er zur Sidebar wird. Die obere
+   Grenze ist zwingend: ohne sie überschreibt diese Regel die Sidebar aus §6,
+   weil sie später in der Datei steht und dieselbe Spezifität hat. */
+@media (min-width: 768px) and (max-width: 899px) {
+  .app-nav {
     max-width: 520px;
     bottom: 20px;
     border-radius: var(--radius-lg);
@@ -1711,6 +1785,10 @@ button:disabled, .btn:disabled {
     box-shadow: var(--shadow-md);
     padding: 6px 14px;
   }
+}
+
+/* ── Responsive Optimizations: iPad Air & Tablet (>= 768px) ── */
+@media (min-width: 768px) {
   .score {
     font-size: 3.6em; 
   }

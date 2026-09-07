@@ -2,7 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { Routes, Route, useNavigate, Navigate, useLocation } from 'react-router-dom';
 import { HomeContainer } from './components/HomeContainer';
 import { MainMenu } from './components/MainMenu';
-import { BottomNav } from './components/BottomNav';
+import { AppNav } from './components/AppNav';
 import { AuthScreen } from './components/AuthScreen';
 import { PasswordResetScreen } from './components/PasswordResetScreen';
 import { LobbyBrowser } from './components/LobbyBrowser';
@@ -95,7 +95,7 @@ export default function App() {
   // the bottom of a phone with no way to scroll to it.
   const fullscreenMatchRoutes = ['/game', '/powerscoring', '/splitscore', '/checkout', '/online-game'];
   const isMatchActive = fullscreenMatchRoutes.some(route => location.pathname.startsWith(route));
-  const hideBottomNav = isMatchActive || location.pathname.startsWith('/lobby/');
+  const hideNav = isMatchActive || location.pathname.startsWith('/lobby/');
 
   const effectiveMiniGamePlayers = miniGameConfig.players.length > 0
     ? miniGameConfig.players
@@ -375,7 +375,7 @@ export default function App() {
         </Routes>
       </Suspense>
 
-      {!hideBottomNav && <BottomNav />}
+      {!hideNav && <AppNav />}
 
       {/* One stack for every message. Each toast used to position itself, so
           several at once covered one another exactly and only the oldest was

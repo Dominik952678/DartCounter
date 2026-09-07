@@ -13,3 +13,6 @@ export type { CardProps, CardHeaderProps } from './Card';
 
 export { Choice, ChoiceGroup } from './Choice';
 export type { ChoiceProps, ChoiceGroupProps, ChoiceOption } from './Choice';
+
+export { NavItem } from './NavItem';
+export type { NavItemProps } from './NavItem';

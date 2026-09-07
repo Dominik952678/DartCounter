@@ -90,6 +90,11 @@
   --radius-card: 12px;        /* durchgehend, §3 */
   --card-padding: var(--space-4);
 
+  /* Breite der Sidebar ab 900px (§6). Steht hier und nicht am Element, weil
+     `body` den Wert braucht, um den Platz dafür freizuhalten. Unter 900px ist
+     die Navigation der untere Dock und der Wert wird nicht gelesen. */
+  --nav-rail: 232px;
+
   /* ─────────────────────────────────────────────────────────────────────────
      Legacy-Aliasse — Abbau in Phase 2–5
 
@@ -155,7 +160,7 @@
 
   /* ── Stacking order ──
      Everything that overlaps draws from this scale. `.modal-overlay` and
-     `.bottom-nav` both sat on 1000 and the dock is rendered after the routes,
+     `.app-nav` both sat on 1000 and the dock is rendered after the routes,
      so it painted over the bottom of every dialog — which is where the buttons
      are. Numbers are spaced so a new layer can be slotted between two. */
   --z-content: 1;

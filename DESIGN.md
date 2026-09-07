@@ -95,7 +95,9 @@ Konkrete Layout-Änderungen pro Stufe:
 
 - **< 600px (Phone Hochformat, aktueller Ist-Zustand):** Single-Column, Bottom-Tab-Navigation, Karten volle Breite oder 2-Grid wie im Mockup.
 - **≥ 600px (Phone Querformat):** Content bekommt `max-width: 600px` und wird zentriert statt gestreckt — sonst werden Karten unnatürlich breit und Buttons unangenehm lang. Bottom-Tabs bleiben.
-- **≥ 900px (iPad Air, beide Ausrichtungen):** Navigation wechselt von Bottom-Tabs zu einer linken Sidebar (klassisches iPad-Pattern, mehr Platz, kein Daumen-Reach-Problem). Home-Grid wird 3-spaltig statt 2-spaltig. Formulare (Neues Spiel, Training) zeigen beide Spalten (Modus & Spieler / Einstellungen) nebeneinander mit mehr Breite statt gestrecktem Inhalt.
+- **≥ 900px (iPad Air Querformat, iPad 13" Hochformat):** Navigation wechselt von Bottom-Tabs zu einer linken Sidebar (klassisches iPad-Pattern, mehr Platz, kein Daumen-Reach-Problem). Home-Grid wird 3-spaltig statt 2-spaltig. Formulare (Neues Spiel, Training) zeigen beide Spalten (Modus & Spieler / Einstellungen) nebeneinander mit mehr Breite statt gestrecktem Inhalt.
+
+  > **Korrektur zur Gerätetabelle oben:** Hier stand ursprünglich „iPad Air, beide Ausrichtungen". Das iPad Air 11" ist im Hochformat aber nur **820px** breit und fällt damit unter diese Stufe — es behält bewusst die Bottom-Tabs. Eine 232px-Sidebar ließe dort nur 588px für den Inhalt, weniger als das iPhone im Querformat hat, und die zweispaltigen Formulare dieser Stufe würden ohnehin wieder umbrechen. Entschieden am 07.09.2026.
 - **≥ 1200px (iPad Air 13" Querformat):** Max-Content-Width von `~960px` für die Hauptinhalte, zentriert — sonst verlieren sich Karten in der Breite. Statistik-Screen kann Offline/Online-Stats echt nebeneinander mit mehr Detail zeigen statt der aktuellen sehr leeren rechten Spalte (siehe Screenshot "Online Stats" — auf Tablet ist da Platz für ein zweites Diagramm statt Leerraum).
 
 ### Safe Areas
