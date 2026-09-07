@@ -91,7 +91,7 @@ export const LobbyRoom: React.FC = () => {
   const settings = roomSettings;
 
   return (
-    <div className="screen active-screen app-container lobby-room">
+    <div className="screen active-screen lobby-room">
       <div className="ambient-glow" aria-hidden="true" />
 
       <header className="page-header">
@@ -250,7 +250,7 @@ export const LobbyRoom: React.FC = () => {
         {settings && !isHost && (
           <>
             <p className="settings-summary">
-              {(!settings.mode || settings.mode === 'standard') && `${settings.startScore} · ${settings.outMode} · First to ${settings.legsToWin} Legs${settings.setsToWin > 1 ? ` · ${settings.setsToWin} Sets` : ''}`}
+              {(!settings.mode || settings.mode === 'standard') && `${settings.startScore} · ${settings.outMode} · Bis ${settings.legsToWin} Legs${settings.setsToWin > 1 ? ` · ${settings.setsToWin} Sätze` : ''}`}
               {settings.mode === 'powerscoring' && `${settings.rounds || 10} Runden`}
               {settings.mode === 'splitscore' && 'Standard Runden'}
               {settings.mode === 'checkout' && `${settings.checkoutTargets || 10} Targets · ${settings.checkoutRounds || 1} Versuche`}

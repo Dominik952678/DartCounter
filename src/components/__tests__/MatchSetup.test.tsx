@@ -35,15 +35,15 @@ describe('MatchSetup Component', () => {
     const decreaseLegsBtn = screen.getByRole('button', { name: /Legs verringern/i });
 
     // Starts at default 1 for both sets and legs
-    expect(screen.getAllByText('First to 1')).toHaveLength(2);
+    expect(screen.getAllByText('Bis 1')).toHaveLength(2);
 
     // Click to increase legs from default (1) to 2
     fireEvent.click(increaseLegsBtn);
-    expect(screen.getByText('First to 2')).toBeInTheDocument();
+    expect(screen.getByText('Bis 2')).toBeInTheDocument();
 
     // Click to decrease back to 1
     fireEvent.click(decreaseLegsBtn);
-    expect(screen.getAllByText('First to 1')).toHaveLength(2);
+    expect(screen.getAllByText('Bis 1')).toHaveLength(2);
   });
 
   it('loads previously saved sets and legs from localStorage', () => {
@@ -52,8 +52,8 @@ describe('MatchSetup Component', () => {
 
     render(<MatchSetup {...defaultProps} />);
 
-    expect(screen.getByText('First to 3')).toBeInTheDocument();
-    expect(screen.getByText('First to 5')).toBeInTheDocument();
+    expect(screen.getByText('Bis 3')).toBeInTheDocument();
+    expect(screen.getByText('Bis 5')).toBeInTheDocument();
   });
 
   it('allows changing start score (301, 501, 701, 1001)', () => {

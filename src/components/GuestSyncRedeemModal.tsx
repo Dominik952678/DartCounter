@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 import type { Profile } from '../types';
 import { redeemSyncCode } from '../db';
 import { useAuthStore } from '../store/useAuthStore';
 import { resolveHostDeviceId } from '../utils/storage';
+import { useModalA11y } from '../hooks/useModalA11y';
 
 interface GuestSyncRedeemModalProps {
   /** What the caller does with the redeemed guest: seat them, list them, both. */
@@ -32,21 +33,30 @@ export const GuestSyncRedeemModal: React.FC<GuestSyncRedeemModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [found, setFound] = useState<{ profile: Profile; username: string } | null>(null);
+  const titleId = useId();
+  const codeInputId = useId();
+  const dialogRef = useModalA11y<HTMLDivElement>({ onClose });
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => {
+    if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+  }, []);
+
+  const cleanCode = code.replace(/\s+/g, '');
 
   const handleCheckCode = async () => {
     setError(null);
     setSuccess(null);
     setFound(null);
 
-    const clean = code.replace(/\s+/g, '').trim();
-    if (clean.length < 6) {
+    if (cleanCode.length < 6) {
       setError('Bitte gib den 6-stelligen Sync-Code ein.');
       return;
     }
 
     setLoading(true);
     const hostName = user?.user_metadata?.username || user?.email || 'Host-Gerät';
-    const res = await redeemSyncCode(clean, resolveHostDeviceId(), hostName);
+    const res = await redeemSyncCode(cleanCode, resolveHostDeviceId(), hostName);
     setLoading(false);
 
     if (!res.success || !res.profile || !res.username) {
@@ -60,32 +70,45 @@ export const GuestSyncRedeemModal: React.FC<GuestSyncRedeemModalProps> = ({
     if (!found) return;
     onImported(found.username, found.profile);
     setSuccess(`Gastkonto @${found.username} erfolgreich hinzugefügt!`);
-    setTimeout(onClose, 1200);
+    closeTimeoutRef.current = setTimeout(onClose, 1200);
   };
 
   return (
-    <div className="modal-overlay" style={{
-      position: 'fixed',
-      inset: 0,
-      background: 'rgba(0,0,0,0.8)',
-      backdropFilter: 'blur(8px)',
-      zIndex: 10000,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '16px'
-    }}>
-      <div className="modal-content card" style={{
-        maxWidth: '440px',
-        width: '100%',
-        background: 'var(--card)',
-        border: '1px solid var(--primary, #00ff88)',
-        padding: '24px',
-        boxShadow: '0 10px 40px rgba(0,0,0,0.6)'
-      }}>
+    <div
+      className="modal-overlay"
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.8)',
+        backdropFilter: 'blur(8px)',
+        zIndex: 'var(--z-overlay)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '16px'
+      }}
+    >
+      <div
+        ref={dialogRef}
+        className="modal-content card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        onClick={e => e.stopPropagation()}
+        style={{
+          maxWidth: '440px',
+          width: '100%',
+          background: 'var(--card)',
+          border: '1px solid var(--primary, #00ff88)',
+          padding: '24px',
+          boxShadow: '0 10px 40px rgba(0,0,0,0.6)'
+        }}
+      >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h3 style={{ margin: 0, fontSize: '1.25rem' }}>{title}</h3>
-          <button className="btn-ghost" onClick={onClose} style={{ fontSize: '1.2rem', padding: '2px 8px' }}>
+          <h3 id={titleId} style={{ margin: 0, fontSize: '1.25rem' }}>{title}</h3>
+          <button className="btn-ghost" onClick={onClose} aria-label="Schließen" style={{ fontSize: '1.2rem', padding: '2px 8px' }}>
             ✕
           </button>
         </div>
@@ -95,7 +118,9 @@ export const GuestSyncRedeemModal: React.FC<GuestSyncRedeemModalProps> = ({
         </p>
 
         <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
+          <label htmlFor={codeInputId} className="sr-only">6-stelliger Sync-Code</label>
           <input
+            id={codeInputId}
             type="text"
             maxLength={7}
             placeholder="z.B. 482 195"
@@ -113,10 +138,10 @@ export const GuestSyncRedeemModal: React.FC<GuestSyncRedeemModalProps> = ({
           <button
             className="btn-primary"
             onClick={handleCheckCode}
-            disabled={loading || code.trim().length < 6}
+            disabled={loading || cleanCode.length < 6}
             style={{ padding: '0 16px', whiteSpace: 'nowrap' }}
           >
-            {loading ? 'Prüfe...' : 'Suchen'}
+            {loading ? 'Prüfe…' : 'Suchen'}
           </button>
         </div>
 

@@ -30,6 +30,9 @@ export function useProfiles(user?: { id: string; user_metadata?: { username?: st
    * Writing the ref synchronously also makes back-to-back calls compose, which
    * matters because callers do loop over profiles (see the sample-data loader).
    */
+  const userId = user?.id;
+  const username = user?.user_metadata?.username;
+
   const profilesRef = useRef(profiles);
   const userIdRef = useRef(user?.id);
 
@@ -63,27 +66,37 @@ export function useProfiles(user?: { id: string; user_metadata?: { username?: st
   }, []);
 
   const loadProfiles = useCallback(async () => {
-    const username = user?.user_metadata?.username;
-    const loaded = await getProfiles(user?.id, username);
-    profilesRef.current = loaded;
-    setProfiles(loaded);
-  }, [user?.id, user?.user_metadata?.username]);
+    try {
+      const loaded = await getProfiles(userId, username);
+      profilesRef.current = loaded;
+      setProfiles(loaded);
+    } catch (err) {
+      reportPersistenceError(err, 'Profile konnten nicht geladen werden');
+    }
+  }, [userId, username]);
 
   useEffect(() => {
     let isMounted = true;
     (async () => {
-      const username = user?.user_metadata?.username;
-      const loaded = await getProfiles(user?.id, username);
-      if (isMounted) {
+      try {
+        const loaded = await getProfiles(userId, username);
+        if (!isMounted) return;
         profilesRef.current = loaded;
         setProfiles(loaded);
-        setLoadedForUserId(user?.id ?? null);
+        setLoadedForUserId(userId ?? null);
+      } catch (err) {
+        // A rejected load used to leave `profiles` at `{}` with no message, so
+        // every screen showed "Noch keine Profile vorhanden" — indistinguishable
+        // from a player who really has none. `loadedForUserId` deliberately
+        // stays unset: the profiles are unknown, and nothing may write an empty
+        // set back over the account.
+        if (isMounted) reportPersistenceError(err, 'Profile konnten nicht geladen werden');
       }
     })();
     return () => {
       isMounted = false;
     };
-  }, [user?.id, user?.user_metadata?.username]);
+  }, [userId, username]);
 
   const handleCreateProfile = useCallback(async (name: string, isBot?: boolean, targetAverage?: number) => {
     await applyProfiles({
@@ -108,6 +121,12 @@ export function useProfiles(user?: { id: string; user_metadata?: { username?: st
     setProfiles,
     applyProfiles,
     loadedForUserId,
+    /**
+     * Derived rather than stored: the profiles in state belong to another
+     * account (or to nobody yet) until the loader says otherwise. `profiles`
+     * starts empty, so screens need this to tell "still loading" from "none".
+     */
+    isProfilesLoading: loadedForUserId !== (userId ?? null),
     reloadProfiles: loadProfiles,
     handleCreateProfile,
     handleUpdateProfile,

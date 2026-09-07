@@ -45,7 +45,7 @@ export const MatchImageExport: React.FC<MatchImageExportProps> = ({ matchData, p
       {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: '40px' }}>
         <div style={{ color: '#38bdf8', fontSize: '28px', fontWeight: 'bold', letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '10px' }}>
-          OFFICIAL MATCH REPORT
+          OFFIZIELLER MATCH-BERICHT
         </div>
         <div style={{ fontSize: '60px', fontWeight: '900', margin: '0', textTransform: 'uppercase', background: 'linear-gradient(to right, #38bdf8, #818cf8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
           Dartcounter
@@ -89,7 +89,7 @@ export const MatchImageExport: React.FC<MatchImageExportProps> = ({ matchData, p
                   {isWinner && <span style={{ fontSize: '45px' }}>👑</span>}
                 </div>
                 <div style={{ fontSize: '65px', fontWeight: '900', color: playerColor, textShadow: '0 4px 10px rgba(0,0,0,0.3)' }}>
-                  {p.sets} <span style={{ color: '#64748b', fontSize: '45px' }}>SET</span> <span style={{ margin: '0 10px' }}>-</span> {p.legs} <span style={{ color: '#64748b', fontSize: '45px' }}>LEG</span>
+                  {p.sets} <span style={{ color: '#64748b', fontSize: '45px' }}>SÄTZE</span> <span style={{ margin: '0 10px' }}>-</span> {p.legs} <span style={{ color: '#64748b', fontSize: '45px' }}>LEGS</span>
                 </div>
               </div>
 
@@ -100,11 +100,11 @@ export const MatchImageExport: React.FC<MatchImageExportProps> = ({ matchData, p
                   <div style={{ fontSize: '55px', fontWeight: '900', color: '#fff' }}>{p.avg}</div>
                 </div>
                 <div style={{ backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: '16px', padding: '25px', textAlign: 'center', borderBottom: `4px solid ${playerColor}` }}>
-                  <div style={{ color: '#94a3b8', fontSize: '20px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' }}>First 9 Avg</div>
+                  <div style={{ color: '#94a3b8', fontSize: '20px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' }}>Ø Erste 9</div>
                   <div style={{ fontSize: '55px', fontWeight: '900', color: '#fff' }}>{p.first9 || p.avg}</div>
                 </div>
                 <div style={{ backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: '16px', padding: '25px', textAlign: 'center', borderBottom: `4px solid ${playerColor}` }}>
-                  <div style={{ color: '#94a3b8', fontSize: '20px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' }}>Checkout %</div>
+                  <div style={{ color: '#94a3b8', fontSize: '20px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' }}>Checkout-Quote</div>
                   <div style={{ fontSize: '55px', fontWeight: '900', color: '#fff' }}>{checkoutQuote}%</div>
                   <div style={{ color: '#64748b', fontSize: '18px', marginTop: '5px' }}>{p.checkoutSuccesses || 0}/{p.checkoutAttempts || 0}</div>
                 </div>
@@ -125,11 +125,11 @@ export const MatchImageExport: React.FC<MatchImageExportProps> = ({ matchData, p
                   <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#fbbf24' }}>{p.oneEighty || 0}</div>
                 </div>
                 <div style={{ backgroundColor: 'rgba(255,255,255,0.05)', padding: '20px', borderRadius: '12px', textAlign: 'center' }}>
-                  <div style={{ color: '#94a3b8', fontSize: '18px', marginBottom: '8px' }}>Best Leg</div>
+                  <div style={{ color: '#94a3b8', fontSize: '18px', marginBottom: '8px' }}>Bestes Leg</div>
                   <div style={{ fontSize: '32px', fontWeight: 'bold' }}>{p.bestMatchLeg ? `${p.bestMatchLeg} D` : '-'}</div>
                 </div>
                 <div style={{ backgroundColor: 'rgba(255,255,255,0.05)', padding: '20px', borderRadius: '12px', textAlign: 'center' }}>
-                  <div style={{ color: '#94a3b8', fontSize: '18px', marginBottom: '8px' }}>High Finish</div>
+                  <div style={{ color: '#94a3b8', fontSize: '18px', marginBottom: '8px' }}>Highest Finish</div>
                   <div style={{ fontSize: '32px', fontWeight: 'bold' }}>{p.highestCheckout || '-'}</div>
                 </div>
               </div>
@@ -137,7 +137,7 @@ export const MatchImageExport: React.FC<MatchImageExportProps> = ({ matchData, p
               {/* Leg-by-Leg Chart (CSS Bar Chart) */}
               {p.legHistory && p.legHistory.length > 0 && (
                 <div style={{ marginTop: '20px' }}>
-                  <div style={{ color: '#94a3b8', fontSize: '18px', textTransform: 'uppercase', marginBottom: '15px' }}>Leg Averages Trend</div>
+                  <div style={{ color: '#94a3b8', fontSize: '18px', textTransform: 'uppercase', marginBottom: '15px' }}>Average-Verlauf pro Leg</div>
                   <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', height: '120px', backgroundColor: 'rgba(0,0,0,0.2)', padding: '20px 20px 0 20px', borderRadius: '12px' }}>
                     {p.legHistory.map((avgStr, idx) => {
                       const avg = parseFloat(avgStr as unknown as string);
@@ -168,7 +168,7 @@ export const MatchImageExport: React.FC<MatchImageExportProps> = ({ matchData, p
 
       {/* Footer */}
       <div style={{ textAlign: 'center', marginTop: '40px', color: '#64748b', fontSize: '20px' }}>
-        Created with <span style={{ color: '#38bdf8', fontWeight: 'bold' }}>Dartcounter</span>
+        Erstellt mit <span style={{ color: '#38bdf8', fontWeight: 'bold' }}>Dartcounter</span>
       </div>
     </div>
   );

@@ -47,17 +47,29 @@ export const ProfileList: React.FC<ProfileListProps> = ({
               <div
                 key={name}
                 className="profile-chip"
-                onClick={() => onOpenProfile(name)}
                 style={{
                   borderLeftColor: profiles[name]?.color || 'var(--card-border)',
                   position: 'relative',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '6px',
-                  cursor: 'pointer'
+                  gap: '6px'
                 }}
               >
-                <span>{isCloudGuest ? '🔗 ' : (profiles[name]?.isBot ? '🤖 ' : '👤 ')} {name}</span>
+                <button
+                  type="button"
+                  onClick={() => onOpenProfile(name)}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'inherit',
+                    font: 'inherit',
+                    cursor: 'pointer',
+                    padding: 0,
+                    minHeight: 'auto'
+                  }}
+                >
+                  {isCloudGuest ? '🔗 ' : (profiles[name]?.isBot ? '🤖 ' : '👤 ')} {name}
+                </button>
                 {isCloudGuest && (
                   <span style={{
                     fontSize: '0.7em',
@@ -75,11 +87,9 @@ export const ProfileList: React.FC<ProfileListProps> = ({
                 {!isCloudGuest && (
                   <button
                     type="button"
-                    onClick={e => {
-                      e.stopPropagation();
-                      setPendingDeletion(name);
-                    }}
+                    onClick={() => setPendingDeletion(name)}
                     title={`Profil „${name}“ löschen`}
+                    aria-label={`Profil „${name}“ löschen`}
                     style={{
                       background: 'transparent',
                       border: 'none',

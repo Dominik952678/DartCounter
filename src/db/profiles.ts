@@ -74,6 +74,13 @@ export function reconstructProfileFromMatches(
   let matchHighestCheckout = 0;
   let matchBestLeg = 0;
   const matchSegmentHits: Record<string, number> = {};
+  // Recomputed from the history like every other total above, rather than
+  // added onto the stored value: this function runs on each profile load, and
+  // adding made one 600-point session read as 3000 after five launches.
+  let matchPowerScore = 0;
+  let matchSplitScore = 0;
+  let matchCheckoutAttemptsUsed = 0;
+  let matchCheckoutDartsUsed = 0;
 
   playerMatches.forEach(m => {
     const isWinner = isMatchWinner(m, profileName);
@@ -117,7 +124,7 @@ export function reconstructProfileFromMatches(
         prof.powerScoring.matchesPlayed,
         playerMatches.filter(pm => pm.gameType === 'powerScoring').length
       );
-      prof.powerScoring.totalScore = (prof.powerScoring.totalScore || 0) + pStat.score;
+      matchPowerScore += pStat.score;
       if (isWinner) {
         prof.powerScoring.wins = Math.max(
           prof.powerScoring.wins,
@@ -131,7 +138,7 @@ export function reconstructProfileFromMatches(
         prof.splitScore.matchesPlayed,
         playerMatches.filter(pm => pm.gameType === 'splitScore').length
       );
-      prof.splitScore.totalScore = (prof.splitScore.totalScore || 0) + pStat.score;
+      matchSplitScore += pStat.score;
       if (isWinner) {
         prof.splitScore.wins = Math.max(
           prof.splitScore.wins,
@@ -145,8 +152,8 @@ export function reconstructProfileFromMatches(
         prof.checkoutTraining.matchesPlayed,
         playerMatches.filter(pm => pm.gameType === 'checkoutTraining').length
       );
-      if (pStat.attempts) prof.checkoutTraining.totalAttempts = (prof.checkoutTraining.totalAttempts || 0) + pStat.attempts;
-      if (pStat.dartsUsed) prof.checkoutTraining.totalDartsUsed = (prof.checkoutTraining.totalDartsUsed || 0) + pStat.dartsUsed;
+      if (pStat.attempts) matchCheckoutAttemptsUsed += pStat.attempts;
+      if (pStat.dartsUsed) matchCheckoutDartsUsed += pStat.dartsUsed;
       if (isWinner) {
         prof.checkoutTraining.wins = Math.max(
           prof.checkoutTraining.wins,
@@ -170,6 +177,17 @@ export function reconstructProfileFromMatches(
   prof.oneFortyPlus = Math.max(prof.oneFortyPlus || 0, matchOneFortyPlus);
   prof.oneEighty = Math.max(prof.oneEighty || 0, matchOneEighty);
   prof.triplesHit = Math.max(prof.triplesHit || 0, matchTriples);
+
+  if (prof.powerScoring) {
+    prof.powerScoring.totalScore = Math.max(prof.powerScoring.totalScore || 0, matchPowerScore);
+  }
+  if (prof.splitScore) {
+    prof.splitScore.totalScore = Math.max(prof.splitScore.totalScore || 0, matchSplitScore);
+  }
+  if (prof.checkoutTraining) {
+    prof.checkoutTraining.totalAttempts = Math.max(prof.checkoutTraining.totalAttempts || 0, matchCheckoutAttemptsUsed);
+    prof.checkoutTraining.totalDartsUsed = Math.max(prof.checkoutTraining.totalDartsUsed || 0, matchCheckoutDartsUsed);
+  }
 
   if (matchHighestCheckout > 0) {
     prof.highestCheckout = Math.max(prof.highestCheckout || 0, matchHighestCheckout);

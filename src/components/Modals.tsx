@@ -2,97 +2,7 @@ import React from 'react';
 import { useModalA11y } from '../hooks/useModalA11y';
 import type { Player, MatchHistory } from '../types';
 import { DartboardHeatmap } from './DartboardHeatmap';
-
-const bottomSheetStyles = `
-  .bottom-sheet-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.88);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    z-index: 1000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    animation: fadeIn 0.3s ease-out;
-  }
-  
-  .bottom-sheet-content {
-    background-color: #141418;
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    border-radius: var(--radius, 16px);
-    width: 92%;
-    max-width: 520px;
-    max-height: 90vh;
-    overflow-y: auto;
-    padding: 26px 22px;
-    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.95);
-    position: relative;
-    animation: scaleUp 0.3s ease-out;
-    color: #ffffff;
-  }
-
-  @media (max-width: 767px) {
-    .bottom-sheet-overlay {
-      align-items: flex-end;
-    }
-    .bottom-sheet-content {
-      width: 100%;
-      max-width: 100%;
-      border-radius: 24px 24px 0 0;
-      padding: 32px 20px 24px;
-      animation: slideUp 0.3s ease-out forwards;
-      transform: translateY(100%);
-    }
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-
-  @keyframes slideUp {
-    from { transform: translateY(100%); }
-    to { transform: translateY(0); }
-  }
-  
-  @keyframes scaleUp {
-    from { transform: scale(0.95); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
-  }
-
-  .drag-handle {
-    display: none;
-    width: 40px;
-    height: 4px;
-    background-color: rgba(255, 255, 255, 0.3);
-    border-radius: 2px;
-    position: absolute;
-    top: 12px;
-    left: 50%;
-    transform: translateX(-50%);
-  }
-
-  @media (max-width: 767px) {
-    .drag-handle {
-      display: block;
-    }
-  }
-
-  .confetti {
-    font-size: 2.5rem;
-    animation: bounce 1s infinite alternate;
-    display: inline-block;
-  }
-
-  @keyframes bounce {
-    from { transform: translateY(0); }
-    to { transform: translateY(-10px); }
-  }
-`;
+import { checkoutQuote } from '../utils/stats';
 
 export const StatsModal: React.FC<{
   isOpen: boolean;
@@ -114,7 +24,6 @@ export const StatsModal: React.FC<{
 
   return (
     <>
-      <style>{bottomSheetStyles}</style>
       {/* No backdrop-click close either: it commits the match and leaves the board. */}
       <div className="bottom-sheet-overlay">
         <div
@@ -138,17 +47,15 @@ export const StatsModal: React.FC<{
             {matchData.players.map((pData, i) => {
               const isWinner = pData.name === matchData.winner;
               const playerObj = players[i];
-              const coQuote = (pData.checkoutAttempts && pData.checkoutAttempts > 0)
-                ? (((pData.checkoutSuccesses || 0) / pData.checkoutAttempts) * 100).toFixed(1) + '%'
-                : '–';
+              const coQuote = checkoutQuote(pData.checkoutSuccesses || 0, pData.checkoutAttempts || 0);
               const tripleQuote = (pData.triplesHit && pData.matchDarts && pData.matchDarts > 0)
                 ? (((pData.triplesHit || 0) / pData.matchDarts) * 100).toFixed(1) + '%'
                 : '–';
 
               return (
-                <div key={i} style={{ 
-                  background: isWinner ? 'rgba(245, 158, 11, 0.12)' : '#111827',
-                  border: `1.5px solid ${isWinner ? 'var(--green)' : 'rgba(255, 255, 255, 0.1)'}`,
+                <div key={i} style={{
+                  background: isWinner ? 'color-mix(in srgb, var(--primary) 12%, transparent)' : 'var(--bg-surface)',
+                  border: `1.5px solid ${isWinner ? 'var(--green)' : 'var(--card-border)'}`,
                   borderRadius: 'var(--radius, 12px)',
                   padding: '16px'
                 }}>
@@ -159,7 +66,7 @@ export const StatsModal: React.FC<{
                         {pData.name} {isWinner ? '👑' : ''}
                       </strong>
                     </div>
-                    <span style={{ fontSize: '1.1em', fontWeight: 800, background: '#111827', border: '1px solid rgba(148, 163, 184, 0.12)', padding: '4px 12px', borderRadius: '8px' }}>
+                    <span className="result-stat-card" style={{ fontSize: '1.1em', fontWeight: 800, padding: '4px 12px' }}>
                       {matchData.gameType && matchData.gameType !== 'standard'
                         ? (pData.score !== undefined ? `${pData.score} Pkt` : '')
                         : (pData.sets !== undefined ? `${pData.sets}S : ${pData.legs}L` : `${pData.legs} Legs`)}
@@ -168,19 +75,19 @@ export const StatsModal: React.FC<{
                   
                   {matchData.gameType && matchData.gameType !== 'standard' ? (
                     <div style={{ display: 'grid', gridTemplateColumns: matchData.gameType === 'checkoutTraining' ? '1fr 1fr 1fr' : '1fr', gap: '8px', marginBottom: '6px' }}>
-                      <div style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(148, 163, 184, 0.12)', padding: '12px 8px', borderRadius: '8px', textAlign: 'center' }}>
+                      <div className="result-stat-card" style={{ padding: '12px 8px', textAlign: 'center' }}>
                         <div style={{ fontSize: '0.75em', color: 'var(--text-dim)', marginBottom: '2px' }}>
-                          {matchData.gameType === 'checkoutTraining' ? 'Bestes Checkout' : 'Punkte (Score)'}
+                          {matchData.gameType === 'checkoutTraining' ? 'Bestes Checkout' : 'Punkte'}
                         </div>
                         <div style={{ color: 'var(--green)', fontWeight: 800, fontSize: '1.4em' }}>{pData.score || 0}</div>
                       </div>
                       {matchData.gameType === 'checkoutTraining' && (
                         <>
-                          <div style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(148, 163, 184, 0.12)', padding: '12px 8px', borderRadius: '8px', textAlign: 'center' }}>
+                          <div className="result-stat-card" style={{ padding: '12px 8px', textAlign: 'center' }}>
                             <div style={{ fontSize: '0.75em', color: 'var(--text-dim)', marginBottom: '2px' }}>Versuche</div>
                             <div style={{ color: 'var(--orange)', fontWeight: 800, fontSize: '1.4em' }}>{pData.attempts || 0}</div>
                           </div>
-                          <div style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(148, 163, 184, 0.12)', padding: '12px 8px', borderRadius: '8px', textAlign: 'center' }}>
+                          <div className="result-stat-card" style={{ padding: '12px 8px', textAlign: 'center' }}>
                             <div style={{ fontSize: '0.75em', color: 'var(--text-dim)', marginBottom: '2px' }}>Darts</div>
                             <div style={{ color: 'var(--blue)', fontWeight: 800, fontSize: '1.4em' }}>{pData.dartsUsed || 0}</div>
                           </div>
@@ -191,16 +98,16 @@ export const StatsModal: React.FC<{
                     <>
                       {/* Primary Stats Grid */}
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '10px' }}>
-                        <div style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(148, 163, 184, 0.12)', padding: '10px 8px', borderRadius: '8px', textAlign: 'center' }}>
+                        <div className="result-stat-card" style={{ padding: '10px 8px', textAlign: 'center' }}>
                           <div style={{ fontSize: '0.75em', color: 'var(--text-dim)', marginBottom: '2px' }}>Average</div>
                           <div style={{ color: 'var(--green)', fontWeight: 800, fontSize: '1.1em' }}>{pData.avg}</div>
                         </div>
-                        <div style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(148, 163, 184, 0.12)', padding: '10px 8px', borderRadius: '8px', textAlign: 'center' }}>
-                          <div style={{ fontSize: '0.75em', color: 'var(--text-dim)', marginBottom: '2px' }}>First 9</div>
+                        <div className="result-stat-card" style={{ padding: '10px 8px', textAlign: 'center' }}>
+                          <div style={{ fontSize: '0.75em', color: 'var(--text-dim)', marginBottom: '2px' }}>Erste 9</div>
                           <div style={{ color: 'var(--orange)', fontWeight: 800, fontSize: '1.1em' }}>{pData.first9}</div>
                         </div>
-                        <div style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(148, 163, 184, 0.12)', padding: '10px 8px', borderRadius: '8px', textAlign: 'center' }}>
-                          <div style={{ fontSize: '0.75em', color: 'var(--text-dim)', marginBottom: '2px' }}>Best Leg</div>
+                        <div className="result-stat-card" style={{ padding: '10px 8px', textAlign: 'center' }}>
+                          <div style={{ fontSize: '0.75em', color: 'var(--text-dim)', marginBottom: '2px' }}>Bestes Leg</div>
                           <div style={{ color: 'var(--blue)', fontWeight: 800, fontSize: '1.1em' }}>
                             {pData.bestMatchLeg ? `${pData.bestMatchLeg} Darts` : '–'}
                           </div>
@@ -209,18 +116,18 @@ export const StatsModal: React.FC<{
 
                       {/* Secondary Quotas */}
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '10px' }}>
-                        <div style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(148, 163, 184, 0.12)', padding: '8px 10px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div className="result-stat-card" style={{ padding: '8px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span style={{ fontSize: '0.8em', color: 'var(--text-dim)' }}>Checkout-Quote:</span>
                           <strong style={{ color: 'var(--text)' }}>{coQuote}</strong>
                         </div>
-                        <div style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(148, 163, 184, 0.12)', padding: '8px 10px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div className="result-stat-card" style={{ padding: '8px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                           <span style={{ fontSize: '0.8em', color: 'var(--text-dim)' }}>Triple-Quote:</span>
                           <strong style={{ color: 'var(--text)' }}>{tripleQuote}</strong>
                         </div>
                       </div>
 
                       {/* Highlights Grid */}
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(148, 163, 184, 0.12)', padding: '10px 6px', borderRadius: '8px', fontSize: '0.82em', textAlign: 'center' }}>
+                      <div className="result-stat-card" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', padding: '10px 6px', fontSize: '0.82em', textAlign: 'center' }}>
                         <div><span style={{ color: 'var(--text-dim)' }}>180:</span> <strong style={{ color: 'var(--orange)' }}>{pData.oneEighty || 0}</strong></div>
                         <div><span style={{ color: 'var(--text-dim)' }}>140+:</span> <strong>{pData.oneFortyPlus || 0}</strong></div>
                         <div><span style={{ color: 'var(--text-dim)' }}>100+:</span> <strong>{pData.hundredPlus || 0}</strong></div>
@@ -232,7 +139,7 @@ export const StatsModal: React.FC<{
                         <div style={{ marginTop: '10px', display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
                           <span style={{ fontSize: '0.75em', color: 'var(--text-dim)' }}>Legs:</span>
                           {pData.legHistory.map((avg, li) => (
-                            <span key={li} style={{ fontSize: '0.75em', background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(148, 163, 184, 0.12)', padding: '2px 6px', borderRadius: '4px' }}>
+                            <span key={li} className="result-stat-card" style={{ fontSize: '0.75em', padding: '2px 6px', borderRadius: '4px' }}>
                               L{li + 1}: Ø{avg}
                             </span>
                           ))}
@@ -255,74 +162,28 @@ export const StatsModal: React.FC<{
           {/* Action Buttons: Start Again, Undo last throw, Back to Menu */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '12px' }}>
             {onRematch && (
-              <button 
-                className="btn-success" 
-                onClick={onRematch} 
-                style={{ 
-                  width: '100%', 
-                  padding: '15px 20px', 
-                  fontSize: '1.08em', 
-                  borderRadius: 'var(--radius, 12px)', 
-                  border: 'none', 
-                  background: 'linear-gradient(135deg, var(--green, #00C851), #007E33)', 
-                  color: '#fff', 
-                  fontWeight: 800, 
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  boxShadow: '0 4px 15px rgba(0, 200, 81, 0.35)',
-                  transition: 'transform 0.1s ease'
-                }}
+              <button
+                className="btn-success result-btn-rematch"
+                onClick={onRematch}
               >
-                <span>🔄</span> <span>Nochmal spielen (Start again)</span>
+                <span>🔄</span> <span>Nochmal spielen</span>
               </button>
             )}
 
             <div style={{ display: 'grid', gridTemplateColumns: onUndoLastDart ? '1fr 1fr' : '1fr', gap: '10px' }}>
               {onUndoLastDart && (
-                <button 
-                  className="btn-secondary" 
-                  onClick={onUndoLastDart} 
-                  style={{ 
-                    padding: '13px 12px', 
-                    fontSize: '0.95em', 
-                    borderRadius: 'var(--radius, 10px)', 
-                    border: '1px solid rgba(249, 115, 22, 0.4)', 
-                    background: 'rgba(249, 115, 22, 0.14)', 
-                    color: 'var(--orange, #F97316)', 
-                    fontWeight: 700, 
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px',
-                    transition: 'all 0.15s ease'
-                  }}
+                <button
+                  className="result-btn-undo"
+                  onClick={onUndoLastDart}
                   title="Letzten Wurf rückgängig machen (falls verklickt)"
                 >
-                  <span>↩</span> <span>Wurf revidieren</span>
+                  <span>↩</span> <span>Wurf zurücknehmen</span>
                 </button>
               )}
 
-              <button 
-                className="btn-ghost" 
-                onClick={onClose} 
-                style={{ 
-                  padding: '13px 12px', 
-                  fontSize: '0.95em', 
-                  borderRadius: 'var(--radius, 10px)', 
-                  border: '1px solid rgba(255, 255, 255, 0.14)', 
-                  background: 'rgba(255, 255, 255, 0.06)', 
-                  color: 'var(--text, #fff)', 
-                  fontWeight: 700, 
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '6px'
-                }}
+              <button
+                className="btn-ghost result-btn-home"
+                onClick={onClose}
               >
                 <span>🏠</span> <span>Zurück zum Menü</span>
               </button>

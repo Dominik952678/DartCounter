@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 import { Scoreboard } from './Scoreboard';
 import { Keypad } from './Keypad';
 import type { Player, GameConfig, Dart } from '../types';
 import { isSoundEnabled, setSoundEnabled } from '../utils/audio';
 import { ConfirmModal } from './ConfirmModal';
+import { useModalA11y } from '../hooks/useModalA11y';
 
 interface GameScreenProps {
   players: Player[];
@@ -27,6 +28,10 @@ interface GameScreenProps {
 export const GameScreen: React.FC<GameScreenProps> = (props) => {
   const [showAbortConfirm, setShowAbortConfirm] = useState(false);
   const [soundOn, setSoundOn] = useState(isSoundEnabled());
+  const checkoutTitleId = useId();
+  // No `onClose`: the match cannot continue until this is answered, so Escape
+  // does nothing rather than silently discarding the prompt.
+  const checkoutDialogRef = useModalA11y<HTMLDivElement>({ isOpen: !!props.checkoutPrompt });
 
   return (
     <div className="screen active-screen game-screen-layout" style={{ position: 'relative' }}>
@@ -37,7 +42,7 @@ export const GameScreen: React.FC<GameScreenProps> = (props) => {
             🎯 {props.config.startScore} {props.config.outMode}
           </span>
           <span style={{ fontSize: '0.78em', color: 'var(--text-dim)', background: 'rgba(255,255,255,0.06)', padding: '2px 8px', borderRadius: '6px', whiteSpace: 'nowrap' }}>
-            First to {props.config.legsToWin} Legs {props.config.setsToWin > 1 ? `· ${props.config.setsToWin} Sets` : ''}
+            Bis {props.config.legsToWin} Legs {props.config.setsToWin > 1 ? `· ${props.config.setsToWin} Sätze` : ''}
           </span>
         </div>
 
@@ -98,7 +103,6 @@ export const GameScreen: React.FC<GameScreenProps> = (props) => {
             addDart={props.addDart}
             toggleMultiplier={props.toggleMultiplier}
             undoSingleDart={props.undoSingleDart}
-            abortGame={() => setShowAbortConfirm(true)}
             canUndo={props.canUndo}
           />
         </div>
@@ -121,11 +125,19 @@ export const GameScreen: React.FC<GameScreenProps> = (props) => {
 
       {props.checkoutPrompt && (
         <div className="modal-overlay">
-          <div className="modal-content checkout-prompt" style={{ textAlign: 'center' }}>
+          <div
+            ref={checkoutDialogRef}
+            className="modal-content checkout-prompt"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={checkoutTitleId}
+            tabIndex={-1}
+            style={{ textAlign: 'center' }}
+          >
             <div className="checkout-icon">
               {props.checkoutPrompt.isWin ? '🎉' : '🎯'}
             </div>
-            <h2>{props.checkoutPrompt.isWin ? 'Check!' : 'Verpasst'}</h2>
+            <h2 id={checkoutTitleId}>{props.checkoutPrompt.isWin ? 'Check!' : 'Verpasst'}</h2>
             <p style={{ color: '#999', marginBottom: '15px' }}>
               Erkannte Darts auf Doppel: <strong style={{ color: '#fff' }}>{props.checkoutPrompt.autoDarts}</strong>
             </p>

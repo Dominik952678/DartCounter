@@ -225,15 +225,22 @@ export function getCheckoutSuggestion(score: number, outMode: 'SO' | 'DO' | 'MO'
     if (score === 50) return 'DB';
     if (score <= 40 && score % 2 === 0) return `D${score / 2}`;
     if (score <= 60 && score % 3 === 0) return `T${score / 3}`;
-    // Odd scores > 20: find a single + single combination
-    if (score <= 40) {
-        const remainder = score - 20;
-        if (remainder > 0 && remainder <= 20) return `S${remainder} S20`;
-        return `S${score - 1} S1`;
-    }
-    if (score <= 60) {
-        const remainder = score - 40;
-        if (remainder > 0 && remainder <= 20) return `S${remainder} D20`;
+    // Odd scores > 20 need two darts. Suggesting one of these with a single
+    // dart left told the player to throw a route they could not finish; the DO
+    // and MO branches below have always checked what is left in the visit.
+    if (3 - dartsThrown >= 2) {
+      if (score <= 40) {
+          const remainder = score - 20;
+          if (remainder > 0 && remainder <= 20) return `S${remainder} S20`;
+          return `S${score - 1} S1`;
+      }
+      if (score <= 60) {
+          const remainder = score - 40;
+          if (remainder > 0 && remainder <= 20) return `S${remainder} D20`;
+      }
+    } else if (score <= 60) {
+      // One dart left and no single-dart finish exists for this score.
+      return null;
     }
     // Fall through to DO table for higher scores
   }

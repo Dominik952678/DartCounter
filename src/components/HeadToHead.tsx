@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useId } from 'react';
 import type { Profile } from '../types';
+import { useModalA11y } from '../hooks/useModalA11y';
 
 interface HeadToHeadProps {
   profileA: { name: string; profile: Profile };
@@ -8,6 +9,9 @@ interface HeadToHeadProps {
 }
 
 export const HeadToHead: React.FC<HeadToHeadProps> = ({ profileA, profileB, onClose }) => {
+  const titleId = useId();
+  const dialogRef = useModalA11y<HTMLDivElement>({ onClose });
+
   const getWinRate = (profile: Profile) => {
     if (!profile.matches) return 0;
     return (profile.wins / profile.matches) * 100;
@@ -36,7 +40,7 @@ export const HeadToHead: React.FC<HeadToHeadProps> = ({ profileA, profileB, onCl
 
   const stats = [
     {
-      label: 'Win Rate',
+      label: 'Siegquote',
       valA: getWinRate(profileA.profile),
       valB: getWinRate(profileB.profile),
       format: (v: number | undefined) => formatValue(v, true, true),
@@ -50,21 +54,21 @@ export const HeadToHead: React.FC<HeadToHeadProps> = ({ profileA, profileB, onCl
       higherIsBetter: true,
     },
     {
-      label: 'First 9 Average',
+      label: 'Ø Erste 9',
       valA: getFirst9Average(profileA.profile),
       valB: getFirst9Average(profileB.profile),
       format: (v: number | undefined) => formatValue(v, false, true),
       higherIsBetter: true,
     },
     {
-      label: 'Checkout %',
+      label: 'Checkout-Quote',
       valA: getCheckoutPercentage(profileA.profile),
       valB: getCheckoutPercentage(profileB.profile),
       format: (v: number | undefined) => formatValue(v, true, true),
       higherIsBetter: true,
     },
     {
-      label: 'Best Leg',
+      label: 'Bestes Leg',
       valA: profileA.profile.bestLegDarts && profileA.profile.bestLegDarts > 0 ? profileA.profile.bestLegDarts : undefined,
       valB: profileB.profile.bestLegDarts && profileB.profile.bestLegDarts > 0 ? profileB.profile.bestLegDarts : undefined,
       format: (v: number | undefined) => formatValue(v),
@@ -116,10 +120,19 @@ export const HeadToHead: React.FC<HeadToHeadProps> = ({ profileA, profileB, onCl
 
   return (
     <div className="modal-overlay" onClick={onClose} style={styles.overlay}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={styles.modal}>
+      <div
+        ref={dialogRef}
+        className="modal-content"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        onClick={(e) => e.stopPropagation()}
+        style={styles.modal}
+      >
         <div style={styles.header}>
-          <h2 style={{ margin: 0 }}>{profileA.name} ⚔️ {profileB.name}</h2>
-          <button className="btn-close" onClick={onClose} style={styles.closeBtn}>×</button>
+          <h2 id={titleId} style={{ margin: 0 }}>{profileA.name} ⚔️ {profileB.name}</h2>
+          <button className="btn-close" onClick={onClose} aria-label="Schließen" style={styles.closeBtn}>×</button>
         </div>
         
         <div style={styles.content}>
@@ -174,7 +187,7 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 1000,
+    zIndex: 'var(--z-overlay)',
   },
   modal: {
     backgroundColor: 'var(--bg)',

@@ -149,18 +149,30 @@ export const useGuestSync = (
   const abortRemoteMatch = async () => {
     if (!user?.id) return;
     setLoading(true);
-    await abortGuestMatchRemote(user.id);
-    await reload();
-    setLoading(false);
-    flash('🛑 Match auf Host-Gerät abgebrochen und Verbindung getrennt.');
+    setError(null);
+    try {
+      await abortGuestMatchRemote(user.id);
+      await reload();
+      flash('🛑 Match auf Host-Gerät abgebrochen und Verbindung getrennt.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Match konnte nicht abgebrochen werden.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const revokeHost = async (hostId?: string) => {
     if (!user?.id) return;
     setLoading(true);
-    await revokeHostAccess(user.id, hostId);
-    await reload();
-    setLoading(false);
+    setError(null);
+    try {
+      await revokeHostAccess(user.id, hostId);
+      await reload();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Host konnte nicht entkoppelt werden.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return { info, isEnabled, loading, error, notice, generateCode, setEnabled, abortRemoteMatch, revokeHost };

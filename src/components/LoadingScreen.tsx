@@ -14,7 +14,7 @@ interface LoadingScreenProps {
  * route that is still downloading looks like every other wait in the app.
  */
 export const LoadingScreen: React.FC<LoadingScreenProps> = ({ title, message, children }) => (
-  <div className="screen active-screen app-container center-stage">
+  <div className="screen active-screen center-stage">
     <div className="loading-orb" aria-hidden="true">🎯</div>
     {title && <h3 className="center-stage-title">{title}</h3>}
     {message && <p className="center-stage-text">{message}</p>}

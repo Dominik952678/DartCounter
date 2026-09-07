@@ -106,7 +106,7 @@ export const AuthScreen: React.FC = () => {
         </p>
         
         {displayError && (
-          <div style={{ background: 'rgba(239, 68, 68, 0.12)', color: 'var(--red)', padding: '12px', borderRadius: '12px', marginBottom: '20px', textAlign: 'center', fontSize: '0.9em', border: '1px solid rgba(239, 68, 68, 0.25)' }}>
+          <div role="alert" style={{ background: 'rgba(239, 68, 68, 0.12)', color: 'var(--red)', padding: '12px', borderRadius: '12px', marginBottom: '20px', textAlign: 'center', fontSize: '0.9em', border: '1px solid rgba(239, 68, 68, 0.25)' }}>
             ⚠️ {displayError}
           </div>
         )}
@@ -122,6 +122,7 @@ export const AuthScreen: React.FC = () => {
             <input
               type="text"
               placeholder="Benutzername (z.B. Dominik)"
+              aria-label="Benutzername"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               autoComplete="nickname"
@@ -132,6 +133,7 @@ export const AuthScreen: React.FC = () => {
           <input
             type="email"
             placeholder="E-Mail Adresse"
+            aria-label="E-Mail Adresse"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             autoComplete="email"
@@ -143,6 +145,7 @@ export const AuthScreen: React.FC = () => {
               <input
                 type="password"
                 placeholder="Passwort"
+                aria-label="Passwort"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete={isLogin ? 'current-password' : 'new-password'}
@@ -157,7 +160,7 @@ export const AuthScreen: React.FC = () => {
           )}
 
           <button type="submit" className="btn-primary btn-large" disabled={loading} style={{ marginTop: '8px' }}>
-            {loading ? 'Lade...' : isReset ? 'Link anfordern' : isLogin ? 'Einloggen' : 'Kostenlos Registrieren'}
+            {loading ? 'Lade…' : isReset ? 'Link anfordern' : isLogin ? 'Einloggen' : 'Kostenlos registrieren'}
           </button>
 
           {isLogin && (

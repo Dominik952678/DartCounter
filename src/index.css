@@ -48,6 +48,19 @@
   --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.6);
   --shadow-glow: 0 0 20px var(--primary-glow);
 
+  /* ── Stacking order ──
+     Everything that overlaps draws from this scale. `.modal-overlay` and
+     `.bottom-nav` both sat on 1000 and the dock is rendered after the routes,
+     so it painted over the bottom of every dialog — which is where the buttons
+     are. Numbers are spaced so a new layer can be slotted between two. */
+  --z-content: 1;
+  --z-match-shell: 10;
+  --z-sticky: 20;
+  --z-dock: 100;
+  --z-overlay: 200;
+  --z-toast: 300;
+  --z-screen-effect: 400;
+
   /* ── Typography ── */
   --font: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
@@ -155,6 +168,20 @@ h3 { font-size: 1.05em; color: var(--text-dim); font-weight: 600; }
   transform: scale(0.98);
 }
 
+/* Visually hidden but present for screen readers — for labels a compact
+   layout has no room to show, e.g. next to a placeholder-only input. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* ── App Container & Device Scalability ─────────────────────── */
 /* The shell padding is exposed as custom properties so full-height screens can
    size themselves against the space actually left over between the safe areas
@@ -238,7 +265,7 @@ h3 { font-size: 1.05em; color: var(--text-dim); font-weight: 600; }
   overflow: hidden !important;
   overscroll-behavior: none !important;
   touch-action: manipulation !important;
-  z-index: 10;
+  z-index: var(--z-match-shell);
 }
 
 /* ── Cards & Glassmorphism ──────────────────────────────── */
@@ -591,7 +618,18 @@ select:focus, input:focus {
   min-height: 44px;
   user-select: none;
 }
-.radio-group input[type='radio'], .segment-control input[type='radio'] { display: none; }
+/* Kept in the DOM and tab order — `display: none` also removes a control from
+   the accessibility tree, which took every one of these out of keyboard reach. */
+.radio-group input[type='radio'], .segment-control input[type='radio'] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
 .segment-control label.active,
 .radio-group label:has(input:checked),
 .segment-control label:has(input:checked) {
@@ -600,6 +638,11 @@ select:focus, input:focus {
   font-weight: 700;
   border: 1px solid rgba(245, 158, 11, 0.35);
   box-shadow: var(--shadow);
+}
+.radio-group label:has(input:focus-visible),
+.segment-control label:has(input:focus-visible) {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 .segment-control span { pointer-events: none; }
 
@@ -685,25 +728,6 @@ button:active, .btn:active {
   border-radius: var(--radius); 
   min-height: 54px;
 }
-.btn-close { 
-  background: var(--surface); 
-  width: 38px; 
-  height: 38px; 
-  border-radius: 50%; 
-  padding: 0; 
-  font-size: 1.1em; 
-  color: var(--text-dim); 
-  min-height: auto;
-}
-.btn-delete-profile { 
-  background: none; 
-  color: var(--red); 
-  width: 100%; 
-  margin-top: 24px; 
-  border: 1px solid var(--red-glow); 
-  font-size: 0.9em; 
-}
-
 /* ── App Header ────────────────────────── */
 .app-header { 
   text-align: center; 
@@ -725,30 +749,11 @@ button:active, .btn:active {
 }
 
 /* ── Scoreboard ────────────────────────── */
-.scoreboard { 
-  display: flex; 
-  flex-direction: column; 
-  gap: 10px; 
-  margin-bottom: 16px; 
-}
-.player {
-  background: rgba(22, 22, 26, 0.75);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius);
-  padding: 14px 18px;
-  opacity: 0.5;
-  transition: all 0.25s cubic-bezier(0.2, 0, 0, 1);
-  position: relative;
-}
-.player.active {
-  opacity: 1;
-  border-color: rgba(245, 158, 11, 0.5);
-  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  background: rgba(15, 23, 42, 0.95);
-}
-.player-name { 
+/* `.scoreboard`'s real layout rule lives further down (the orientation-aware
+   grid) — this block only still contributes `.player-name`'s type styles,
+   which real markup uses; `.scoreboard`/`.player`/`.player.active` above it
+   were an older flex-based layout no component renders any more. */
+.player-name {
   font-size: 1.1em; 
   font-weight: 700; 
   margin-bottom: 2px; 
@@ -918,10 +923,16 @@ button:active, .btn:active {
   font-weight: 800;
   transition: all 0.15s ease;
 }
-.dart-filled { 
-  border-color: rgba(241, 245, 249, 0.3); 
+@keyframes dartBounce {
+  0% { transform: scale(0.8); opacity: 0.5; }
+  50% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.dart-filled {
+  border-color: rgba(241, 245, 249, 0.3);
   border-style: solid;
-  background: rgba(241, 245, 249, 0.08); 
+  background: rgba(241, 245, 249, 0.08);
+  animation: dartBounce 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 .dart-double { 
   border-color: var(--orange) !important; 
@@ -935,21 +946,33 @@ button:active, .btn:active {
   color: var(--red); 
   box-shadow: 0 0 10px var(--red-glow);
 }
-.round-total { 
-  font-size: 1.6em; 
-  font-weight: 900; 
+.round-total {
+  font-size: 1.6em;
+  font-weight: 900;
   font-family: var(--font-mono);
-  color: var(--text); 
-  margin-left: 8px; 
-  min-width: 52px; 
-  text-align: center; 
+  color: var(--text);
+  margin-left: 8px;
+  min-width: 52px;
+  text-align: center;
 }
-.round-total.bust { color: var(--red); }
+@keyframes bustShake {
+  0%, 100% { transform: translateX(0); color: var(--red); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+.bust-active {
+  animation: bustShake 0.4s ease-in-out;
+  color: var(--red) !important;
+  font-weight: bold;
+}
+.total-low { color: var(--text); transition: color 0.4s ease; }
+.total-medium { color: var(--orange); transition: color 0.4s ease; }
+.total-high { color: var(--green); transition: color 0.4s ease; }
 
-.modifier-grid { 
-  display: grid; 
-  grid-template-columns: 1fr 1fr; 
-  gap: 6px; 
+.modifier-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
   flex-shrink: 0;
 }
 .mod-btn { 
@@ -999,10 +1022,60 @@ button:active, .btn:active {
   align-items: center;
   justify-content: center;
 }
-.num-btn:active { 
-  background: rgba(245, 158, 11, 0.2); 
+.num-btn:active {
+  background: rgba(245, 158, 11, 0.2);
   border-color: rgba(245, 158, 11, 0.4);
   transform: scale(0.94);
+}
+/* Min touch targets and haptic visual feedback on every keypad button. */
+.keypad button {
+  min-height: 52px;
+  transition: transform 0.05s ease-out, background-color 0.15s, border-color 0.2s;
+}
+.keypad button:active {
+  transform: scale(0.92);
+  filter: brightness(1.2);
+}
+.modifier-active-2 .num-btn { border-color: var(--orange) !important; }
+.modifier-active-3 .num-btn { border-color: var(--red) !important; }
+
+/* Undo key: one grid cell wide, so the label is optional chrome. */
+.btn-undo {
+  grid-column: span 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 0 2px;
+  background: linear-gradient(135deg, var(--orange), #EA580C);
+  color: #000;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.btn-undo:disabled {
+  background: var(--surface);
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+.btn-undo-icon { font-size: 1.15em; line-height: 1; }
+.btn-undo-label {
+  font-size: 0.6em;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+/* Too narrow for a word — the glyph alone stays legible. */
+@media (max-width: 340px) {
+  .btn-undo-label { display: none; }
+}
+
+/* Abort button, less prominent. */
+.text-only {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid var(--card-border) !important;
+  color: var(--text-dim) !important;
+  box-shadow: none !important;
 }
 
 /* ── Modals & Dialogs ───────────────────── */
@@ -1012,7 +1085,7 @@ button:active, .btn:active {
   background: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(20px); 
   -webkit-backdrop-filter: blur(20px);
-  z-index: 1000;
+  z-index: var(--z-overlay);
   display: flex; 
   align-items: center; 
   justify-content: center;
@@ -1030,6 +1103,11 @@ button:active, .btn:active {
   overflow-y: auto;
   box-shadow: var(--shadow-lg);
   color: var(--text);
+}
+.checkout-icon {
+  font-size: 3.5em;
+  line-height: 1;
+  margin-bottom: 4px;
 }
 
 /* ── Landscape & wide-desktop 2-column split screen ──
@@ -1259,9 +1337,6 @@ button:active, .btn:active {
     max-width: 1500px;
     padding: 20px 40px;
   }
-  .game-screen-left .player .score {
-    font-size: 5.2em;
-  }
   .game-screen-right {
     max-width: 540px;
   }
@@ -1294,7 +1369,7 @@ button:active, .btn:active {
   gap: 4px;
   padding: 6px 12px calc(6px + env(safe-area-inset-bottom)) 12px;
   border-top: 1px solid var(--card-border);
-  z-index: 1000;
+  z-index: var(--z-dock);
 }
 
 @media (min-width: 600px) {
@@ -1530,6 +1605,7 @@ button:active, .btn:active {
   width: 100%;
   padding: 14px;
   border-radius: 12px;
+  font-size: 0.9em;
   font-weight: 700;
   cursor: pointer;
   margin-top: 20px;
@@ -1604,15 +1680,7 @@ button:active, .btn:active {
     box-shadow: var(--shadow-md);
     padding: 6px 14px;
   }
-  .scoreboard { 
-    flex-direction: row; 
-    flex-wrap: wrap; 
-  }
-  .player { 
-    flex: 1; 
-    min-width: 260px; 
-  }
-  .score { 
+  .score {
     font-size: 3.6em; 
   }
   .modal-overlay { 
@@ -1659,6 +1727,7 @@ button:active, .btn:active {
   grid-template-columns: 1fr;
   gap: 8px;
   align-content: stretch;
+  margin-bottom: 16px;
 }
 .scoreboard[data-players="2"] { grid-template-columns: 1fr 1fr; }
 .scoreboard[data-players="3"] { grid-template-columns: repeat(3, 1fr); }
@@ -2033,7 +2102,7 @@ button:active, .btn:active {
   top: max(calc(env(safe-area-inset-top) + 6px), 10px);
   left: 50%;
   transform: translateX(-50%);
-  z-index: 20;
+  z-index: var(--z-sticky);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -2066,23 +2135,46 @@ button:active, .btn:active {
   from { opacity: 0; transform: translate(-50%, 16px); }
   to { opacity: 1; transform: translate(-50%, 0); }
 }
-.global-toast {
+/**
+ * The stack, not the individual message, is what is positioned.
+ *
+ * Every toast was `position: fixed` at the same offset, so the three the store
+ * keeps landed exactly on top of each other and the one actually visible was
+ * the oldest — the reverse of what the store sorts for. `column-reverse` puts
+ * the newest closest to the dock while the list stays newest-first in the DOM.
+ */
+.toast-stack {
   position: fixed;
   left: 50%;
   bottom: max(calc(env(safe-area-inset-bottom) + 92px), 100px);
   transform: translateX(-50%);
-  z-index: 2000;
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 10px;
+  width: min(520px, calc(100vw - 28px));
+  pointer-events: none;
+}
+
+.global-toast {
+  pointer-events: auto;
   display: flex;
   align-items: center;
   gap: 12px;
-  width: min(520px, calc(100vw - 28px));
+  width: 100%;
   padding: 14px 16px;
   border-radius: var(--radius);
   background: var(--bg-surface);
-  border: 1px solid rgba(239, 68, 68, 0.45);
+  border: 1px solid var(--card-border);
   box-shadow: var(--shadow-lg);
   animation: toastIn 0.25s cubic-bezier(0.2, 0, 0, 1);
 }
+
+/* The border carries the severity, which the icon repeats for anyone who does
+   not see the colour. */
+.global-toast-error { border-color: rgba(239, 68, 68, 0.45); }
+.global-toast-success { border-color: rgba(16, 185, 129, 0.45); }
+.global-toast-info { border-color: rgba(59, 130, 246, 0.45); }
 .global-toast-body { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .global-toast-body strong { font-size: 0.95em; }
 .global-toast-body span { font-size: 0.84em; color: var(--text-dim); line-height: 1.4; }
@@ -2106,4 +2198,975 @@ button:active, .btn:active {
     justify-content: center;
   }
   .lobby-room .lobby-actions > * { flex: 1 1 260px; max-width: 380px; }
+}
+
+/* ── Bottom Sheet (results dialog) ───────── */
+.bottom-sheet-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.88);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  z-index: var(--z-overlay);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.bottom-sheet-content {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius, 16px);
+  width: 92%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 26px 22px;
+  box-shadow: var(--shadow-lg, 0 24px 80px rgba(0, 0, 0, 0.95));
+  position: relative;
+  animation: scaleUp 0.3s ease-out;
+  color: var(--text);
+}
+
+@media (max-width: 767px) {
+  .bottom-sheet-overlay {
+    align-items: flex-end;
+  }
+  .bottom-sheet-content {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 24px 24px 0 0;
+    padding: 32px 20px 24px;
+    animation: slideUp 0.3s ease-out forwards;
+    transform: translateY(100%);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes scaleUp {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.drag-handle {
+  display: none;
+  width: 40px;
+  height: 4px;
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+@media (max-width: 767px) {
+  .drag-handle {
+    display: block;
+  }
+}
+
+.confetti {
+  font-size: 2.5rem;
+  animation: bounce 1s infinite alternate;
+  display: inline-block;
+}
+
+@keyframes bounce {
+  from { transform: translateY(0); }
+  to { transform: translateY(-10px); }
+}
+
+/* ── Training Hub ─────────────────────────── */
+.hero-glow-bg-training {
+  position: absolute;
+  top: -80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 500px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.1) 0%, rgba(59, 130, 246, 0.06) 50%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+.training-hub-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+@media (min-width: 768px) {
+  .training-hub-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+}
+.training-mode-btn {
+  padding: 16px;
+  text-align: left;
+  font-size: 1.05em;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--card-border);
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+  color: var(--text);
+  cursor: pointer;
+  width: 100%;
+}
+.training-mode-btn:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+.training-mode-btn.active-checkout {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.22), rgba(59, 130, 246, 0.05));
+  border-color: var(--blue);
+  box-shadow: 0 4px 16px var(--blue-glow);
+}
+.training-mode-btn.active-powerscoring {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.22), rgba(239, 68, 68, 0.05));
+  border-color: var(--red);
+  box-shadow: 0 4px 16px var(--red-glow);
+}
+.training-mode-btn.active-splitscore {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.22), rgba(249, 115, 22, 0.05));
+  border-color: var(--orange);
+  box-shadow: 0 4px 16px var(--orange-glow);
+}
+.training-mode-btn.inactive {
+  background: var(--surface);
+  opacity: 0.7;
+}
+
+/* ── Scoreboard player cards ──────────────── */
+@keyframes scorePulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); text-shadow: 0 0 16px var(--player-color, rgba(255,255,255,0.5)); }
+  100% { transform: scale(1); }
+}
+@keyframes scoreboardFadeInSlide {
+  from { opacity: 0; transform: translateX(-6px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes lockOpenPop {
+  0% {
+    transform: scale(0.92);
+    background: rgba(90, 200, 250, 0.25);
+    border-color: rgba(90, 200, 250, 0.7);
+    color: #5ac8fa;
+  }
+  40% {
+    transform: scale(1.15);
+    background: rgba(48, 209, 88, 0.45);
+    border-color: rgba(48, 209, 88, 0.95);
+    color: #30d158;
+    box-shadow: 0 0 20px rgba(48, 209, 88, 0.85);
+  }
+  75% {
+    transform: scale(1.03);
+    background: rgba(48, 209, 88, 0.25);
+    border-color: rgba(48, 209, 88, 0.7);
+    color: #30d158;
+  }
+  100% {
+    transform: scale(1);
+    background: rgba(48, 209, 88, 0.18);
+    border-color: rgba(48, 209, 88, 0.5);
+    color: #30d158;
+  }
+}
+@keyframes lockIconShake {
+  0% { transform: rotate(0deg) scale(1); }
+  20% { transform: rotate(-20deg) scale(1.3); }
+  40% { transform: rotate(20deg) scale(1.35); }
+  60% { transform: rotate(-10deg) scale(1.2); }
+  80% { transform: rotate(10deg) scale(1.1); }
+  100% { transform: rotate(0deg) scale(1); }
+}
+@keyframes popIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+.score-anim-pulse {
+  animation: scorePulse 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: inline-block;
+  will-change: transform;
+}
+.player-card {
+  position: relative;
+  background: rgba(15, 23, 42, 0.9);
+  border-radius: var(--radius, 14px);
+  padding: 8px 10px;
+  transition: all 0.2s ease;
+  overflow: hidden;
+  border: 1px solid var(--card-border);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.player-card.is-inactive {
+  opacity: 0.55;
+  filter: grayscale(20%);
+}
+.player-card.is-active {
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
+  border-left: 5px solid var(--player-color, var(--primary));
+  border-color: rgba(245, 158, 11, 0.3);
+  opacity: 1;
+  filter: grayscale(0%);
+  background: rgba(15, 23, 42, 0.98);
+}
+.player-card.checkout-range {
+  background: linear-gradient(145deg, rgba(16, 185, 129, 0.12), rgba(15, 23, 42, 0.95));
+}
+.score-display {
+  /* Sized against the shorter viewport axis so the number grows with
+     the card in landscape instead of leaving an iPad card half empty. */
+  font-size: clamp(2.8rem, min(9vw, 16vh), 5rem);
+  font-weight: 900;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  line-height: 0.95;
+  text-align: center;
+  margin: auto 0;
+  color: var(--text);
+  text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.12em;
+  letter-spacing: -0.02em;
+}
+.player-card.is-active .score-display {
+  color: var(--player-color, var(--text));
+}
+.checkout-pill {
+  background: var(--primary);
+  color: #000;
+  border-radius: var(--radius-xs, 6px);
+  padding: 4px 10px;
+  font-weight: 800;
+  font-size: 0.92rem;
+  display: inline-block;
+  margin: 0 auto;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  letter-spacing: 0.4px;
+  animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.checkout-pill-frozen {
+  background: linear-gradient(135deg, rgba(255, 30, 30, 0.38) 0%, rgba(180, 0, 0, 0.25) 100%);
+  border: 1.5px solid #ff3333;
+  color: #ff4d4d;
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-weight: 800;
+  font-size: 0.84rem;
+  display: inline-block;
+  margin: 0 auto;
+  letter-spacing: 0.3px;
+  box-shadow: 0 0 16px rgba(255, 30, 30, 0.45);
+  text-shadow: 0 0 8px rgba(255, 50, 50, 0.8);
+}
+.lock-badge-bar {
+  margin: 4px 0 2px 0;
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: clamp(0.75rem, 2.2vw, 0.84rem);
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+  line-height: 1.2;
+  flex-shrink: 0;
+  letter-spacing: 0.3px;
+  transition: all 0.25s ease;
+  backdrop-filter: blur(8px);
+}
+.lock-badge-bar.locked {
+  background: linear-gradient(135deg, rgba(255, 25, 25, 0.35) 0%, rgba(170, 0, 0, 0.25) 100%);
+  border: 1.5px solid #ff3333;
+  color: #ff4d4d;
+  box-shadow: 0 0 16px rgba(255, 30, 30, 0.5), inset 0 0 8px rgba(255, 30, 30, 0.25);
+  text-shadow: 0 0 8px rgba(255, 50, 50, 0.8);
+}
+.lock-badge-bar.must-throw {
+  background: linear-gradient(135deg, rgba(255, 60, 0, 0.38) 0%, rgba(190, 20, 0, 0.26) 100%);
+  border: 1.5px solid #ff4500;
+  color: #fff2f2;
+  box-shadow: 0 0 18px rgba(255, 60, 0, 0.5), inset 0 0 10px rgba(255, 60, 0, 0.25);
+  text-shadow: 0 0 8px rgba(255, 60, 0, 0.6);
+}
+.lock-badge-bar.must-throw strong {
+  color: #ffffff;
+  font-weight: 900;
+  text-shadow: 0 0 10px #ff3333;
+}
+.lock-badge-bar.unlocking {
+  background: linear-gradient(135deg, rgba(48, 209, 88, 0.35) 0%, rgba(52, 199, 89, 0.2) 100%);
+  border: 1.5px solid rgba(48, 209, 88, 0.9);
+  color: #4cd964;
+  box-shadow: 0 0 20px rgba(48, 209, 88, 0.55), inset 0 0 10px rgba(48, 209, 88, 0.25);
+  animation: lockOpenPop 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+.lock-icon-opening {
+  display: inline-block;
+  animation: lockIconShake 0.8s ease-in-out;
+}
+.compact-stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--card-border);
+  text-align: center;
+}
+/* A phone in landscape has no vertical budget for the strip. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .compact-stats { display: none; }
+}
+/* Keep the strip to a single line on a phone: three figures fit, five wrap. */
+@media (max-width: 767px) {
+  .compact-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 3px;
+  }
+  .compact-stats .stat-secondary { display: none; }
+  .compact-stats span {
+    padding: 3px 2px;
+    font-size: 0.62rem;
+    min-width: 0;
+    gap: 3px;
+  }
+}
+@media (min-width: 768px) {
+  .scoreboard {
+    gap: 12px;
+    margin-bottom: 0;
+    min-width: 0;
+    height: 100%;
+    width: 100%;
+  }
+  .player-card {
+    padding: 14px 16px;
+    min-width: 0;
+  }
+  .score-display {
+    margin: 10px 0;
+  }
+  .compact-stats {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--card-border);
+    text-align: center;
+  }
+  .compact-stats span {
+    flex: 1 1 auto;
+    min-width: 60px;
+  }
+}
+.compact-stats span {
+  white-space: nowrap;
+  background: rgba(0,0,0,0.25);
+  padding: 4px 6px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.compact-stats strong {
+  color: var(--text);
+  font-weight: 700;
+}
+.live-preview-darts {
+  font-size: clamp(1rem, 4vw, 1.8rem);
+  color: var(--text-dim);
+  margin-left: 8px;
+  font-weight: 600;
+  animation: scoreboardFadeInSlide 0.2s ease-out forwards;
+}
+
+/* ── Main Menu ─────────────────────────────── */
+.hero-glow-bg {
+  position: absolute;
+  top: -100px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(500px, 90vw);
+  height: 350px;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.1) 0%, rgba(59, 130, 246, 0.06) 50%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* The .shell-fill utility derives the exact height left between the safe
+   areas and the floating dock, so nothing slides under the nav. */
+.main-menu-screen {
+  display: flex;
+  flex-direction: column;
+}
+
+.main-menu-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: min(520px, 100%);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all 0.2s ease;
+  gap: clamp(10px, 2vh, 20px);
+}
+
+.menu-header-area {
+  flex-shrink: 0;
+  width: 100%;
+  text-align: center;
+  margin-top: clamp(2px, 0.8vh, 6px);
+  margin-bottom: clamp(2px, 0.6vh, 6px);
+}
+
+.menu-header-flex {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-header-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(42px, 5.5vh, 56px);
+  height: clamp(42px, 5.5vh, 56px);
+  border-radius: clamp(12px, 1.8vh, 18px);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(59, 130, 246, 0.15));
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  margin-bottom: clamp(2px, 0.6vh, 8px);
+  font-size: clamp(1.3rem, 2.2vh, 1.8rem);
+}
+
+.menu-header-title {
+  font-size: clamp(1.6rem, 2.8vh, 2.2rem);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, var(--primary), #FBBF24);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0;
+  line-height: 1.15;
+}
+
+.menu-header-subtitle {
+  color: var(--text-dim);
+  font-size: clamp(0.76em, 1.2vh, 0.88em);
+  margin-top: clamp(1px, 0.3vh, 3px);
+  font-weight: 500;
+}
+
+.menu-middle-wrapper {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(8px, 1.4vh, 14px);
+}
+
+/* ── 1. Hero CTA (Full width, dominant Amber gradient) ── */
+.hero-cta-tile {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: clamp(14px, 2.2vh, 20px) clamp(16px, 2.2vw, 22px);
+  border-radius: var(--radius, 14px);
+  background: linear-gradient(135deg, var(--primary), #D97706);
+  color: #000;
+  cursor: pointer;
+  transition: transform 0.15s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+  animation: ctaPulse 3s infinite ease-in-out;
+}
+.hero-cta-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(245, 158, 11, 0.5);
+}
+.hero-cta-tile:active {
+  transform: scale(0.98);
+}
+
+.hero-cta-icon {
+  width: clamp(40px, 5.5vh, 48px);
+  height: clamp(40px, 5.5vh, 48px);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(1.4rem, 2.4vh, 1.8rem);
+  flex-shrink: 0;
+}
+
+.hero-cta-title {
+  font-size: clamp(1.15em, 2vh, 1.35em);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: #000;
+}
+
+.hero-cta-desc {
+  font-size: clamp(0.76em, 1.2vh, 0.86em);
+  color: rgba(0, 0, 0, 0.7);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.hero-cta-arrow {
+  font-size: clamp(1.3em, 2.2vh, 1.6em);
+  font-weight: 900;
+  color: #000;
+  flex-shrink: 0;
+}
+
+/* ── 2. Secondary Grid (2-Column: Online & Stats/Auth) ── */
+.menu-secondary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(8px, 1.4vw, 12px);
+  width: 100%;
+}
+
+.secondary-tile {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: clamp(12px, 1.8vh, 16px) clamp(12px, 1.8vw, 16px);
+  border-radius: var(--radius, 14px);
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.2s, box-shadow 0.2s;
+  color: var(--text);
+  box-sizing: border-box;
+  min-height: clamp(80px, 12vh, 105px);
+  text-align: left;
+  width: 100%;
+}
+
+.secondary-tile:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.secondary-tile:active {
+  transform: scale(0.98);
+}
+
+.secondary-tile-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.secondary-tile-icon {
+  width: clamp(32px, 4.2vh, 38px);
+  height: clamp(32px, 4.2vh, 38px);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(1.2rem, 1.8vh, 1.5rem);
+}
+
+.secondary-tile-arrow {
+  font-size: 1.1em;
+  font-weight: 700;
+}
+
+.secondary-tile-title {
+  font-size: clamp(0.92em, 1.5vh, 1.05em);
+  font-weight: 800;
+  color: var(--text);
+  margin-top: 6px;
+}
+
+.secondary-tile-desc {
+  font-size: clamp(0.68em, 1.1vh, 0.76em);
+  color: var(--text-dim);
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tile-online {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(59, 130, 246, 0.02)), var(--card);
+  border-color: rgba(59, 130, 246, 0.35);
+}
+.tile-online:hover {
+  border-color: var(--blue);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.2);
+}
+
+.tile-stats {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.12), rgba(249, 115, 22, 0.02)), var(--card);
+  border-color: rgba(249, 115, 22, 0.35);
+}
+.tile-stats:hover {
+  border-color: var(--orange);
+  box-shadow: 0 6px 20px rgba(249, 115, 22, 0.2);
+}
+
+.tile-auth {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.12), rgba(139, 92, 246, 0.02)), var(--card);
+  border-color: rgba(139, 92, 246, 0.35);
+}
+.tile-auth:hover {
+  border-color: var(--purple);
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.2);
+}
+
+/* ── 3. Training Quickstart Chips (3-Column) ── */
+.menu-training-container {
+  width: 100%;
+}
+
+.training-section-label {
+  font-size: clamp(0.74em, 1.2vh, 0.8em);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-dim);
+  margin-bottom: clamp(4px, 0.6vh, 6px);
+  font-weight: 700;
+  padding-left: 2px;
+}
+
+.training-chips-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(6px, 1.2vw, 10px);
+}
+
+.training-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(3px, 0.6vh, 6px);
+  padding: clamp(12px, 1.8vh, 16px) clamp(6px, 1vw, 10px);
+  min-height: clamp(78px, 11vh, 100px);
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius, 14px);
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+  color: var(--text);
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.training-chip:hover {
+  background: var(--surface-hover);
+  transform: translateY(-2px);
+  border-color: var(--primary);
+}
+
+.training-chip:active {
+  transform: scale(0.97);
+}
+
+.training-chip-icon {
+  font-size: clamp(1.5rem, 2.6vh, 1.9rem);
+  line-height: 1;
+}
+
+.training-chip-title {
+  font-weight: 800;
+  font-size: clamp(0.86em, 1.5vh, 1em);
+  letter-spacing: -0.01em;
+}
+
+/* ── 4. User Status Bar (Docked bottom) ── */
+.menu-status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: clamp(6px, 1vh, 8px) clamp(10px, 1.5vw, 14px);
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: var(--radius-sm, 10px);
+  border: 1px solid var(--card-border);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.menu-status-text {
+  font-size: clamp(0.78em, 1.3vh, 0.85em);
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.menu-status-btn {
+  font-size: clamp(0.74em, 1.2vh, 0.8em);
+  font-weight: 700;
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 2px 8px;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.menu-footer-area {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  align-items: center;
+}
+
+/* Phone in landscape: ~400pt of height, so the chrome gets out of the way and
+   the three columns keep their content. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .main-menu-card { gap: 6px !important; }
+  .menu-header-area { margin: 0 !important; }
+  .menu-header-icon { display: none !important; }
+  .menu-header-title { font-size: 1.2rem !important; }
+  .menu-header-subtitle { display: none !important; }
+  .hero-cta-icon { width: 38px !important; height: 38px !important; font-size: 1.3rem !important; }
+  .hero-cta-title { font-size: 1rem !important; }
+  .secondary-tile {
+    min-height: 0 !important;
+    padding: 8px 12px !important;
+    gap: 4px !important;
+  }
+  .secondary-tile-icon { width: 26px !important; height: 26px !important; font-size: 1rem !important; }
+  .secondary-tile-desc { display: none !important; }
+  .training-section-label { display: none !important; }
+  .training-chip { padding: 4px 12px !important; min-height: 0 !important; }
+  .menu-status-bar { padding: 4px 10px !important; }
+  .menu-version { display: none !important; }
+}
+
+/* ── iPad in Portrait ── */
+@media (min-width: 768px) and (orientation: portrait) {
+  .main-menu-card {
+    max-width: 600px !important;
+    gap: 18px !important;
+  }
+  .hero-cta-tile {
+    padding: 22px 26px !important;
+  }
+  .secondary-tile {
+    min-height: 120px !important;
+    padding: 18px !important;
+  }
+}
+
+/* ── Landscape / Wide Mode (iPad & Desktop: 3-Column Layout) ── */
+@media (orientation: landscape) {
+  .main-menu-screen {
+    /* A hard height (not just min-height) is what lets the middle row shrink
+       on a phone in landscape, where ~400pt has to hold header, tiles and
+       status bar without anything sliding under the dock. */
+    height: calc(100dvh - var(--shell-pad-top) - var(--shell-pad-bottom));
+    min-height: 0;
+    overflow: hidden;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .main-menu-card {
+    max-width: min(1080px, 94vw) !important;
+    gap: clamp(8px, 1.6vh, 14px) !important;
+  }
+
+  /* The tile stacks in landscape, where a trailing arrow on its own row reads
+     as a stray glyph rather than an affordance. */
+  .hero-cta-arrow {
+    display: none;
+  }
+
+  .menu-header-area {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  .menu-header-flex {
+    display: inline-flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  .menu-header-icon {
+    width: 38px !important;
+    height: 38px !important;
+    font-size: 1.3rem !important;
+    margin-bottom: 0 !important;
+  }
+
+  .menu-header-title {
+    font-size: clamp(1.4rem, 3vh, 1.9rem) !important;
+  }
+
+  .menu-middle-wrapper {
+    display: grid !important;
+    grid-template-columns: 1.2fr 1fr 1fr !important;
+    gap: clamp(10px, 1.8vw, 18px) !important;
+    align-items: stretch !important;
+    /* Without a ceiling the three columns stretch to fill an iPad's full
+       height and the tiles turn into empty billboards. */
+    flex: 1 1 0 !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .menu-header-area,
+  .menu-footer-area {
+    flex-shrink: 0 !important;
+  }
+
+  .main-menu-card {
+    min-height: 0 !important;
+  }
+
+  .secondary-tile {
+    justify-content: center !important;
+    gap: 10px !important;
+  }
+  .secondary-tile-title { margin-top: 0 !important; }
+
+  .hero-cta-tile {
+    height: 100% !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    text-align: center !important;
+    padding: 16px !important;
+    gap: 8px !important;
+  }
+
+  .hero-cta-icon {
+    width: 52px !important;
+    height: 52px !important;
+    font-size: 2rem !important;
+  }
+
+  .menu-secondary-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    height: 100% !important;
+    gap: 10px !important;
+  }
+
+  .secondary-tile {
+    flex: 1 !important;
+    min-height: 0 !important;
+  }
+
+  .menu-training-col {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    height: 100% !important;
+    gap: 8px !important;
+  }
+
+  .menu-training-container {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+  }
+
+  .training-chips-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 !important;
+    gap: clamp(8px, 1.6vh, 14px) !important;
+  }
+
+  .training-chip {
+    flex: 1 !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 14px !important;
+    padding: 8px 16px !important;
+    min-height: 0 !important;
+  }
+
+  .training-chip-icon {
+    font-size: clamp(1.6rem, 3vh, 2.1rem) !important;
+  }
+
+  .training-chip-title {
+    font-size: clamp(0.95em, 1.8vh, 1.15em) !important;
+  }
+}
+
+/* ── Results dialog stat cards & actions ─── */
+/* The result dialog's stat tiles and its three action buttons used to
+   hardcode their own colors (#111827, rgba(15,23,42,...), a fixed green/
+   orange) instead of the theme tokens every other button already follows —
+   so the dialog every match ends on looked identical in all three themes. */
+.result-stat-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+}
+.result-btn-rematch {
+  padding: 15px 20px;
+  font-size: 1.08em;
+  gap: 8px;
+}
+.result-btn-undo {
+  background: color-mix(in srgb, var(--orange) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--orange) 40%, transparent);
+  color: var(--orange);
+  padding: 13px 12px;
+  font-size: 0.95em;
+  gap: 6px;
+}
+.result-btn-home {
+  padding: 13px 12px;
+  font-size: 0.95em;
+  gap: 6px;
 }

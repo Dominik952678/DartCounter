@@ -64,3 +64,23 @@ describe('Checkout suggestions logic', () => {
     expect(CHECKOUTS[167]).toBe('T20 T19 DB');
   });
 });
+
+describe('Single Out suggestions respect the darts left in the visit', () => {
+  it('offers a two-dart route only while two darts remain', () => {
+    expect(getCheckoutSuggestion(23, 'SO', 0)).toBe('S3 S20');
+    expect(getCheckoutSuggestion(23, 'SO', 1)).toBe('S3 S20');
+  });
+
+  it('offers nothing for a two-dart score with one dart left', () => {
+    // 45 is not in this list: T15 finishes it with the single dart left.
+    expect(getCheckoutSuggestion(23, 'SO', 2)).toBeNull();
+    expect(getCheckoutSuggestion(43, 'SO', 2)).toBeNull();
+  });
+
+  it('still offers the single-dart finishes with one dart left', () => {
+    expect(getCheckoutSuggestion(18, 'SO', 2)).toBe('S18');
+    expect(getCheckoutSuggestion(40, 'SO', 2)).toBe('D20');
+    expect(getCheckoutSuggestion(50, 'SO', 2)).toBe('DB');
+    expect(getCheckoutSuggestion(60, 'SO', 2)).toBe('T20');
+  });
+});

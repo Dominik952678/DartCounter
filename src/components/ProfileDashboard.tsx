@@ -236,9 +236,10 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
           <div>
             <h2>{profile?.isBot ? '🤖 ' : '👤 '}{profileName}</h2>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '5px' }}>
-              <select 
-                value={selectedMode} 
+              <select
+                value={selectedMode}
                 onChange={(e) => setSelectedMode(e.target.value)}
+                aria-label="Modus"
                 style={{ background: '#2a2a2c', color: '#fff', border: '1px solid var(--card-border)', padding: '6px 10px', borderRadius: '8px', fontSize: '0.9em' }}
               >
                 {availableModes.map((m: string) => (
@@ -247,7 +248,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
               </select>
             </div>
           </div>
-          <button className="btn-close" onClick={onClose} title="Schließen" style={{ fontSize: '1.2em', cursor: 'pointer' }}>✕</button>
+          <button className="btn-close" onClick={onClose} title="Schließen" aria-label="Schließen" style={{ fontSize: '1.2em', cursor: 'pointer' }}>✕</button>
         </div>
 
         {/* Linked Cloud Guest Banner */}
@@ -291,9 +292,10 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
             {profile.isBot && (
               <div className="dash-bot-level" style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px', background: 'var(--surface)', padding: '10px', borderRadius: '10px' }}>
                 <span style={{ fontSize: '0.9em', color: 'var(--text-dim)' }}>Bot Level:</span>
-                <select 
+                <select
                   value={profile.targetAverage ? Math.max(1, Math.min(10, Math.round((profile.targetAverage - 20) / 10))) : 4}
                   onChange={(e) => onUpdateProfile(profileName, { targetAverage: parseInt(e.target.value) * 10 + 20 })}
+                  aria-label="Bot Level"
                   style={{ background: '#2a2a2c', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', flex: 1 }}
                 >
                   {[1,2,3,4,5,6,7,8,9,10].map(l => (
@@ -305,10 +307,11 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
             
             <div className="dash-color-picker" style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'var(--surface)', padding: '10px', borderRadius: '10px' }}>
               <span style={{ fontSize: '0.9em', color: 'var(--text-dim)' }}>Spielerfarbe:</span>
-              <input 
-                type="color" 
-                value={profile.color || '#0a84ff'} 
+              <input
+                type="color"
+                value={profile.color || '#0a84ff'}
                 onChange={(e) => onUpdateProfile(profileName, { color: e.target.value })}
+                aria-label="Spielerfarbe"
                 style={{ width: '32px', height: '32px', padding: '0', border: 'none', borderRadius: '50%', cursor: 'pointer', background: 'transparent' }}
               />
               <span style={{ fontSize: '0.85em', color: profile.color || '#0a84ff', fontWeight: 'bold' }}>●</span>
@@ -321,9 +324,10 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
           <div className="dash-section" style={{ marginTop: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h3>Head-to-Head Vergleich</h3>
-              <select 
+              <select
                 value={compareWith}
                 onChange={(e) => setCompareWith(e.target.value)}
+                aria-label="Gegner für Head-to-Head-Vergleich"
                 style={{ background: '#2a2a2c', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px' }}
               >
                 <option value="">Wähle Gegner...</option>
@@ -350,22 +354,22 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
           <>
             <div className="dash-stats-grid dash-stats-grid-4">
               <div className="dash-stat-card">
-                <span className="dash-stat-label">Win Rate</span>
+                <span className="dash-stat-label">Siegquote</span>
                 <span className="dash-stat-value">{winRate}%</span>
                 <span className="dash-stat-detail">{effectiveProfile?.wins || 0}W / {effectiveProfile?.matches || 0}G</span>
               </div>
               <div className="dash-stat-card">
-                <span className="dash-stat-label">Best Leg</span>
+                <span className="dash-stat-label">Bestes Leg</span>
                 <span className="dash-stat-value">{effectiveProfile?.bestLegDarts || '–'}</span>
                 <span className="dash-stat-detail">Darts</span>
               </div>
               <div className="dash-stat-card">
-                <span className="dash-stat-label">Best Finish</span>
+                <span className="dash-stat-label">Bestes Finish</span>
                 <span className="dash-stat-value">{effectiveProfile?.highestCheckout || '–'}</span>
                 <span className="dash-stat-detail">Checkout</span>
               </div>
               <div className="dash-stat-card">
-                <span className="dash-stat-label">Best Throw</span>
+                <span className="dash-stat-label">Bester Wurf</span>
                 <span className="dash-stat-value">{effectiveProfile?.highestThrow || '–'}</span>
                 <span className="dash-stat-detail">3 Darts</span>
               </div>
@@ -380,7 +384,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                   <span className="dash-stat-value accent-orange">{effectiveProfile?.oneEighty || 0}</span>
                 </div>
                 <div className="dash-stat-card">
-                  <span className="dash-stat-label">Triple Quote</span>
+                  <span className="dash-stat-label">Triple-Quote</span>
                   <span className="dash-stat-value">
                     {effectiveProfile?.triplesHit && effectiveProfile?.dartsThrown ? ((effectiveProfile.triplesHit / effectiveProfile.dartsThrown) * 100).toFixed(1) + '%' : '–'}
                   </span>
@@ -510,7 +514,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                   <span className="dash-stat-detail">
                     {effectiveProfile?.checkoutTraining?.totalAttempts && effectiveProfile?.checkoutTraining.totalAttempts > 0 ? 
                     `${Math.round(((effectiveProfile.checkoutTraining.roundsCompleted || 0) / effectiveProfile.checkoutTraining.totalAttempts) * 100)}% Quote` 
-                    : 'Best Out'}
+                    : 'Bestes Finish'}
                   </span>
                 </div>
               </div>
@@ -526,7 +530,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                   <span className="curve-recent">L5: {last5Avg}</span>
                 </div>
                 <div className="form-curve-item">
-                  <span className="curve-label">First 9</span>
+                  <span className="curve-label">Erste 9</span>
                   <span className="curve-value">{first9Avg}</span>
                   <span className="curve-recent">L5: {last5First9}</span>
                 </div>
@@ -541,12 +545,12 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
         ) : (
           <div className="dash-stats-grid dash-stats-grid-2">
             <div className="dash-stat-card">
-              <span className="dash-stat-label">Best Score</span>
+              <span className="dash-stat-label">Bestpunktzahl</span>
               <span className="dash-stat-value">{minigameBestScore}</span>
               <span className="dash-stat-detail">{selectedMode}</span>
             </div>
             <div className="dash-stat-card">
-                <span className="dash-stat-label">Average Score</span>
+                <span className="dash-stat-label">Ø Punktzahl</span>
               <span className="dash-stat-value">{minigameAvgScore}</span>
               <span className="dash-stat-detail">Ø pro Spiel</span>
             </div>
@@ -566,12 +570,12 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                   <Tooltip 
                     contentStyle={{ backgroundColor: '#1a1a1c', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
                     labelStyle={{ color: '#999' }}
-                    formatter={(val: unknown) => [val as React.ReactNode, isMinigame ? 'Punkte (Score)' : '3-Dart Average']}
+                    formatter={(val: unknown) => [val as React.ReactNode, isMinigame ? 'Punkte' : 'Average']}
                   />
-                  <Line 
-                    type="monotone" 
-                    dataKey="val" 
-                    name={isMinigame ? "Punkte (Score)" : "3-Dart Average"} 
+                  <Line
+                    type="monotone"
+                    dataKey="val"
+                    name={isMinigame ? "Punkte" : "Average"}
                     stroke="#0a84ff" 
                     strokeWidth={2.5} 
                     dot={{ fill: '#0a84ff', r: 3, strokeWidth: 0 }} 

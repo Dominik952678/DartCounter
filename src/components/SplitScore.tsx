@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import type { Profile, Dart } from '../types';
 import { playDartHitSound, playSciFiHitSound, speak, play180Sound, isSoundEnabled, setSoundEnabled } from '../utils/audio';
@@ -63,6 +63,7 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
   const [history, setHistory] = useState<HistorySnapshot[]>([]);
 
   const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const finishTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const activeP = gameState[activePlayer];
   const currentTarget = TARGETS[currentRoundIndex];
@@ -70,9 +71,17 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
 
   const stateRef = React.useRef({ gameState, activePlayer, currentRoundIndex, currentRoundDarts, isProcessing, currentMultiplier });
 
-  useEffect(() => {
+  // Before paint, so two taps inside one frame cannot both pass the
+  // `isProcessing` guard in `handleDart`.
+  useLayoutEffect(() => {
     stateRef.current = { gameState, activePlayer, currentRoundIndex, currentRoundDarts, isProcessing, currentMultiplier };
   }, [gameState, activePlayer, currentRoundIndex, currentRoundDarts, isProcessing, currentMultiplier]);
+
+  // Aborting inside the 500 ms result delay must not still book the session.
+  useEffect(() => () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    if (finishTimeoutRef.current) clearTimeout(finishTimeoutRef.current);
+  }, []);
 
   const processRoundEnd = React.useCallback((darts: Dart[]) => {
     let roundScore = 0;
@@ -101,22 +110,25 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
     }
 
     const st = stateRef.current;
-    setGameState(prev => {
-      const newState = [...prev];
-      if (hitAny) newState[st.activePlayer].score += roundScore;
-      else newState[st.activePlayer].score = Math.floor(newState[st.activePlayer].score / 2);
-      return newState;
+
+    // Computed here rather than inside the updater. `[...prev]` shares the
+    // player objects, so writing through it edited the previous state too:
+    // StrictMode ran the updater twice and the halving branch quartered the
+    // score instead of halving it.
+    const nextState = st.gameState.map((p, i) => {
+      if (i !== st.activePlayer) return p;
+      return { ...p, score: hitAny ? p.score + roundScore : Math.floor(p.score / 2) };
     });
+    setGameState(nextState);
 
     if (st.activePlayer === players.length - 1) {
       if (st.currentRoundIndex === TARGETS.length - 1) {
         setCurrentRoundDarts([]);
-        setTimeout(() => {
-          setGameState(finalState => {
-            onFinish(finalState.map(p => ({ name: p.name, score: p.score })));
-            return finalState;
-          });
-        }, 500);
+        // `onFinish` saves the match and books the profile stats. It used to be
+        // called from inside a `setGameState` updater, so StrictMode ran it
+        // twice and every session was written to history twice over.
+        const finalResults = nextState.map(p => ({ name: p.name, score: p.score }));
+        finishTimeoutRef.current = setTimeout(() => onFinish(finalResults), 500);
         return;
       } else {
         setCurrentRoundIndex(prev => prev + 1);
@@ -236,7 +248,10 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
       }, 800);
       return () => clearTimeout(timer);
     }
-  }, [activeP.isBot, activeP.targetAverage, currentRoundIndex, currentTarget.type, currentTarget.val, isProcessing, isOnline, isHost, handleDart]);
+    // `currentRoundDarts.length` is what makes the bot throw more than once:
+    // nothing else here changes between darts of the same visit, so the effect
+    // never re-ran and the bot stalled after its first dart.
+  }, [activeP.isBot, activeP.targetAverage, currentRoundIndex, currentRoundDarts.length, currentTarget.type, currentTarget.val, isProcessing, isOnline, isHost, handleDart]);
   const undoSingleDart = () => {
     if (isOnline && !isHost) return;
     if (timeoutRef.current) {
@@ -347,7 +362,7 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
                   </div>
                   {i === activePlayer && (
                      <div style={{ color: currentRoundDarts.length > 0 ? (getLiveScore() > p.score ? '#34c759' : '#ff3b30') : '#999', fontWeight: 'bold' }}>
-                       {currentRoundDarts.length === 3 && getLiveScore() === p.score ? 'Halbiert!' : 'Wurf...'}
+                       {currentRoundDarts.length === 3 && getLiveScore() === p.score ? 'Halbiert!' : 'Wurf…'}
                      </div>
                   )}
                 </div>
@@ -417,9 +432,9 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
                 </div>
               )}
 
-              <div className="keypad-actions" style={{ marginTop: '15px' }}>
+              <div style={{ marginTop: '15px' }}>
                 <button className="btn-secondary" onClick={undoSingleDart} disabled={(history.length === 0 && currentRoundDarts.length === 0) || isProcessing}>
-                  ↩ Rückgängig
+                  ↩ Wurf zurücknehmen
                 </button>
               </div>
             </div>

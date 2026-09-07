@@ -208,7 +208,9 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
         <GameConfigPanel config={config} dispatch={dispatch} />
       </div>
 
-      <div style={{ position: 'sticky', bottom: '20px', zIndex: 10, padding: '0 10px' }}>
+      {/* Sticks above the floating dock, not 20px above the viewport edge —
+          which put the primary action behind the dock while scrolling. */}
+      <div style={{ position: 'sticky', bottom: 'var(--dock-space)', zIndex: 'var(--z-sticky)', padding: '0 10px' }}>
         <button
           className="btn-success btn-large"
           onClick={handleStartGame}
@@ -224,7 +226,6 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
       </div>
 
       {/* spacer for bottom nav */}
-      <div style={{ height: '80px' }}></div>
 
       {showOverwriteModal && (
         <OverwriteSavedGameModal

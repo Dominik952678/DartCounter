@@ -15,46 +15,51 @@ export const BottomNav: React.FC = () => {
 
   return (
     <nav className="bottom-nav" aria-label="Hauptnavigation">
-      <button 
+      <button
         className={`nav-item ${isHome ? 'active' : ''}`}
         onClick={() => navigate('/')}
         aria-label="Home"
+        aria-current={isHome ? 'page' : undefined}
       >
         <span className="nav-icon">🏠</span>
         <span className="nav-label">Home</span>
       </button>
 
-      <button 
+      <button
         className={`nav-item ${isOffline ? 'active' : ''}`}
         onClick={() => navigate('/offline')}
         aria-label="Offline Match"
+        aria-current={isOffline ? 'page' : undefined}
       >
         <span className="nav-icon">🎯</span>
         <span className="nav-label">Offline</span>
       </button>
 
-      <button 
+      <button
         className={`nav-item ${isOnline ? 'active' : ''}`}
         onClick={() => navigate('/online')}
         aria-label="Online Multiplayer"
+        aria-current={isOnline ? 'page' : undefined}
       >
         <span className="nav-icon">🌍</span>
         <span className="nav-label">Online</span>
       </button>
 
-      <button 
+      <button
         className={`nav-item ${isStats ? 'active' : ''}`}
         onClick={() => navigate('/stats')}
         aria-label="Statistiken"
+        aria-current={isStats ? 'page' : undefined}
       >
         <span className="nav-icon">📊</span>
         <span className="nav-label">Stats</span>
       </button>
 
-      <button 
+      <button
         className={`nav-item ${isProfile ? 'active' : ''}`}
         onClick={() => navigate('/profile')}
         aria-label="Profil"
+        aria-current={isProfile ? 'page' : undefined}
       >
         <span className="nav-icon">👤</span>
         <span className="nav-label">Profil</span>

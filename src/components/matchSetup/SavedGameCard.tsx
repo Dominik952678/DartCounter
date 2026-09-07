@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useId } from 'react';
 import type { GameConfig } from '../../types';
+import { useModalA11y } from '../../hooks/useModalA11y';
 
 export interface SavedMatchSummary {
   players: { name: string; score: number; legs: number; sets: number; isBot?: boolean; team?: number }[];
@@ -13,8 +14,10 @@ interface SavedGameCardProps {
   onDismiss: () => void;
 }
 
+// The engine plays "first to N", not "best of N" — at legsToWin=3 the match
+// ends after two legs won, one leg short of what "Best of 3" would promise.
 const distanceLabel = (config: GameConfig): string =>
-  config.setsToWin > 1 ? `Best of ${config.setsToWin} Sets` : `Best of ${config.legsToWin} Legs`;
+  config.setsToWin > 1 ? `Bis ${config.setsToWin} Sätze` : `Bis ${config.legsToWin} Legs`;
 
 /** The unfinished match waiting to be resumed, with its current scores. */
 export const SavedGameCard: React.FC<SavedGameCardProps> = ({ match, onResume, onDiscard, onDismiss }) => (
@@ -133,31 +136,50 @@ interface OverwriteSavedGameModalProps {
 }
 
 /** Asked when a new match would overwrite a saved one the player never ended. */
-export const OverwriteSavedGameModal: React.FC<OverwriteSavedGameModalProps> = ({ onResume, onOverwrite, onCancel }) => (
-  <div className="modal-backdrop" style={{
-    position: 'fixed',
-    top: 0, left: 0, right: 0, bottom: 0,
-    background: 'rgba(0, 0, 0, 0.78)',
-    backdropFilter: 'blur(8px)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 9999,
-    padding: '16px'
-  }}>
-    <div className="card" style={{
-      maxWidth: '460px',
-      width: '100%',
-      background: 'rgba(24, 24, 34, 0.98)',
-      border: '1.5px solid rgba(10, 132, 255, 0.65)',
-      borderRadius: '16px',
-      padding: '24px',
-      boxShadow: '0 16px 40px rgba(0, 0, 0, 0.7)'
-    }}>
-      <h3 style={{ margin: '0 0 10px 0', color: '#fff', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+export const OverwriteSavedGameModal: React.FC<OverwriteSavedGameModalProps> = ({ onResume, onOverwrite, onCancel }) => {
+  const titleId = useId();
+  const messageId = useId();
+  const dialogRef = useModalA11y<HTMLDivElement>({ onClose: onCancel });
+
+  return (
+  <div
+    className="modal-backdrop"
+    onClick={onCancel}
+    style={{
+      position: 'fixed',
+      top: 0, left: 0, right: 0, bottom: 0,
+      background: 'rgba(0, 0, 0, 0.78)',
+      backdropFilter: 'blur(8px)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 'var(--z-overlay)',
+      padding: '16px'
+    }}
+  >
+    <div
+      ref={dialogRef}
+      className="card"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={titleId}
+      aria-describedby={messageId}
+      tabIndex={-1}
+      onClick={e => e.stopPropagation()}
+      style={{
+        maxWidth: '460px',
+        width: '100%',
+        background: 'rgba(24, 24, 34, 0.98)',
+        border: '1.5px solid rgba(10, 132, 255, 0.65)',
+        borderRadius: '16px',
+        padding: '24px',
+        boxShadow: '0 16px 40px rgba(0, 0, 0, 0.7)'
+      }}
+    >
+      <h3 id={titleId} style={{ margin: '0 0 10px 0', color: '#fff', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
         <span aria-hidden="true">🎯</span> Laufendes Match gefunden
       </h3>
-      <p style={{ color: 'var(--text-dim, #ccc)', fontSize: '0.9rem', lineHeight: 1.5, marginBottom: '20px' }}>
+      <p id={messageId} style={{ color: 'var(--text-dim, #ccc)', fontSize: '0.9rem', lineHeight: 1.5, marginBottom: '20px' }}>
         Du hast noch ein unvollendetes Spiel gespeichert. Wie möchtest du fortfahren?
       </p>
 
@@ -186,4 +208,5 @@ export const OverwriteSavedGameModal: React.FC<OverwriteSavedGameModalProps> = (
       </div>
     </div>
   </div>
-);
+  );
+};

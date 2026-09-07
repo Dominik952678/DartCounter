@@ -350,20 +350,24 @@
   top: 0;
   left: 0;
   width: 100vw;
-  height: 100vh;
+  height: 100dvh;
   background: linear-gradient(rgba(18, 16, 20, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
   background-size: 100% 4px;
   pointer-events: none;
-  z-index: 99999;
+  z-index: var(--z-screen-effect);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    📱 RESPONSIVE ADAPTATIONS: IPAD AIR & IPHONE 17 PRO (PORTRAIT & LANDSCAPE)
+   Scoped to this theme: unscoped, these `!important` rules used to win over
+   `index.css` in Classic and Cyberpunk too — e.g. shrinking every number
+   button to 34px on any phone in landscape, below the 38px `index.css`
+   deliberately keeps as the smallest safe tap target.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* iPhone 17 Pro Safe Area & Dynamic Island Handling */
 @supports (padding-top: env(safe-area-inset-top)) {
-  .app-container {
+  [data-theme="vaporwave"] .app-container {
     padding-top: max(env(safe-area-inset-top), 16px);
     padding-bottom: max(calc(env(safe-area-inset-bottom) + 72px), 80px);
     padding-left: max(env(safe-area-inset-left), 14px);
@@ -373,67 +377,67 @@
 
 /* iPhone 17 Pro Landscape (Ultra Compact Height ~390px - 440px) */
 @media (orientation: landscape) and (max-height: 480px) {
-  .match-top-header {
+  [data-theme="vaporwave"] .match-top-header {
     margin-bottom: 4px !important;
     padding: 3px 8px !important;
     min-height: 28px !important;
   }
-  
-  .game-screen-body {
+
+  [data-theme="vaporwave"] .game-screen-body {
     gap: 6px !important;
   }
-  
-  .keypad {
+
+  [data-theme="vaporwave"] .keypad {
     gap: 4px !important;
   }
-  
-  .dart-display {
+
+  [data-theme="vaporwave"] .dart-display {
     margin-bottom: 0px !important;
   }
-  
-  .dart-box {
+
+  [data-theme="vaporwave"] .dart-box {
     width: 38px !important;
     height: 38px !important;
     font-size: 0.95em !important;
   }
-  
-  .num-btn {
+
+  [data-theme="vaporwave"] .num-btn {
     min-height: 34px !important;
     font-size: 1.15rem !important;
   }
 
-  .mod-btn {
+  [data-theme="vaporwave"] .mod-btn {
     min-height: 32px !important;
     padding: 4px 2px !important;
     font-size: 0.8rem !important;
   }
 
-  .player-card {
+  [data-theme="vaporwave"] .player-card {
     padding: 6px 10px !important;
   }
 
-  .score-display .score-anim-pulse {
+  [data-theme="vaporwave"] .score-display .score-anim-pulse {
     font-size: 2.2rem !important;
   }
 }
 
 /* iPad Air (Portrait: ~820px wide, Landscape: ~1180px wide) */
 @media (min-width: 768px) and (max-width: 1200px) {
-  .match-setup-grid {
+  [data-theme="vaporwave"] .match-setup-grid {
     grid-template-columns: repeat(2, 1fr) !important;
     gap: 16px !important;
   }
 
-  .game-screen-left .scoreboard {
+  [data-theme="vaporwave"] .game-screen-left .scoreboard {
     grid-template-columns: repeat(2, 1fr) !important;
     gap: 12px !important;
   }
 
-  .player-card {
+  [data-theme="vaporwave"] .player-card {
     padding: 16px 20px !important;
   }
 
-  .num-btn {
+  [data-theme="vaporwave"] .num-btn {
     font-size: 1.65rem !important;
   }
 }

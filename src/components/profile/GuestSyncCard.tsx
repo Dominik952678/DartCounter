@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { GuestSync } from './useGuestSync';
 import { ConfirmModal } from '../ConfirmModal';
+import { useNotificationStore } from '../../store/useNotificationStore';
 
 interface GuestSyncCardProps {
   sync: GuestSync;
@@ -14,12 +15,16 @@ export const GuestSyncCard: React.FC<GuestSyncCardProps> = ({ sync }) => {
   const [copiedCode, setCopiedCode] = useState(false);
   const [confirmAbort, setConfirmAbort] = useState(false);
   const { info, isEnabled, loading } = sync;
+  const notify = useNotificationStore(state => state.notify);
 
   const handleCopyCode = () => {
     if (!info?.code) return;
-    navigator.clipboard.writeText(info.code);
-    setCopiedCode(true);
-    setTimeout(() => setCopiedCode(false), 2000);
+    navigator.clipboard.writeText(info.code).then(() => {
+      setCopiedCode(true);
+      setTimeout(() => setCopiedCode(false), 2000);
+    }).catch(() => {
+      notify('error', 'Kopieren fehlgeschlagen', 'Der Code konnte nicht in die Zwischenablage kopiert werden.');
+    });
   };
 
   const host = info?.activeHost || info?.activeHosts?.[0];
@@ -186,7 +191,7 @@ export const GuestSyncCard: React.FC<GuestSyncCardProps> = ({ sync }) => {
                   onClick={sync.generateCode}
                   disabled={loading}
                   style={{ padding: '8px 14px', fontSize: '0.85rem' }}
-                  title="Generiert einen neuen Code und invalidiert alte Codes (Anti-Stat-Washing)"
+                  title="Generiert einen neuen Code und macht alte Codes ungültig, damit niemand mehr über sie auf dein Profil zugreifen kann"
                 >
                   🔄 Code erneuern
                 </button>
@@ -257,7 +262,7 @@ export const GuestSyncCard: React.FC<GuestSyncCardProps> = ({ sync }) => {
               disabled={loading}
               style={{ padding: '10px 20px', fontWeight: 800 }}
             >
-              {loading ? 'Erzeuge Code...' : '⚡ 6-stelligen Sync-Code generieren'}
+              {loading ? 'Erzeuge Code…' : '⚡ 6-stelligen Sync-Code generieren'}
             </button>
           </div>
         )}

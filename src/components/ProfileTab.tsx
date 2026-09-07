@@ -66,7 +66,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
 
   if (viewProfile && profiles[viewProfile]) {
     return (
-      <div className="screen active-screen app-container" style={{ position: 'relative', overflowX: 'hidden', paddingBottom: '120px' }}>
+      <div className="screen active-screen" style={{ position: 'relative', overflowX: 'hidden' }}>
         <div className="hero-glow-bg-profile" />
 
         <div style={{ position: 'relative', zIndex: 1 }}>
@@ -171,7 +171,6 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
       <AppInfoCard />
 
       {/* spacer for bottom nav */}
-      <div style={{ height: '120px' }}></div>
     </div>
   );
 };

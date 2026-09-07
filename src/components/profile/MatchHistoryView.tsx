@@ -3,6 +3,7 @@ import type { MatchHistory, Profile } from '../../types';
 import { MatchImageExport } from '../MatchImageExport';
 import { LegProgressChart } from './LegProgressChart';
 import { hasLegProgress } from './legProgress';
+import { useNotificationStore } from '../../store/useNotificationStore';
 
 interface MatchHistoryViewProps {
   matches: MatchHistory[];
@@ -24,6 +25,7 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
   const [exportingMatch, setExportingMatch] = useState<number | null>(null);
   /** Which match has its leg-by-leg chart open. */
   const [expandedMatch, setExpandedMatch] = useState<number | null>(null);
+  const notify = useNotificationStore(state => state.notify);
 
   /**
    * Renders the share image once its off-screen node is in the DOM.
@@ -44,16 +46,17 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
         await exportElementAsImage(`export-node-${exportingMatch}`, `Dartcounter-Match-${label}.png`);
       } catch (err) {
         console.error('Bild-Export fehlgeschlagen', err);
+        notify('error', 'Export fehlgeschlagen', 'Das Bild konnte nicht erstellt werden.');
       } finally {
         if (!cancelled) setExportingMatch(null);
       }
     })();
 
     return () => { cancelled = true; };
-  }, [exportingMatch, matches]);
+  }, [exportingMatch, matches, notify]);
 
   return (
-    <div className="screen active-screen app-container" style={{ position: 'relative', overflowX: 'hidden', paddingBottom: '120px' }}>
+    <div className="screen active-screen" style={{ position: 'relative', overflowX: 'hidden' }}>
       <div className="hero-glow-bg-profile" />
 
       <div className="app-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', position: 'relative', zIndex: 1 }}>
