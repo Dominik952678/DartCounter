@@ -7,26 +7,28 @@
    useThemeStore.ts). Die Dateien bleiben für den Folge-Task liegen. */
 @import './styles/tokens.css';
 
-/* ── Breakpoint scale ──
-   Media queries cannot read custom properties, so these are the documented
-   names for the widths this stylesheet uses. Write new rules against one of
-   them rather than inventing a thirteenth number.
+/* ── Breakpoint-Skala ──
+   Media-Queries können keine Custom-Properties lesen, die Zahlen stehen also
+   zwangsläufig doppelt: als Literal hier und in `styles/breakpoints.ts`, das
+   dieselben Stufen für JavaScript exportiert. breakpoints.ts ist die
+   maßgebliche Datei — wer dort eine Stufe verschiebt, muss hier nachziehen.
 
-     380px   small phone      (iPhone SE and narrower)
-     440px   phone            (most phones in portrait)
-     600px   large phone      (phablets, small tablets in portrait)
-     768px   tablet           (iPad portrait; the app's two-column threshold)
-     900px   wide tablet      (iPad landscape)
-    1180px   desktop
-    1400px   wide desktop
+   Die vier Stufen aus DESIGN.md §6:
 
-   Landscape is a separate question from width, and asking by width alone is
-   what broke the iPad in landscape: it is 1180px wide and fell into the same
-   rules as a desktop, though its height is that of a phone. Orientation rules
-   pair `(orientation: landscape)` with a `max-height`, not a width.
+      < 600px   iPhone Hochformat      Single-Column, Dock unten
+     ≥ 600px    iPhone Querformat      Inhalt zentriert statt gestreckt
+     ≥ 900px    iPad / iPad 13" hoch   Sidebar statt Dock, zweispaltige Formulare
+     ≥ 1200px   iPad 13" Querformat    ~960px Maximalbreite, zentriert
 
-   Still off the scale, each needing a look in a browser before it moves:
-   360px, 420px, 500px and 560px. */
+   Noch nicht auf dieser Skala und in Phase 5 pro Screen aufzulösen:
+   360, 380, 420, 440, 500, 520, 540, 560, 767, 768, 960, 980, 1180, 1400,
+   1500. Neue Regeln bitte gegen eine der vier Stufen schreiben.
+
+   Querformat ist eine andere Frage als Breite, und danach allein zu fragen ist
+   das, was das iPad im Querformat kaputt gemacht hat: es ist 1180px breit und
+   fiel in dieselben Regeln wie ein Desktop, obwohl seine Höhe die eines
+   Telefons ist. Orientierungs-Regeln kombinieren `(orientation: landscape)`
+   mit einer `max-height`, nicht mit einer Breite. */
 
 *, *::before, *::after { 
   box-sizing: border-box; 
@@ -134,15 +136,28 @@ h3 { font-size: 1.05em; color: var(--text-dim); font-weight: 600; }
      siehe den Sidebar-Block bei der Navigation. */
   --dock-height: 58px;
   --dock-offset: 0px;
-  --dock-space: calc(var(--dock-height) + var(--dock-offset) + env(safe-area-inset-bottom) + 20px);
+  --dock-space: calc(var(--dock-height) + var(--dock-offset) + var(--safe-bottom) + 20px);
 
-  --shell-pad-top: max(calc(env(safe-area-inset-top) + 12px), 16px);
+  /* Die Stufen unten stellen nur noch --gutter und --gutter-min um; wie daraus
+     mit den Safe-Areas ein Padding wird, steht genau einmal hier.
+
+     Links und rechts werden getrennt gerechnet. Vorher gab es ein gemeinsames
+     --shell-pad-x, das aus dem linken Inset berechnet und auf beiden Seiten
+     gesetzt wurde — im Querformat, wo nur eine Seite eine Aussparung hat, war
+     die rechte Seite damit immer falsch eingerückt. */
+  --gutter-top: 12px;
+  --gutter-top-min: 16px;
+  --gutter-x: 12px;
+  --gutter-x-min: 16px;
+
+  --shell-pad-top: max(calc(var(--safe-top) + var(--gutter-top)), var(--gutter-top-min));
   --shell-pad-bottom: var(--dock-space);
-  --shell-pad-x: max(calc(env(safe-area-inset-left) + 12px), 16px);
+  --shell-pad-left: max(calc(var(--safe-left) + var(--gutter-x)), var(--gutter-x-min));
+  --shell-pad-right: max(calc(var(--safe-right) + var(--gutter-x)), var(--gutter-x-min));
 
   max-width: 600px;
   margin: 0 auto;
-  padding: var(--shell-pad-top) var(--shell-pad-x) var(--shell-pad-bottom) var(--shell-pad-x);
+  padding: var(--shell-pad-top) var(--shell-pad-right) var(--shell-pad-bottom) var(--shell-pad-left);
   min-height: 100vh;
   min-height: 100dvh;
   position: relative;
@@ -153,42 +168,73 @@ h3 { font-size: 1.05em; color: var(--text-dim); font-weight: 600; }
   min-height: calc(100dvh - var(--shell-pad-top) - var(--shell-pad-bottom));
 }
 
-/* iPhone portrait (incl. 17 Pro at 402pt) — tighter gutters, more room to score. */
+/* ── Shell-Breiten: die Leiter aus DESIGN.md §6 ──
+   Vorher lief der Container auf 500/768 plus Orientierung und wurde dabei bis
+   zu 1120px breit. §6 begründet beide Deckel, die er setzt: bei ≥600px „sonst
+   werden Karten unnatürlich breit und Buttons unangenehm lang", bei ≥1200px
+   „sonst verlieren sich Karten in der Breite". Genau das tat der alte Shell —
+   804px auf dem iPhone im Querformat, 1120px auf dem iPad 13".
+
+   Bis auf eine Stelle entscheidet die Breite allein. Die Ausnahme ist die
+   768px-Stufe: ein iPad Air 11" hochkant ist 820px breit, ein iPhone 17 Pro
+   quer 874px — die Breite kann die beiden nicht auseinanderhalten, obwohl sie
+   gegensätzliche Behandlung brauchen. Dort und nur dort steht deshalb ein
+   `orientation: portrait` dabei. */
+
+/* iPhone Hochformat (17 Pro: 402pt) — engere Gutter, mehr Platz zum Scoren. */
 @media (max-width: 500px) {
   .app-container {
-    --shell-pad-top: max(calc(env(safe-area-inset-top) + 6px), 8px);
-    --shell-pad-x: max(calc(env(safe-area-inset-left) + 10px), 14px);
+    --gutter-top: 6px;  --gutter-top-min: 8px;
+    --gutter-x: 10px;   --gutter-x-min: 14px;
   }
 }
 
-/* iPad Air portrait (820pt) and up. */
+/* ≥600px — iPhone Querformat. Zentriert statt gestreckt (§6). */
 @media (min-width: 600px) {
-  .app-container { --dock-offset: 12px; }
+  .app-container {
+    --dock-offset: 12px;
+    --gutter-top: 6px;  --gutter-top-min: 10px;
+    --gutter-x: 12px;   --gutter-x-min: 16px;
+    max-width: 600px;
+  }
 }
 
-@media (min-width: 768px) {
+/* ≥768px im Hochformat — iPad Air 11" (820pt).
+   Eigene Zwischenstufe, die §6 nicht nennt: das Gerät fällt sonst in die
+   600px-Regel, die dort ausdrücklich mit dem sehr flachen Phone-Querformat
+   begründet ist. Ein 820×1180-Tablet ist ein anderer Fall und hätte mit 600px
+   auf jeder Seite 110px ungenutzten Rand. Bottom-Tabs behält es trotzdem,
+   siehe die 900px-Entscheidung in DESIGN.md §6.
+
+   `orientation: portrait` ist hier zwingend: ohne das greift die Regel auch
+   auf dem 874px breiten iPhone im Querformat, dem §6 ausdrücklich 600px
+   zuweist. */
+@media (min-width: 768px) and (orientation: portrait) {
   .app-container {
     --dock-offset: 20px;
-    --shell-pad-top: max(calc(env(safe-area-inset-top) + 20px), 24px);
-    --shell-pad-x: max(calc(env(safe-area-inset-left) + 24px), 32px);
-    max-width: 980px;
+    --gutter-top: 20px; --gutter-top-min: 24px;
+    --gutter-x: 24px;   --gutter-x-min: 32px;
+    max-width: 720px;
   }
 }
 
-@media (orientation: landscape) {
+/* ≥900px — Sidebar-Stufe. Mehr Breite für die zweispaltigen Formulare (§6). */
+@media (min-width: 900px) {
   .app-container {
-    --shell-pad-top: max(calc(env(safe-area-inset-top) + 6px), 10px);
-    --shell-pad-x: max(calc(env(safe-area-inset-left) + 12px), 16px);
-    max-width: min(1060px, 94vw);
+    --gutter-top: 12px; --gutter-top-min: 16px;
+    /* Muss hier stehen: die 24/32 kommen sonst nur aus der 768px-Regel, und
+       die gilt nur im Hochformat — das iPad im Querformat fiele auf die
+       schmalen 12/16 der 600px-Stufe zurück. */
+    --gutter-x: 24px;   --gutter-x-min: 32px;
+    max-width: 960px;
   }
 }
 
-/* iPad Air landscape (1180pt) — wider measure, generous vertical rhythm. */
-@media (min-width: 768px) and (orientation: landscape) {
+/* ≥1200px — iPad Air 13" Querformat. §6 nennt ~960px, zentriert; das ist
+   derselbe Deckel wie eine Stufe darunter, und ab hier wird er wirksam. */
+@media (min-width: 1200px) {
   .app-container {
-    --shell-pad-top: max(calc(env(safe-area-inset-top) + 12px), 16px);
-    --shell-pad-x: max(calc(env(safe-area-inset-left) + 24px), 32px);
-    max-width: min(1120px, 92vw);
+    max-width: 960px;
   }
 }
 
@@ -889,7 +935,14 @@ button:disabled, .btn:disabled {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  padding: max(calc(env(safe-area-inset-top) + 4px), 6px) 10px max(calc(env(safe-area-inset-bottom) + 6px), 8px) 10px;
+  /* Im Hochformat sind die seitlichen Insets null, die Rechnung ergibt also
+     dieselben 10px wie vorher — sie steht hier, damit diese Regel nicht die
+     einzige im Match-Screen ist, die ohne Safe-Area auskommt. */
+  padding:
+    max(calc(var(--safe-top) + 4px), 6px)
+    max(calc(var(--safe-right) + 10px), 10px)
+    max(calc(var(--safe-bottom) + 6px), 8px)
+    max(calc(var(--safe-left) + 10px), 10px);
   box-sizing: border-box;
   justify-content: space-between;
   user-select: none;
@@ -1159,7 +1212,7 @@ button:disabled, .btn:disabled {
     overflow-x: hidden !important;
     display: flex !important;
     flex-direction: column !important;
-    padding: max(calc(env(safe-area-inset-top) + 4px), 6px) max(calc(env(safe-area-inset-right) + 10px), 16px) max(calc(env(safe-area-inset-bottom) + 4px), 8px) max(calc(env(safe-area-inset-left) + 10px), 16px) !important;
+    padding: max(calc(var(--safe-top) + 4px), 6px) max(calc(var(--safe-right) + 10px), 16px) max(calc(var(--safe-bottom) + 4px), 8px) max(calc(var(--safe-left) + 10px), 16px) !important;
     margin: 0 !important;
     box-sizing: border-box !important;
   }
@@ -1391,7 +1444,7 @@ button:disabled, .btn:disabled {
   right: 0;
   width: 100%;
   max-width: 600px;
-  height: calc(var(--dock-height) + env(safe-area-inset-bottom));
+  height: calc(var(--dock-height) + var(--safe-bottom));
   margin: 0 auto;
   background: rgba(11, 17, 32, 0.94);
   backdrop-filter: blur(24px);
@@ -1400,7 +1453,7 @@ button:disabled, .btn:disabled {
   align-items: center;
   justify-content: space-around;
   gap: var(--space-1);
-  padding: 6px var(--space-3) calc(6px + env(safe-area-inset-bottom)) var(--space-3);
+  padding: 6px var(--space-3) calc(6px + var(--safe-bottom)) var(--space-3);
   border-top: 1px solid var(--card-border);
   z-index: var(--z-dock);
 }
@@ -1474,7 +1527,7 @@ button:disabled, .btn:disabled {
      Lobby-Raum rendert App.tsx keine Navigation, und ohne das `:has()` stünde
      der Inhalt dort grundlos um eine leere Spalte eingerückt. */
   body:has(.app-nav) {
-    padding-left: calc(var(--nav-rail) + env(safe-area-inset-left));
+    padding-left: calc(var(--nav-rail) + var(--safe-left));
   }
 
   .app-nav {
@@ -1482,7 +1535,7 @@ button:disabled, .btn:disabled {
     bottom: 0;
     left: 0;
     right: auto;
-    width: calc(var(--nav-rail) + env(safe-area-inset-left));
+    width: calc(var(--nav-rail) + var(--safe-left));
     max-width: none;
     height: 100%;
     margin: 0;
@@ -1490,10 +1543,10 @@ button:disabled, .btn:disabled {
     justify-content: flex-start;
     gap: var(--space-2);
     padding:
-      calc(env(safe-area-inset-top) + var(--space-6))
+      calc(var(--safe-top) + var(--space-6))
       var(--space-3)
-      calc(env(safe-area-inset-bottom) + var(--space-4))
-      calc(env(safe-area-inset-left) + var(--space-3));
+      calc(var(--safe-bottom) + var(--space-4))
+      calc(var(--safe-left) + var(--space-3));
     border-top: none;
     border-right: 1px solid var(--card-border);
     border-radius: 0;
@@ -1521,7 +1574,7 @@ button:disabled, .btn:disabled {
 
   /* Ohne Dock am unteren Rand braucht auch niemand mehr Platz dafür. */
   .app-container {
-    --shell-pad-bottom: calc(env(safe-area-inset-bottom) + var(--space-6));
+    --shell-pad-bottom: calc(var(--safe-bottom) + var(--space-6));
   }
 }
 
@@ -1803,8 +1856,9 @@ button:disabled, .btn:disabled {
 /* ── Responsive Optimizations: Compact iPhone (< 380px) ────── */
 @media (max-width: 380px) {
   .app-container {
-    padding-left: 10px;
-    padding-right: 10px;
+    /* Über die Gutter, nicht über padding-left/right direkt — sonst fällt auf
+       diesen Geräten die Safe-Area-Rechnung aus dem Basis-Block weg. */
+    --gutter-x: 6px;    --gutter-x-min: 10px;
   }
   .numpad-grid { 
     gap: 4px; 
@@ -2206,7 +2260,7 @@ button:disabled, .btn:disabled {
 
 .turn-banner {
   position: absolute;
-  top: max(calc(env(safe-area-inset-top) + 6px), 10px);
+  top: max(calc(var(--safe-top) + 6px), 10px);
   left: 50%;
   transform: translateX(-50%);
   z-index: var(--z-sticky);
@@ -2253,7 +2307,7 @@ button:disabled, .btn:disabled {
 .toast-stack {
   position: fixed;
   left: 50%;
-  bottom: max(calc(env(safe-area-inset-bottom) + 92px), 100px);
+  bottom: max(calc(var(--safe-bottom) + 92px), 100px);
   transform: translateX(-50%);
   z-index: var(--z-toast);
   display: flex;

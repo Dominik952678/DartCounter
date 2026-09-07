@@ -96,6 +96,24 @@
   --nav-rail: 232px;
 
   /* ─────────────────────────────────────────────────────────────────────────
+     Safe Areas (DESIGN.md §6)
+
+     `viewport-fit=cover` steht in index.html, also reicht der Anzeigebereich
+     unter Dynamic Island, Home-Indicator und die abgerundeten Ecken. Alle vier
+     Insets sind hier einmal benannt, mit `0px` als Rückfall für alles, was
+     env() nicht kennt — sonst wird ein calc() mit einem leeren Wert ungültig
+     und der ganze Deklarationswert fällt weg.
+
+     Wichtig: rechts ist NICHT gleich links. Im Querformat sitzt die Aussparung
+     auf genau einer Seite, und wer beide Seiten aus --safe-left berechnet,
+     schiebt den Inhalt auf der falschen Seite ein.
+     ───────────────────────────────────────────────────────────────────────── */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+
+  /* ─────────────────────────────────────────────────────────────────────────
      Legacy-Aliasse — Abbau in Phase 2–5
 
      Die Alt-Namen zeigen auf die Rollen, deren Bedeutung sie heute schon
