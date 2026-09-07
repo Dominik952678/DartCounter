@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { LoadingScreen } from './LoadingScreen';
 import { useOnlineStore } from '../store/useOnlineStore';
-import { Button, Card } from './ui';
+import { Button, Card, CardHeader } from './ui';
+import { playerColorBySeat } from '../utils/playerColors';
 
 const modeLabel = (mode?: string) => {
   if (mode === 'powerscoring') return '🔥 Power Scoring';
@@ -103,8 +104,8 @@ export const LobbyRoom: React.FC = () => {
         <div className="page-header-spacer" />
       </header>
 
-      <section className="card room-code-card">
-        <span className="section-label" style={{ marginTop: 0 }}>Raumcode</span>
+      <Card as="section" className="room-code-card">
+        <span className="section-label">Raumcode</span>
         <div className="room-code-value" aria-label={`Raumcode ${roomCode.split('').join(' ')}`}>
           {roomCode.split('').map((char, i) => (
             <span key={i} className="room-code-char">{char}</span>
@@ -121,17 +122,20 @@ export const LobbyRoom: React.FC = () => {
             ↗ Teilen
           </Button>
         </div>
-      </section>
+      </Card>
 
       <Card as="section">
-        <div className="card-header">
-          <h3>Spieler am Board</h3>
-          <span className="card-badge">{players.length}</span>
-        </div>
+        <CardHeader heading="Spieler am Board" action={<span className="card-badge">{players.length}</span>} />
         <ul className="lobby-player-list">
-          {players.map(p => (
+          {players.map((p, i) => (
             <li key={p.id} className="lobby-player">
-              <span className="lobby-player-avatar" aria-hidden="true">
+              {/* Sitzplatzfarbe statt eines gemeinsamen Blaus für alle — dieselbe
+                  Palette, die das Match-Setup und der Scoreboard benutzen. */}
+              <span
+                className="lobby-player-avatar"
+                style={{ backgroundColor: playerColorBySeat(i) }}
+                aria-hidden="true"
+              >
                 {p.username.charAt(0).toUpperCase() || '?'}
               </span>
               <span className="lobby-player-name">{p.username}</span>
@@ -150,10 +154,7 @@ export const LobbyRoom: React.FC = () => {
       </Card>
 
       <Card as="section">
-        <div className="card-header">
-          <h3>Einstellungen</h3>
-          <span className="card-badge">{modeLabel(settings?.mode)}</span>
-        </div>
+        <CardHeader heading="Einstellungen" action={<span className="card-badge">{modeLabel(settings?.mode)}</span>} />
 
         {!settings && <p className="text-dim">Einstellungen werden vom Host geladen…</p>}
 

@@ -4,7 +4,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { useOnlineStore } from '../store/useOnlineStore';
 import type { GameConfig } from '../types';
 import { readString, write } from '../utils/storage';
-import { Button, Card, CardHeader, ChoiceGroup } from './ui';
+import { Button, Card, CardHeader, Choice, ChoiceGroup } from './ui';
 
 type Mode = 'standard' | 'powerscoring' | 'splitscore' | 'checkout';
 
@@ -88,7 +88,7 @@ export const LobbyBrowser: React.FC = () => {
 
   return (
     <div className="screen active-screen">
-      <div className="ambient-glow ambient-glow-blue" aria-hidden="true" />
+      <div className="ambient-glow" aria-hidden="true" />
 
       <header className="page-header">
         <Button variant="ghost" className="btn-back" onClick={() => navigate('/')}>← Menü</Button>
@@ -159,12 +159,14 @@ export const LobbyBrowser: React.FC = () => {
           </Card>
 
           <Card as="section">
-            <div className="card-header">
-              <h3>Öffentliche Räume</h3>
-              <Button variant="primary" size="compact" onClick={() => setShowCreateForm(true)}>
-                + Raum erstellen
-              </Button>
-            </div>
+            <CardHeader
+              heading="Öffentliche Räume"
+              action={
+                <Button variant="primary" size="compact" onClick={() => setShowCreateForm(true)}>
+                  + Raum erstellen
+                </Button>
+              }
+            />
 
             {publicLobbies.length === 0 ? (
               <div className="empty-state">
@@ -201,10 +203,12 @@ export const LobbyBrowser: React.FC = () => {
         </>
       ) : (
         <Card as="section">
-          <div className="card-header">
-            <h3>Raum erstellen</h3>
-            <Button variant="ghost" className="btn-close" onClick={() => setShowCreateForm(false)} aria-label="Schließen">✕</Button>
-          </div>
+          <CardHeader
+            heading="Raum erstellen"
+            action={
+              <Button variant="ghost" className="btn-close" onClick={() => setShowCreateForm(false)} aria-label="Schließen">✕</Button>
+            }
+          />
 
           <label className="section-label">Sichtbarkeit</label>
           <ChoiceGroup
@@ -221,19 +225,18 @@ export const LobbyBrowser: React.FC = () => {
           <label className="section-label">Spielmodus</label>
           <div className="mode-grid">
             {MODES.map(m => (
-              <button
+              <Choice
                 key={m.id}
-                type="button"
-                className={`mode-tile ${mode === m.id ? 'is-selected' : ''}`}
+                className="mode-tile"
+                selected={mode === m.id}
                 onClick={() => setMode(m.id)}
-                aria-pressed={mode === m.id}
               >
                 <span className="mode-tile-icon" aria-hidden="true">{m.icon}</span>
                 <span className="mode-tile-body">
                   <span className="mode-tile-title">{m.title}</span>
                   <span className="mode-tile-desc">{m.desc}</span>
                 </span>
-              </button>
+              </Choice>
             ))}
           </div>
 

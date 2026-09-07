@@ -2166,13 +2166,13 @@ button:disabled, .btn:disabled {
   transform: translateX(-50%);
   width: min(520px, 92vw);
   height: 300px;
-  background: radial-gradient(circle, rgba(245, 158, 11, 0.12) 0%, rgba(59, 130, 246, 0.06) 50%, transparent 70%);
+  background: radial-gradient(circle, var(--bg-accent-muted) 0%, transparent 70%);
   pointer-events: none;
   z-index: 0;
 }
-.ambient-glow-blue {
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.14) 0%, rgba(16, 185, 129, 0.06) 50%, transparent 70%);
-}
+/* .ambient-glow-blue ist entfallen: es färbte den Schein blau-grün, und beide
+   Farben haben seit §1 keine Rolle mehr. Der Screen nutzt jetzt denselben
+   Schein wie alle anderen. */
 
 /* Equal side columns keep the title optically centred no matter how long the
    back label is, and the label itself never wraps. */
@@ -2188,9 +2188,9 @@ button:disabled, .btn:disabled {
 }
 .page-title {
   margin: 0;
-  font-size: clamp(1.15rem, 4.2vw, 1.5rem);
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-size: var(--text-screen-title);
+  font-weight: var(--weight-medium);
+  letter-spacing: normal;
   text-align: center;
   white-space: nowrap;
   overflow: hidden;
@@ -2200,23 +2200,23 @@ button:disabled, .btn:disabled {
 .btn-back {
   justify-self: start;
   width: auto;
-  padding: 8px 12px;
-  font-size: 0.86em;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-body);
   min-height: 44px;
   white-space: nowrap;
 }
 
 .text-dim { color: var(--text-dim); }
 .hint-text {
-  margin-top: 10px;
-  font-size: 0.82em;
-  color: var(--text-dim);
+  margin-top: var(--space-3);
+  font-size: var(--text-label);
+  color: var(--text-secondary);
   line-height: 1.45;
 }
 .settings-summary {
-  font-size: 1.02em;
-  font-weight: 700;
-  color: var(--text);
+  font-size: var(--text-body-lg);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
 }
 .full-width { width: 100%; }
 /* .btn-compact stand hier ein zweites Mal und gewann als spätere Regel — mit
@@ -2226,19 +2226,20 @@ button:disabled, .btn:disabled {
 .pill {
   display: inline-flex;
   align-items: center;
-  padding: 3px 10px;
+  padding: 3px var(--space-3);
   border-radius: 999px;
-  font-size: 0.74em;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  font-size: var(--text-label);
+  font-weight: var(--weight-regular);
   border: 1px solid var(--card-border);
-  background: var(--surface);
-  color: var(--text-dim);
+  background: var(--surface-card);
+  color: var(--text-secondary);
 }
+/* §1: --text-success trägt Erfolg, und zwar als Rolle statt als eigener
+   Hellgrünton (#34D399). */
 .pill-success {
-  background: rgba(16, 185, 129, 0.14);
-  border-color: rgba(16, 185, 129, 0.35);
-  color: #34D399;
+  background: color-mix(in srgb, var(--text-success) 14%, transparent);
+  border-color: color-mix(in srgb, var(--text-success) 35%, transparent);
+  color: var(--text-success);
 }
 .pill-muted {
   font-family: var(--font-mono);
@@ -2257,19 +2258,35 @@ button:disabled, .btn:disabled {
   position: relative;
   z-index: 1;
 }
+/* Ebenso hier: --text-danger statt eines eigenen #FCA5A5. */
 .alert-error {
-  background: rgba(239, 68, 68, 0.12);
-  border: 1px solid rgba(239, 68, 68, 0.32);
-  color: #FCA5A5;
+  background: color-mix(in srgb, var(--text-danger) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--text-danger) 32%, transparent);
+  color: var(--text-danger);
 }
 
+/* Icon + Headline + Erklärung + CTA — das Muster bleibt (§7), nur die
+   Typografie folgt jetzt der Skala aus §2. */
 .empty-state {
   text-align: center;
-  padding: 28px 12px;
+  padding: var(--space-8) var(--space-3);
 }
-.empty-state-icon { font-size: 2.2rem; display: block; margin-bottom: 10px; }
-.empty-state-title { font-weight: 700; color: var(--text); margin-bottom: 4px; }
-.empty-state-text { font-size: 0.86em; color: var(--text-dim); line-height: 1.5; }
+.empty-state-icon {
+  font-size: 2.2rem;
+  display: block;
+  margin-bottom: var(--space-3);
+}
+.empty-state-title {
+  font-size: var(--text-body-lg);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  margin-bottom: var(--space-1);
+}
+.empty-state-text {
+  font-size: var(--text-body);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
 
 .center-stage {
   display: flex;
@@ -2295,11 +2312,15 @@ button:disabled, .btn:disabled {
   grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
-@media (max-width: 360px) {
-  .config-grid { grid-template-columns: 1fr; }
+/* Einspaltig bis zur ersten §6-Stufe statt ab einer eigenen 360er-Grenze —
+   zwei Zahlenfelder nebeneinander sind auf einem 402px-Telefon ohnehin eng. */
+.config-grid { grid-template-columns: 1fr; }
+@media (min-width: 600px) {
+  .config-grid { grid-template-columns: 1fr 1fr; }
 }
 .config-item { min-width: 0; }
 .config-item .section-label { margin-top: 0; }
+.room-code-card .section-label { margin-top: 0; }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    MULTIPLAYER — lobby browser & room
@@ -2319,6 +2340,8 @@ button:disabled, .btn:disabled {
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
 }
+/* Solide statt Verlauf, und der Text ist der dunkle Ton der Akzentfamilie
+   statt reinem Schwarz (§5). */
 .identity-avatar {
   width: 38px;
   height: 38px;
@@ -2327,40 +2350,49 @@ button:disabled, .btn:disabled {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 800;
-  color: #000;
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  font-weight: var(--weight-medium);
+  color: var(--on-accent-primary);
+  background: var(--accent-primary);
 }
 .identity-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.identity-name { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.identity-sub { font-size: 0.76em; color: var(--text-dim); }
-.identity-label {
-  font-size: 0.7em;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: var(--text-dim);
-  font-weight: 700;
+.identity-name {
+  font-weight: var(--weight-medium);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+.identity-sub { font-size: var(--text-label); color: var(--text-secondary); }
+/* Hatte uppercase, letter-spacing und 700 — §2 verlangt Sentence case und
+   nimmt Labels ausdrücklich die Caps. */
+.identity-label {
+  font-size: var(--text-label);
+  color: var(--text-secondary);
+  font-weight: var(--weight-regular);
+}
+/* §4: 40px lag unter der 44er Grenze. 16px Schriftgröße bleibt, sonst zoomt
+   iOS beim Fokussieren in das Feld hinein. */
 .identity-input {
-  background: rgba(0, 0, 0, 0.25) !important;
-  padding: 8px 10px !important;
-  min-height: 40px !important;
+  background: var(--surface-card) !important;
+  padding: var(--space-2) var(--space-3) !important;
+  min-height: 44px !important;
   font-size: 16px !important;
 }
 
-.join-row { display: flex; gap: 10px; }
+.join-row { display: flex; gap: var(--space-3); }
+/* Der Raumcode bleibt in Versalien: er ist ein Bezeichner, keine Headline —
+   die Eingabe wird ohnehin per JS uppercase normalisiert. */
 .join-code-input {
   flex: 1;
   text-transform: uppercase;
   font-family: var(--font-mono);
-  font-size: 1.35rem !important;
-  font-weight: 800;
+  font-size: var(--text-card-title) !important;
+  font-weight: var(--weight-medium);
   letter-spacing: 0.35em;
   text-align: center;
   padding-left: 0.35em !important;
 }
 
-.lobby-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.lobby-list { list-style: none; display: flex; flex-direction: column; gap: var(--space-3); }
 .lobby-list-item {
   display: flex;
   align-items: center;
@@ -2372,11 +2404,17 @@ button:disabled, .btn:disabled {
   border-radius: var(--radius-sm);
   transition: border-color 0.2s ease, background-color 0.2s ease;
 }
-.lobby-list-item:hover { border-color: rgba(148, 163, 184, 0.28); background: var(--surface-hover); }
-.lobby-list-body { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
-.lobby-list-host { font-size: 1.02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.lobby-list-meta { font-size: 0.82em; color: var(--text-dim); }
-.lobby-list-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.lobby-list-item:hover { border-color: var(--card-border-glow); background: var(--surface-hover); }
+.lobby-list-body { min-width: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.lobby-list-host {
+  font-size: var(--text-body-lg);
+  font-weight: var(--weight-medium);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lobby-list-meta { font-size: var(--text-label); color: var(--text-secondary); }
+.lobby-list-actions { display: flex; align-items: center; gap: var(--space-3); flex-shrink: 0; }
 
 .mode-grid {
   display: grid;
@@ -2384,30 +2422,29 @@ button:disabled, .btn:disabled {
   gap: 8px;
   margin-bottom: 18px;
 }
-@media (min-width: 560px) {
+/* 560px war eine eigene Stufe; §6 kennt 600 als erste. */
+@media (min-width: 600px) {
   .mode-grid { grid-template-columns: 1fr 1fr; }
 }
+/* Die Modus-Auswahl beim Raum-Erstellen. Fläche und Rand kommen von `.choice`
+   (§5), diese Regel macht nur noch das Layout — vorher war der ausgewählte
+   Zustand ein eigener Amber-Verlauf mit 1px-Rand. */
 .mode-tile {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 13px 14px;
-  background: var(--surface);
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius-sm);
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
   text-align: left;
-  color: var(--text);
-  min-height: 60px;
-}
-.mode-tile.is-selected {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.16), rgba(245, 158, 11, 0.05));
-  border-color: rgba(245, 158, 11, 0.5);
-  box-shadow: 0 4px 16px rgba(245, 158, 11, 0.12);
+  min-height: 64px;
 }
 .mode-tile-icon { font-size: 1.4rem; flex-shrink: 0; }
 .mode-tile-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.mode-tile-title { font-weight: 700; font-size: 0.96em; }
-.mode-tile-desc { font-size: 0.76em; color: var(--text-dim); font-weight: 500; }
+.mode-tile-title {
+  font-weight: var(--weight-medium);
+  font-size: var(--text-body-lg);
+  color: var(--text-primary);
+}
+.mode-tile-desc { font-size: var(--text-label); color: var(--text-secondary); }
 
 .room-code-card { text-align: center; position: relative; z-index: 1; }
 .room-code-value {
@@ -2416,20 +2453,27 @@ button:disabled, .btn:disabled {
   gap: 8px;
   margin: 10px 0 12px;
 }
+/* Der Code ist die große Zahl dieses Screens — §2 stellt dafür die
+   32px-Stufe bereit. */
 .room-code-char {
   font-family: var(--font-mono);
-  font-size: clamp(2rem, 11vw, 3rem);
-  font-weight: 800;
+  font-size: var(--text-display);
+  font-weight: var(--weight-medium);
   line-height: 1;
-  color: var(--primary);
-  background: rgba(245, 158, 11, 0.08);
-  border: 1px solid rgba(245, 158, 11, 0.28);
-  border-radius: var(--radius-sm);
-  padding: 10px 0;
+  color: var(--accent-primary);
+  background: var(--bg-accent-muted);
+  border: 1px solid var(--accent-primary);
+  border-radius: var(--radius-card);
+  padding: var(--space-3) 0;
   width: clamp(52px, 16vw, 72px);
 }
-.room-code-hint { color: var(--text-dim); font-size: 0.86em; margin-bottom: 14px; line-height: 1.45; }
-.room-code-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+.room-code-hint {
+  color: var(--text-secondary);
+  font-size: var(--text-body);
+  margin-bottom: var(--space-4);
+  line-height: 1.45;
+}
+.room-code-actions { display: flex; gap: var(--space-3); justify-content: center; flex-wrap: wrap; }
 .room-code-actions button { flex: 1 1 140px; }
 
 .lobby-player-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
@@ -2442,6 +2486,8 @@ button:disabled, .btn:disabled {
   border: 1px solid var(--card-border);
   border-radius: var(--radius-sm);
 }
+/* Die Füllfarbe kommt aus der Spielerpalette und wird inline gesetzt, wie im
+   Match-Setup — vorher war jeder Avatar hier derselbe blaue Verlauf. */
 .lobby-player-avatar {
   width: 30px;
   height: 30px;
@@ -2450,13 +2496,18 @@ button:disabled, .btn:disabled {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 800;
-  font-size: 0.85em;
-  color: #000;
-  background: linear-gradient(135deg, var(--blue), #2563EB);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-label);
+  color: var(--bg-base);
 }
-.lobby-player-name { flex: 1; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.lobby-player-empty { color: var(--text-dim); font-weight: 500; justify-content: center; }
+.lobby-player-name {
+  flex: 1;
+  font-weight: var(--weight-medium);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lobby-player-empty { color: var(--text-secondary); font-weight: var(--weight-regular); justify-content: center; }
 
 .lobby-actions {
   display: flex;
@@ -2470,14 +2521,14 @@ button:disabled, .btn:disabled {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 16px;
-  border-radius: var(--radius);
-  background: rgba(59, 130, 246, 0.1);
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  color: var(--text);
-  font-weight: 600;
-  font-size: 0.92em;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+  border: 1px solid var(--card-border);
+  color: var(--text-secondary);
+  font-weight: var(--weight-regular);
+  font-size: var(--text-body);
   text-align: center;
 }
 @keyframes waitPulse {
@@ -2488,9 +2539,42 @@ button:disabled, .btn:disabled {
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: var(--blue);
+  background: var(--accent-primary);
   animation: waitPulse 1.4s ease-in-out infinite;
   flex-shrink: 0;
+}
+
+/* ── Verbindungsabbruch ──
+   Lag komplett inline im Markup, mit eigenem Schwarz-Overlay, `color: white`
+   und einer 3em-Zahl. Liegt innerhalb des Match-Shells, deshalb `absolute`
+   statt `fixed` wie bei den übrigen Overlays. */
+.disconnect-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--space-5);
+  padding: var(--space-6);
+  background: color-mix(in srgb, var(--bg-base) 88%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: var(--z-overlay);
+  color: var(--text-primary);
+}
+.disconnect-overlay p {
+  font-size: var(--text-body-lg);
+  color: var(--text-secondary);
+  max-width: 34ch;
+}
+/* Die große Zahl aus §2 — hier zählt sie herunter, bis das Match abbricht. */
+.disconnect-countdown {
+  font-size: var(--text-display);
+  font-weight: var(--weight-medium);
+  color: var(--accent-primary);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ── Online match shell ── */
@@ -2509,13 +2593,13 @@ button:disabled, .btn:disabled {
   gap: 8px;
   padding: 6px 16px;
   border-radius: 999px;
-  background: rgba(11, 17, 32, 0.94);
-  border: 1px solid rgba(59, 130, 246, 0.45);
+  background: var(--bg-surface);
+  border: 1px solid var(--card-border);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  color: var(--text);
-  font-weight: 700;
-  font-size: 0.84em;
+  color: var(--text-primary);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-body);
   white-space: nowrap;
   max-width: calc(100vw - 32px);
   overflow: hidden;
@@ -2526,7 +2610,7 @@ button:disabled, .btn:disabled {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--blue);
+  background: var(--accent-primary);
   animation: waitPulse 1.4s ease-in-out infinite;
   flex-shrink: 0;
 }
