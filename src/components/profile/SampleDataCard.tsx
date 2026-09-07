@@ -4,7 +4,7 @@ import { saveMatch } from '../../db';
 import { useAuthStore } from '../../store/useAuthStore';
 import { reportPersistenceError } from '../../store/useNotificationStore';
 import { SAMPLE_MATCHES, SAMPLE_PROFILES, SAMPLE_PROFILE_KEYS } from '../../utils/sampleData';
-import { Button, Card } from '../ui';
+import { Button, Card, CardHeader } from '../ui';
 
 interface SampleDataCardProps {
   profiles: Record<string, Profile>;
@@ -47,13 +47,11 @@ export const SampleDataCard: React.FC<SampleDataCardProps> = ({ profiles, onUpda
 
   return (
     <Card style={{ marginTop: '20px' }}>
-      <div className="card-header" style={{ marginBottom: '12px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '1.3em' }} aria-hidden="true">🧪</span>
-          <h2>Testdaten & Demospiele</h2>
-        </div>
-        <span style={{ fontSize: '0.8rem', color: 'var(--text-dim)' }}>Sicheres Ausprobieren</span>
-      </div>
+      <CardHeader
+        icon="🧪"
+        heading="Testdaten & Demospiele"
+        action={<span className="stat-label">Sicheres Ausprobieren</span>}
+      />
 
       <p style={{ fontSize: '0.86rem', color: 'var(--text-dim)', margin: '0 0 14px 0', lineHeight: 1.5 }}>
         Lade vorgefertigte Testprofile (z. B. <em>Lukas (Profi)</em>, <em>Stefan (Kneipe)</em>, <em>Leon (Cloud-Gast)</em>) und realistische Demospiele, um alle Statistiken, Heatmaps und den Gast-Sync gefahrlos zu testen.
@@ -61,9 +59,9 @@ export const SampleDataCard: React.FC<SampleDataCardProps> = ({ profiles, onUpda
 
       {status && (
         <div style={{
-          background: 'rgba(59, 130, 246, 0.15)',
-          border: '1px solid rgba(59, 130, 246, 0.3)',
-          color: 'var(--blue)',
+          background: 'var(--surface-card)',
+          border: '1px solid var(--card-border)',
+          color: 'var(--text-secondary)',
           padding: '10px 14px',
           borderRadius: '8px',
           fontSize: '0.85rem',

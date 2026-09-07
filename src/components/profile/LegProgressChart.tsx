@@ -1,6 +1,7 @@
 import React from 'react';
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import type { MatchHistory, Profile } from '../../types';
+import { playerColorBySeat } from '../../utils/playerColors';
 
 interface LegProgressChartProps {
   match: MatchHistory;
@@ -8,7 +9,6 @@ interface LegProgressChartProps {
 }
 
 /** The colours a player falls back to, in the order they were seated. */
-const FALLBACK_COLORS = ['var(--blue)', 'var(--orange)', 'var(--green)', 'var(--purple)'];
 
 /**
  * How each player's average moved from leg to leg within one match.
@@ -48,7 +48,7 @@ export const LegProgressChart: React.FC<LegProgressChartProps> = ({ match, profi
           />
           <Legend wrapperStyle={{ fontSize: '0.78rem' }} />
           {players.map((p, i) => {
-            const color = profiles[p.name]?.color || FALLBACK_COLORS[i % FALLBACK_COLORS.length];
+            const color = profiles[p.name]?.color || playerColorBySeat(i);
             return (
               <Line
                 key={p.name}

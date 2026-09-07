@@ -97,20 +97,9 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
       <div className="hero-glow-bg-profile" />
 
       {!user && (
-        <div style={{
-          background: 'rgba(59, 130, 246, 0.1)',
-          border: '1px solid rgba(59, 130, 246, 0.3)',
-          borderRadius: '12px',
-          padding: '10px 14px',
-          marginBottom: '16px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          gap: '12px',
-          flexWrap: 'wrap'
-        }}>
-          <span style={{ fontSize: '0.82em', color: 'var(--text)' }}>
-            💡 <strong>Gast-Modus:</strong> Profile & Statistiken werden lokal auf diesem Gerät gespeichert.
+        <div className="callout callout-action">
+          <span>
+            <span aria-hidden="true">💡</span> <strong>Gast-Modus:</strong> Profile &amp; Statistiken werden lokal auf diesem Gerät gespeichert.
           </span>
           <Button
             variant="primary"

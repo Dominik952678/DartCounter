@@ -78,17 +78,6 @@ export const GuestSyncRedeemModal: React.FC<GuestSyncRedeemModalProps> = ({
     <div
       className="modal-overlay"
       onClick={onClose}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,0.8)',
-        backdropFilter: 'blur(8px)',
-        zIndex: 'var(--z-overlay)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '16px'
-      }}
     >
       <div
         ref={dialogRef}
@@ -102,9 +91,9 @@ export const GuestSyncRedeemModal: React.FC<GuestSyncRedeemModalProps> = ({
           maxWidth: '440px',
           width: '100%',
           background: 'var(--bg-surface)',
-          border: '1px solid var(--primary, #00ff88)',
+          border: '1px solid var(--card-border)',
           padding: '24px',
-          boxShadow: '0 10px 40px rgba(0,0,0,0.6)'
+          boxShadow: 'var(--shadow-lg)'
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
@@ -131,7 +120,7 @@ export const GuestSyncRedeemModal: React.FC<GuestSyncRedeemModalProps> = ({
               fontSize: '1.3rem',
               textAlign: 'center',
               letterSpacing: '0.1em',
-              fontWeight: 800,
+              fontWeight: 'var(--weight-medium)',
               fontFamily: 'var(--font-mono)'
             }}
             onKeyDown={e => e.key === 'Enter' && handleCheckCode()}
@@ -147,36 +136,20 @@ export const GuestSyncRedeemModal: React.FC<GuestSyncRedeemModalProps> = ({
         </div>
 
         {error && (
-          <div style={{
-            background: 'rgba(239, 68, 68, 0.15)',
-            border: '1px solid rgba(239, 68, 68, 0.3)',
-            color: 'var(--red)',
-            padding: '10px 12px',
-            borderRadius: '8px',
-            fontSize: '0.85rem',
-            marginBottom: '14px'
-          }}>
+          <div className="alert alert-error" role="alert">
             ⚠️ {error}
           </div>
         )}
 
         {success && (
-          <div style={{
-            background: 'rgba(16, 185, 129, 0.15)',
-            border: '1px solid rgba(16, 185, 129, 0.3)',
-            color: 'var(--green, #10B981)',
-            padding: '10px 12px',
-            borderRadius: '8px',
-            fontSize: '0.85rem',
-            marginBottom: '14px'
-          }}>
+          <div className="alert alert-success" role="status">
             ✅ {success}
           </div>
         )}
 
         {found && (
           <div style={{
-            background: 'rgba(0, 0, 0, 0.3)',
+            background: 'var(--surface-card)',
             border: '1px solid var(--card-border)',
             borderRadius: '10px',
             padding: '14px',
@@ -187,11 +160,11 @@ export const GuestSyncRedeemModal: React.FC<GuestSyncRedeemModalProps> = ({
                 width: '38px',
                 height: '38px',
                 borderRadius: '50%',
-                background: found.profile.color || 'var(--blue)',
+                background: found.profile.color || 'var(--player-1)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontWeight: 900,
+                fontWeight: 'var(--weight-medium)',
                 color: '#fff'
               }}>
                 {found.username.charAt(0).toUpperCase()}

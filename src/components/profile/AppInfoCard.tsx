@@ -22,8 +22,8 @@ export const AppInfoCard: React.FC = () => {
         style={{
           padding: '6px 14px',
           borderRadius: '20px',
-          background: 'rgba(255,255,255,0.04)',
-          border: '1px solid rgba(255,255,255,0.06)',
+          background: 'var(--surface-card)',
+          border: '1px solid var(--card-border)',
           color: 'inherit',
           font: 'inherit',
           minHeight: 'auto',

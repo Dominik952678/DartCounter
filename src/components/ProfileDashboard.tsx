@@ -6,6 +6,8 @@ import { HeadToHead } from './HeadToHead';
 import { DartboardHeatmap } from './DartboardHeatmap';
 import { ConfirmModal } from './ConfirmModal';
 import { Button } from './ui';
+import { chartColor } from '../utils/chartColors';
+import { DEFAULT_PLAYER_COLOR_HEX } from '../utils/playerColors';
 
 interface ProfileDashboardProps {
   profileName: string;
@@ -241,7 +243,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                 value={selectedMode}
                 onChange={(e) => setSelectedMode(e.target.value)}
                 aria-label="Modus"
-                style={{ background: '#2a2a2c', color: '#fff', border: '1px solid var(--card-border)', padding: '6px 10px', borderRadius: '8px', fontSize: '0.9em' }}
+                
               >
                 {availableModes.map((m: string) => (
                   <option key={m} value={m}>{m}</option>
@@ -255,8 +257,8 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
         {/* Linked Cloud Guest Banner */}
         {profile.isLinkedCloudGuest && (
           <div style={{
-            background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.15))',
-            border: '1px solid rgba(59, 130, 246, 0.4)',
+            background: 'var(--surface-card)',
+            border: '1px solid var(--card-border)',
             borderRadius: '12px',
             padding: '12px 14px',
             marginBottom: '18px',
@@ -269,7 +271,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span style={{ fontSize: '1.1em' }}>🔗</span>
-                <strong style={{ color: 'var(--blue)' }}>Cloud-Gastkonto: @{profile.linkedUsername || profileName}</strong>
+                <strong>Cloud-Gastkonto: @{profile.linkedUsername || profileName}</strong>
               </div>
               <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginTop: '2px' }}>
                 Gespielte Matches auf diesem Gerät werden automatisch mit dem Cloud-Profil synchronisiert.
@@ -296,7 +298,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                   value={profile.targetAverage ? Math.max(1, Math.min(10, Math.round((profile.targetAverage - 20) / 10))) : 4}
                   onChange={(e) => onUpdateProfile(profileName, { targetAverage: parseInt(e.target.value) * 10 + 20 })}
                   aria-label="Bot Level"
-                  style={{ background: '#2a2a2c', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', flex: 1 }}
+                  style={{ flex: 1 }}
                 >
                   {[1,2,3,4,5,6,7,8,9,10].map(l => (
                     <option key={l} value={l}>Level {l} · Avg ~{l*10 + 20}</option>
@@ -309,12 +311,12 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
               <span style={{ fontSize: '0.9em', color: 'var(--text-dim)' }}>Spielerfarbe:</span>
               <input
                 type="color"
-                value={profile.color || '#0a84ff'}
+                value={profile.color || DEFAULT_PLAYER_COLOR_HEX}
                 onChange={(e) => onUpdateProfile(profileName, { color: e.target.value })}
                 aria-label="Spielerfarbe"
                 style={{ width: '32px', height: '32px', padding: '0', border: 'none', borderRadius: '50%', cursor: 'pointer', background: 'transparent' }}
               />
-              <span style={{ fontSize: '0.85em', color: profile.color || '#0a84ff', fontWeight: 'bold' }}>●</span>
+              <span style={{ color: profile.color || DEFAULT_PLAYER_COLOR_HEX }} aria-hidden="true">●</span>
             </div>
           </div>
         )}
@@ -328,7 +330,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                 value={compareWith}
                 onChange={(e) => setCompareWith(e.target.value)}
                 aria-label="Gegner für Head-to-Head-Vergleich"
-                style={{ background: '#2a2a2c', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px' }}
+                
               >
                 <option value="">Wähle Gegner...</option>
                 {Object.keys(allProfiles).filter(p => p !== profileName).map(p => (
@@ -421,13 +423,12 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                             stroke="none"
                           >
                             {pieData.map((entry: { name: string; value: number }, index: number) => {
-                               const colors = ['#00d26a', '#0a84ff', '#ff9f0a', '#ff375f', '#bf5af2', '#5e5ce6', '#32ade6', '#ffd60a', '#ff453a', '#8e8e93'];
-                               const fill = entry.name === 'Rest' ? '#636366' : colors[index % colors.length];
+                               const fill = chartColor(index, entry.name);
                                return <Cell key={`cell-${index}`} fill={fill} />;
                             })}
                           </Pie>
                           <Tooltip 
-                            contentStyle={{ backgroundColor: '#1a1a1c', border: '1px solid var(--card-border)', borderRadius: '8px' }} 
+                            contentStyle={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--card-border)', borderRadius: '8px' }} 
                             itemStyle={{ color: '#fff' }}
                             formatter={(value: unknown, name: unknown) => {
                               const total = pieData.reduce((s: number, e: { value: number }) => s + e.value, 0);
@@ -438,10 +439,10 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                         </PieChart>
                       </ResponsiveContainer>
                       <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', pointerEvents: 'none' }}>
-                        <div style={{ fontSize: '1.2em', fontWeight: 800, color: 'var(--text)' }}>
+                        <div className="stat-value stat-value-sm">
                           {pieData.reduce((s: number, e: { value: number }) => s + e.value, 0)}
                         </div>
-                        <div style={{ fontSize: '0.7em', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        <div className="stat-label">
                           Hits
                         </div>
                       </div>
@@ -452,12 +453,11 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                       {pieData.map((entry: { name: string; value: number }, idx: number) => {
                         const total = pieData.reduce((s: number, e: { value: number }) => s + e.value, 0);
                         const pct = total > 0 ? Math.round((entry.value / total) * 100) : 0;
-                        const colors = ['#00d26a', '#0a84ff', '#ff9f0a', '#ff375f', '#bf5af2', '#5e5ce6', '#32ade6', '#ffd60a', '#ff453a', '#8e8e93'];
-                        const color = entry.name === 'Rest' ? '#636366' : colors[idx % colors.length];
+                        const color = chartColor(idx, entry.name);
                         return (
-                          <div key={entry.name} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.06)', padding: '4px 8px', borderRadius: '6px', fontSize: '0.82em' }}>
+                          <div key={entry.name} className="chart-legend-item">
                             <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: color, display: 'inline-block' }} />
-                            <span style={{ fontWeight: 600 }}>{entry.name}:</span>
+                            <span>{entry.name}:</span>
                             <span style={{ color: 'var(--text-dim)' }}>{pct}%</span>
                           </div>
                         );
@@ -473,7 +473,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                         <PolarGrid stroke="var(--card-border)" />
                         <PolarAngleAxis dataKey="subject" tick={{ fill: 'var(--text-dim)', fontSize: 12 }} />
                         <PolarRadiusAxis angle={30} domain={[0, maxRadarHits]} tick={false} axisLine={false} />
-                        <Radar name={profileName} dataKey="hits" stroke={effectiveProfile?.color || 'var(--blue)'} fill={effectiveProfile?.color || 'var(--blue)'} fillOpacity={0.4} />
+                        <Radar name={profileName} dataKey="hits" stroke={effectiveProfile?.color || 'var(--accent-primary)'} fill={effectiveProfile?.color || 'var(--accent-primary)'} fillOpacity={0.4} />
                       </RadarChart>
                     </ResponsiveContainer>
                   </div>
@@ -564,11 +564,11 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
             <div className="chart-container">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--card-border)" />
                   <XAxis dataKey="name" stroke="#555" tick={{ fontSize: 11 }} />
                   <YAxis stroke="#555" tick={{ fontSize: 11 }} domain={isMinigame ? ['auto', 'auto'] : ['dataMin - 5', 'dataMax + 5']} />
                   <Tooltip 
-                    contentStyle={{ backgroundColor: '#1a1a1c', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                    contentStyle={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--card-border)', borderRadius: '8px' }}
                     labelStyle={{ color: '#999' }}
                     formatter={(val: unknown) => [val as React.ReactNode, isMinigame ? 'Punkte' : 'Average']}
                   />
@@ -576,19 +576,19 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                     type="monotone"
                     dataKey="val"
                     name={isMinigame ? "Punkte" : "Average"}
-                    stroke="#0a84ff" 
+                    stroke="var(--accent-primary)" 
                     strokeWidth={2.5} 
-                    dot={{ fill: '#0a84ff', r: 3, strokeWidth: 0 }} 
-                    activeDot={{ r: 5, fill: '#0a84ff' }} 
+                    dot={{ fill: 'var(--accent-primary)', r: 3, strokeWidth: 0 }} 
+                    activeDot={{ r: 5, fill: 'var(--accent-primary)' }} 
                   />
                 </LineChart>
               </ResponsiveContainer>
             </div>
           </div>
         ) : (
-          <div style={{ textAlign: 'center', padding: '24px 16px', background: 'rgba(255,255,255,0.02)', borderRadius: '12px', border: '1px dashed var(--card-border)', color: 'var(--text-dim)', margin: '15px 0' }}>
+          <div className="empty-state" style={{ border: '1px dashed var(--card-border)', borderRadius: 'var(--radius-card)', margin: 'var(--space-4) 0' }}>
             <div style={{ fontSize: '1.8rem', marginBottom: '6px' }}>🎯</div>
-            <div style={{ fontWeight: 700, color: 'var(--text)', fontSize: '0.95rem' }}>Noch keine Matches in diesem Modus</div>
+            <p className="empty-state-title">Noch keine Matches in diesem Modus</p>
             <div style={{ fontSize: '0.82rem', marginTop: '4px' }}>Starte dein erstes Spiel, um deine Formkurve und Treffer aufzuzeichnen!</div>
           </div>
         )}
@@ -600,15 +600,15 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
             <div className="chart-container">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={checkoutChartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--card-border)" />
                   <XAxis dataKey="name" stroke="#555" tick={{ fontSize: 11 }} />
                   <YAxis stroke="#555" tick={{ fontSize: 11 }} domain={[0, 100]} />
                   <Tooltip 
-                    contentStyle={{ backgroundColor: '#1a1a1c', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}
+                    contentStyle={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--card-border)', borderRadius: '8px' }}
                     labelStyle={{ color: '#999' }}
                     formatter={(val: unknown) => [`${val}%`, 'Quote']}
                   />
-                  <Line type="monotone" dataKey="quote" stroke="#ff3b30" strokeWidth={2.5} dot={{ fill: '#ff3b30', r: 3, strokeWidth: 0 }} activeDot={{ r: 5, fill: '#ff3b30' }} />
+                  <Line type="monotone" dataKey="quote" stroke="var(--accent-info)" strokeWidth={2.5} dot={{ fill: 'var(--accent-info)', r: 3, strokeWidth: 0 }} activeDot={{ r: 5, fill: 'var(--accent-info)' }} />
                 </LineChart>
               </ResponsiveContainer>
             </div>

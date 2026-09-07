@@ -214,7 +214,7 @@ export const PlayerSelection: React.FC<PlayerSelectionProps> = ({
             display: 'flex',
             alignItems: 'center',
             gap: '10px',
-            fontWeight: 'bold'
+            fontWeight: 'var(--weight-medium)'
           }}
         >
           <span aria-hidden="true">⚠️</span>

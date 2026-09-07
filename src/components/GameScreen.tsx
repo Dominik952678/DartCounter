@@ -140,7 +140,7 @@ export const GameScreen: React.FC<GameScreenProps> = (props) => {
               ✓ {props.checkoutPrompt.autoDarts} Dart(s) bestätigen
             </Button>
 
-            <p style={{ fontSize: '0.75em', color: '#666', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Manuell korrigieren</p>
+            <p className="stat-label" style={{ marginBottom: 'var(--space-2)' }}>Manuell korrigieren</p>
             <div className="checkout-darts-select" style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
               {[0, 1, 2, 3].slice(0, props.checkoutPrompt.maxDarts + 1).map(num => (
                 <button 

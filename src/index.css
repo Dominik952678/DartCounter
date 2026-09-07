@@ -310,7 +310,7 @@ h4 { font-size: var(--text-body); }
   border-radius: 20px; 
   font-size: 0.8em; 
   color: var(--text-dim); 
-  font-weight: 600; 
+  font-weight: var(--weight-medium); 
 }
 .stat-card { 
   text-align: center; 
@@ -326,7 +326,7 @@ h4 { font-size: var(--text-body); }
 }
 .stat-value { 
   font-size: 1.45em; 
-  font-weight: 800; 
+  font-weight: var(--weight-medium); 
   margin-top: 4px; 
 }
 
@@ -380,12 +380,13 @@ select:focus, input:focus {
 .profile-tab-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 16px;
+  gap: var(--space-4);
 }
-@media (min-width: 768px) {
+/* Wie die übrigen Formular-Grids auf der 900px-Stufe aus §6, nicht auf 768. */
+@media (min-width: 900px) {
   .profile-tab-grid {
     grid-template-columns: 1fr 1fr;
-    gap: 20px;
+    gap: var(--space-5);
     align-items: start;
   }
 }
@@ -747,7 +748,7 @@ select:focus, input:focus {
 
 .distance-title {
   font-size: 1.1em;
-  font-weight: 800;
+  font-weight: var(--weight-medium);
   color: var(--text);
   line-height: 1.2;
 }
@@ -755,7 +756,7 @@ select:focus, input:focus {
 .distance-subtitle {
   font-size: 0.75em;
   color: var(--text-dim);
-  font-weight: 600;
+  font-weight: var(--weight-medium);
 }
 
 .stepper-box {
@@ -778,7 +779,7 @@ select:focus, input:focus {
   height: 36px;
   border-radius: 8px;
   font-size: 1.25em;
-  font-weight: 800;
+  font-weight: var(--weight-medium);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -820,7 +821,7 @@ select:focus, input:focus {
   box-shadow: none !important;
   text-align: center;
   font-size: 1.45em;
-  font-weight: 900;
+  font-weight: var(--weight-medium);
   color: var(--text);
   padding: 0 !important;
   margin: 0 !important;
@@ -837,7 +838,7 @@ select:focus, input:focus {
 .stepper-unit {
   font-size: 0.68em;
   color: var(--text-dim);
-  font-weight: 600;
+  font-weight: var(--weight-medium);
   margin-top: 1px;
 }
 
@@ -1075,7 +1076,7 @@ button:disabled, .btn:disabled {
 .player-name.is-active { font-weight: var(--weight-medium); }
 .score { 
   font-size: 3.2em; 
-  font-weight: 900; 
+  font-weight: var(--weight-medium); 
   font-variant-numeric: tabular-nums; 
   line-height: 1.05; 
   margin: 6px 0; 
@@ -1232,7 +1233,7 @@ button:disabled, .btn:disabled {
   border: 2px dashed rgba(148, 163, 184, 0.15);
   border-radius: var(--radius-sm); 
   font-size: 1.1em; 
-  font-weight: 800;
+  font-weight: var(--weight-medium);
   transition: all 0.15s ease;
 }
 @keyframes dartBounce {
@@ -1246,21 +1247,19 @@ button:disabled, .btn:disabled {
   background: rgba(241, 245, 249, 0.08);
   animation: dartBounce 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
-.dart-double { 
-  border-color: var(--orange) !important; 
+/* Ein geworfener Double bzw. Triple. Beide trugen Orange und Rot — Orange hat
+   keine Rolle mehr, Rot ist laut §1 destruktiven Aktionen vorbehalten. Sie
+   heben sich jetzt über den Akzent ab und bleiben durch die Beschriftung im
+   Feld (D/T) unterscheidbar. */
+.dart-double,
+.dart-triple {
+  border-color: var(--accent-primary) !important;
   border-style: solid !important;
-  color: var(--orange); 
-  box-shadow: 0 0 10px var(--orange-glow);
-}
-.dart-triple { 
-  border-color: var(--red) !important; 
-  border-style: solid !important;
-  color: var(--red); 
-  box-shadow: 0 0 10px var(--red-glow);
+  color: var(--accent-primary);
 }
 .round-total {
-  font-size: 1.6em;
-  font-weight: 900;
+  font-size: var(--text-card-title);
+  font-weight: var(--weight-medium);
   font-family: var(--font-mono);
   color: var(--text);
   margin-left: 8px;
@@ -1272,14 +1271,17 @@ button:disabled, .btn:disabled {
   20%, 60% { transform: translateX(-6px); }
   40%, 80% { transform: translateX(6px); }
 }
+/* Ein Überwurf ist eine Fehlermeldung — hier ist --text-danger die Rolle. */
 .bust-active {
   animation: bustShake 0.4s ease-in-out;
-  color: var(--red) !important;
-  font-weight: bold;
+  color: var(--text-danger) !important;
+  font-weight: var(--weight-medium);
 }
-.total-low { color: var(--text); transition: color 0.4s ease; }
-.total-medium { color: var(--orange); transition: color 0.4s ease; }
-.total-high { color: var(--green); transition: color 0.4s ease; }
+/* Die Rundensumme steigt in der Wertigkeit: neutral, Akzent, Erfolg. Vorher
+   war die Mittelstufe Orange, das keine Rolle mehr hat. */
+.total-low { color: var(--text-primary); transition: color 0.4s ease; }
+.total-medium { color: var(--accent-primary); transition: color 0.4s ease; }
+.total-high { color: var(--text-success); transition: color 0.4s ease; }
 
 .modifier-grid {
   display: grid;
@@ -1885,7 +1887,7 @@ button:disabled, .btn:disabled {
 .dash-header h2 {
   font-size: 1.6em;
   margin: 0;
-  font-weight: 800;
+  font-weight: var(--weight-medium);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -2008,7 +2010,7 @@ button:disabled, .btn:disabled {
   font-size: 1.05em;
   margin: 0 0 14px 0;
   color: var(--text);
-  font-weight: 700;
+  font-weight: var(--weight-medium);
 }
 
 .form-curve-grid {
@@ -2032,14 +2034,14 @@ button:disabled, .btn:disabled {
   font-weight: var(--weight-regular);
 }
 .curve-value {
-  font-size: 1.45em;
-  font-weight: 900;
-  color: var(--text);
+  font-size: var(--text-card-title);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
 }
 .curve-recent {
-  font-size: 0.78em;
-  color: var(--blue);
-  font-weight: 600;
+  font-size: var(--text-label);
+  color: var(--text-secondary);
+  font-weight: var(--weight-regular);
 }
 
 .chart-container {
@@ -2055,7 +2057,7 @@ button:disabled, .btn:disabled {
   padding: 14px;
   border-radius: 12px;
   font-size: 0.9em;
-  font-weight: 700;
+  font-weight: var(--weight-medium);
   cursor: pointer;
   margin-top: 20px;
   transition: all 0.2s ease;
@@ -2073,11 +2075,11 @@ button:disabled, .btn:disabled {
 .profile-chip {
   background: var(--surface);
   border: 1px solid var(--card-border);
-  border-left: 4px solid var(--blue);
+  border-left: 4px solid var(--accent-primary);
   border-radius: 12px;
   padding: 14px 16px;
   font-size: 1.05em;
-  font-weight: 700;
+  font-weight: var(--weight-medium);
   color: var(--text);
   display: flex;
   align-items: center;
@@ -2102,7 +2104,7 @@ button:disabled, .btn:disabled {
   margin-bottom: 10px;
 }
 .history-winner {
-  font-weight: 800;
+  font-weight: var(--weight-medium);
   font-size: 1.05em;
 }
 .history-date {
@@ -2116,8 +2118,9 @@ button:disabled, .btn:disabled {
   padding: 6px 0;
 }
 
-.accent-orange { color: var(--orange) !important; }
-.accent-green { color: var(--green) !important; }
+/* .accent-orange ist entfallen: Orange hat seit §1 keine Rolle mehr, und die
+   Klasse wurde von keinem Markup mehr benutzt. */
+.accent-green { color: var(--text-success) !important; }
 
 /* Der Dock in seiner letzten Ausbaustufe, bevor er zur Sidebar wird. Die obere
    Grenze ist zwingend: ohne sie überschreibt diese Regel die Sidebar aus §6,
@@ -2312,6 +2315,13 @@ button:disabled, .btn:disabled {
   position: relative;
   z-index: 1;
 }
+/* Erfolgsmeldung — §1 nennt genau das als Aufgabe von --text-success. */
+.alert-success {
+  background: color-mix(in srgb, var(--text-success) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--text-success) 32%, transparent);
+  color: var(--text-success);
+}
+
 /* Ebenso hier: --text-danger statt eines eigenen #FCA5A5. */
 .alert-error {
   background: color-mix(in srgb, var(--text-danger) 12%, transparent);
@@ -2956,6 +2966,115 @@ button:disabled, .btn:disabled {
   color: var(--text-danger);
 }
 
+/* ── Anmeldung ──
+   Auth- und Passwort-Screen bauten ihr Icon-Feld, ihre Meldungen und ihre
+   Trennlinie selbst, inklusive eines literalen #16161a hinter dem Wort „Oder". */
+.auth-card {
+  max-width: 420px;
+  width: 100%;
+  padding: var(--space-8) var(--space-6);
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+.auth-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+  border: 1px solid var(--card-border);
+  margin-bottom: var(--space-3);
+  font-size: 1.8rem;
+}
+.auth-title {
+  margin-bottom: var(--space-2);
+  font-size: var(--text-screen-title);
+  font-weight: var(--weight-medium);
+}
+.auth-subtitle {
+  color: var(--text-secondary);
+  font-size: var(--text-body);
+  margin-bottom: var(--space-6);
+}
+.auth-alt {
+  margin-top: var(--space-6);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+/* Trennlinie mit Beschriftung. Das Label deckt die Linie mit der Kartenfarbe
+   ab, statt mit einem eigenen Hex — dadurch stimmt es auch, wenn sich der
+   Kartenhintergrund ändert. */
+.auth-divider {
+  position: relative;
+  margin: var(--space-2) 0;
+  text-align: center;
+}
+.auth-divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--card-border);
+}
+.auth-divider span {
+  position: relative;
+  background: var(--bg-base);
+  padding: 0 var(--space-4);
+  color: var(--text-secondary);
+  font-size: var(--text-body);
+}
+
+/* ── Gast-Sync ──
+   Die Karte baute vier Meldungsflächen selbst: einen rot-orangen Verlauf mit
+   Glüheffekt für das laufende Match, eine grüne Notiz, ein blaues Host-Feld
+   und einen Sync-Code in einem Cyberpunk-Grün, das als Fallback stehen
+   geblieben war (`var(--primary, #00ff88)`). */
+.sync-status {
+  font-size: var(--text-label);
+  color: var(--text-secondary);
+  font-weight: var(--weight-regular);
+}
+.sync-status.is-on { color: var(--text-success); }
+
+.sync-panel {
+  background: var(--surface-card);
+  padding: var(--space-4);
+  border-radius: var(--radius-card);
+  border: 1px solid var(--card-border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* Der Sync-Code ist die große Zahl dieser Karte (§2). */
+.sync-code {
+  font-size: var(--text-display);
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.15em;
+  color: var(--accent-primary);
+  font-family: var(--font-mono);
+}
+
+.sync-host {
+  background: var(--surface-hover);
+  border: 1px solid var(--card-border);
+  padding: var(--space-3);
+  border-radius: var(--radius-card);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-body);
+}
+.sync-host strong { color: var(--text-primary); font-weight: var(--weight-medium); }
+
 /* ── Direktvergleich zweier Profile ──
    Lag als `styles`-Objekt am Dateiende, inklusive eigenem Overlay, eigenem
    12px-Radius und `fontWeight: 'bold'`. Der bessere Wert ist grün — das ist
@@ -3351,7 +3470,7 @@ button:disabled, .btn:disabled {
   color: #000;
   border-radius: var(--radius-xs, 6px);
   padding: 4px 10px;
-  font-weight: 800;
+  font-weight: var(--weight-medium);
   font-size: 0.92rem;
   display: inline-block;
   margin: 0 auto;
@@ -3400,7 +3519,7 @@ button:disabled, .btn:disabled {
 }
 .lock-badge-bar.must-throw strong {
   color: #ffffff;
-  font-weight: 900;
+  font-weight: var(--weight-medium);
   text-shadow: 0 0 10px #ff3333;
 }
 .lock-badge-bar.unlocking {
@@ -3487,13 +3606,13 @@ button:disabled, .btn:disabled {
 }
 .compact-stats strong {
   color: var(--text);
-  font-weight: 700;
+  font-weight: var(--weight-medium);
 }
 .live-preview-darts {
   font-size: clamp(1rem, 4vw, 1.8rem);
   color: var(--text-dim);
   margin-left: 8px;
-  font-weight: 600;
+  font-weight: var(--weight-medium);
   animation: scoreboardFadeInSlide 0.2s ease-out forwards;
 }
 

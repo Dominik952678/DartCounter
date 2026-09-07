@@ -12,7 +12,7 @@ import {
   parseBackup,
   type BackupFile
 } from './dataBackup';
-import { Button, Card } from '../ui';
+import { Button, Card, CardHeader } from '../ui';
 
 interface DataExportCardProps {
   profiles: Record<string, Profile>;
@@ -125,48 +125,29 @@ export const DataExportCard: React.FC<DataExportCardProps> = ({
 
   return (
     <Card style={{ marginTop: '20px' }}>
-      <div className="card-header" style={{ marginBottom: '12px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '1.3em' }} aria-hidden="true">💾</span>
-          <h2>Daten sichern & wiederherstellen</h2>
-        </div>
-      </div>
+      <CardHeader icon="💾" heading="Daten sichern & wiederherstellen" />
 
       <p style={{ fontSize: '0.86rem', color: 'var(--text-dim)', margin: '0 0 14px 0', lineHeight: 1.5 }}>
         Lade alle Profile, Matches und Einstellungen als JSON-Datei herunter — als Backup oder um sie auf ein anderes Gerät zu bringen. Beim Einspielen werden bereits vorhandene Matches übersprungen.
       </p>
 
       {status && (
-        <div style={{
-          background: 'rgba(16, 185, 129, 0.15)',
-          border: '1px solid rgba(16, 185, 129, 0.3)',
-          color: 'var(--green, #10B981)',
-          padding: '10px 14px',
-          borderRadius: '8px',
-          fontSize: '0.85rem',
-          marginBottom: '14px'
-        }}>
-          ✅ {status}
+        <div className="alert alert-success" role="status">
+          <span aria-hidden="true">✅</span>
+          <span>{status}</span>
         </div>
       )}
 
       {error && (
-        <div style={{
-          background: 'rgba(239, 68, 68, 0.15)',
-          border: '1px solid rgba(239, 68, 68, 0.3)',
-          color: 'var(--red)',
-          padding: '10px 14px',
-          borderRadius: '8px',
-          fontSize: '0.85rem',
-          marginBottom: '14px'
-        }}>
-          ⚠️ {error}
+        <div className="alert alert-error" role="alert">
+          <span aria-hidden="true">⚠️</span>
+          <span>{error}</span>
         </div>
       )}
 
       {preview && (
         <div style={{
-          background: 'rgba(0, 0, 0, 0.3)',
+          background: 'var(--surface-card)',
           border: '1px solid var(--card-border)',
           borderRadius: '10px',
           padding: '14px',

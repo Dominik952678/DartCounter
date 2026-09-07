@@ -26,7 +26,7 @@ export const HeatmapPreview: React.FC<HeatmapPreviewProps> = ({ profiles, initia
           value={shown}
           onChange={e => setSelected(e.target.value)}
           style={{
-            background: '#24242c',
+            background: 'var(--bg-surface)',
             color: '#fff',
             border: '1px solid var(--card-border)',
             padding: '6px 12px',

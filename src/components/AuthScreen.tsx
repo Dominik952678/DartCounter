@@ -66,39 +66,17 @@ export const AuthScreen: React.FC = () => {
 
   return (
     <div className="screen active-screen" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100dvh', padding: '20px', position: 'relative', overflowX: 'hidden' }}>
-      <div style={{
-        position: 'absolute',
-        top: '-80px',
-        left: '50%',
-        transform: 'translateX(-50%)',
-        width: '450px',
-        height: '320px',
-        background: 'radial-gradient(circle, rgba(245, 158, 11, 0.1) 0%, rgba(59, 130, 246, 0.06) 50%, transparent 70%)',
-        pointerEvents: 'none',
-        zIndex: 0
-      }} />
+      <div className="hero-glow-bg-setup" aria-hidden="true" />
 
-      <Card style={{ maxWidth: '420px', width: '100%', padding: '36px 24px', position: 'relative', zIndex: 1, textAlign: 'center' }}>
-        <div style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: '56px',
-          height: '56px',
-          borderRadius: '18px',
-          background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(59, 130, 246, 0.15))',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          boxShadow: '0 8px 20px rgba(0,0,0,0.3)',
-          marginBottom: '12px',
-          fontSize: '1.8rem'
-        }}>
+      <Card className="auth-card">
+        <div className="auth-icon" aria-hidden="true">
           {isReset ? '📧' : isLogin ? '🔑' : '✨'}
         </div>
 
-        <h2 style={{ textAlign: 'center', marginBottom: '8px', fontSize: '1.7em', fontWeight: 800 }}>
+        <h2 className="auth-title">
           {isReset ? 'Passwort zurücksetzen' : isLogin ? 'Willkommen zurück' : 'Account erstellen'}
         </h2>
-        <p style={{ color: 'var(--text-dim)', fontSize: '0.9em', marginBottom: '24px' }}>
+        <p className="auth-subtitle">
           {isReset
             ? 'Wir schicken dir einen Link, mit dem du ein neues Passwort setzen kannst'
             : isLogin
@@ -107,14 +85,16 @@ export const AuthScreen: React.FC = () => {
         </p>
         
         {displayError && (
-          <div role="alert" style={{ background: 'rgba(239, 68, 68, 0.12)', color: 'var(--red)', padding: '12px', borderRadius: '12px', marginBottom: '20px', textAlign: 'center', fontSize: '0.9em', border: '1px solid rgba(239, 68, 68, 0.25)' }}>
-            ⚠️ {displayError}
+          <div className="alert alert-error" role="alert">
+            <span aria-hidden="true">⚠️</span>
+            <span>{displayError}</span>
           </div>
         )}
 
         {successMsg && (
-          <div style={{ background: 'rgba(16, 185, 129, 0.12)', color: 'var(--green)', padding: '12px', borderRadius: '12px', marginBottom: '20px', textAlign: 'center', fontSize: '0.9em', border: '1px solid rgba(16, 185, 129, 0.25)' }}>
-            ✅ {successMsg}
+          <div className="alert alert-success" role="status">
+            <span aria-hidden="true">✅</span>
+            <span>{successMsg}</span>
           </div>
         )}
         
@@ -153,7 +133,7 @@ export const AuthScreen: React.FC = () => {
                 required
               />
               {isSignup && (
-                <small style={{ color: 'var(--text-dim)', fontSize: '0.8em', textAlign: 'left', marginLeft: '4px' }}>
+                <small className="form-hint" style={{ textAlign: 'left' }}>
                   Mindestens 6 Zeichen erforderlich.
                 </small>
               )}
@@ -175,11 +155,8 @@ export const AuthScreen: React.FC = () => {
           )}
         </form>
 
-        <div style={{ marginTop: '24px', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <div style={{ position: 'relative', margin: '8px 0' }}>
-            <div style={{ position: 'absolute', top: '50%', left: 0, right: 0, height: '1px', background: 'var(--card-border)' }}></div>
-            <span style={{ position: 'relative', background: '#16161a', padding: '0 15px', color: 'var(--text-dim)', fontSize: '0.85em' }}>Oder</span>
-          </div>
+        <div className="auth-alt">
+          <div className="auth-divider"><span>Oder</span></div>
 
           <Button
             type="button"
@@ -189,13 +166,16 @@ export const AuthScreen: React.FC = () => {
             {isLogin ? 'Jetzt neuen Account erstellen' : 'Bereits einen Account? Login'}
           </Button>
           
+          {/* Sekundär: das Absenden des Formulars ist die primäre Aktion
+              dieses Screens, und §1 lässt nur eine gefüllte Fläche zu. */}
           <Button
             type="button"
-            variant="primary" size="large" fullWidth
+            variant="secondary"
+            size="large"
+            fullWidth
             onClick={() => navigate('/offline')}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
           >
-            <span>🎯</span> Als Gast fortfahren
+            <span aria-hidden="true">🎯</span> Als Gast fortfahren
           </Button>
 
           <Button type="button" variant="ghost" onClick={() => navigate('/')} style={{ marginTop: '4px' }}>

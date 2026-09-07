@@ -54,8 +54,9 @@ export const CreateProfileCard: React.FC<CreateProfileCardProps> = ({ profiles, 
       </div>
 
       {error && (
-        <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.3)', color: 'var(--red)', padding: '8px 12px', borderRadius: '8px', fontSize: '0.85em', marginBottom: '12px' }}>
-          ⚠️ {error}
+        <div className="alert alert-error" role="alert">
+          <span aria-hidden="true">⚠️</span>
+          <span>{error}</span>
         </div>
       )}
 
@@ -64,7 +65,7 @@ export const CreateProfileCard: React.FC<CreateProfileCardProps> = ({ profiles, 
           type="checkbox"
           checked={isBot}
           onChange={e => setIsBot(e.target.checked)}
-          style={{ width: 'auto', accentColor: 'var(--blue)' }}
+          style={{ width: 'auto', accentColor: 'var(--accent-primary)' }}
         />
         Als Bot (Computergegner) erstellen
       </label>

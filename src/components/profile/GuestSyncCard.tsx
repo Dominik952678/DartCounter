@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import type { GuestSync } from './useGuestSync';
 import { ConfirmModal } from '../ConfirmModal';
 import { useNotificationStore } from '../../store/useNotificationStore';
-import { Button, Card } from '../ui';
+import { Button, Card, CardHeader } from '../ui';
 
 interface GuestSyncCardProps {
   sync: GuestSync;
@@ -33,49 +33,35 @@ export const GuestSyncCard: React.FC<GuestSyncCardProps> = ({ sync }) => {
 
   return (
     <Card style={{ marginTop: '20px' }}>
-      <div className="card-header" style={{ marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '1.3em' }} aria-hidden="true">📱</span>
-          <h2>Gast-Sync & Geräte-Freigaben</h2>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '0.8rem', color: isEnabled ? 'var(--green, #10B981)' : 'var(--text-dim)', fontWeight: 700 }}>
-            {isEnabled ? '🟢 Sync Aktiv' : '⚪ Sync Aus'}
-          </span>
-          <button
-            type="button"
-            className={isEnabled ? 'btn-secondary' : 'btn-primary'}
-            onClick={() => sync.setEnabled(!isEnabled)}
-            disabled={loading}
-            style={{ padding: '4px 12px', fontSize: '0.78rem', minHeight: '30px' }}
-          >
-            {isEnabled ? 'Deaktivieren' : 'Aktivieren'}
-          </button>
-        </div>
-      </div>
+      <CardHeader
+        icon="📱"
+        heading="Gast-Sync & Geräte-Freigaben"
+        action={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+            <span className={`sync-status ${isEnabled ? 'is-on' : ''}`}>
+              {isEnabled ? '🟢 Sync aktiv' : '⚪ Sync aus'}
+            </span>
+            <Button
+              type="button"
+              variant={isEnabled ? 'secondary' : 'primary'}
+              size="compact"
+              onClick={() => sync.setEnabled(!isEnabled)}
+              disabled={loading}
+            >
+              {isEnabled ? 'Deaktivieren' : 'Aktivieren'}
+            </Button>
+          </div>
+        }
+      />
 
       {info?.liveMatch && !info.liveMatch.isAborted && (
-        <div style={{
-          background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(245, 158, 11, 0.2))',
-          border: '1px solid rgba(239, 68, 68, 0.4)',
-          borderRadius: '12px',
-          padding: '14px 16px',
-          marginBottom: '16px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '12px',
-          boxShadow: '0 0 20px rgba(239, 68, 68, 0.25)'
-        }}>
+        <div className="alert alert-error callout-action" role="alert">
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontSize: '1.3rem' }} aria-hidden="true">🎯</span>
-              <strong style={{ color: 'var(--red, #ef4444)', fontSize: '0.98rem' }}>
-                Live-Match aktiv auf {info.liveMatch.hostName}!
-              </strong>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+              <span aria-hidden="true">🎯</span>
+              <strong>Live-Match aktiv auf {info.liveMatch.hostName}!</strong>
             </div>
-            <div style={{ fontSize: '0.8rem', color: 'var(--text-dim)', marginTop: '4px' }}>
+            <div className="stat-label" style={{ marginTop: '4px' }}>
               Dein Profil wird gerade in einem {info.liveMatch.gameType || 'Standard'}-Spiel verwendet.
             </div>
           </div>
@@ -118,28 +104,12 @@ export const GuestSyncCard: React.FC<GuestSyncCardProps> = ({ sync }) => {
       )}
 
       {sync.notice && (
-        <div style={{
-          background: 'rgba(16, 185, 129, 0.15)',
-          border: '1px solid rgba(16, 185, 129, 0.3)',
-          color: 'var(--green, #10B981)',
-          padding: '10px 12px',
-          borderRadius: '8px',
-          fontSize: '0.85rem',
-          marginBottom: '14px'
-        }}>
-          {sync.notice}
+        <div className="alert alert-success" role="status">
+          <span>{sync.notice}</span>
         </div>
       )}
 
-      <div style={{
-        background: 'rgba(0, 0, 0, 0.35)',
-        padding: '16px',
-        borderRadius: '12px',
-        border: '1px solid var(--card-border)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '14px'
-      }}>
+      <div className="sync-panel">
         {!isEnabled ? (
           <div style={{ textAlign: 'center', padding: '12px 0' }}>
             <p style={{ fontSize: '0.88rem', color: 'var(--text-dim)', marginBottom: '14px' }}>
@@ -158,16 +128,8 @@ export const GuestSyncCard: React.FC<GuestSyncCardProps> = ({ sync }) => {
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
               <div>
-                <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Dein aktiver Sync-Code:
-                </span>
-                <div style={{
-                  fontSize: '2rem',
-                  fontWeight: 900,
-                  letterSpacing: '0.15em',
-                  color: 'var(--primary, #00ff88)',
-                  fontFamily: 'var(--font-mono)'
-                }}>
+                <span className="stat-label">Dein aktiver Sync-Code:</span>
+                <div className="sync-code">
                   {info.code.slice(0, 3)} {info.code.slice(3)}
                 </div>
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
@@ -197,7 +159,7 @@ export const GuestSyncCard: React.FC<GuestSyncCardProps> = ({ sync }) => {
 
             <div style={{ marginTop: '16px', borderTop: '1px solid var(--card-border)', paddingTop: '12px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text)' }}>
+                <span style={{ fontWeight: 'var(--weight-medium)', color: 'var(--text-primary)' }}>
                   Gekoppeltes Host-Gerät:
                 </span>
                 {host && (
@@ -213,18 +175,9 @@ export const GuestSyncCard: React.FC<GuestSyncCardProps> = ({ sync }) => {
               </div>
 
               {host ? (
-                <div style={{
-                  background: 'rgba(59, 130, 246, 0.08)',
-                  border: '1px solid rgba(59, 130, 246, 0.25)',
-                  padding: '10px 14px',
-                  borderRadius: '10px',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  fontSize: '0.85rem'
-                }}>
+                <div className="sync-host">
                   <div>
-                    <strong style={{ color: 'var(--blue)' }}>📱 {host.hostName}</strong>
+                    <strong><span aria-hidden="true">📱</span> {host.hostName}</strong>
                     <span style={{ color: 'var(--text-dim)', marginLeft: '8px', fontSize: '0.75rem' }}>
                       (Gekoppelt {new Date(host.linkedAt).toLocaleDateString('de-DE')})
                     </span>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { Profile } from '../../types';
 import { ConfirmModal } from '../ConfirmModal';
-import { Button, Card } from '../ui';
+import { Button, Card, CardHeader } from '../ui';
 
 interface ProfileListProps {
   profiles: Record<string, Profile>;
@@ -24,9 +24,8 @@ export const ProfileList: React.FC<ProfileListProps> = ({
 
   return (
     <Card>
-      <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h2>Vorhandene Profile</h2>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+      <CardHeader heading="Vorhandene Profile" action={
+        <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }}>
           <Button
             type="button"
             variant="primary"
@@ -37,7 +36,7 @@ export const ProfileList: React.FC<ProfileListProps> = ({
           </Button>
           <span className="card-badge">{profileNames.length}</span>
         </div>
-      </div>
+      } />
 
       {profileNames.length > 0 ? (
         <div className="profile-chips">
@@ -74,11 +73,11 @@ export const ProfileList: React.FC<ProfileListProps> = ({
                   <span style={{
                     fontSize: '0.7em',
                     marginLeft: '4px',
-                    background: 'rgba(59, 130, 246, 0.25)',
-                    color: 'var(--blue)',
+                    background: 'var(--surface-hover)',
+                    color: 'var(--text-secondary)',
                     padding: '1px 5px',
                     borderRadius: '4px',
-                    fontWeight: 700
+                    fontWeight: 'var(--weight-medium)'
                   }}>
                     Cloud
                   </span>
@@ -103,7 +102,7 @@ export const ProfileList: React.FC<ProfileListProps> = ({
                       borderRadius: '4px',
                       lineHeight: 1
                     }}
-                    onMouseEnter={e => (e.currentTarget.style.color = 'var(--red, #ef4444)')}
+                    onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-danger)')}
                     onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-dim)')}
                   >
                     ✕

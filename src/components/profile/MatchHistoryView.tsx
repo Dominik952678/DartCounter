@@ -5,6 +5,7 @@ import { LegProgressChart } from './LegProgressChart';
 import { hasLegProgress } from './legProgress';
 import { useNotificationStore } from '../../store/useNotificationStore';
 import { Button } from '../ui';
+import { playerColorByName } from '../../utils/playerColors';
 
 interface MatchHistoryViewProps {
   matches: MatchHistory[];
@@ -78,7 +79,7 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
           matches.map((m, i) => (
             <div key={i} id={`history-item-${i}`} className="history-item card" style={{ marginBottom: '10px' }}>
               <div className="history-header" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span className="history-winner" style={{ fontWeight: 'bold', color: profiles[m.winner]?.color || 'var(--blue)' }}>🏆 {m.winner}</span>
+                <span className="history-winner" style={{ color: profiles[m.winner]?.color || playerColorByName(m.winner) }}>🏆 {m.winner}</span>
                 <span className="history-date" style={{ color: 'var(--text-dim)', fontSize: '0.85em' }}>{m.date}</span>
               </div>
               <div className="history-players">
@@ -86,14 +87,14 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
                   <div key={j} style={{ borderBottom: j < m.players.length - 1 ? '1px solid var(--card-border)' : 'none', paddingBottom: '8px', marginBottom: '8px' }}>
                     <div className="history-player-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0' }}>
                       <span className="history-player-name" style={{ flex: 2, color: profiles[p.name]?.color }}>{p.name}</span>
-                      <span className="history-player-score" style={{ flex: 1, textAlign: 'center', fontWeight: 'bold' }}>{p.sets}:{p.legs}</span>
+                      <span className="history-player-score" style={{ flex: 1, textAlign: 'center' }}>{p.sets}:{p.legs}</span>
                       <span className="history-player-avg" style={{ flex: 1, textAlign: 'right', color: 'var(--text-dim)' }}>Ø {p.avg}</span>
                       <span className="history-player-f9" style={{ flex: 1, textAlign: 'right', color: 'var(--text-dim)' }}>F9: {p.first9}</span>
                     </div>
                     {p.legHistory && p.legHistory.length > 0 && (
                       <div style={{ fontSize: '0.75em', color: 'var(--text-dim)', marginTop: '4px', display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
                         {p.legHistory.map((legAvg, li) => (
-                          <span key={li} style={{ background: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: '4px' }}>
+                          <span key={li} className="badge-count">
                             L{li + 1}: Ø{legAvg}
                           </span>
                         ))}

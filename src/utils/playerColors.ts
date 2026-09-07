@@ -18,6 +18,21 @@ const PLAYER_COLORS = [
   'var(--player-4)'
 ] as const;
 
+/**
+ * Dieselben Farben als Literale.
+ *
+ * Nur für `<input type="color">`: das Element akzeptiert ausschließlich einen
+ * Hex-Wert und kann mit `var(--player-1)` nichts anfangen. Überall sonst gilt
+ * der Variablen-Verweis oben.
+ *
+ * MUSS mit dem Spielerpaletten-Block in styles/tokens.css übereinstimmen —
+ * eine CSS-Custom-Property lässt sich von hier aus nicht auslesen.
+ */
+export const PLAYER_COLOR_HEX = ['#5DA9E9', '#E9A05D', '#A9E95D', '#E95DA9'] as const;
+
+/** Voreinstellung der Farbwahl im Profil, wenn noch keine gesetzt ist. */
+export const DEFAULT_PLAYER_COLOR_HEX = PLAYER_COLOR_HEX[0];
+
 /** Farbe nach Sitzplatz — für alles, was eine feste Reihenfolge hat. */
 export const playerColorBySeat = (seat: number): string =>
   PLAYER_COLORS[((seat % PLAYER_COLORS.length) + PLAYER_COLORS.length) % PLAYER_COLORS.length];

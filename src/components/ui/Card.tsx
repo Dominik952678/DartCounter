@@ -48,19 +48,27 @@ export interface CardHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
    * nicht `title`, weil `title` auf einem div schon das Tooltip-Attribut ist.
    */
   heading?: React.ReactNode;
+  /** Emoji vor der Überschrift. Dekorativ, wird für Screenreader versteckt. */
+  icon?: React.ReactNode;
   /** Steht rechts in der Kopfzeile, z. B. ein Badge oder ein Ghost-Button. */
   action?: React.ReactNode;
 }
 
 export const CardHeader: React.FC<CardHeaderProps> = ({
   heading,
+  icon,
   action,
   className,
   children,
   ...rest
 }) => (
   <div className={['card-header', className].filter(Boolean).join(' ')} {...rest}>
-    {heading !== undefined ? <h2>{heading}</h2> : children}
+    {heading !== undefined ? (
+      <div className="card-header-heading">
+        {icon !== undefined && <span className="card-header-icon" aria-hidden="true">{icon}</span>}
+        <h2>{heading}</h2>
+      </div>
+    ) : children}
     {action}
   </div>
 );

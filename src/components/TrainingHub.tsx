@@ -311,7 +311,7 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
                       alignItems: 'center', 
                       justifyContent: 'center', 
                       color: 'white', 
-                      fontWeight: 'bold', 
+                      fontWeight: 'var(--weight-medium)', 
                       fontSize: '14px',
                       backgroundColor: playerColorByName(playerName || `Spieler ${i+1}`) 
                     }}>
@@ -372,7 +372,7 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
                   display: 'flex',
                   alignItems: 'center',
                   gap: '10px',
-                  fontWeight: 'bold'
+                  fontWeight: 'var(--weight-medium)'
                 }}
               >
                 <span aria-hidden="true">⚠️</span>

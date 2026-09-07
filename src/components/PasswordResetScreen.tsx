@@ -42,7 +42,7 @@ export const PasswordResetScreen: React.FC = () => {
     <div className="screen active-screen" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100dvh', padding: '20px' }}>
       <Card style={{ maxWidth: '420px', width: '100%', padding: '36px 24px', textAlign: 'center' }}>
         <div style={{ fontSize: '2rem', marginBottom: '10px' }} aria-hidden="true">🔒</div>
-        <h2 style={{ marginBottom: '8px', fontSize: '1.6em', fontWeight: 800 }}>Neues Passwort</h2>
+        <h2 className="auth-title">Neues Passwort</h2>
 
         {done ? (
           <>
@@ -62,7 +62,7 @@ export const PasswordResetScreen: React.FC = () => {
             </p>
 
             {displayError && (
-              <div role="alert" style={{ background: 'rgba(239, 68, 68, 0.12)', color: 'var(--red)', padding: '12px', borderRadius: '12px', marginBottom: '20px', fontSize: '0.9em', border: '1px solid rgba(239, 68, 68, 0.25)' }}>
+              <div className="alert alert-error" role="alert">
                 ⚠️ {displayError}
               </div>
             )}
