@@ -39,7 +39,7 @@ export const LegProgressChart: React.FC<LegProgressChartProps> = ({ match, profi
           <YAxis stroke="var(--text-dim)" tick={{ fontSize: 11 }} domain={['dataMin - 5', 'dataMax + 5']} />
           <Tooltip
             contentStyle={{
-              backgroundColor: 'var(--card)',
+              backgroundColor: 'var(--bg-surface)',
               border: '1px solid var(--card-border)',
               borderRadius: '8px'
             }}

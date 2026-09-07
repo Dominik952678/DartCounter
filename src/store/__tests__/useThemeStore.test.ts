@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useThemeStore } from '../useThemeStore';
+import { readOneOf } from '../../utils/storage';
 
 describe('useThemeStore Theme System', () => {
   beforeEach(() => {
@@ -12,18 +13,19 @@ describe('useThemeStore Theme System', () => {
     expect(document.documentElement.getAttribute('data-theme')).toBe('classic');
   });
 
-  it('switches to vaporwave theme and updates data-theme attribute', () => {
-    useThemeStore.getState().setTheme('vaporwave');
-    expect(useThemeStore.getState().theme).toBe('vaporwave');
-    expect(localStorage.getItem('dartcounter_theme')).toBe('vaporwave');
-    expect(document.documentElement.getAttribute('data-theme')).toBe('vaporwave');
+  it('persists the theme and mirrors it onto data-theme', () => {
+    useThemeStore.getState().setTheme('classic');
+    expect(useThemeStore.getState().theme).toBe('classic');
+    expect(localStorage.getItem('dartcounter_theme')).toBe('classic');
+    expect(document.documentElement.getAttribute('data-theme')).toBe('classic');
   });
 
-  it('switches to cyberpunk theme and updates data-theme attribute', () => {
-    useThemeStore.getState().setTheme('cyberpunk');
-    expect(useThemeStore.getState().theme).toBe('cyberpunk');
-    expect(localStorage.getItem('dartcounter_theme')).toBe('cyberpunk');
-    expect(document.documentElement.getAttribute('data-theme')).toBe('cyberpunk');
+  // Vaporwave und Cyberpunk sind während des Redesigns aus THEMES genommen.
+  // Wer eines von beiden gespeichert hat, darf nicht auf einem Theme
+  // festhängen, dessen Stylesheet gar nicht mehr geladen wird.
+  it.each(['vaporwave', 'cyberpunk'])('falls back to classic for the retired %s theme', (retired) => {
+    localStorage.setItem('dartcounter_theme', retired);
+    expect(readOneOf('theme', ['classic'] as const, 'classic')).toBe('classic');
   });
 
   it('toggles scanlines and gridAnimation', () => {

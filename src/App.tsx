@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { Routes, Route, useNavigate, Navigate, useLocation } from 'react-router-dom';
 import { HomeContainer } from './components/HomeContainer';
 import { MainMenu } from './components/MainMenu';
@@ -30,7 +30,6 @@ import { reportPersistenceError, useNotificationStore, type NotificationType } f
 import { useProfiles } from './hooks/useProfiles';
 import { useGameEngine } from './hooks/useGameEngine';
 import { useAuthStore } from './store/useAuthStore';
-import { useThemeStore } from './store/useThemeStore';
 
 type MiniGameResult = {
   name: string;
@@ -75,7 +74,6 @@ export default function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, initialize } = useAuthStore();
-  const { theme, scanlines, gridAnimation } = useThemeStore();
   const notifications = useNotificationStore(s => s.notifications);
   const dismissNotification = useNotificationStore(s => s.dismiss);
 
@@ -275,27 +273,6 @@ export default function App() {
     ).catch(err => reportPersistenceError(err, 'Match konnte nicht mit Gästen synchronisiert werden'));
   }, [statsModalData, applyProfiles, user, refreshMatches]);
 
-  const themeOverlays = useMemo(() => {
-    if (theme === 'vaporwave') {
-      return (
-        <>
-          <div className="vaporwave-sun" />
-          {gridAnimation && <div className="vaporwave-grid-floor" />}
-          {scanlines && <div className="crt-scanlines" />}
-        </>
-      );
-    }
-    if (theme === 'cyberpunk') {
-      return (
-        <>
-          {gridAnimation && <div className="cyberpunk-circuit-grid" />}
-          {scanlines && <div className="cyberpunk-scanlines" />}
-        </>
-      );
-    }
-    return null;
-  }, [theme, gridAnimation, scanlines]);
-
   return (
     <div className={`app-container ${isMatchActive ? 'app-container-match' : ''}`}>
       {/* Inside the container, so the dock below stays put while a route loads. */}
@@ -466,8 +443,6 @@ export default function App() {
             : undefined
         }
       />
-
-      {themeOverlays}
     </div>
   );
 }

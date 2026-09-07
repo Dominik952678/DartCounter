@@ -1,0 +1,171 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Design-Tokens — die eine Quelle der Wahrheit für Farbe, Typografie und
+   Spacing. Umsetzung von DESIGN.md Abschnitt 1–3.
+
+   Regeln, die sich aus DESIGN.md ergeben und hier durchgesetzt werden:
+   · Jede Farbe hat genau EINE Bedeutung, unabhängig vom Screen (§1).
+   · Pro Screen maximal eine `--accent-primary`-gefüllte Fläche (§1).
+   · Neue Farbwerte gehören in diese Datei, nirgendwo sonst — kein ad-hoc-Hex
+     in Komponenten oder in index.css.
+
+   Scope: ausschließlich das `classic`-Theme. `vaporwave.css` und
+   `cyberpunk.css` sind bewusst nicht auf dieses Rollen-System umgestellt und
+   deshalb aktuell nicht erreichbar (siehe useThemeStore.ts). Volle Parität für
+   diese beiden ist ein eigener Folge-Task.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ─────────────────────────────────────────────────────────────────────────
+     1. Farbsystem — Rollen, nicht Farbnamen (DESIGN.md §1)
+     ───────────────────────────────────────────────────────────────────────── */
+
+  /* Grundflächen */
+  --bg-base: #0B1120;                        /* App-Hintergrund, überall identisch */
+  --surface-card: rgba(255, 255, 255, 0.05); /* Karte auf --bg-base. NICHT für vollflächige Screens */
+
+  /* Akzente. `-rgb` existiert nur, damit Washes wie --bg-accent-muted aus
+     derselben Quelle abgeleitet werden und nicht auseinanderlaufen können. */
+  --accent-primary: #F59E0B;                 /* genau 1 primäre CTA pro Screen */
+  --accent-primary-rgb: 245, 158, 11;
+  --accent-info: #5DCAA5;                    /* kategorisch, z. B. Multiplayer-Icon */
+  --accent-pro: #AFA9EC;                     /* kategorisch, z. B. Statistik-Icon */
+
+  /* 10-%-Wash der Akzentfarbe — Hintergrund des Selected-State (§5). */
+  --bg-accent-muted: rgba(var(--accent-primary-rgb), 0.1);
+
+  /* Semantik — eng gefasst, siehe „NICHT verwenden für" in §1. */
+  --text-success: #10B981;                   /* nur Erfolg, Sieg, positive Deltas */
+  --text-danger: #EF4444;                    /* nur destruktiv, Hotspot-Segmente */
+
+  /* Text */
+  --text-primary: #F5F5F0;
+  --text-secondary: #8B93A6;
+
+  /* Kontrast auf gefüllten Akzentflächen (§5): nie reines Schwarz, sondern der
+     dunkelste Ton derselben Farbfamilie. --accent-info und --accent-pro brauchen
+     kein Gegenstück, weil §1 sie ausdrücklich auf Icon-/Text-Kennzeichnung
+     begrenzt und nicht als Füllfläche vorsieht. */
+  --on-accent-primary: #4A3A10;
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     2. Typografie (DESIGN.md §2)
+
+     Skala nach Verwendung benannt, nicht nach Größe — damit ein späterer
+     Wechsel von 20px auf 21px für Card-Titel nicht `--text-20` zur Lüge macht.
+     ───────────────────────────────────────────────────────────────────────── */
+  --text-label: 12px;         /* Label/Meta, u. a. Label über Kennzahlen */
+  --text-body: 14px;
+  --text-body-lg: 16px;
+  --text-card-title: 20px;
+  --text-screen-title: 24px;
+  --text-display: 32px;       /* Live-Score, große Zahlen */
+
+  /* Nur diese zwei. Kein 700 — wirkt in der dunklen UI zu schwer (§2). */
+  --weight-regular: 400;
+  --weight-medium: 500;
+
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     3. Spacing & Grid (DESIGN.md §3)
+
+     Basis-Einheit 4px; die Skala listet nur die in §3 erlaubten Vielfachen.
+     Ein Abstand, der hier nicht vorkommt, ist im Redesign kein gültiger Wert.
+     ───────────────────────────────────────────────────────────────────────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  --radius-card: 12px;        /* durchgehend, §3 */
+  --card-padding: var(--space-4);
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     Legacy-Aliasse — Abbau in Phase 2–5
+
+     Die Alt-Namen zeigen auf die Rollen, deren Bedeutung sie heute schon
+     tragen. Dadurch gibt es keine zwei parallelen Farbsysteme: wer noch
+     `var(--text-dim)` schreibt, bekommt bereits den DESIGN.md-Wert. Beim
+     Migrieren eines Screens wird der Alt-Name durch die Rolle ersetzt; ist ein
+     Alias nirgends mehr referenziert, fliegt er hier raus.
+     ───────────────────────────────────────────────────────────────────────── */
+  --bg: var(--bg-base);
+  --card: var(--surface-card);
+  --surface: var(--surface-card);
+  --text: var(--text-primary);
+  --text-dim: var(--text-secondary);
+  --primary: var(--accent-primary);
+  --green: var(--text-success);
+  --red: var(--text-danger);
+  --radius: var(--radius-card);
+
+  /* Bewusst NICHT aliasiert: --blue, --orange, --purple.
+
+     DESIGN.md §1 ersetzt genau diese vier Screen-abhängigen Farben durch feste
+     Rollen — und das ist semantische Arbeit, keine mechanische Umbenennung.
+     Dasselbe `var(--blue)` steht heute je nach Fundstelle für ein Multiplayer-
+     Icon (→ --accent-info), einen Auswahl-Zustand (→ --accent-primary) oder
+     reine Dekoration (→ ersatzlos weg). Ein pauschaler Alias würde die falsche
+     Bedeutung festschreiben. Diese drei werden pro Screen in Phase 5 aufgelöst
+     und verschwinden dann. --green und --red sind dagegen aliasiert, weil ihre
+     DESIGN.md-Rolle und ihr heutiger Wert exakt übereinstimmen. */
+  --blue: #3B82F6;
+  --orange: #F97316;
+  --purple: #8B5CF6;
+
+  /* Ohne Rolle in DESIGN.md — unverändert übernommen, damit Phase 1 nichts
+     kaputt macht. Was davon bleibt, entscheidet sich in Phase 2 (Karten-Border,
+     Hover-Zustände) bzw. beim jeweiligen Screen. */
+  --bg-surface: #111827;                      /* deckend; Modals, Overlays */
+  --card-hover: rgba(30, 41, 59, 0.92);
+  --card-border: rgba(148, 163, 184, 0.12);
+  --card-border-glow: rgba(251, 191, 36, 0.3);
+  --surface-hover: rgba(148, 163, 184, 0.12);
+  --text-muted: #64748B;
+  --primary-glow: rgba(var(--accent-primary-rgb), 0.3);
+  --primary-dark: #D97706;
+  --green-glow: rgba(16, 185, 129, 0.25);
+  --blue-glow: rgba(59, 130, 246, 0.25);
+  --orange-glow: rgba(249, 115, 22, 0.25);
+  --red-glow: rgba(239, 68, 68, 0.25);
+  --purple-glow: rgba(139, 92, 246, 0.25);
+
+  /* Radius-Stufen jenseits der Karte: DESIGN.md kennt nur den Card-Radius.
+     Bis geklärt ist, was Pills und Modals bekommen, bleiben sie wie gehabt. */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.6);
+  --shadow-glow: 0 0 20px var(--primary-glow);
+
+  /* ── Stacking order ──
+     Everything that overlaps draws from this scale. `.modal-overlay` and
+     `.bottom-nav` both sat on 1000 and the dock is rendered after the routes,
+     so it painted over the bottom of every dialog — which is where the buttons
+     are. Numbers are spaced so a new layer can be slotted between two. */
+  --z-content: 1;
+  --z-match-shell: 10;
+  --z-sticky: 20;
+  --z-dock: 100;
+  --z-overlay: 200;
+  --z-toast: 300;
+  --z-screen-effect: 400;
+}
+
+/* Karten-Padding wächst ab Tablet (§3 i. V. m. §6: die 900px-Stufe ist die
+   iPad-Stufe). Bewusst nur diese eine Änderung — die restlichen Breakpoints
+   sind Phase 4. */
+@media (min-width: 900px) {
+  :root {
+    --card-padding: var(--space-5);
+  }
+}

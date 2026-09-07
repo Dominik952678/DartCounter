@@ -100,7 +100,7 @@ export const GuestSyncRedeemModal: React.FC<GuestSyncRedeemModalProps> = ({
         style={{
           maxWidth: '440px',
           width: '100%',
-          background: 'var(--card)',
+          background: 'var(--bg-surface)',
           border: '1px solid var(--primary, #00ff88)',
           padding: '24px',
           boxShadow: '0 10px 40px rgba(0,0,0,0.6)'
