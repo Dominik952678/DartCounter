@@ -91,7 +91,7 @@ export const LobbyRoom: React.FC = () => {
   const settings = roomSettings;
 
   return (
-    <div className="screen active-screen app-container lobby-room">
+    <div className="screen active-screen lobby-room">
       <div className="ambient-glow" aria-hidden="true" />
 
       <header className="page-header">

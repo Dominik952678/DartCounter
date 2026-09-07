@@ -559,7 +559,6 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
       </div>
       
       {/* spacer for bottom nav */}
-      <div style={{ height: '120px' }}></div>
     </div>
   );
 };

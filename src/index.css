@@ -48,6 +48,19 @@
   --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.6);
   --shadow-glow: 0 0 20px var(--primary-glow);
 
+  /* ── Stacking order ──
+     Everything that overlaps draws from this scale. `.modal-overlay` and
+     `.bottom-nav` both sat on 1000 and the dock is rendered after the routes,
+     so it painted over the bottom of every dialog — which is where the buttons
+     are. Numbers are spaced so a new layer can be slotted between two. */
+  --z-content: 1;
+  --z-match-shell: 10;
+  --z-sticky: 20;
+  --z-dock: 100;
+  --z-overlay: 200;
+  --z-toast: 300;
+  --z-screen-effect: 400;
+
   /* ── Typography ── */
   --font: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
@@ -238,7 +251,7 @@ h3 { font-size: 1.05em; color: var(--text-dim); font-weight: 600; }
   overflow: hidden !important;
   overscroll-behavior: none !important;
   touch-action: manipulation !important;
-  z-index: 10;
+  z-index: var(--z-match-shell);
 }
 
 /* ── Cards & Glassmorphism ──────────────────────────────── */
@@ -1012,7 +1025,7 @@ button:active, .btn:active {
   background: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(20px); 
   -webkit-backdrop-filter: blur(20px);
-  z-index: 1000;
+  z-index: var(--z-overlay);
   display: flex; 
   align-items: center; 
   justify-content: center;
@@ -1294,7 +1307,7 @@ button:active, .btn:active {
   gap: 4px;
   padding: 6px 12px calc(6px + env(safe-area-inset-bottom)) 12px;
   border-top: 1px solid var(--card-border);
-  z-index: 1000;
+  z-index: var(--z-dock);
 }
 
 @media (min-width: 600px) {
@@ -2033,7 +2046,7 @@ button:active, .btn:active {
   top: max(calc(env(safe-area-inset-top) + 6px), 10px);
   left: 50%;
   transform: translateX(-50%);
-  z-index: 20;
+  z-index: var(--z-sticky);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -2066,23 +2079,46 @@ button:active, .btn:active {
   from { opacity: 0; transform: translate(-50%, 16px); }
   to { opacity: 1; transform: translate(-50%, 0); }
 }
-.global-toast {
+/**
+ * The stack, not the individual message, is what is positioned.
+ *
+ * Every toast was `position: fixed` at the same offset, so the three the store
+ * keeps landed exactly on top of each other and the one actually visible was
+ * the oldest — the reverse of what the store sorts for. `column-reverse` puts
+ * the newest closest to the dock while the list stays newest-first in the DOM.
+ */
+.toast-stack {
   position: fixed;
   left: 50%;
   bottom: max(calc(env(safe-area-inset-bottom) + 92px), 100px);
   transform: translateX(-50%);
-  z-index: 2000;
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 10px;
+  width: min(520px, calc(100vw - 28px));
+  pointer-events: none;
+}
+
+.global-toast {
+  pointer-events: auto;
   display: flex;
   align-items: center;
   gap: 12px;
-  width: min(520px, calc(100vw - 28px));
+  width: 100%;
   padding: 14px 16px;
   border-radius: var(--radius);
   background: var(--bg-surface);
-  border: 1px solid rgba(239, 68, 68, 0.45);
+  border: 1px solid var(--card-border);
   box-shadow: var(--shadow-lg);
   animation: toastIn 0.25s cubic-bezier(0.2, 0, 0, 1);
 }
+
+/* The border carries the severity, which the icon repeats for anyone who does
+   not see the colour. */
+.global-toast-error { border-color: rgba(239, 68, 68, 0.45); }
+.global-toast-success { border-color: rgba(16, 185, 129, 0.45); }
+.global-toast-info { border-color: rgba(59, 130, 246, 0.45); }
 .global-toast-body { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .global-toast-body strong { font-size: 0.95em; }
 .global-toast-body span { font-size: 0.84em; color: var(--text-dim); line-height: 1.4; }

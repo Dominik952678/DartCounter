@@ -5,6 +5,7 @@ import { useProfiles } from '../hooks/useProfiles';
 import { StatsWidget } from './StatsWidget';
 import type { MatchHistory } from '../types';
 import { getMatches } from '../db';
+import { reportPersistenceError } from '../store/useNotificationStore';
 
 export const StatsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -20,7 +21,9 @@ export const StatsPage: React.FC = () => {
   }, [initialize]);
 
   useEffect(() => {
-    getMatches(user?.id).then(setMatches);
+    getMatches(user?.id)
+      .then(setMatches)
+      .catch(err => reportPersistenceError(err, 'Statistiken konnten nicht geladen werden'));
   }, [user?.id]);
 
   const defaultProfile = useMemo(() => {
@@ -49,7 +52,7 @@ export const StatsPage: React.FC = () => {
   const profileNames = Object.keys(profiles);
 
   return (
-    <div className="screen active-screen app-container" style={{ position: 'relative', overflowX: 'hidden' }}>
+    <div className="screen active-screen" style={{ position: 'relative', overflowX: 'hidden' }}>
       <div style={{
         position: 'absolute',
         top: '-80px',

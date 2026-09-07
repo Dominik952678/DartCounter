@@ -81,7 +81,7 @@ export const LobbyBrowser: React.FC = () => {
   };
 
   return (
-    <div className="screen active-screen app-container">
+    <div className="screen active-screen">
       <div className="ambient-glow ambient-glow-blue" aria-hidden="true" />
 
       <header className="page-header">

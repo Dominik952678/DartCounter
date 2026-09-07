@@ -25,7 +25,7 @@ const StatsPage = lazy(() => import('./components/StatsPage').then(m => ({ defau
 const ProfileTab = lazy(() => import('./components/ProfileTab').then(m => ({ default: m.ProfileTab })));
 import type { Player, MatchHistory, Profile } from './types';
 import { saveMatch, getMatchPage, syncMatchesAndProfilesForGuests, reconstructAllProfilesFromMatches, MATCH_PAGE_SIZE } from './db';
-import { reportPersistenceError, useNotificationStore } from './store/useNotificationStore';
+import { reportPersistenceError, useNotificationStore, type NotificationType } from './store/useNotificationStore';
 
 import { useProfiles } from './hooks/useProfiles';
 import { useGameEngine } from './hooks/useGameEngine';
@@ -48,6 +48,28 @@ const toModalPlayer = (r: MiniGameResult): Player => ({
   oneFortyPlus: 0, oneEighty: 0, checkoutAttempts: 0, checkoutSuccesses: 0,
   highestCheckout: 0, segmentHits: {}
 });
+
+const TOAST_ICON: Record<NotificationType, string> = {
+  error: '⚠️',
+  success: '✅',
+  info: 'ℹ️'
+};
+
+const Toast = ({ type, title, message, onDismiss }: {
+  type: NotificationType;
+  title: string;
+  message: string;
+  onDismiss: () => void;
+}) => (
+  <div className={`global-toast global-toast-${type}`} role="alert">
+    <span aria-hidden="true">{TOAST_ICON[type]}</span>
+    <div className="global-toast-body">
+      <strong>{title}</strong>
+      <span>{message}</span>
+    </div>
+    <button className="btn-close" onClick={onDismiss} aria-label="Hinweis schließen">✕</button>
+  </div>
+);
 
 export default function App() {
   const navigate = useNavigate();
@@ -91,10 +113,12 @@ export default function App() {
 
   /** Reloads the match window after something wrote to it. */
   const refreshMatches = useCallback(() => {
-    getMatchPage(user?.id, matchWindow).then(({ matches, total }) => {
-      setSavedMatches(matches);
-      setTotalMatches(total);
-    });
+    getMatchPage(user?.id, matchWindow)
+      .then(({ matches, total }) => {
+        setSavedMatches(matches);
+        setTotalMatches(total);
+      })
+      .catch(err => reportPersistenceError(err, 'Matches konnten nicht geladen werden'));
   }, [user?.id, matchWindow]);
 
   // Bridges the hook's legacy `screen` strings onto the router.
@@ -119,37 +143,41 @@ export default function App() {
   useEffect(() => {
     let cancelled = false;
 
-    getMatchPage(user?.id, matchWindow).then(({ matches, total }) => {
-      if (cancelled) return;
-      setSavedMatches(matches);
-      setTotalMatches(total);
-      if (matches.length === 0) return;
+    getMatchPage(user?.id, matchWindow)
+      .then(({ matches, total }) => {
+        if (cancelled) return;
+        setSavedMatches(matches);
+        setTotalMatches(total);
+        if (matches.length === 0) return;
 
-      // Reconstruction recomputes wins, best leg and segment distribution by
-      // walking the whole history, so a partial window would book fewer than
-      // the profile already has. It stays idle until every match is loaded;
-      // the per-match totals are accumulated as matches are played anyway.
-      if (matches.length < total) return;
+        // Reconstruction recomputes wins, best leg and segment distribution by
+        // walking the whole history, so a partial window would book fewer than
+        // the profile already has. It stays idle until every match is loaded;
+        // the per-match totals are accumulated as matches are played anyway.
+        if (matches.length < total) return;
 
-      // Reconciliation writes back to the cloud, so it must never run against a
-      // profile set that belongs to someone else. This effect and the loader in
-      // useProfiles both key off user?.id and race; when the match query won,
-      // `prev` still held the guest defaults and this saved them over the
-      // signed-in user's real profiles.
-      if (loadedForUserId !== (user?.id ?? null)) return;
+        // Reconciliation writes back to the cloud, so it must never run against a
+        // profile set that belongs to someone else. This effect and the loader in
+        // useProfiles both key off user?.id and race; when the match query won,
+        // `prev` still held the guest defaults and this saved them over the
+        // signed-in user's real profiles.
+        if (loadedForUserId !== (user?.id ?? null)) return;
 
-      const username = user?.user_metadata?.username;
-      // `applyProfiles` resolves this against the live profile set and persists
-      // the result itself. The reconciliation used to run inside a `setProfiles`
-      // updater with the save call in its body — a side effect in a function
-      // React may invoke twice, and whose result the save could not observe.
-      applyProfiles(prev => {
-        if (Object.keys(prev).length === 0) return prev;
-        const updated = reconstructAllProfilesFromMatches(prev, matches, username ? [username] : []);
-        if (JSON.stringify(updated) === JSON.stringify(prev)) return prev;
-        return updated;
+        const username = user?.user_metadata?.username;
+        // `applyProfiles` resolves this against the live profile set and persists
+        // the result itself. The reconciliation used to run inside a `setProfiles`
+        // updater with the save call in its body — a side effect in a function
+        // React may invoke twice, and whose result the save could not observe.
+        applyProfiles(prev => {
+          if (Object.keys(prev).length === 0) return prev;
+          const updated = reconstructAllProfilesFromMatches(prev, matches, username ? [username] : []);
+          if (JSON.stringify(updated) === JSON.stringify(prev)) return prev;
+          return updated;
+        });
+      })
+      .catch(err => {
+        if (!cancelled) reportPersistenceError(err, 'Matches konnten nicht geladen werden');
       });
-    });
 
     return () => { cancelled = true; };
   }, [user?.id, user?.user_metadata?.username, loadedForUserId, applyProfiles, matchWindow]);
@@ -244,7 +272,7 @@ export default function App() {
       statsModalData.pendingMatchData.winner,
       user?.id,
       hostName
-    ).catch(err => console.error('Guest sync error in background', err));
+    ).catch(err => reportPersistenceError(err, 'Match konnte nicht mit Gästen synchronisiert werden'));
   }, [statsModalData, applyProfiles, user, refreshMatches]);
 
   const themeOverlays = useMemo(() => {
@@ -371,29 +399,31 @@ export default function App() {
 
       {!hideBottomNav && <BottomNav />}
 
-      {gameEngine.remoteAbortNotice && (
-        <div className="global-toast" role="alert">
-          <span aria-hidden="true">⚠️</span>
-          <div className="global-toast-body">
-            <strong>Match beendet</strong>
-            <span>{gameEngine.remoteAbortNotice}</span>
-          </div>
-          <button className="btn-close" onClick={gameEngine.dismissRemoteAbortNotice} aria-label="Hinweis schließen">✕</button>
+      {/* One stack for every message. Each toast used to position itself, so
+          several at once covered one another exactly and only the oldest was
+          readable. Failed writes used to be console-only on top of that, and
+          the player kept scoring against data that was no longer saved. */}
+      {(gameEngine.remoteAbortNotice || notifications.length > 0) && (
+        <div className="toast-stack">
+          {notifications.map(n => (
+            <Toast
+              key={n.id}
+              type={n.type}
+              title={n.title}
+              message={n.message}
+              onDismiss={() => dismissNotification(n.id)}
+            />
+          ))}
+          {gameEngine.remoteAbortNotice && (
+            <Toast
+              type="error"
+              title="Match beendet"
+              message={gameEngine.remoteAbortNotice}
+              onDismiss={gameEngine.dismissRemoteAbortNotice}
+            />
+          )}
         </div>
       )}
-
-      {/* Failed writes used to be console-only; the player kept scoring against
-          data that was no longer being saved anywhere. */}
-      {notifications.map(n => (
-        <div key={n.id} className="global-toast" role="alert">
-          <span aria-hidden="true">{n.type === 'error' ? '⚠️' : n.type === 'success' ? '✅' : 'ℹ️'}</span>
-          <div className="global-toast-body">
-            <strong>{n.title}</strong>
-            <span>{n.message}</span>
-          </div>
-          <button className="btn-close" onClick={() => dismissNotification(n.id)} aria-label="Hinweis schließen">✕</button>
-        </div>
-      ))}
 
       <StatsModal
         isOpen={statsModalData.isOpen}

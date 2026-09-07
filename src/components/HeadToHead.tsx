@@ -174,7 +174,7 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 1000,
+    zIndex: 'var(--z-overlay)',
   },
   modal: {
     backgroundColor: 'var(--bg)',

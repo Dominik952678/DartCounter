@@ -69,7 +69,7 @@ export const GuestSyncRedeemModal: React.FC<GuestSyncRedeemModalProps> = ({
       inset: 0,
       background: 'rgba(0,0,0,0.8)',
       backdropFilter: 'blur(8px)',
-      zIndex: 10000,
+      zIndex: 'var(--z-overlay)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
