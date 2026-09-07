@@ -168,6 +168,20 @@ h3 { font-size: 1.05em; color: var(--text-dim); font-weight: 600; }
   transform: scale(0.98);
 }
 
+/* Visually hidden but present for screen readers — for labels a compact
+   layout has no room to show, e.g. next to a placeholder-only input. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* ── App Container & Device Scalability ─────────────────────── */
 /* The shell padding is exposed as custom properties so full-height screens can
    size themselves against the space actually left over between the safe areas
@@ -604,7 +618,18 @@ select:focus, input:focus {
   min-height: 44px;
   user-select: none;
 }
-.radio-group input[type='radio'], .segment-control input[type='radio'] { display: none; }
+/* Kept in the DOM and tab order — `display: none` also removes a control from
+   the accessibility tree, which took every one of these out of keyboard reach. */
+.radio-group input[type='radio'], .segment-control input[type='radio'] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
 .segment-control label.active,
 .radio-group label:has(input:checked),
 .segment-control label:has(input:checked) {
@@ -613,6 +638,11 @@ select:focus, input:focus {
   font-weight: 700;
   border: 1px solid rgba(245, 158, 11, 0.35);
   box-shadow: var(--shadow);
+}
+.radio-group label:has(input:focus-visible),
+.segment-control label:has(input:focus-visible) {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 .segment-control span { pointer-events: none; }
 

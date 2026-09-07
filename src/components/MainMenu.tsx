@@ -189,6 +189,8 @@ export const MainMenu: React.FC = () => {
           color: var(--text);
           box-sizing: border-box;
           min-height: clamp(80px, 12vh, 105px);
+          text-align: left;
+          width: 100%;
         }
 
         .secondary-tile:hover {
@@ -570,12 +572,12 @@ export const MainMenu: React.FC = () => {
         {/* ── Command Center Body ── */}
         <div className="menu-middle-wrapper">
           {/* 1. Hero CTA Button (Full width in Portrait / Col 1 in Landscape) */}
-          <div className="hero-cta-tile" onClick={() => navigate('/offline')}>
+          <button type="button" className="hero-cta-tile" onClick={() => navigate('/offline')}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '14px', minWidth: 0 }}>
               <div className="hero-cta-icon">
                 🎯
               </div>
-              <div style={{ minWidth: 0 }}>
+              <div style={{ minWidth: 0, textAlign: 'left' }}>
                 <div className="hero-cta-title">
                   {user ? 'NEUES SPIEL STARTEN' : 'SPIELEN ALS GAST'}
                 </div>
@@ -587,12 +589,12 @@ export const MainMenu: React.FC = () => {
             <div className="hero-cta-arrow">
               ➔
             </div>
-          </div>
+          </button>
 
           {/* 2. Secondary Grid (Col 2 in Landscape) */}
           <div className="menu-secondary-grid">
             {/* Online Multiplayer */}
-            <div className="secondary-tile tile-online" onClick={handleOnlineClick}>
+            <button type="button" className="secondary-tile tile-online" onClick={handleOnlineClick}>
               <div className="secondary-tile-top">
                 <div className="secondary-tile-icon" style={{ background: 'rgba(59, 130, 246, 0.15)' }}>
                   🌍
@@ -603,11 +605,11 @@ export const MainMenu: React.FC = () => {
                 <div className="secondary-tile-title">Multiplayer</div>
                 <div className="secondary-tile-desc">Räume & Global</div>
               </div>
-            </div>
+            </button>
 
             {/* Stats or Auth */}
             {user ? (
-              <div className="secondary-tile tile-stats" onClick={() => navigate('/stats')}>
+              <button type="button" className="secondary-tile tile-stats" onClick={() => navigate('/stats')}>
                 <div className="secondary-tile-top">
                   <div className="secondary-tile-icon" style={{ background: 'rgba(249, 115, 22, 0.15)' }}>
                     📊
@@ -618,9 +620,9 @@ export const MainMenu: React.FC = () => {
                   <div className="secondary-tile-title">Statistiken</div>
                   <div className="secondary-tile-desc">Averages & Radar</div>
                 </div>
-              </div>
+              </button>
             ) : (
-              <div className="secondary-tile tile-auth" onClick={() => navigate('/auth')}>
+              <button type="button" className="secondary-tile tile-auth" onClick={() => navigate('/auth')}>
                 <div className="secondary-tile-top">
                   <div className="secondary-tile-icon" style={{ background: 'rgba(139, 92, 246, 0.15)' }}>
                     🔑
@@ -631,7 +633,7 @@ export const MainMenu: React.FC = () => {
                   <div className="secondary-tile-title">Account</div>
                   <div className="secondary-tile-desc">Login & Cloud</div>
                 </div>
-              </div>
+              </button>
             )}
           </div>
 
@@ -642,27 +644,30 @@ export const MainMenu: React.FC = () => {
                 SCHNELLSTART TRAINING
               </div>
               <div className="training-chips-grid">
-                <div 
-                  className="training-chip" 
+                <button
+                  type="button"
+                  className="training-chip"
                   onClick={() => navigate('/offline?tab=training&mode=checkout')}
                 >
                   <span className="training-chip-icon">🎯</span>
                   <span className="training-chip-title">Checkout</span>
-                </div>
-                <div 
-                  className="training-chip" 
+                </button>
+                <button
+                  type="button"
+                  className="training-chip"
                   onClick={() => navigate('/offline?tab=training&mode=powerscoring')}
                 >
                   <span className="training-chip-icon">🔥</span>
                   <span className="training-chip-title">Scoring</span>
-                </div>
-                <div 
-                  className="training-chip" 
+                </button>
+                <button
+                  type="button"
+                  className="training-chip"
                   onClick={() => navigate('/offline?tab=training&mode=splitscore')}
                 >
                   <span className="training-chip-icon">➗</span>
                   <span className="training-chip-title">Split</span>
-                </div>
+                </button>
               </div>
             </div>
           </div>
@@ -707,19 +712,23 @@ export const MainMenu: React.FC = () => {
             )}
           </div>
 
-          <div
+          <button
+            type="button"
             className="menu-version"
             style={{
-              padding: '2px 8px', 
-              borderRadius: '8px', 
-              display: 'inline-flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              gap: '6px', 
-              fontSize: '0.68rem', 
+              padding: '2px 8px',
+              borderRadius: '8px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              fontSize: '0.68rem',
               color: 'var(--text-muted)',
               userSelect: 'none',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              background: 'transparent',
+              border: 'none',
+              minHeight: 'auto'
             }}
             onClick={() => setShowReloadPrompt(true)}
             title="Klicken zum Neuladen / Cache leeren"
@@ -727,7 +736,7 @@ export const MainMenu: React.FC = () => {
             <span>{APP_VERSION}</span>
             <span>•</span>
             <span>Build {BUILD_TIME}</span>
-          </div>
+          </button>
         </div>
       </div>
 

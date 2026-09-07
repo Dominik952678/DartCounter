@@ -311,7 +311,6 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
               addDart={(base) => handleDart(base)}
               toggleMultiplier={(m) => setCurrentMultiplier(m)}
               undoSingleDart={undoSingleDart}
-              abortGame={() => setShowAbortConfirm(true)}
               canUndo={(history.length > 0 || currentRoundDarts.length > 0) && !isProcessing}
             />
           </div>

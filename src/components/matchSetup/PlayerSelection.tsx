@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import type { Profile } from '../../types';
 import type { Lineup } from './useLineup';
 
@@ -38,6 +38,13 @@ export const PlayerSelection: React.FC<PlayerSelectionProps> = ({
 }) => {
   const profileNames = Object.keys(profiles);
   const { selectedPlayers, guestBots } = lineup;
+  const errorRef = useRef<HTMLDivElement>(null);
+
+  // The trigger for this error sits below the settings panel, off-screen from
+  // this card on a phone — nothing moved the error into view before.
+  useEffect(() => {
+    if (errorMsg) errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [errorMsg]);
 
   return (
     <div className="card">
@@ -256,18 +263,22 @@ export const PlayerSelection: React.FC<PlayerSelectionProps> = ({
       )}
 
       {errorMsg && (
-        <div style={{
-          background: 'var(--red)',
-          color: 'white',
-          padding: '12px',
-          borderRadius: 'var(--radius)',
-          marginTop: '15px',
-          animation: 'slide-down 0.3s ease-out',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-          fontWeight: 'bold'
-        }}>
+        <div
+          ref={errorRef}
+          role="alert"
+          style={{
+            background: 'var(--red)',
+            color: 'white',
+            padding: '12px',
+            borderRadius: 'var(--radius)',
+            marginTop: '15px',
+            animation: 'slide-down 0.3s ease-out',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            fontWeight: 'bold'
+          }}
+        >
           <span aria-hidden="true">⚠️</span>
           <span>{errorMsg}</span>
         </div>

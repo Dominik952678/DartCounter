@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import type { Profile } from '../types';
 import { useAuthStore } from '../store/useAuthStore';
 import { getActiveUserSyncInfo } from '../db';
@@ -65,6 +65,11 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
   const [guestBots, setGuestBots] = useState<Record<string, boolean>>({});
   const [randomOrderOnStart, setRandomOrderOnStart] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const errorRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (errorMsg) errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [errorMsg]);
 
   useEffect(() => {
     write('trainingMode', selectedMode);
@@ -118,8 +123,13 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
       setErrorMsg("Ein Spieler kann nicht mehrfach antreten. Bitte wähle unterschiedliche Spieler!");
       return;
     }
-    
-    const hasHuman = isGuest 
+
+    if (chosenPlayers.some(p => !p || !p.trim())) {
+      setErrorMsg('Bitte gib für jeden Spielerplatz einen Namen ein.');
+      return;
+    }
+
+    const hasHuman = isGuest
        ? chosenPlayers.some(p => !guestBots[p])
        : chosenPlayers.some(p => profiles[p] && !profiles[p].isBot);
        
@@ -226,6 +236,7 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
           transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
           color: var(--text);
           cursor: pointer;
+          width: 100%;
         }
         .training-mode-btn:hover {
           transform: translateY(-2px);
@@ -266,38 +277,44 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
             <h2>Modus wählen</h2>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <div 
+            <button
+              type="button"
               className={`training-mode-btn ${selectedMode === 'checkout' ? 'active-checkout' : 'inactive'}`}
               onClick={() => setSelectedMode('checkout')}
+              aria-pressed={selectedMode === 'checkout'}
             >
               <span style={{ fontSize: '1.8rem', background: 'rgba(59, 130, 246, 0.15)', padding: '10px', borderRadius: '12px' }}>🎯</span>
               <div>
                 <div style={{ fontWeight: 800 }}>Checkout Training</div>
                 <div style={{ fontSize: '0.82em', color: 'var(--text-dim)', fontWeight: 400, marginTop: '2px' }}>Zufällige Checkouts unter Druck treffen</div>
               </div>
-            </div>
-            
-            <div 
+            </button>
+
+            <button
+              type="button"
               className={`training-mode-btn ${selectedMode === 'powerscoring' ? 'active-powerscoring' : 'inactive'}`}
               onClick={() => setSelectedMode('powerscoring')}
+              aria-pressed={selectedMode === 'powerscoring'}
             >
               <span style={{ fontSize: '1.8rem', background: 'rgba(239, 68, 68, 0.15)', padding: '10px', borderRadius: '12px' }}>🔥</span>
               <div>
                 <div style={{ fontWeight: 800 }}>Power Scoring</div>
                 <div style={{ fontSize: '0.82em', color: 'var(--text-dim)', fontWeight: 400, marginTop: '2px' }}>Maximale Punkte in festen Runden sammeln</div>
               </div>
-            </div>
+            </button>
 
-            <div 
+            <button
+              type="button"
               className={`training-mode-btn ${selectedMode === 'splitscore' ? 'active-splitscore' : 'inactive'}`}
               onClick={() => setSelectedMode('splitscore')}
+              aria-pressed={selectedMode === 'splitscore'}
             >
               <span style={{ fontSize: '1.8rem', background: 'rgba(249, 115, 22, 0.15)', padding: '10px', borderRadius: '12px' }}>➗</span>
               <div>
                 <div style={{ fontWeight: 800 }}>Split Score (Halve-It)</div>
                 <div style={{ fontSize: '0.82em', color: 'var(--text-dim)', fontWeight: 400, marginTop: '2px' }}>Vorgegebene Segmente treffen oder Punkte halbieren</div>
               </div>
-            </div>
+            </button>
           </div>
         </div>
 
@@ -439,18 +456,22 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
             </div>
 
             {errorMsg && (
-              <div style={{
-                background: 'var(--red)',
-                color: 'white',
-                padding: '12px',
-                borderRadius: 'var(--radius)',
-                marginTop: '15px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                fontWeight: 'bold'
-              }}>
-                <span>⚠️</span>
+              <div
+                ref={errorRef}
+                role="alert"
+                style={{
+                  background: 'var(--red)',
+                  color: 'white',
+                  padding: '12px',
+                  borderRadius: 'var(--radius)',
+                  marginTop: '15px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  fontWeight: 'bold'
+                }}
+              >
+                <span aria-hidden="true">⚠️</span>
                 <span>{errorMsg}</span>
               </div>
             )}

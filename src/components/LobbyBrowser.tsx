@@ -28,8 +28,8 @@ export const LobbyBrowser: React.FC = () => {
   const [mode, setMode] = useState<Mode>('standard');
   const [startScore, setStartScore] = useState(501);
   const [outMode, setOutMode] = useState<'SO' | 'DO' | 'MO'>('DO');
-  const [setsToWin, setSetsToWin] = useState(1);
-  const [legsToWin, setLegsToWin] = useState(3);
+  const [setsToWin, setSetsToWin] = useState<number | ''>(1);
+  const [legsToWin, setLegsToWin] = useState<number | ''>(3);
   const [rounds, setRounds] = useState(10);
   const [checkoutTargets, setCheckoutTargets] = useState(10);
   const [checkoutRounds, setCheckoutRounds] = useState(1);
@@ -68,7 +68,12 @@ export const LobbyBrowser: React.FC = () => {
     if (busy) return;
     setLocalError('');
     setBusy('create');
-    const config: GameConfig = { mode, startScore, outMode, setsToWin, legsToWin, rounds, checkoutTargets, checkoutRounds };
+    const config: GameConfig = {
+      mode, startScore, outMode,
+      setsToWin: setsToWin || 1,
+      legsToWin: legsToWin || 3,
+      rounds, checkoutTargets, checkoutRounds
+    };
     try {
       const res = await createRoom(username, isPublic, config);
       if (res.error || !res.code) setLocalError(res.error || 'Raum konnte nicht erstellt werden.');
@@ -254,12 +259,14 @@ export const LobbyBrowser: React.FC = () => {
               <div className="config-item">
                 <label className="section-label" htmlFor="create-sets">Sets</label>
                 <input id="create-sets" type="number" inputMode="numeric" min={1} max={10} value={setsToWin}
-                  onChange={e => setSetsToWin(Math.min(10, Math.max(1, parseInt(e.target.value) || 1)))} />
+                  onChange={e => setSetsToWin(e.target.value === '' ? '' : parseInt(e.target.value) || 1)}
+                  onBlur={() => setSetsToWin(Math.min(10, Math.max(1, setsToWin || 1)))} />
               </div>
               <div className="config-item">
                 <label className="section-label" htmlFor="create-legs">Legs</label>
                 <input id="create-legs" type="number" inputMode="numeric" min={1} max={15} value={legsToWin}
-                  onChange={e => setLegsToWin(Math.min(15, Math.max(1, parseInt(e.target.value) || 1)))} />
+                  onChange={e => setLegsToWin(e.target.value === '' ? '' : parseInt(e.target.value) || 1)}
+                  onBlur={() => setLegsToWin(Math.min(15, Math.max(1, legsToWin || 1)))} />
               </div>
             </div>
           )}

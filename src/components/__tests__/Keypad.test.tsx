@@ -12,7 +12,6 @@ describe('Keypad Component', () => {
     addDart: vi.fn(),
     toggleMultiplier: vi.fn(),
     undoSingleDart: vi.fn(),
-    abortGame: vi.fn(),
     canUndo: false
   };
 
@@ -27,7 +26,6 @@ describe('Keypad Component', () => {
     expect(screen.getByText('Double')).toBeInTheDocument();
     expect(screen.getByText('Triple')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /letzten wurf zurücknehmen/i })).toBeInTheDocument();
-    expect(screen.getByText('Abbrechen')).toBeInTheDocument();
   });
 
   it('calls addDart when a number button is clicked', () => {
@@ -68,13 +66,5 @@ describe('Keypad Component', () => {
   it('disables undo button when canUndo is false and no darts in round', () => {
     render(<Keypad {...defaultProps} canUndo={false} currentRoundDarts={[]} />);
     expect(screen.getByRole('button', { name: /letzten wurf zurücknehmen/i })).toBeDisabled();
-  });
-
-  it('calls abortGame when abort button is clicked', () => {
-    const abortMock = vi.fn();
-    render(<Keypad {...defaultProps} abortGame={abortMock} />);
-
-    fireEvent.click(screen.getByText('Abbrechen'));
-    expect(abortMock).toHaveBeenCalled();
   });
 });

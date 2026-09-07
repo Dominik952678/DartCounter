@@ -102,9 +102,10 @@ export const StatsPage: React.FC = () => {
       <div className="card" style={{ marginBottom: '20px', display: 'flex', flexWrap: 'wrap', gap: '15px', alignItems: 'center' }}>
          <div style={{ display: 'flex', flex: 1, gap: '10px', minWidth: '200px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-               <label style={{ fontSize: '0.8em', color: 'var(--text-dim)', marginBottom: '4px' }}>Spieler</label>
-               <select 
-                  value={effectiveProfile} 
+               <label htmlFor="stats-profile" style={{ fontSize: '0.8em', color: 'var(--text-dim)', marginBottom: '4px' }}>Spieler</label>
+               <select
+                  id="stats-profile"
+                  value={effectiveProfile}
                   onChange={(e) => setSelectedProfile(e.target.value)}
                   style={{ background: 'var(--bg-surface)', color: 'var(--text)', border: '1px solid var(--card-border)', padding: '8px 12px', borderRadius: '10px' }}
                >
@@ -114,9 +115,10 @@ export const StatsPage: React.FC = () => {
                </select>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-               <label style={{ fontSize: '0.8em', color: 'var(--text-dim)', marginBottom: '4px' }}>Modus</label>
-               <select 
-                  value={selectedMode} 
+               <label htmlFor="stats-mode" style={{ fontSize: '0.8em', color: 'var(--text-dim)', marginBottom: '4px' }}>Modus</label>
+               <select
+                  id="stats-mode"
+                  value={selectedMode}
                   onChange={(e) => setSelectedMode(e.target.value)}
                   style={{ background: 'var(--bg-surface)', color: 'var(--text)', border: '1px solid var(--card-border)', padding: '8px 12px', borderRadius: '10px' }}
                >

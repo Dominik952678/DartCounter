@@ -10,7 +10,6 @@ interface KeypadProps {
   addDart: (baseValue: number) => void;
   toggleMultiplier: (mult: number) => void;
   undoSingleDart: () => void;
-  abortGame: () => void;
   canUndo?: boolean;
 }
 
@@ -22,7 +21,6 @@ export const Keypad: React.FC<KeypadProps> = ({
   addDart,
   toggleMultiplier,
   undoSingleDart,
-  abortGame,
   canUndo
 }) => {
   const handleAddDartClick = (baseValue: number) => {
@@ -110,11 +108,6 @@ export const Keypad: React.FC<KeypadProps> = ({
         }
         .modifier-active-3 .num-btn {
           border-color: var(--red, red) !important;
-        }
-        
-        /* Action Buttons Grid */
-        .keypad-actions {
-          display: none;
         }
         
         /* Undo key: one grid cell wide, so the label is optional chrome. */
@@ -233,13 +226,6 @@ export const Keypad: React.FC<KeypadProps> = ({
         >
           <span className="btn-undo-icon" aria-hidden="true">⟲</span>
           <span className="btn-undo-label">Zurück</span>
-        </button>
-      </div>
-
-      {/* Fallback hidden actions container for screen readers / test queries */}
-      <div className="keypad-actions" aria-hidden="true">
-        <button className="btn-abort text-only" onClick={abortGame}>
-          Abbrechen
         </button>
       </div>
     </div>

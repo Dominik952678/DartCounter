@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 import type { MatchSetupAction, MatchSetupConfig, OutMode } from './useMatchSetupConfig';
 import { MAX_LEGS, MAX_SETS, START_SCORES } from './useMatchSetupConfig';
 
@@ -25,6 +25,7 @@ interface StepperProps {
 /** Sets and legs are the same control twice, differing only in their bounds. */
 const DistanceStepper: React.FC<StepperProps> = ({ title, subtitle, value, max, label, onChange }) => {
   const current = typeof value === 'number' ? value : 1;
+  const inputId = useId();
   return (
     <div className="distance-card">
       <div className="distance-header">
@@ -42,13 +43,17 @@ const DistanceStepper: React.FC<StepperProps> = ({ title, subtitle, value, max, 
           −
         </button>
         <div className="stepper-val-wrap">
+          <label htmlFor={inputId} className="sr-only">{title} ({subtitle})</label>
           <input
+            id={inputId}
             type="number"
             min="1"
             max={max}
             value={value}
-            onChange={e => onChange(e.target.value === '' ? '' : Math.min(max, Math.max(1, parseInt(e.target.value) || 1)))}
-            onBlur={() => { if (value === '') onChange(1); }}
+            // Clamping is deferred to blur so a value being retyped (e.g. clearing
+            // "9" to type "12") isn't snapped back to the limit after every digit.
+            onChange={e => onChange(e.target.value === '' ? '' : parseInt(e.target.value) || 1)}
+            onBlur={() => onChange(Math.min(max, Math.max(1, value === '' ? 1 : value)))}
             className="stepper-input"
           />
           <span className="stepper-unit">First to {value || 1}</span>

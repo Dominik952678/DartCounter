@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 import type { Profile } from '../../types';
 
 interface CreateProfileCardProps {
@@ -10,6 +10,7 @@ interface CreateProfileCardProps {
 const targetAverageForLevel = (level: number): number => level * 10 + 20;
 
 export const CreateProfileCard: React.FC<CreateProfileCardProps> = ({ profiles, onCreateProfile }) => {
+  const nameInputId = useId();
   const [name, setName] = useState('');
   const [isBot, setIsBot] = useState(false);
   const [botLevel, setBotLevel] = useState(3);
@@ -38,7 +39,9 @@ export const CreateProfileCard: React.FC<CreateProfileCardProps> = ({ profiles, 
         <h2>Neues Profil erstellen</h2>
       </div>
       <div style={{ display: 'flex', gap: '8px', marginBottom: error ? '6px' : '12px' }}>
+        <label htmlFor={nameInputId} className="sr-only">Spielername</label>
         <input
+          id={nameInputId}
           type="text"
           placeholder="Spielername"
           value={name}
@@ -48,7 +51,7 @@ export const CreateProfileCard: React.FC<CreateProfileCardProps> = ({ profiles, 
           }}
           onKeyDown={e => e.key === 'Enter' && handleCreate()}
         />
-        <button className="btn-primary" onClick={handleCreate} style={{ padding: '0 20px' }}>+</button>
+        <button className="btn-primary" onClick={handleCreate} aria-label="Profil erstellen" style={{ padding: '0 20px' }}>+</button>
       </div>
 
       {error && (

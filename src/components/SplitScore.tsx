@@ -432,7 +432,7 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
                 </div>
               )}
 
-              <div className="keypad-actions" style={{ marginTop: '15px' }}>
+              <div style={{ marginTop: '15px' }}>
                 <button className="btn-secondary" onClick={undoSingleDart} disabled={(history.length === 0 && currentRoundDarts.length === 0) || isProcessing}>
                   ↩ Rückgängig
                 </button>

@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useId } from 'react';
 import type { Profile } from '../types';
+import { useModalA11y } from '../hooks/useModalA11y';
 
 interface HeadToHeadProps {
   profileA: { name: string; profile: Profile };
@@ -8,6 +9,9 @@ interface HeadToHeadProps {
 }
 
 export const HeadToHead: React.FC<HeadToHeadProps> = ({ profileA, profileB, onClose }) => {
+  const titleId = useId();
+  const dialogRef = useModalA11y<HTMLDivElement>({ onClose });
+
   const getWinRate = (profile: Profile) => {
     if (!profile.matches) return 0;
     return (profile.wins / profile.matches) * 100;
@@ -116,10 +120,19 @@ export const HeadToHead: React.FC<HeadToHeadProps> = ({ profileA, profileB, onCl
 
   return (
     <div className="modal-overlay" onClick={onClose} style={styles.overlay}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()} style={styles.modal}>
+      <div
+        ref={dialogRef}
+        className="modal-content"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        onClick={(e) => e.stopPropagation()}
+        style={styles.modal}
+      >
         <div style={styles.header}>
-          <h2 style={{ margin: 0 }}>{profileA.name} ⚔️ {profileB.name}</h2>
-          <button className="btn-close" onClick={onClose} style={styles.closeBtn}>×</button>
+          <h2 id={titleId} style={{ margin: 0 }}>{profileA.name} ⚔️ {profileB.name}</h2>
+          <button className="btn-close" onClick={onClose} aria-label="Schließen" style={styles.closeBtn}>×</button>
         </div>
         
         <div style={styles.content}>
