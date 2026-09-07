@@ -55,6 +55,9 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [bullOffPlayers, setBullOffPlayers] = useState<string[] | null>(null);
 
+  /** Die Karte oben verschiebt die primäre Aktion, siehe unten beim Button. */
+  const showSavedBanner = Boolean(hasSavedGame && !isSavedBannerDismissed && savedMatch);
+
   const discardSavedGame = () => {
     if (onDiscardSavedGame) onDiscardSavedGame();
     else removeStored('savedGame');
@@ -195,7 +198,9 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
         <p className="subtitle">Konfiguriere dein Match</p>
       </div>
 
-      {hasSavedGame && !isSavedBannerDismissed && savedMatch && (
+      {/* `savedMatch` steckt zwar schon in showSavedBanner, wird hier aber
+          nochmal geprüft, damit TypeScript den Typ verengen kann. */}
+      {showSavedBanner && savedMatch && (
         <SavedGameCard
           match={savedMatch}
           onResume={() => onResumeGame?.()}
@@ -204,11 +209,7 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
         />
       )}
 
-      {/* Bottom margin guarantees clearance for the sticky start button below —
-          without it, a short desktop two-column layout left too little page
-          height for the button's natural flow position, so it stuck early and
-          covered the last checkbox in this grid. */}
-      <div className="match-setup-grid" style={{ marginBottom: '76px' }}>
+      <div className="match-setup-grid match-setup-grid-sticky-clearance">
         <PlayerSelection
           profiles={profiles}
           isGuest={isGuest}
@@ -224,19 +225,19 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
         <GameConfigPanel config={config} dispatch={dispatch} />
       </div>
 
-      {/* Sticks above the floating dock, not 20px above the viewport edge —
-          which put the primary action behind the dock while scrolling. */}
-      <div style={{ position: 'sticky', bottom: 'var(--dock-space)', zIndex: 'var(--z-sticky)', padding: '0 10px' }}>
+      <div className="sticky-action-bar">
+        {/* §1 lässt eine gefüllte Akzentfläche pro Screen zu. Steht die Karte
+            oben, hält sie mit „Spiel fortsetzen" die dringlichere Aktion und
+            bekommt sie — dieser Button tritt dann zurück. */}
         <Button
-          variant="primary" size="large"
+          variant={showSavedBanner ? 'secondary' : 'primary'}
+          size="large"
+          fullWidth
           onClick={handleStartGame}
-          style={{ boxShadow: '0 4px 15px rgba(0, 0, 0, 0.4)' }}
         >
           🎯 Spiel starten
         </Button>
       </div>
-
-      {/* spacer for bottom nav */}
 
       {showOverwriteModal && (
         <OverwriteSavedGameModal

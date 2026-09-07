@@ -33,6 +33,25 @@
   /* 10-%-Wash der Akzentfarbe — Hintergrund des Selected-State (§5). */
   --bg-accent-muted: rgba(var(--accent-primary-rgb), 0.1);
 
+  /* ─────────────────────────────────────────────────────────────────────────
+     Spielerfarben — bewusste Erweiterung über DESIGN.md §1 hinaus
+
+     §1 kennt zwei kategorische Akzente, die App muss aber bis zu vier Spieler
+     auseinanderhalten. Auf dem Scoreboard, den man aus drei Metern abliest,
+     ist das funktional und nicht dekorativ, deshalb bekommen Spieler eine
+     eigene Palette statt geliehener Rollenfarben — --accent-info und
+     --accent-pro behalten so ihre eine Bedeutung.
+
+     Nur für Avatar-Kreise, Randmarkierungen und Namen. Keine dieser Farben
+     wird zur gefüllten Fläche; §1s „eine Akzentfläche pro Screen" bleibt
+     dadurch unberührt. In 2v2 bekommt Team 1 --player-1, Team 2 --player-2.
+     Das optionale `color`-Feld am Profile-Typ überschreibt die Zuordnung.
+     ───────────────────────────────────────────────────────────────────────── */
+  --player-1: #5DA9E9;
+  --player-2: #E9A05D;
+  --player-3: #A9E95D;
+  --player-4: #E95DA9;
+
   /* Semantik — eng gefasst, siehe „NICHT verwenden für" in §1. */
   --text-success: #10B981;                   /* nur Erfolg, Sieg, positive Deltas */
   --text-danger: #EF4444;                    /* nur destruktiv, Hotspot-Segmente */

@@ -110,21 +110,13 @@ export const BullOffModal: React.FC<BullOffModalProps> = ({ players, profiles, o
             return (
               <div
                 key={i}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '10px 14px',
-                  borderRadius: 'var(--radius)',
-                  background: isActive ? 'rgba(10, 132, 255, 0.12)' : 'var(--surface)',
-                  border: isActive ? '1px solid var(--blue)' : '1px solid var(--card-border)',
-                  opacity: isPending ? 1 : 0.5
-                }}
+                className={`bulloff-row ${isActive ? 'is-active' : ''}`}
+                style={{ opacity: isPending ? 1 : 0.5 }}
               >
-                <span style={{ fontWeight: 600 }}>
+                <span className="bulloff-name">
                   {profiles[name]?.isBot ? '🤖 ' : ''}{name}
                 </span>
-                <span style={{ color: 'var(--text-dim)', fontSize: '0.9em' }}>
+                <span className="bulloff-state">
                   {result !== null ? RESULT_LABEL[result] : (isActive && isCurrentBot ? 'wirft…' : isActive ? 'ist dran' : '—')}
                 </span>
               </div>

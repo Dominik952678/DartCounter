@@ -1,7 +1,8 @@
 import React, { useId } from 'react';
 import type { GameConfig } from '../../types';
 import { useModalA11y } from '../../hooks/useModalA11y';
-import { Button } from '../ui';
+import { Button, Card } from '../ui';
+import { playerColorBySeat } from '../../utils/playerColors';
 
 export interface SavedMatchSummary {
   players: { name: string; score: number; legs: number; sets: number; isBot?: boolean; team?: number }[];
@@ -22,92 +23,55 @@ const distanceLabel = (config: GameConfig): string =>
 
 /** The unfinished match waiting to be resumed, with its current scores. */
 export const SavedGameCard: React.FC<SavedGameCardProps> = ({ match, onResume, onDiscard, onDismiss }) => (
-  <div className="card saved-game-card" style={{
-    background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.18) 0%, rgba(15, 23, 42, 0.98) 100%)',
-    border: '1.5px solid rgba(59, 130, 246, 0.65)',
-    borderRadius: '16px',
-    padding: '16px 18px',
-    marginBottom: '22px',
-    boxShadow: '0 8px 30px rgba(0, 0, 0, 0.4), 0 0 20px rgba(59, 130, 246, 0.2)',
-    position: 'relative'
-  }}>
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <span style={{ fontSize: '1.6rem' }} aria-hidden="true">🎯</span>
+  <Card className="saved-game-card">
+    <div className="saved-game-header">
+      <div className="saved-game-heading">
+        <span className="saved-game-icon" aria-hidden="true">🎯</span>
         <div>
-          <h3 style={{ margin: 0, color: '#fff', fontSize: '1.05rem', fontWeight: 800 }}>Laufendes Match gefunden</h3>
-          <span style={{ fontSize: '0.8rem', color: 'var(--text-dim, #aaa)' }}>
+          <h3>Laufendes Match gefunden</h3>
+          <span className="saved-game-meta">
             {match.config.startScore} {match.config.outMode} {match.config.is2v2 ? '· 2v2 Doppel' : ''} · {distanceLabel(match.config)}
           </span>
         </div>
       </div>
-      <button
-        onClick={onDismiss}
-        style={{
-          background: 'rgba(148, 163, 184, 0.12)',
-          border: 'none',
-          color: 'var(--text-dim, #aaa)',
-          fontSize: '1rem',
-          cursor: 'pointer',
-          padding: '4px 8px',
-          borderRadius: '6px'
-        }}
-        title="Schließen"
-      >
+      <Button variant="ghost" className="btn-close" onClick={onDismiss} aria-label="Hinweis schließen" title="Schließen">
         ✕
-      </button>
+      </Button>
     </div>
 
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: `repeat(${Math.min(match.players.length, 4)}, 1fr)`,
-      gap: '8px',
-      background: 'rgba(0, 0, 0, 0.35)',
-      padding: '10px',
-      borderRadius: '10px',
-      marginBottom: '14px'
-    }}>
+    {/* Label über Kennzahl, große Zahl darunter — das Stats-Karten-Muster aus
+        §7, das ausdrücklich beibehalten wird. Die Zahl trägt die Farbe des
+        Spielers, nicht ein pauschales Blau. */}
+    <div
+      className="saved-game-scores"
+      style={{ gridTemplateColumns: `repeat(${Math.min(match.players.length, 4)}, 1fr)` }}
+    >
       {match.players.map((p, idx) => (
-        <div key={idx} style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text, #fff)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {p.isBot ? '🤖 ' : ''}{p.name}
-          </div>
-          <div style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--blue, #3B82F6)' }}>
-            {p.score}
-          </div>
-          <div style={{ fontSize: '0.72rem', color: 'var(--text-dim, #888)' }}>
-            {p.legs} {p.legs === 1 ? 'Leg' : 'Legs'}
-          </div>
+        <div key={idx} className="saved-game-score">
+          <span className="saved-game-player">{p.isBot ? '🤖 ' : ''}{p.name}</span>
+          <span className="saved-game-value" style={{ color: playerColorBySeat(idx) }}>{p.score}</span>
+          <span className="saved-game-legs">{p.legs} {p.legs === 1 ? 'Leg' : 'Legs'}</span>
         </div>
       ))}
     </div>
 
-    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-      <Button
-        variant="primary"
-        onClick={onResume}
-        style={{ flex: '1 1 160px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
-      >
+    {/* Solange diese Karte steht, ist Fortsetzen die dringlichere Aktion und
+        bekommt die eine Akzentfläche, die §1 pro Screen zulässt — der
+        Start-Button unten schaltet dafür auf sekundär. */}
+    <div className="saved-game-actions">
+      <Button variant="primary" onClick={onResume} style={{ flex: '1 1 160px' }}>
         ▶️ Spiel fortsetzen
       </Button>
-
-      <Button
-        variant="secondary"
-        onClick={onDiscard}
-        style={{ flex: '1 1 160px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
-      >
+      <Button variant="secondary" onClick={onDiscard} style={{ flex: '1 1 160px' }}>
         🗑️ Altes Spiel verwerfen
       </Button>
-
-      <Button
-        variant="secondary"
-        onClick={onDismiss}
-        style={{ flex: '0 0 auto' }}
-      >
+      {/* Tut dasselbe wie das ✕ oben. Bleibt trotzdem: die beschriftete
+          Variante ist die auffindbarere von beiden. */}
+      <Button variant="ghost" onClick={onDismiss} style={{ flex: '0 0 auto' }}>
         Schließen
       </Button>
     </div>
-  </div>
+  </Card>
 );
 
 interface OverwriteSavedGameModalProps {
@@ -123,48 +87,29 @@ export const OverwriteSavedGameModal: React.FC<OverwriteSavedGameModalProps> = (
   const dialogRef = useModalA11y<HTMLDivElement>({ onClose: onCancel });
 
   return (
-  <div
-    className="modal-backdrop"
-    onClick={onCancel}
-    style={{
-      position: 'fixed',
-      top: 0, left: 0, right: 0, bottom: 0,
-      background: 'rgba(0, 0, 0, 0.78)',
-      backdropFilter: 'blur(8px)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 'var(--z-overlay)',
-      padding: '16px'
-    }}
-  >
+  /* Nutzt die gemeinsamen Modal-Klassen statt eines eigenen Overlays. Vorher
+     baute dieser Dialog Hintergrund, Rahmen, Radius und Schatten selbst nach —
+     mit blauem Rand und #fff-Überschrift, also weder Rolle noch Skala. */
+  <div className="modal-overlay" onClick={onCancel}>
     <div
       ref={dialogRef}
-      className="card"
+      className="modal-content"
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
       aria-describedby={messageId}
       tabIndex={-1}
       onClick={e => e.stopPropagation()}
-      style={{
-        maxWidth: '460px',
-        width: '100%',
-        background: 'rgba(24, 24, 34, 0.98)',
-        border: '1.5px solid rgba(10, 132, 255, 0.65)',
-        borderRadius: '16px',
-        padding: '24px',
-        boxShadow: '0 16px 40px rgba(0, 0, 0, 0.7)'
-      }}
+      style={{ maxWidth: '460px' }}
     >
-      <h3 id={titleId} style={{ margin: '0 0 10px 0', color: '#fff', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <h3 id={titleId} className="modal-title">
         <span aria-hidden="true">🎯</span> Laufendes Match gefunden
       </h3>
-      <p id={messageId} style={{ color: 'var(--text-dim, #ccc)', fontSize: '0.9rem', lineHeight: 1.5, marginBottom: '20px' }}>
+      <p id={messageId} className="modal-text">
         Du hast noch ein unvollendetes Spiel gespeichert. Wie möchtest du fortfahren?
       </p>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
         <Button
           variant="primary"
           onClick={onResume}

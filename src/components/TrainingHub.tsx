@@ -3,11 +3,34 @@ import type { Profile } from '../types';
 import { useAuthStore } from '../store/useAuthStore';
 import { getActiveUserSyncInfo } from '../db';
 import { readInt, readOneOf, write } from '../utils/storage';
-import { Button, Card, CardHeader, ChoiceGroup } from './ui';
+import { Button, Card, CardHeader, Choice, ChoiceGroup } from './ui';
+import { playerColorByName } from '../utils/playerColors';
 
 export type MiniGameMode = 'checkout' | 'powerscoring' | 'splitscore';
 
 const MINI_GAME_MODES: readonly MiniGameMode[] = ['checkout', 'powerscoring', 'splitscore'];
+
+/** Die drei Modus-Karten. §5 gibt ihnen denselben Selected-State wie den Chips. */
+const MODE_CHOICES: readonly { mode: MiniGameMode; icon: string; title: string; desc: string }[] = [
+  {
+    mode: 'checkout',
+    icon: '🎯',
+    title: 'Checkout Training',
+    desc: 'Zufällige Checkouts unter Druck treffen'
+  },
+  {
+    mode: 'powerscoring',
+    icon: '🔥',
+    title: 'Power Scoring',
+    desc: 'Maximale Punkte in festen Runden sammeln'
+  },
+  {
+    mode: 'splitscore',
+    icon: '➗',
+    title: 'Split Score (Halve-It)',
+    desc: 'Vorgegebene Segmente treffen oder Punkte halbieren'
+  }
+];
 
 interface TrainingHubProps {
   profiles: Record<string, Profile>;
@@ -108,15 +131,6 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
     setGuestBots(prev => ({ ...prev, [name]: isBot }));
   };
 
-  const getAvatarColor = (name: string) => {
-    const colors = ['var(--blue)', 'var(--green)', 'var(--orange)', 'var(--purple)', 'var(--red)'];
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) {
-      hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    return colors[Math.abs(hash) % colors.length];
-  };
-
   const handleStart = async () => {
     let chosenPlayers = selectedPlayers.slice(0, playerCount);
 
@@ -213,45 +227,21 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
         {/* Modes Column */}
         <Card>
           <CardHeader heading={"Modus wählen"} />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <button
-              type="button"
-              className={`training-mode-btn ${selectedMode === 'checkout' ? 'active-checkout' : 'inactive'}`}
-              onClick={() => setSelectedMode('checkout')}
-              aria-pressed={selectedMode === 'checkout'}
-            >
-              <span style={{ fontSize: '1.8rem', background: 'rgba(59, 130, 246, 0.15)', padding: '10px', borderRadius: '12px' }}>🎯</span>
-              <div>
-                <div style={{ fontWeight: 800 }}>Checkout Training</div>
-                <div style={{ fontSize: '0.82em', color: 'var(--text-dim)', fontWeight: 400, marginTop: '2px' }}>Zufällige Checkouts unter Druck treffen</div>
-              </div>
-            </button>
-
-            <button
-              type="button"
-              className={`training-mode-btn ${selectedMode === 'powerscoring' ? 'active-powerscoring' : 'inactive'}`}
-              onClick={() => setSelectedMode('powerscoring')}
-              aria-pressed={selectedMode === 'powerscoring'}
-            >
-              <span style={{ fontSize: '1.8rem', background: 'rgba(239, 68, 68, 0.15)', padding: '10px', borderRadius: '12px' }}>🔥</span>
-              <div>
-                <div style={{ fontWeight: 800 }}>Power Scoring</div>
-                <div style={{ fontSize: '0.82em', color: 'var(--text-dim)', fontWeight: 400, marginTop: '2px' }}>Maximale Punkte in festen Runden sammeln</div>
-              </div>
-            </button>
-
-            <button
-              type="button"
-              className={`training-mode-btn ${selectedMode === 'splitscore' ? 'active-splitscore' : 'inactive'}`}
-              onClick={() => setSelectedMode('splitscore')}
-              aria-pressed={selectedMode === 'splitscore'}
-            >
-              <span style={{ fontSize: '1.8rem', background: 'rgba(249, 115, 22, 0.15)', padding: '10px', borderRadius: '12px' }}>➗</span>
-              <div>
-                <div style={{ fontWeight: 800 }}>Split Score (Halve-It)</div>
-                <div style={{ fontSize: '0.82em', color: 'var(--text-dim)', fontWeight: 400, marginTop: '2px' }}>Vorgegebene Segmente treffen oder Punkte halbieren</div>
-              </div>
-            </button>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+            {MODE_CHOICES.map(({ mode, icon, title, desc }) => (
+              <Choice
+                key={mode}
+                className="training-mode-btn"
+                selected={selectedMode === mode}
+                onClick={() => setSelectedMode(mode)}
+              >
+                <span className="training-mode-icon" aria-hidden="true">{icon}</span>
+                <span>
+                  <span className="training-mode-title">{title}</span>
+                  <span className="training-mode-desc">{desc}</span>
+                </span>
+              </Choice>
+            ))}
           </div>
         </Card>
 
@@ -290,40 +280,22 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
                       border: '1px solid var(--card-border)'
                     }}
                   >
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                      <button 
-                        type="button" 
-                        onClick={() => movePlayer(i, 'up')} 
-                        disabled={i === 0} 
-                        style={{ 
-                          background: 'transparent', 
-                          border: 'none', 
-                          color: i === 0 ? 'rgba(255,255,255,0.15)' : 'var(--text-dim)', 
-                          padding: '2px 4px', 
-                          cursor: i === 0 ? 'default' : 'pointer', 
-                          fontSize: '0.75rem',
-                          lineHeight: 1,
-                          minHeight: 'auto'
-                        }}
+                    <div className="seat-order">
+                      <button
+                        type="button"
+                        className="seat-move-btn"
+                        onClick={() => movePlayer(i, 'up')}
+                        disabled={i === 0}
                         aria-label="Spieler nach oben"
                         title="Nach oben"
                       >
                         ▲
                       </button>
-                      <button 
-                        type="button" 
-                        onClick={() => movePlayer(i, 'down')} 
-                        disabled={i >= playerCount - 1} 
-                        style={{ 
-                          background: 'transparent', 
-                          border: 'none', 
-                          color: i >= playerCount - 1 ? 'rgba(255,255,255,0.15)' : 'var(--text-dim)', 
-                          padding: '2px 4px', 
-                          cursor: i >= playerCount - 1 ? 'default' : 'pointer', 
-                          fontSize: '0.75rem',
-                          lineHeight: 1,
-                          minHeight: 'auto'
-                        }}
+                      <button
+                        type="button"
+                        className="seat-move-btn"
+                        onClick={() => movePlayer(i, 'down')}
+                        disabled={i >= playerCount - 1}
                         aria-label="Spieler nach unten"
                         title="Nach unten"
                       >
@@ -341,7 +313,7 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
                       color: 'white', 
                       fontWeight: 'bold', 
                       fontSize: '14px',
-                      backgroundColor: getAvatarColor(playerName || `Spieler ${i+1}`) 
+                      backgroundColor: playerColorByName(playerName || `Spieler ${i+1}`) 
                     }}>
                       {isBot ? '🤖' : (playerName.charAt(0).toUpperCase() || '?')}
                     </div>
@@ -410,25 +382,13 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
 
             {playerCount > 1 && (
               <div style={{ marginTop: '15px' }}>
-                <label style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '12px', 
-                  padding: '12px 14px', 
-                  background: randomOrderOnStart ? 'rgba(59, 130, 246, 0.12)' : 'var(--surface)', 
-                  border: randomOrderOnStart ? '1px solid var(--blue)' : '1px solid var(--card-border)', 
-                  borderRadius: 'var(--radius)', 
-                  cursor: 'pointer', 
-                  transition: 'all 0.2s',
-                  userSelect: 'none'
-                }}>
-                  <input 
-                    type="checkbox" 
-                    checked={randomOrderOnStart} 
-                    onChange={(e) => setRandomOrderOnStart(e.target.checked)} 
-                    style={{ width: '18px', height: '18px', accentColor: 'var(--blue)', cursor: 'pointer' }}
+                <label className="option-toggle">
+                  <input
+                    type="checkbox"
+                    checked={randomOrderOnStart}
+                    onChange={(e) => setRandomOrderOnStart(e.target.checked)}
                   />
-                  <span style={{ fontWeight: 600, color: 'var(--text)', fontSize: '0.9em' }}>
+                  <span className="option-toggle-title">
                     🎲 Zufällige Reihenfolge beim Start auslosen
                   </span>
                 </label>

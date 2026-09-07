@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import type { Profile } from '../../types';
 import type { Lineup } from './useLineup';
 import { Button, Card, CardHeader, ChoiceGroup } from '../ui';
+import { playerColorByName, teamColor } from '../../utils/playerColors';
 
 interface PlayerSelectionProps {
   profiles: Record<string, Profile>;
@@ -14,16 +15,6 @@ interface PlayerSelectionProps {
   onPlayerCountChange: (count: number) => void;
   onAddCloudGuest: () => void;
 }
-
-/** A stable colour per name, so the same player keeps the same avatar. */
-const avatarColor = (name: string): string => {
-  const colors = ['var(--blue)', 'var(--green)', 'var(--orange)', 'var(--purple)', 'var(--red)'];
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) {
-    hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  return colors[Math.abs(hash) % colors.length];
-};
 
 /** Mode, seat count, and the four seats themselves with their ordering controls. */
 export const PlayerSelection: React.FC<PlayerSelectionProps> = ({
@@ -64,18 +55,9 @@ export const PlayerSelection: React.FC<PlayerSelectionProps> = ({
         />
 
         {is2v2 ? (
-          <div style={{
-            background: 'linear-gradient(135deg, rgba(10, 132, 255, 0.12), rgba(90, 200, 250, 0.06))',
-            border: '1px solid rgba(10, 132, 255, 0.3)',
-            borderRadius: '10px',
-            padding: '10px 12px',
-            fontSize: '0.82rem',
-            lineHeight: 1.4,
-            color: 'var(--text)',
-            marginBottom: '12px'
-          }}>
-            ❄️ <strong>Freeze-Regel:</strong> Geworfen wird alternierend (T1 ➔ T2 ➔ T1 ➔ T2). Ein Team gewinnt bei 0 Rest nur, wenn die eigenen Teampunkte ≤ den Gegnerpunkten sind!
-          </div>
+          <p className="callout">
+            <span aria-hidden="true">❄️</span> <strong>Freeze-Regel:</strong> Geworfen wird alternierend (T1 ➔ T2 ➔ T1 ➔ T2). Ein Team gewinnt bei 0 Rest nur, wenn die eigenen Teampunkte ≤ den Gegnerpunkten sind!
+          </p>
         ) : (
           <ChoiceGroup
             name="playerCount"
@@ -93,7 +75,7 @@ export const PlayerSelection: React.FC<PlayerSelectionProps> = ({
           const playerName = selectedPlayers[i] || '';
           const isBot = isGuest ? guestBots[playerName] : profiles[playerName]?.isBot;
           const slotTeam = i % 2 === 0 ? 1 : 2;
-          const teamColor = slotTeam === 1 ? 'var(--blue, #3B82F6)' : 'var(--orange, #F97316)';
+          const slotColor = teamColor(slotTeam as 1 | 2);
 
           return (
             <div
@@ -119,8 +101,8 @@ export const PlayerSelection: React.FC<PlayerSelectionProps> = ({
                   background: 'var(--surface)',
                   padding: '8px 12px',
                   borderRadius: 'var(--radius)',
-                  border: is2v2 ? `1px solid ${teamColor}` : '1px solid var(--card-border)',
-                  borderLeft: is2v2 ? `4px solid ${teamColor}` : undefined
+                  border: is2v2 ? `1px solid ${slotColor}` : '1px solid var(--card-border)',
+                  borderLeft: is2v2 ? `4px solid ${slotColor}` : undefined
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -129,21 +111,12 @@ export const PlayerSelection: React.FC<PlayerSelectionProps> = ({
                       <path d="M2 4h12v2H2V4zm0 6h12v2H2v-2z" />
                     </svg>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  <div className="seat-order">
                     <button
                       type="button"
+                      className="seat-move-btn"
                       onClick={() => lineup.movePlayer(i, 'up')}
                       disabled={i === 0}
-                      style={{
-                        background: 'transparent',
-                        border: 'none',
-                        color: i === 0 ? 'rgba(255,255,255,0.15)' : 'var(--text-dim)',
-                        padding: '2px 4px',
-                        cursor: i === 0 ? 'default' : 'pointer',
-                        fontSize: '0.75rem',
-                        lineHeight: 1,
-                        minHeight: 'auto'
-                      }}
                       aria-label="Spieler nach oben"
                       title="Nach oben"
                     >
@@ -151,18 +124,9 @@ export const PlayerSelection: React.FC<PlayerSelectionProps> = ({
                     </button>
                     <button
                       type="button"
+                      className="seat-move-btn"
                       onClick={() => lineup.movePlayer(i, 'down')}
                       disabled={i >= playerCount - 1}
-                      style={{
-                        background: 'transparent',
-                        border: 'none',
-                        color: i >= playerCount - 1 ? 'rgba(255,255,255,0.15)' : 'var(--text-dim)',
-                        padding: '2px 4px',
-                        cursor: i >= playerCount - 1 ? 'default' : 'pointer',
-                        fontSize: '0.75rem',
-                        lineHeight: 1,
-                        minHeight: 'auto'
-                      }}
                       aria-label="Spieler nach unten"
                       title="Nach unten"
                     >
@@ -172,20 +136,12 @@ export const PlayerSelection: React.FC<PlayerSelectionProps> = ({
                 </div>
 
                 {is2v2 && (
-                  <span style={{
-                    background: slotTeam === 1 ? 'rgba(10, 132, 255, 0.2)' : 'rgba(255, 159, 10, 0.2)',
-                    color: teamColor,
-                    padding: '2px 6px',
-                    borderRadius: '4px',
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
-                    flexShrink: 0
-                  }}>
+                  <span className="team-badge" style={{ color: slotColor }}>
                     T{slotTeam}
                   </span>
                 )}
 
-                <div className="avatar-circle" style={{ backgroundColor: is2v2 ? teamColor : avatarColor(playerName || `Gast ${i + 1}`) }}>
+                <div className="avatar-circle" style={{ backgroundColor: is2v2 ? slotColor : playerColorByName(playerName || `Gast ${i + 1}`) }}>
                   {isBot ? '🤖' : (playerName.charAt(0).toUpperCase() || '?')}
                 </div>
 
@@ -269,18 +225,7 @@ export const PlayerSelection: React.FC<PlayerSelectionProps> = ({
       <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {/* Mutually exclusive with "random order": both decide who starts leg 1,
             so letting a user turn on both at once doesn't make sense. */}
-        <label style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          padding: '14px 16px',
-          background: lineup.bullOffEnabled ? 'rgba(10, 132, 255, 0.12)' : 'var(--surface)',
-          border: lineup.bullOffEnabled ? '1px solid var(--blue)' : '1px solid var(--card-border)',
-          borderRadius: 'var(--radius)',
-          cursor: 'pointer',
-          transition: 'all 0.2s',
-          userSelect: 'none'
-        }}>
+        <label className="option-toggle">
           <input
             type="checkbox"
             checked={lineup.bullOffEnabled}
@@ -288,32 +233,20 @@ export const PlayerSelection: React.FC<PlayerSelectionProps> = ({
               lineup.setBullOffEnabled(e.target.checked);
               if (e.target.checked) lineup.setRandomOrderOnStart(false);
             }}
-            style={{ width: '20px', height: '20px', accentColor: 'var(--blue)', cursor: 'pointer' }}
           />
-          <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-            <span style={{ fontWeight: 600, color: 'var(--text)', fontSize: '0.95em' }}>
+          <span className="option-toggle-body">
+            <span className="option-toggle-title">
               🎯 Ausbullen
             </span>
-            <span style={{ fontSize: '0.8em', color: 'var(--text-dim)' }}>
+            <span className="option-toggle-desc">
               {lineup.bullOffEnabled
                 ? 'Aktiv: Wer den Bull am nächsten trifft, beginnt Leg 1'
                 : 'Inaktiv: Erster Spieler in der Reihenfolge beginnt'}
             </span>
-          </div>
+          </span>
         </label>
 
-        <label style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          padding: '14px 16px',
-          background: lineup.randomOrderOnStart ? 'rgba(10, 132, 255, 0.12)' : 'var(--surface)',
-          border: lineup.randomOrderOnStart ? '1px solid var(--blue)' : '1px solid var(--card-border)',
-          borderRadius: 'var(--radius)',
-          cursor: 'pointer',
-          transition: 'all 0.2s',
-          userSelect: 'none'
-        }}>
+        <label className="option-toggle">
           <input
             type="checkbox"
             checked={lineup.randomOrderOnStart}
@@ -321,18 +254,17 @@ export const PlayerSelection: React.FC<PlayerSelectionProps> = ({
               lineup.setRandomOrderOnStart(e.target.checked);
               if (e.target.checked) lineup.setBullOffEnabled(false);
             }}
-            style={{ width: '20px', height: '20px', accentColor: 'var(--blue)', cursor: 'pointer' }}
           />
-          <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-            <span style={{ fontWeight: 600, color: 'var(--text)', fontSize: '0.95em' }}>
+          <span className="option-toggle-body">
+            <span className="option-toggle-title">
               🎲 Zufällige Reihenfolge beim Start
             </span>
-            <span style={{ fontSize: '0.8em', color: 'var(--text-dim)' }}>
+            <span className="option-toggle-desc">
               {lineup.randomOrderOnStart
                 ? 'Aktiv: Reihenfolge wird beim Klick auf „Spiel starten“ ausgelost'
                 : 'Inaktiv: Ausgewählte Reihenfolge wird übernommen'}
             </span>
-          </div>
+          </span>
         </label>
 
         {!lineup.randomOrderOnStart && (

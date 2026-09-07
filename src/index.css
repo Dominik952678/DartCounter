@@ -69,14 +69,21 @@ body {
   }
 }
 
-h1, h2, h3, h4 { 
-  font-weight: 800; 
-  letter-spacing: -0.03em; 
-  margin: 0; 
+/* §2 lässt nur 400 und 500 zu — 700 und schwerer wirkt in der dunklen UI zu
+   schwer. Hier standen 800 für h1–h4 und 600 für h3.
+
+   Die Größen kommen aus der Skala in §2: 24px Screen-Titel, 20px Card-Titel.
+   h3 ist die Zwischenüberschrift innerhalb einer Karte und liegt auf der
+   Body-groß-Stufe. */
+h1, h2, h3, h4 {
+  font-weight: var(--weight-medium);
+  letter-spacing: normal;
+  margin: 0;
 }
-h1 { font-size: 1.85em; }
-h2 { font-size: 1.35em; }
-h3 { font-size: 1.05em; color: var(--text-dim); font-weight: 600; }
+h1 { font-size: var(--text-screen-title); }
+h2 { font-size: var(--text-card-title); }
+h3 { font-size: var(--text-body-lg); color: var(--text-primary); }
+h4 { font-size: var(--text-body); }
 
 /* ── Tungsten Micro-Animations & Interactions ── */
 @keyframes ctaPulse {
@@ -367,18 +374,8 @@ select:focus, input:focus {
 .input-row > div { flex: 1; text-align: left; }
 .input-row label { font-size: 0.85em; color: var(--text-dim); margin-bottom: 6px; display: block; }
 
-/* Profile screen; moved out of a <style> tag inside ProfileTab. */
-.hero-glow-bg-profile {
-  position: absolute;
-  top: -80px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 500px;
-  height: 300px;
-  background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, rgba(59, 130, 246, 0.06) 50%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-}
+/* .hero-glow-bg-profile stand hier ein zweites Mal und wurde von der
+   zusammengelegten Glow-Regel weiter unten ohnehin überschrieben. */
 
 .profile-tab-grid {
   display: grid;
@@ -398,14 +395,19 @@ select:focus, input:focus {
    meant .avatar-circle only existed while that screen was mounted — the
    training screen uses the same class and lost its avatars whenever the setup
    screen was not on. */
-.hero-glow-bg-setup {
+/* Ein Glow für alle Screens, die einen haben. Es gab drei fast gleiche
+   Definitionen (-setup, -training, -profile), alle mit einem zweiten blauen
+   Farbstopp — und Blau hat seit §1 keine Rolle mehr. */
+.hero-glow-bg-setup,
+.hero-glow-bg-training,
+.hero-glow-bg-profile {
   position: absolute;
   top: -80px;
   left: 50%;
   transform: translateX(-50%);
-  width: 500px;
+  width: min(500px, 90vw);
   height: 300px;
-  background: radial-gradient(circle, rgba(245, 158, 11, 0.1) 0%, rgba(59, 130, 246, 0.06) 50%, transparent 70%);
+  background: radial-gradient(circle, var(--bg-accent-muted) 0%, transparent 70%);
   pointer-events: none;
   z-index: 0;
 }
@@ -413,13 +415,133 @@ select:focus, input:focus {
 .match-setup-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 16px;
+  gap: var(--space-4);
 }
-@media (min-width: 768px) {
+/* §6 setzt die zweispaltigen Formulare auf die 900px-Stufe, nicht auf 768.
+   Bei 768 bekäme das iPad Air 11" hochkant zwei Spalten von je ~340px —
+   „beide Spalten nebeneinander mit mehr Breite" ist damit nicht erfüllt. */
+@media (min-width: 900px) {
   .match-setup-grid {
     grid-template-columns: 1fr 1fr;
-    gap: 20px;
+    gap: var(--space-5);
     align-items: start;
+  }
+}
+
+/* ── Ausbullen-Reihenfolge ──
+   Der aktive Spieler ist ein Auswahl-Zustand und bekommt deshalb denselben
+   Rahmen wie alles andere (§5) — vorher war er blau getönt. */
+.bulloff-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+  border: 2px solid transparent;
+}
+.bulloff-row.is-active {
+  background: var(--bg-accent-muted);
+  border-color: var(--accent-primary);
+}
+.bulloff-name {
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+}
+.bulloff-state {
+  font-size: var(--text-body);
+  color: var(--text-secondary);
+}
+
+/* ── Gespeichertes Match ──
+   War eine blau umrandete Karte mit blauem Verlauf, eigenem 16px-Radius und
+   #fff-Überschrift. Jetzt eine normale Karte; die einzige Farbe darin ist die
+   des jeweiligen Spielers. */
+.saved-game-card { margin-bottom: var(--space-5); }
+
+.saved-game-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+.saved-game-heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.saved-game-icon { font-size: 1.6rem; flex-shrink: 0; }
+.saved-game-meta {
+  display: block;
+  font-size: var(--text-label);
+  color: var(--text-secondary);
+}
+
+.saved-game-scores {
+  display: grid;
+  gap: var(--space-2);
+  background: var(--surface-card);
+  padding: var(--space-3);
+  border-radius: var(--radius-card);
+  margin-bottom: var(--space-3);
+}
+.saved-game-score {
+  text-align: center;
+  min-width: 0;
+}
+/* §2: Label über der Kennzahl, 12px, --text-secondary, Sentence case. */
+.saved-game-player {
+  display: block;
+  font-size: var(--text-label);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.saved-game-value {
+  display: block;
+  font-size: var(--text-card-title);
+  font-weight: var(--weight-medium);
+}
+.saved-game-legs {
+  display: block;
+  font-size: var(--text-label);
+  color: var(--text-secondary);
+}
+
+.saved-game-actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+/* ── Sticky-Aktionsleiste ──
+   Klebt über dem schwebenden Dock, nicht am Viewport-Rand — sonst steht die
+   primäre Aktion beim Scrollen hinter dem Dock. Ab 900px gibt es keinen Dock
+   mehr, dann reicht der Safe-Area-Abstand.
+
+   Die Freihaltefläche darunter war eine Inline-Zahl (76px) am Grid. Sie steht
+   jetzt hier, weil sie zur Leiste gehört: ohne sie bleibt in einem kurzen
+   zweispaltigen Layout zu wenig Seitenhöhe für die natürliche Flussposition
+   des Buttons, er klebt zu früh und verdeckt die letzte Zeile des Formulars. */
+.sticky-action-bar {
+  position: sticky;
+  bottom: var(--dock-space);
+  z-index: var(--z-sticky);
+  padding: 0 var(--space-2);
+}
+
+.match-setup-grid-sticky-clearance,
+.training-hub-grid-sticky-clearance {
+  margin-bottom: calc(64px + var(--space-3));
+}
+
+@media (min-width: 900px) {
+  .sticky-action-bar {
+    bottom: calc(var(--safe-bottom) + var(--space-4));
   }
 }
 
@@ -459,6 +581,9 @@ select:focus, input:focus {
   cursor: grabbing;
 }
 
+/* Die Füllfarbe kommt aus der Spielerpalette (utils/playerColors.ts) und wird
+   inline gesetzt, weil sie vom Spieler abhängt. Der dunkle Grund macht die
+   Initiale darauf lesbar, ohne auf reines Weiß zu gehen. */
 .avatar-circle {
   width: 34px;
   height: 34px;
@@ -466,11 +591,108 @@ select:focus, input:focus {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  font-weight: bold;
-  font-size: 14px;
+  color: var(--bg-base);
+  font-weight: var(--weight-medium);
+  font-size: var(--text-body);
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+/* ── Sitzplatz-Reihenfolge ──
+   Die Pfeile sind die tastaturbedienbare Alternative zum Ziehen, also echte
+   Bedienelemente — §4 nimmt Icon-only-Buttons von den 44×44 nicht aus. Vorher
+   waren es 2px Padding auf `min-height: auto`. */
+.seat-order {
+  display: flex;
+  flex-direction: column;
+}
+
+.seat-move-btn {
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: var(--text-label);
+  line-height: 1;
+}
+.seat-move-btn:disabled { opacity: 0.25; }
+
+.team-badge {
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-xs);
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  flex-shrink: 0;
+  /* Fläche und Text aus derselben Teamfarbe — 20 % Wash, wie der Selected-
+     State es mit dem Akzent macht. */
+  background: color-mix(in srgb, currentColor 20%, transparent);
+}
+
+/* ── Hinweisfeld ──
+   Erklärtext ohne eigene Farbrolle. §1 lässt --accent-info nur für
+   kategorische Kennzeichnung zu, nicht für Meldungen, also bleibt es neutral. */
+.callout {
+  background: var(--surface-card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-card);
+  padding: var(--space-3);
+  font-size: var(--text-body);
+  line-height: 1.4;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-3);
+}
+.callout strong {
+  color: var(--text-primary);
+  font-weight: var(--weight-medium);
+}
+
+/* ── Options-Schalter ──
+   Ein An/Aus mit Erklärung. §5 gibt auch dafür den einen Selected-State vor;
+   vorher war der aktive Zustand blau getönt. */
+.option-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-card);
+  border: 2px solid transparent;
+  border-radius: var(--radius-card);
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+  user-select: none;
+  min-height: 64px;
+}
+.option-toggle:has(input:checked) {
+  background: var(--bg-accent-muted);
+  border-color: var(--accent-primary);
+}
+.option-toggle:has(input:focus-visible) {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+.option-toggle input[type='checkbox'] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent-primary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.option-toggle-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+.option-toggle-title {
+  font-size: var(--text-body-lg);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+}
+.option-toggle-desc {
+  font-size: var(--text-label);
+  color: var(--text-secondary);
 }
 
 /* ── Symmetrical Distance & Stepper Controls ── */
@@ -804,24 +1026,24 @@ button:disabled, .btn:disabled {
 }
 
 .btn-full { width: 100%; }
-/* ── App Header ────────────────────────── */
-.app-header { 
-  text-align: center; 
-  padding: 16px 0 20px; 
+/* ── App Header ──
+   Der Screen-Titel aus §2: 24px, unabhängig davon ob der Screen ihn als h1
+   oder h2 auszeichnet. */
+.app-header {
+  text-align: center;
+  padding: var(--space-4) 0 var(--space-5);
 }
-.app-header h1 { 
-  font-size: 1.85em; 
-  letter-spacing: -0.03em;
-}
-.app-header h2 { 
-  font-size: 1.5em; 
-  letter-spacing: -0.02em;
+.app-header h1,
+.app-header h2 {
+  font-size: var(--text-screen-title);
+  font-weight: var(--weight-medium);
+  letter-spacing: normal;
 }
 .subtitle {
-  color: var(--text-dim);
-  font-size: 0.92em;
-  margin-top: 4px;
-  font-weight: 500;
+  color: var(--text-secondary);
+  font-size: var(--text-body);
+  margin-top: var(--space-1);
+  font-weight: var(--weight-regular);
 }
 
 /* ── Scoreboard ────────────────────────── */
@@ -1162,6 +1384,24 @@ button:disabled, .btn:disabled {
 }
 
 /* ── Modals & Dialogs ───────────────────── */
+/* Titel und Fließtext eines Dialogs, damit nicht jedes Modal seine eigene
+   Größe und Farbe mitbringt. */
+.modal-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-card-title);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  margin: 0 0 var(--space-2) 0;
+}
+.modal-text {
+  font-size: var(--text-body);
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-bottom: var(--space-5);
+}
+
 .modal-overlay, .modal {
   position: fixed; 
   inset: 0;
@@ -2452,65 +2692,60 @@ button:disabled, .btn:disabled {
 }
 
 /* ── Training Hub ─────────────────────────── */
-.hero-glow-bg-training {
-  position: absolute;
-  top: -80px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 500px;
-  height: 300px;
-  background: radial-gradient(circle, rgba(245, 158, 11, 0.1) 0%, rgba(59, 130, 246, 0.06) 50%, transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-}
 .training-hub-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 16px;
+  gap: var(--space-4);
 }
-@media (min-width: 768px) {
+/* §6 setzt die zweispaltigen Formulare auf die 900px-Stufe, nicht auf 768.
+   Bei 768 bekäme das iPad Air 11" hochkant zwei Spalten von je ~340px —
+   „beide Spalten nebeneinander mit mehr Breite" ist damit nicht erfüllt. */
+@media (min-width: 900px) {
   .training-hub-grid {
     grid-template-columns: 1fr 1fr;
-    gap: 20px;
+    gap: var(--space-5);
     align-items: start;
   }
 }
+/* ── Trainings-Modus-Karten ──
+   §5 nennt sie beim Namen: „Gilt für Tabs, Auswahl-Chips … und
+   Trainings-Modus-Karten gleichermaßen." Vorher trug jeder Modus seine eigene
+   Farbe im ausgewählten Zustand — Blau, Rot, Orange — also drei Bedeutungen
+   für einen einzigen Zustand. Fläche und Rand kommen jetzt von `.choice`,
+   diese Regel steuert nur noch das Layout innerhalb der Karte. */
 .training-mode-btn {
-  padding: 16px;
+  padding: var(--card-padding);
   text-align: left;
-  font-size: 1.05em;
-  border-radius: 14px;
   display: flex;
   align-items: center;
-  gap: 12px;
-  border: 1px solid var(--card-border);
-  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
-  color: var(--text);
-  cursor: pointer;
+  gap: var(--space-3);
   width: 100%;
+  /* §4: das ist die Wahl, mit der das Training beginnt — großzügig. */
+  min-height: 72px;
 }
-.training-mode-btn:hover {
-  transform: translateY(-2px);
-  border-color: rgba(255, 255, 255, 0.18);
+.training-mode-btn:hover { transform: translateY(-2px); }
+
+.training-mode-icon {
+  font-size: 1.8rem;
+  line-height: 1;
+  padding: var(--space-2);
+  border-radius: var(--radius-card);
+  background: var(--surface-hover);
+  flex-shrink: 0;
 }
-.training-mode-btn.active-checkout {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.22), rgba(59, 130, 246, 0.05));
-  border-color: var(--blue);
-  box-shadow: 0 4px 16px var(--blue-glow);
+
+.training-mode-title {
+  display: block;
+  font-size: var(--text-body-lg);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
 }
-.training-mode-btn.active-powerscoring {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.22), rgba(239, 68, 68, 0.05));
-  border-color: var(--red);
-  box-shadow: 0 4px 16px var(--red-glow);
-}
-.training-mode-btn.active-splitscore {
-  background: linear-gradient(135deg, rgba(249, 115, 22, 0.22), rgba(249, 115, 22, 0.05));
-  border-color: var(--orange);
-  box-shadow: 0 4px 16px var(--orange-glow);
-}
-.training-mode-btn.inactive {
-  background: var(--surface);
-  opacity: 0.7;
+
+.training-mode-desc {
+  display: block;
+  font-size: var(--text-label);
+  color: var(--text-secondary);
+  margin-top: 2px;
 }
 
 /* ── Scoreboard player cards ──────────────── */

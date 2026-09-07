@@ -191,7 +191,7 @@ export const AuthScreen: React.FC = () => {
           
           <Button
             type="button"
-            variant="primary" size="large"
+            variant="primary" size="large" fullWidth
             onClick={() => navigate('/offline')}
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
           >

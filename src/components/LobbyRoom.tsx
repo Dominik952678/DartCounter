@@ -263,7 +263,7 @@ export const LobbyRoom: React.FC = () => {
 
       <div className="lobby-actions">
         {isHost ? (
-          <Button variant="primary" size="large" onClick={handleStartGame}>
+          <Button variant="primary" size="large" fullWidth onClick={handleStartGame}>
             🎯 Spiel starten
           </Button>
         ) : (
