@@ -200,68 +200,6 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
 
   return (
     <div className="training-hub screen active-screen" style={{ position: 'relative', overflowX: 'hidden' }}>
-      <style>{`
-        .hero-glow-bg-training {
-          position: absolute;
-          top: -80px;
-          left: 50%;
-          transform: translateX(-50%);
-          width: 500px;
-          height: 300px;
-          background: radial-gradient(circle, rgba(245, 158, 11, 0.1) 0%, rgba(59, 130, 246, 0.06) 50%, transparent 70%);
-          pointer-events: none;
-          z-index: 0;
-        }
-        .training-hub-grid {
-          display: grid;
-          grid-template-columns: 1fr;
-          gap: 16px;
-        }
-        @media (min-width: 768px) {
-          .training-hub-grid {
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            align-items: start;
-          }
-        }
-        .training-mode-btn {
-          padding: 16px;
-          text-align: left;
-          font-size: 1.05em;
-          border-radius: 14px;
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          border: 1px solid var(--card-border);
-          transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
-          color: var(--text);
-          cursor: pointer;
-          width: 100%;
-        }
-        .training-mode-btn:hover {
-          transform: translateY(-2px);
-          border-color: rgba(255, 255, 255, 0.18);
-        }
-        .training-mode-btn.active-checkout {
-          background: linear-gradient(135deg, rgba(59, 130, 246, 0.22), rgba(59, 130, 246, 0.05));
-          border-color: var(--blue);
-          box-shadow: 0 4px 16px var(--blue-glow);
-        }
-        .training-mode-btn.active-powerscoring {
-          background: linear-gradient(135deg, rgba(239, 68, 68, 0.22), rgba(239, 68, 68, 0.05));
-          border-color: var(--red);
-          box-shadow: 0 4px 16px var(--red-glow);
-        }
-        .training-mode-btn.active-splitscore {
-          background: linear-gradient(135deg, rgba(249, 115, 22, 0.22), rgba(249, 115, 22, 0.05));
-          border-color: var(--orange);
-          box-shadow: 0 4px 16px var(--orange-glow);
-        }
-        .training-mode-btn.inactive {
-          background: var(--surface);
-          opacity: 0.7;
-        }
-      `}</style>
 
       <div className="hero-glow-bg-training" />
 

@@ -4,97 +4,6 @@ import type { Player, MatchHistory } from '../types';
 import { DartboardHeatmap } from './DartboardHeatmap';
 import { checkoutQuote } from '../utils/stats';
 
-const bottomSheetStyles = `
-  .bottom-sheet-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.88);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    z-index: 1000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    animation: fadeIn 0.3s ease-out;
-  }
-  
-  .bottom-sheet-content {
-    background-color: #141418;
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    border-radius: var(--radius, 16px);
-    width: 92%;
-    max-width: 520px;
-    max-height: 90vh;
-    overflow-y: auto;
-    padding: 26px 22px;
-    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.95);
-    position: relative;
-    animation: scaleUp 0.3s ease-out;
-    color: #ffffff;
-  }
-
-  @media (max-width: 767px) {
-    .bottom-sheet-overlay {
-      align-items: flex-end;
-    }
-    .bottom-sheet-content {
-      width: 100%;
-      max-width: 100%;
-      border-radius: 24px 24px 0 0;
-      padding: 32px 20px 24px;
-      animation: slideUp 0.3s ease-out forwards;
-      transform: translateY(100%);
-    }
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-
-  @keyframes slideUp {
-    from { transform: translateY(100%); }
-    to { transform: translateY(0); }
-  }
-  
-  @keyframes scaleUp {
-    from { transform: scale(0.95); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
-  }
-
-  .drag-handle {
-    display: none;
-    width: 40px;
-    height: 4px;
-    background-color: rgba(255, 255, 255, 0.3);
-    border-radius: 2px;
-    position: absolute;
-    top: 12px;
-    left: 50%;
-    transform: translateX(-50%);
-  }
-
-  @media (max-width: 767px) {
-    .drag-handle {
-      display: block;
-    }
-  }
-
-  .confetti {
-    font-size: 2.5rem;
-    animation: bounce 1s infinite alternate;
-    display: inline-block;
-  }
-
-  @keyframes bounce {
-    from { transform: translateY(0); }
-    to { transform: translateY(-10px); }
-  }
-`;
-
 export const StatsModal: React.FC<{
   isOpen: boolean;
   winnerIndex: number | null;
@@ -115,7 +24,6 @@ export const StatsModal: React.FC<{
 
   return (
     <>
-      <style>{bottomSheetStyles}</style>
       {/* No backdrop-click close either: it commits the match and leaves the board. */}
       <div className="bottom-sheet-overlay">
         <div
