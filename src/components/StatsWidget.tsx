@@ -213,12 +213,12 @@ export const StatsWidget: React.FC<StatsWidgetProps> = ({ title, mode, isOnline,
              {isMinigame ? (
                 <div className="dash-stats-grid dash-stats-grid-2">
                   <div className="dash-stat-card">
-                    <span className="dash-stat-label">Best Score</span>
+                    <span className="dash-stat-label">Bestpunktzahl</span>
                     <span className="dash-stat-value">{minigameBestScore}</span>
                     <span className="dash-stat-detail">{mode}</span>
                   </div>
                   <div className="dash-stat-card">
-                    <span className="dash-stat-label">Average Score</span>
+                    <span className="dash-stat-label">Ø Punktzahl</span>
                     <span className="dash-stat-value">{minigameAvgScore}</span>
                     <span className="dash-stat-detail">Ø pro Spiel</span>
                   </div>
@@ -227,7 +227,7 @@ export const StatsWidget: React.FC<StatsWidgetProps> = ({ title, mode, isOnline,
                 <>
                   <div className="dash-stats-grid dash-stats-grid-6">
                     <div className="dash-stat-card">
-                      <span className="dash-stat-label">Win Rate</span>
+                      <span className="dash-stat-label">Siegquote</span>
                       <span className="dash-stat-value">{winRate}%</span>
                       <span className="dash-stat-detail">{matchesPlayed} Spiele</span>
                     </div>
@@ -237,7 +237,7 @@ export const StatsWidget: React.FC<StatsWidgetProps> = ({ title, mode, isOnline,
                       <span className="dash-stat-detail">L5: {last5Avg}</span>
                     </div>
                     <div className="dash-stat-card">
-                      <span className="dash-stat-label">First 9</span>
+                      <span className="dash-stat-label">Erste 9</span>
                       <span className="dash-stat-value">{first9Avg}</span>
                       <span className="dash-stat-detail">L5: {last5First9}</span>
                     </div>
@@ -252,17 +252,17 @@ export const StatsWidget: React.FC<StatsWidgetProps> = ({ title, mode, isOnline,
                       <span className="dash-stat-detail">Ø für {targetScore}</span>
                     </div>
                     <div className="dash-stat-card">
-                      <span className="dash-stat-label">Triple Quote</span>
+                      <span className="dash-stat-label">Triple-Quote</span>
                       <span className="dash-stat-value">{tripleQuote}</span>
                       <span className="dash-stat-detail">Trefferrate</span>
                     </div>
                   </div>
-                  
+
                   {chartData.length > 0 && (
                     <div style={{ marginTop: '20px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                         <span style={{ fontSize: '0.78em', color: 'var(--text-dim)', fontWeight: 600 }}>
-                          📈 {isMinigame ? 'Score-Entwicklung' : '3-Dart Average Trend'}
+                          📈 {isMinigame ? 'Score-Entwicklung' : 'Average-Verlauf (3 Darts)'}
                         </span>
                         <span style={{ fontSize: '0.72em', color: isOnline ? 'var(--blue)' : 'var(--green)' }}>
                           Letzte Spiele
@@ -276,12 +276,12 @@ export const StatsWidget: React.FC<StatsWidgetProps> = ({ title, mode, isOnline,
                             <Tooltip 
                               contentStyle={{ backgroundColor: '#111827', border: '1px solid rgba(148, 163, 184, 0.15)', borderRadius: '10px' }} 
                               itemStyle={{ color: 'var(--text)' }}
-                              formatter={(value: unknown) => [value as React.ReactNode, isMinigame ? 'Punkte' : '3-Dart Average']}
+                              formatter={(value: unknown) => [value as React.ReactNode, isMinigame ? 'Punkte' : 'Average']}
                             />
-                            <Line 
-                              type="monotone" 
-                              dataKey="val" 
-                              name={isMinigame ? "Punkte" : "3-Dart Average"}
+                            <Line
+                              type="monotone"
+                              dataKey="val"
+                              name={isMinigame ? "Punkte" : "Average"}
                               stroke={isOnline ? "var(--blue)" : "var(--primary)"} 
                               strokeWidth={2.5} 
                               dot={{ fill: isOnline ? "var(--blue)" : "var(--primary)", r: 2.5, strokeWidth: 0 }} 

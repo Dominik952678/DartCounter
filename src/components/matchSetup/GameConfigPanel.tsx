@@ -56,7 +56,7 @@ const DistanceStepper: React.FC<StepperProps> = ({ title, subtitle, value, max, 
             onBlur={() => onChange(Math.min(max, Math.max(1, value === '' ? 1 : value)))}
             className="stepper-input"
           />
-          <span className="stepper-unit">First to {value || 1}</span>
+          <span className="stepper-unit">Bis {value || 1}</span>
         </div>
         <button
           type="button"

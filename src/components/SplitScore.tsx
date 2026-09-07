@@ -362,7 +362,7 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
                   </div>
                   {i === activePlayer && (
                      <div style={{ color: currentRoundDarts.length > 0 ? (getLiveScore() > p.score ? '#34c759' : '#ff3b30') : '#999', fontWeight: 'bold' }}>
-                       {currentRoundDarts.length === 3 && getLiveScore() === p.score ? 'Halbiert!' : 'Wurf...'}
+                       {currentRoundDarts.length === 3 && getLiveScore() === p.score ? 'Halbiert!' : 'Wurf…'}
                      </div>
                   )}
                 </div>
@@ -434,7 +434,7 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
 
               <div style={{ marginTop: '15px' }}>
                 <button className="btn-secondary" onClick={undoSingleDart} disabled={(history.length === 0 && currentRoundDarts.length === 0) || isProcessing}>
-                  ↩ Rückgängig
+                  ↩ Wurf zurücknehmen
                 </button>
               </div>
             </div>

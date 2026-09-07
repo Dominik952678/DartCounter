@@ -40,7 +40,7 @@ export const HeadToHead: React.FC<HeadToHeadProps> = ({ profileA, profileB, onCl
 
   const stats = [
     {
-      label: 'Win Rate',
+      label: 'Siegquote',
       valA: getWinRate(profileA.profile),
       valB: getWinRate(profileB.profile),
       format: (v: number | undefined) => formatValue(v, true, true),
@@ -54,21 +54,21 @@ export const HeadToHead: React.FC<HeadToHeadProps> = ({ profileA, profileB, onCl
       higherIsBetter: true,
     },
     {
-      label: 'First 9 Average',
+      label: 'Ø Erste 9',
       valA: getFirst9Average(profileA.profile),
       valB: getFirst9Average(profileB.profile),
       format: (v: number | undefined) => formatValue(v, false, true),
       higherIsBetter: true,
     },
     {
-      label: 'Checkout %',
+      label: 'Checkout-Quote',
       valA: getCheckoutPercentage(profileA.profile),
       valB: getCheckoutPercentage(profileB.profile),
       format: (v: number | undefined) => formatValue(v, true, true),
       higherIsBetter: true,
     },
     {
-      label: 'Best Leg',
+      label: 'Bestes Leg',
       valA: profileA.profile.bestLegDarts && profileA.profile.bestLegDarts > 0 ? profileA.profile.bestLegDarts : undefined,
       valB: profileB.profile.bestLegDarts && profileB.profile.bestLegDarts > 0 ? profileB.profile.bestLegDarts : undefined,
       format: (v: number | undefined) => formatValue(v),

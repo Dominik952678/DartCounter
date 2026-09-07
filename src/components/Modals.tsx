@@ -169,7 +169,7 @@ export const StatsModal: React.FC<{
                     <div style={{ display: 'grid', gridTemplateColumns: matchData.gameType === 'checkoutTraining' ? '1fr 1fr 1fr' : '1fr', gap: '8px', marginBottom: '6px' }}>
                       <div style={{ background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(148, 163, 184, 0.12)', padding: '12px 8px', borderRadius: '8px', textAlign: 'center' }}>
                         <div style={{ fontSize: '0.75em', color: 'var(--text-dim)', marginBottom: '2px' }}>
-                          {matchData.gameType === 'checkoutTraining' ? 'Bestes Checkout' : 'Punkte (Score)'}
+                          {matchData.gameType === 'checkoutTraining' ? 'Bestes Checkout' : 'Punkte'}
                         </div>
                         <div style={{ color: 'var(--green)', fontWeight: 800, fontSize: '1.4em' }}>{pData.score || 0}</div>
                       </div>
@@ -275,7 +275,7 @@ export const StatsModal: React.FC<{
                   transition: 'transform 0.1s ease'
                 }}
               >
-                <span>🔄</span> <span>Nochmal spielen (Start again)</span>
+                <span>🔄</span> <span>Nochmal spielen</span>
               </button>
             )}
 
@@ -301,7 +301,7 @@ export const StatsModal: React.FC<{
                   }}
                   title="Letzten Wurf rückgängig machen (falls verklickt)"
                 >
-                  <span>↩</span> <span>Wurf revidieren</span>
+                  <span>↩</span> <span>Wurf zurücknehmen</span>
                 </button>
               )}
 

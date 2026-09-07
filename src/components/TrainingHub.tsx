@@ -530,7 +530,7 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
             <>
             <div className="card">
               <div className="card-header">
-                <h2>Rundenlimit (Anzahl Targets)</h2>
+                <h2>Anzahl Targets</h2>
               </div>
               <div className="segment-control">
                 {[5, 10, 15, 20].map(r => (
@@ -550,7 +550,7 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
 
             <div className="card">
               <div className="card-header">
-                <h2>Versuche pro Finish (Runden)</h2>
+                <h2>Runden (Versuche pro Finish)</h2>
               </div>
               <div className="segment-control">
                 {[1, 2, 3, 5].map(r => (

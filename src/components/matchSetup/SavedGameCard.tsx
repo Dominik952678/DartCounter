@@ -14,8 +14,10 @@ interface SavedGameCardProps {
   onDismiss: () => void;
 }
 
+// The engine plays "first to N", not "best of N" — at legsToWin=3 the match
+// ends after two legs won, one leg short of what "Best of 3" would promise.
 const distanceLabel = (config: GameConfig): string =>
-  config.setsToWin > 1 ? `Best of ${config.setsToWin} Sets` : `Best of ${config.legsToWin} Legs`;
+  config.setsToWin > 1 ? `Bis ${config.setsToWin} Sätze` : `Bis ${config.legsToWin} Legs`;
 
 /** The unfinished match waiting to be resumed, with its current scores. */
 export const SavedGameCard: React.FC<SavedGameCardProps> = ({ match, onResume, onDiscard, onDismiss }) => (

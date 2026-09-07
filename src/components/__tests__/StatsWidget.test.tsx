@@ -56,9 +56,9 @@ describe('StatsWidget Component', () => {
     );
 
     expect(screen.getByText('Offline Statistiken')).toBeInTheDocument();
-    expect(screen.getByText('Win Rate')).toBeInTheDocument();
+    expect(screen.getByText('Siegquote')).toBeInTheDocument();
     expect(screen.getByText('Average')).toBeInTheDocument();
-    expect(screen.getByText('First 9')).toBeInTheDocument();
+    expect(screen.getByText('Erste 9')).toBeInTheDocument();
     expect(screen.getByText('Checkout')).toBeInTheDocument();
     expect(screen.getByText('Darts pro Leg')).toBeInTheDocument();
   });

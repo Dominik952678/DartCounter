@@ -42,7 +42,7 @@ export const GameScreen: React.FC<GameScreenProps> = (props) => {
             🎯 {props.config.startScore} {props.config.outMode}
           </span>
           <span style={{ fontSize: '0.78em', color: 'var(--text-dim)', background: 'rgba(255,255,255,0.06)', padding: '2px 8px', borderRadius: '6px', whiteSpace: 'nowrap' }}>
-            First to {props.config.legsToWin} Legs {props.config.setsToWin > 1 ? `· ${props.config.setsToWin} Sets` : ''}
+            Bis {props.config.legsToWin} Legs {props.config.setsToWin > 1 ? `· ${props.config.setsToWin} Sätze` : ''}
           </span>
         </div>
 

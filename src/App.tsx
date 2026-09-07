@@ -451,14 +451,20 @@ export default function App() {
             navigate('/game');
           }
         }}
-        onUndoLastDart={() => {
-          const mData = statsModalData.matchData;
-          setStatsModalData({ isOpen: false, winnerIndex: null, players: [], matchData: null });
-          gameEngine.undoSingleDart();
-          if (!mData?.gameType || mData?.gameType === 'standard') {
-            navigate('/game');
-          }
-        }}
+        // Only a standard X01 match can be undone here — the button calls
+        // gameEngine.undoSingleDart(), which is that engine's own darts stack.
+        // A mini-game result has nothing for it to undo: offering it there
+        // used to close the dialog on an already-saved training result and
+        // leave the player on a blank screen.
+        onUndoLastDart={
+          !statsModalData.matchData?.gameType || statsModalData.matchData.gameType === 'standard'
+            ? () => {
+                setStatsModalData({ isOpen: false, winnerIndex: null, players: [], matchData: null });
+                gameEngine.undoSingleDart();
+                navigate('/game');
+              }
+            : undefined
+        }
       />
 
       {themeOverlays}

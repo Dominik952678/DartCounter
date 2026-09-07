@@ -185,7 +185,7 @@ export const LobbyBrowser: React.FC = () => {
                         {lobby.settings?.mode === 'powerscoring' ? '🔥 Power Scoring'
                           : lobby.settings?.mode === 'splitscore' ? '➗ Split Score'
                             : lobby.settings?.mode === 'checkout' ? '✅ Checkout Training'
-                              : `${lobby.settings?.startScore} · ${lobby.settings?.outMode} · Best of ${lobby.settings?.legsToWin}`}
+                              : `${lobby.settings?.startScore} · ${lobby.settings?.outMode} · Bis ${lobby.settings?.legsToWin} Legs`}
                       </span>
                     </div>
                     <div className="lobby-list-actions">

@@ -191,7 +191,7 @@ export const GuestSyncCard: React.FC<GuestSyncCardProps> = ({ sync }) => {
                   onClick={sync.generateCode}
                   disabled={loading}
                   style={{ padding: '8px 14px', fontSize: '0.85rem' }}
-                  title="Generiert einen neuen Code und invalidiert alte Codes (Anti-Stat-Washing)"
+                  title="Generiert einen neuen Code und macht alte Codes ungültig, damit niemand mehr über sie auf dein Profil zugreifen kann"
                 >
                   🔄 Code erneuern
                 </button>
@@ -262,7 +262,7 @@ export const GuestSyncCard: React.FC<GuestSyncCardProps> = ({ sync }) => {
               disabled={loading}
               style={{ padding: '10px 20px', fontWeight: 800 }}
             >
-              {loading ? 'Erzeuge Code...' : '⚡ 6-stelligen Sync-Code generieren'}
+              {loading ? 'Erzeuge Code…' : '⚡ 6-stelligen Sync-Code generieren'}
             </button>
           </div>
         )}

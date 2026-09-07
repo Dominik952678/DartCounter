@@ -141,7 +141,7 @@ export const GuestSyncRedeemModal: React.FC<GuestSyncRedeemModalProps> = ({
             disabled={loading || cleanCode.length < 6}
             style={{ padding: '0 16px', whiteSpace: 'nowrap' }}
           >
-            {loading ? 'Prüfe...' : 'Suchen'}
+            {loading ? 'Prüfe…' : 'Suchen'}
           </button>
         </div>
 

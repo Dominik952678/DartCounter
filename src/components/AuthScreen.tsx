@@ -160,7 +160,7 @@ export const AuthScreen: React.FC = () => {
           )}
 
           <button type="submit" className="btn-primary btn-large" disabled={loading} style={{ marginTop: '8px' }}>
-            {loading ? 'Lade...' : isReset ? 'Link anfordern' : isLogin ? 'Einloggen' : 'Kostenlos Registrieren'}
+            {loading ? 'Lade…' : isReset ? 'Link anfordern' : isLogin ? 'Einloggen' : 'Kostenlos registrieren'}
           </button>
 
           {isLogin && (
