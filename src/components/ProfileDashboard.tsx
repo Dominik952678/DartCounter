@@ -236,9 +236,10 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
           <div>
             <h2>{profile?.isBot ? '🤖 ' : '👤 '}{profileName}</h2>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '5px' }}>
-              <select 
-                value={selectedMode} 
+              <select
+                value={selectedMode}
                 onChange={(e) => setSelectedMode(e.target.value)}
+                aria-label="Modus"
                 style={{ background: '#2a2a2c', color: '#fff', border: '1px solid var(--card-border)', padding: '6px 10px', borderRadius: '8px', fontSize: '0.9em' }}
               >
                 {availableModes.map((m: string) => (
@@ -247,7 +248,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
               </select>
             </div>
           </div>
-          <button className="btn-close" onClick={onClose} title="Schließen" style={{ fontSize: '1.2em', cursor: 'pointer' }}>✕</button>
+          <button className="btn-close" onClick={onClose} title="Schließen" aria-label="Schließen" style={{ fontSize: '1.2em', cursor: 'pointer' }}>✕</button>
         </div>
 
         {/* Linked Cloud Guest Banner */}
@@ -291,9 +292,10 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
             {profile.isBot && (
               <div className="dash-bot-level" style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px', background: 'var(--surface)', padding: '10px', borderRadius: '10px' }}>
                 <span style={{ fontSize: '0.9em', color: 'var(--text-dim)' }}>Bot Level:</span>
-                <select 
+                <select
                   value={profile.targetAverage ? Math.max(1, Math.min(10, Math.round((profile.targetAverage - 20) / 10))) : 4}
                   onChange={(e) => onUpdateProfile(profileName, { targetAverage: parseInt(e.target.value) * 10 + 20 })}
+                  aria-label="Bot Level"
                   style={{ background: '#2a2a2c', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px', flex: 1 }}
                 >
                   {[1,2,3,4,5,6,7,8,9,10].map(l => (
@@ -305,10 +307,11 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
             
             <div className="dash-color-picker" style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'var(--surface)', padding: '10px', borderRadius: '10px' }}>
               <span style={{ fontSize: '0.9em', color: 'var(--text-dim)' }}>Spielerfarbe:</span>
-              <input 
-                type="color" 
-                value={profile.color || '#0a84ff'} 
+              <input
+                type="color"
+                value={profile.color || '#0a84ff'}
                 onChange={(e) => onUpdateProfile(profileName, { color: e.target.value })}
+                aria-label="Spielerfarbe"
                 style={{ width: '32px', height: '32px', padding: '0', border: 'none', borderRadius: '50%', cursor: 'pointer', background: 'transparent' }}
               />
               <span style={{ fontSize: '0.85em', color: profile.color || '#0a84ff', fontWeight: 'bold' }}>●</span>
@@ -321,9 +324,10 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
           <div className="dash-section" style={{ marginTop: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h3>Head-to-Head Vergleich</h3>
-              <select 
+              <select
                 value={compareWith}
                 onChange={(e) => setCompareWith(e.target.value)}
+                aria-label="Gegner für Head-to-Head-Vergleich"
                 style={{ background: '#2a2a2c', color: '#fff', border: 'none', padding: '6px 12px', borderRadius: '6px' }}
               >
                 <option value="">Wähle Gegner...</option>

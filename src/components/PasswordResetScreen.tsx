@@ -61,7 +61,7 @@ export const PasswordResetScreen: React.FC = () => {
             </p>
 
             {displayError && (
-              <div style={{ background: 'rgba(239, 68, 68, 0.12)', color: 'var(--red)', padding: '12px', borderRadius: '12px', marginBottom: '20px', fontSize: '0.9em', border: '1px solid rgba(239, 68, 68, 0.25)' }}>
+              <div role="alert" style={{ background: 'rgba(239, 68, 68, 0.12)', color: 'var(--red)', padding: '12px', borderRadius: '12px', marginBottom: '20px', fontSize: '0.9em', border: '1px solid rgba(239, 68, 68, 0.25)' }}>
                 ⚠️ {displayError}
               </div>
             )}
@@ -70,6 +70,7 @@ export const PasswordResetScreen: React.FC = () => {
               <input
                 type="password"
                 placeholder="Neues Passwort"
+                aria-label="Neues Passwort"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 autoComplete="new-password"
@@ -78,6 +79,7 @@ export const PasswordResetScreen: React.FC = () => {
               <input
                 type="password"
                 placeholder="Neues Passwort wiederholen"
+                aria-label="Neues Passwort wiederholen"
                 value={repeat}
                 onChange={e => setRepeat(e.target.value)}
                 autoComplete="new-password"
