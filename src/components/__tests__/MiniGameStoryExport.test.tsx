@@ -1,7 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { StatsModal } from '../Modals';
-import { PowerScoringImageExport } from '../PowerScoringImageExport';
+import { MiniGameStoryExport } from '../MiniGameStoryExport';
+import { buildStoryData } from '../../utils/storyExport';
 import type { MatchHistory, Player, PlayerStats } from '../../types';
 
 const playerRow = (name: string, over: Partial<PlayerStats> = {}): PlayerStats => ({
@@ -71,15 +72,19 @@ describe('Story-Export im Ergebnis-Dialog', () => {
 });
 
 describe('Story-Bild', () => {
-  const renderImage = (over: Partial<PlayerStats> = {}) =>
-    render(
-      <PowerScoringImageExport
+  const renderImage = (over: Partial<PlayerStats> = {}) => {
+    const player = playerRow('Anna', over);
+    return render(
+      <MiniGameStoryExport
         exportId="test-story"
-        player={playerRow('Anna', over)}
-        date="08.09.2026, 10:00"
+        playerName={player.name}
         isWinner
+        date="08.09.2026, 10:00"
+        segmentHits={player.segmentHits ?? {}}
+        {...buildStoryData(player, 'powerScoring')}
       />
     );
+  };
 
   it('shows every round, thrown and still open', () => {
     const { container } = renderImage();

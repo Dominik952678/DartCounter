@@ -3,12 +3,20 @@ import type { RealtimeChannel } from '@supabase/supabase-js';
 import type { Profile, Dart } from '../types';
 import { playDartHitSound, playSciFiHitSound, speak, play180Sound, isSoundEnabled, setSoundEnabled } from '../utils/audio';
 import { ConfirmModal } from './ConfirmModal';
-import { Button } from './ui';
+import { Button, CallOut } from './ui';
+import { withDartRecorded } from '../utils/segmentStats';
 
 interface SplitScoreProps {
   players: string[];
   profiles: Record<string, Profile>;
-  onFinish: (results: { name: string; score: number }[]) => void;
+  onFinish: (results: {
+    name: string;
+    score: number;
+    splitLog: { target: string; gained: number | null }[];
+    segmentHits: Record<string, number>;
+    dartsThrown: number;
+    triplesHit: number;
+  }[]) => void;
   onAbort: () => void;
   isOnline?: boolean;
   isHost?: boolean;
@@ -22,6 +30,11 @@ interface PlayerState {
   isBot: boolean;
   targetAverage: number;
   color?: string;
+  /** Ziel für Ziel: `gained: null` heißt halbiert. Länge = TARGETS.length. */
+  splitLog: { target: string; gained: number | null }[];
+  segmentHits: Record<string, number>;
+  dartsThrown: number;
+  triplesHit: number;
 }
 
 const TARGETS = [
@@ -52,7 +65,11 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
       score: 40,
       isBot: profiles[p]?.isBot || false,
       targetAverage: profiles[p]?.targetAverage || 40,
-      color: profiles[p]?.color
+      color: profiles[p]?.color,
+      splitLog: TARGETS.map(t => ({ target: t.label, gained: null as number | null })),
+      segmentHits: {},
+      dartsThrown: 0,
+      triplesHit: 0
     }))
   );
   
@@ -62,6 +79,8 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
   const [currentMultiplier, setCurrentMultiplier] = useState<number>(1);
   const [isProcessing, setIsProcessing] = useState(false);
   const [history, setHistory] = useState<HistorySnapshot[]>([]);
+  /** Zählt hoch, wenn halbiert wurde — löst die SPLIT-Einblendung neu aus. */
+  const [splitFlash, setSplitFlash] = useState(0);
 
   const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const finishTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -107,7 +126,10 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
       if (roundScore === 180) play180Sound();
       else speak(roundScore.toString());
     } else {
-      speak("Halbiert");
+      // Der Modus heißt Split Score, und „Split" ist auch das, was am Board
+      // gerufen wird — vorher sagte der Caller „Halbiert".
+      speak('Split');
+      setSplitFlash(st => st + 1);
     }
 
     const st = stateRef.current;
@@ -118,7 +140,30 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
     // score instead of halving it.
     const nextState = st.gameState.map((p, i) => {
       if (i !== st.activePlayer) return p;
-      return { ...p, score: hitAny ? p.score + roundScore : Math.floor(p.score / 2) };
+
+      // Neu aufgebaut statt mutiert: die Snapshots im Undo-Verlauf teilen sich
+      // sonst dieselben Objekte.
+      let segmentHits = p.segmentHits;
+      let triplesHit = p.triplesHit;
+      for (const d of darts) {
+        segmentHits = withDartRecorded(segmentHits, d);
+        if (d.mult === 3) triplesHit += 1;
+      }
+
+      const splitLog = [...p.splitLog];
+      splitLog[st.currentRoundIndex] = {
+        target: TARGETS[st.currentRoundIndex].label,
+        gained: hitAny ? roundScore : null
+      };
+
+      return {
+        ...p,
+        score: hitAny ? p.score + roundScore : Math.floor(p.score / 2),
+        splitLog,
+        segmentHits,
+        triplesHit,
+        dartsThrown: p.dartsThrown + darts.length
+      };
     });
     setGameState(nextState);
 
@@ -128,7 +173,14 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
         // `onFinish` saves the match and books the profile stats. It used to be
         // called from inside a `setGameState` updater, so StrictMode ran it
         // twice and every session was written to history twice over.
-        const finalResults = nextState.map(p => ({ name: p.name, score: p.score }));
+        const finalResults = nextState.map(p => ({
+          name: p.name,
+          score: p.score,
+          splitLog: p.splitLog,
+          segmentHits: p.segmentHits,
+          dartsThrown: p.dartsThrown,
+          triplesHit: p.triplesHit
+        }));
         finishTimeoutRef.current = setTimeout(() => onFinish(finalResults), 500);
         return;
       } else {
@@ -294,8 +346,17 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
     return activeP.score + rs;
   };
 
+  const activeSplitScore = gameState[activePlayer]?.score ?? 0;
+  const activeSplitLog = gameState[activePlayer]?.splitLog ?? [];
+
   return (
     <div className="screen active-screen game-screen-layout">
+      <CallOut
+        trigger={splitFlash}
+        text="SPLIT"
+        detail={`Halbiert auf ${activeSplitScore}`}
+        tone="bad"
+      />
       {isOnline && !isMyTurn && (
          <div className="bust-flash">
             Warte auf {activeP.name}...
@@ -360,27 +421,41 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
             </div>
             
             <div className="training-score-panel">
-               <div style={{ fontSize: '0.9em', color: '#999' }}>Aktuelles Ziel</div>
+               <div className="stat-label">Aktuelles Ziel</div>
                <div className="training-score-value">
                  {currentTarget?.label}
                </div>
-               <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '10px' }}>
-                 {[0, 1, 2].map(idx => (
-                    <div key={idx} style={{ 
-                      width: '40px', 
-                      height: '40px', 
-                      borderRadius: '50%', 
-                      border: '2px solid #555',
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center',
-                      background: currentRoundDarts[idx] ? '#333' : 'transparent',
-                      color: currentRoundDarts[idx]?.value > 0 ? 'var(--text-success)' : 'var(--text-primary)'
-                    }}>
-                      {currentRoundDarts[idx] ? currentRoundDarts[idx].label : ''}
-                    </div>
-                 ))}
+               <div className="split-darts">
+                 {[0, 1, 2].map(idx => {
+                   const dart = currentRoundDarts[idx];
+                   return (
+                     <div
+                       key={idx}
+                       className={`split-dart ${dart ? (dart.value > 0 ? 'is-hit' : 'is-miss') : ''}`}
+                     >
+                       {dart ? dart.label : ''}
+                     </div>
+                   );
+                 })}
                </div>
+
+               {/* Alle neun Ziele auf einen Blick, wie das Runden-Raster im
+                   Power Scoring: erledigte, das laufende und die kommenden. */}
+               <ol className="split-targets">
+                 {activeSplitLog.map((entry, idx) => (
+                   <li
+                     key={entry.target}
+                     className={`split-target ${idx === currentRoundIndex ? 'is-current' : ''} ${
+                       idx < currentRoundIndex ? (entry.gained === null ? 'is-split' : 'is-hit') : ''
+                     }`}
+                   >
+                     <span className="split-target-label">{entry.target}</span>
+                     <span className="split-target-value">
+                       {idx >= currentRoundIndex ? '–' : entry.gained === null ? 'SPLIT' : `+${entry.gained}`}
+                     </span>
+                   </li>
+                 ))}
+               </ol>
             </div>
           </div>
 
@@ -388,18 +463,18 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
             <div className="keypad" style={{ padding: '10px 0' }}>
               {currentTarget?.type === 'number' && currentTarget?.val !== 25 && (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                  <button className="num-btn" onClick={() => handleDart(0, 1)} style={{ color: 'var(--red)', gridColumn: 'span 2' }}>Miss (0)</button>
+                  <button onClick={() => handleDart(0, 1)} className="num-btn is-miss" style={{ gridColumn: 'span 2' }}>Miss (0)</button>
                   <button className="num-btn" onClick={() => handleDart(currentTarget.val, 1)}>Single ({currentTarget.val})</button>
                   <button className="num-btn" onClick={() => handleDart(currentTarget.val, 2)}>Double ({currentTarget.val * 2})</button>
-                  <button className="num-btn" onClick={() => handleDart(currentTarget.val, 3)} style={{ color: 'var(--red)' }}>Triple ({currentTarget.val * 3})</button>
+                  <button className="num-btn" onClick={() => handleDart(currentTarget.val, 3)}>Triple ({currentTarget.val * 3})</button>
                 </div>
               )}
 
               {currentTarget?.type === 'number' && currentTarget?.val === 25 && (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '10px' }}>
-                  <button className="num-btn" onClick={() => handleDart(0, 1)} style={{ color: 'var(--red)' }}>Miss</button>
+                  <button className="num-btn is-miss" onClick={() => handleDart(0, 1)}>Miss</button>
                   <button className="num-btn" onClick={() => handleDart(25, 1)}>Single Bull (25)</button>
-                  <button className="num-btn" onClick={() => handleDart(25, 2)} style={{ color: 'var(--red)' }}>Double Bull (50)</button>
+                  <button className="num-btn" onClick={() => handleDart(25, 2)}>Double Bull (50)</button>
                 </div>
               )}
 
@@ -416,7 +491,7 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
                     </button>
                   ))}
                   {currentTarget.val === 2 && (
-                    <button className="num-btn" onClick={() => handleDart(25, 2)} style={{ color: 'var(--red)' }}>BULL</button>
+                    <button className="num-btn" onClick={() => handleDart(25, 2)}>BULL</button>
                   )}
                   <button className="num-btn" onClick={() => handleDart(0, 1)} style={{ color: 'var(--text-dim)', gridColumn: currentTarget.val === 2 ? 'span 4' : 'span 5' }}>MISS</button>
                 </div>

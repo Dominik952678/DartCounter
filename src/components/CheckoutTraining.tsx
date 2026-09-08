@@ -6,14 +6,25 @@ import { getCheckoutSuggestion } from '../utils/checkouts';
 import { getBotDart } from '../utils/bot';
 import { playDartHitSound, playSciFiHitSound, speak, isSoundEnabled, setSoundEnabled } from '../utils/audio';
 import { ConfirmModal } from './ConfirmModal';
-import { Button } from './ui';
+import { Button, CallOut } from './ui';
+import { withDartRecorded } from '../utils/segmentStats';
 
 interface CheckoutTrainingProps {
   players: string[];
   profiles: Record<string, Profile>;
   checkoutRounds: number;
   checkoutTargets: number;
-  onFinish: (results: { name: string; score: number; roundsCompleted: number; attempts: number; dartsUsed: number }[]) => void;
+  onFinish: (results: {
+    name: string;
+    score: number;
+    roundsCompleted: number;
+    attempts: number;
+    dartsUsed: number;
+    checkoutLog: { target: number; darts: number | null }[];
+    segmentHits: Record<string, number>;
+    dartsThrown: number;
+    triplesHit: number;
+  }[]) => void;
   onAbort: () => void;
   isOnline?: boolean;
   isHost?: boolean;
@@ -39,6 +50,11 @@ interface PlayerState {
   dartsUsed: number;
   roundsCompleted: number;
   attempts: number;
+  /** Ziel für Ziel: `darts: null` heißt, es wurde nicht gefinisht. */
+  checkoutLog: { target: number; darts: number | null }[];
+  segmentHits: Record<string, number>;
+  dartsThrown: number;
+  triplesHit: number;
   bestCheckout: number;
 }
 
@@ -70,6 +86,10 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
             dartsUsed: 0,
             roundsCompleted: 0,
             attempts: 0,
+            checkoutLog: [],
+            segmentHits: {},
+            dartsThrown: 0,
+            triplesHit: 0,
             bestCheckout: 0
         };
     })
@@ -81,6 +101,13 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
   const [isProcessing, setIsProcessing] = useState(false);
   const [roundBust, setRoundBust] = useState(false);
   const [history, setHistory] = useState<HistorySnapshot[]>([]);
+  /**
+   * Der große Zuruf über dem Board. `n` zählt hoch, damit derselbe Ruf zweimal
+   * hintereinander auch zweimal erscheint.
+   */
+  const [callOut, setCallOut] = useState<{ n: number; text: string; detail: string; tone: 'good' | 'bad' }>(
+    { n: 0, text: '', detail: '', tone: 'good' }
+  );
 
   const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -105,7 +132,11 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
           score: p.bestCheckout, 
           roundsCompleted: p.roundsCompleted, 
           attempts: p.attempts, 
-          dartsUsed: p.dartsUsed 
+          dartsUsed: p.dartsUsed,
+          checkoutLog: p.checkoutLog,
+          segmentHits: p.segmentHits,
+          dartsThrown: p.dartsThrown,
+          triplesHit: p.triplesHit 
         })));
       }, 500);
       return;
@@ -126,11 +157,17 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
   }, [checkoutTargets, onFinish, players.length]);
 
   const processCheckout = React.useCallback((dartsInThisTurn: number) => {
-    speak("Game Shot");
+    speak('Game Shot');
 
     const st = stateRef.current;
     const p = st.gameState[st.activePlayer];
     const totalDartsForThisTarget = p.dartsOnCurrentTarget + dartsInThisTurn;
+    setCallOut(c => ({
+      n: c.n + 1,
+      text: 'CHECKOUT!',
+      detail: `${p.targetScore} mit ${totalDartsForThisTarget} Darts`,
+      tone: 'good'
+    }));
     const newAttempts = p.attempts + 1;
     const newCompleted = p.roundsCompleted + 1;
     const newBestCheckout = Math.max(p.bestCheckout, p.targetScore);
@@ -147,6 +184,7 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
       roundsCompleted: newCompleted,
       bestCheckout: newBestCheckout,
       dartsUsed: newDartsUsed,
+      checkoutLog: [...p.checkoutLog, { target: p.targetScore, darts: totalDartsForThisTarget }],
       targetScore: nextTarget,
       currentScore: nextTarget,
       scoreAtStartOfRound: nextTarget,
@@ -173,6 +211,7 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
 
     if (nextRoundOnTarget >= checkoutRounds) {
       // All allowed rounds on this target used -> target failed
+      setCallOut(c => ({ n: c.n + 1, text: 'VERPASST', detail: `${p.targetScore} nicht gefinisht`, tone: 'bad' }));
       const newAttempts = p.attempts + 1;
       const totalDartsForThisTarget = p.dartsOnCurrentTarget + dartsInThisTurn;
       let nextTarget = p.targetScore;
@@ -184,6 +223,7 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
         ...p,
         attempts: newAttempts,
         dartsUsed: p.dartsUsed + totalDartsForThisTarget,
+        checkoutLog: [...p.checkoutLog, { target: p.targetScore, darts: null }],
         targetScore: nextTarget,
         currentScore: nextTarget,
         scoreAtStartOfRound: nextTarget,
@@ -285,6 +325,16 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
 
     const newDarts = [...stateRef.current.currentRoundDarts, dart];
     setCurrentRoundDarts(newDarts);
+
+    // Sofort verbucht, nicht erst am Rundenende: ein Ziel kann platzen oder
+    // ungefinisht auslaufen, geworfen wurde trotzdem — und die Heatmap auf dem
+    // Story-Bild soll jeden Dart zeigen.
+    setGameState(prev => prev.map((pl, i) => i !== stateRef.current.activePlayer ? pl : {
+      ...pl,
+      segmentHits: withDartRecorded(pl.segmentHits, dart),
+      dartsThrown: pl.dartsThrown + 1,
+      triplesHit: pl.triplesHit + (dart.mult === 3 ? 1 : 0)
+    }));
     setCurrentMultiplier(1);
 
     if (base === 20 && mult === 3) playSciFiHitSound('T20');
@@ -406,6 +456,7 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
 
   return (
     <div className="screen active-screen game-screen-layout">
+      <CallOut trigger={callOut.n} text={callOut.text} detail={callOut.detail} tone={callOut.tone} />
       {isOnline && !isMyTurn && (
          <div className="bust-flash">
             Warte auf {activeP.name}...

@@ -4,7 +4,8 @@ import type { Player, MatchHistory } from '../types';
 import { DartboardHeatmap } from './DartboardHeatmap';
 import { checkoutQuote } from '../utils/stats';
 import { Button, ChoiceGroup } from './ui';
-import { PowerScoringImageExport } from './PowerScoringImageExport';
+import { MiniGameStoryExport } from './MiniGameStoryExport';
+import { buildStoryData, hasStoryData, type MiniGameType } from '../utils/storyExport';
 
 const STORY_EXPORT_ID = 'power-scoring-story';
 
@@ -29,10 +30,13 @@ export const StatsModal: React.FC<{
 
   const winnerName = players[winnerIndex]?.name || matchData.winner;
 
-  // Nur Power Scoring liefert bisher Rundenwerte; ohne sie hätte das Bild
-  // nichts zu zeigen, deshalb erscheint der Block gar nicht erst.
-  const exportablePlayers = matchData.gameType === 'powerScoring'
-    ? matchData.players.filter(p => p.roundScores && p.roundScores.length > 0)
+  // Alle drei Trainingsmodi liefern inzwischen einen Rundenverlauf. Fehlt er —
+  // ein X01-Match oder ein Ergebnis von vor dieser Aufzeichnung —, erscheint
+  // der Block gar nicht erst, statt ein leeres Bild anzubieten.
+  const storyType = (['powerScoring', 'splitScore', 'checkoutTraining'] as const)
+    .find(t => t === matchData.gameType) as MiniGameType | undefined;
+  const exportablePlayers = storyType
+    ? matchData.players.filter(p => hasStoryData(p, matchData.gameType))
     : [];
   const canExportStory = exportablePlayers.length > 0;
   const exportTarget = canExportStory
@@ -44,7 +48,7 @@ export const StatsModal: React.FC<{
     setIsExporting(true);
     try {
       const { exportElementAsImage } = await import('../utils/exportImage');
-      await exportElementAsImage(STORY_EXPORT_ID, `Dartcounter-PowerScoring-${exportTarget.name}.png`);
+      await exportElementAsImage(STORY_EXPORT_ID, `Dartcounter-${storyType}-${exportTarget.name}.png`);
     } finally {
       setIsExporting(false);
     }
@@ -246,12 +250,14 @@ export const StatsModal: React.FC<{
       {/* Liegt außerhalb des Sichtbereichs; html2canvas filmt genau diesen
           Knoten ab. Nur der gewählte Spieler wird gerendert, sonst stünden bis
           zu vier 1080×1920-Bäume im DOM. */}
-      {exportTarget && (
-        <PowerScoringImageExport
+      {exportTarget && storyType && (
+        <MiniGameStoryExport
           exportId={STORY_EXPORT_ID}
-          player={exportTarget}
-          date={matchData.date}
+          playerName={exportTarget.name}
           isWinner={exportTarget.name === matchData.winner}
+          date={matchData.date}
+          segmentHits={exportTarget.segmentHits ?? {}}
+          {...buildStoryData(exportTarget, storyType)}
         />
       )}
     </>

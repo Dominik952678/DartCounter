@@ -14,5 +14,8 @@ export type { CardProps, CardHeaderProps } from './Card';
 export { Choice, ChoiceGroup } from './Choice';
 export type { ChoiceProps, ChoiceGroupProps, ChoiceOption } from './Choice';
 
+export { CallOut } from './CallOut';
+export type { CallOutTone } from './CallOut';
+
 export { NavItem } from './NavItem';
 export type { NavItemProps } from './NavItem';

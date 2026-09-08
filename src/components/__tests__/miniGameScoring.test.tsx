@@ -184,3 +184,59 @@ describe('SplitScore scoring', () => {
     expect(shownScore(container)).toBe('85');
   });
 });
+
+/**
+ * Der namensgebende Moment des Modus: verfehlt man das Ziel, wird der Punkte-
+ * stand halbiert. Vorher rief der Caller „Halbiert" und optisch passierte
+ * nichts — jetzt sagt er „Split" und der Zuruf steht groß über dem Board.
+ */
+describe('Split Score: der Split', () => {
+  beforeEach(() => { vi.useFakeTimers(); });
+  afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); });
+
+  const advance = async (ms: number) => {
+    await act(async () => { await vi.advanceTimersByTimeAsync(ms); });
+  };
+
+  it('calls SPLIT and halves the score when the target is missed', async () => {
+    const audio = await import('../../utils/audio');
+    const speak = vi.spyOn(audio, 'speak').mockImplementation(() => {});
+
+    render(
+      <StrictMode>
+        <SplitScore players={['Tester']} profiles={profiles} onFinish={vi.fn()} onAbort={vi.fn()} />
+      </StrictMode>
+    );
+
+    // Erstes Ziel ist die 15 — dreimal daneben verfehlt es.
+    press('Miss (0)'); press('Miss (0)'); press('Miss (0)');
+    await advance(1200);
+
+    expect(speak).toHaveBeenCalledWith('Split');
+    // Der große Zuruf über dem Board. Der erledigte Ziel-Kasten im Raster
+    // zeigt ebenfalls „SPLIT", deshalb wird hier gezielt der Zuruf geprüft.
+    const flash = document.querySelector('.callout-flash');
+    expect(flash).not.toBeNull();
+    expect(flash).toHaveClass('tone-bad');
+    expect(flash?.textContent).toContain('SPLIT');
+    // Startpunktzahl 40, halbiert auf 20.
+    expect(flash?.textContent).toContain('Halbiert auf 20');
+  });
+
+  it('does not call SPLIT when the target is hit', async () => {
+    const audio = await import('../../utils/audio');
+    const speak = vi.spyOn(audio, 'speak').mockImplementation(() => {});
+
+    render(
+      <StrictMode>
+        <SplitScore players={['Tester']} profiles={profiles} onFinish={vi.fn()} onAbort={vi.fn()} />
+      </StrictMode>
+    );
+
+    press('Single (15)'); press('Single (15)'); press('Single (15)');
+    await advance(1200);
+
+    expect(speak).not.toHaveBeenCalledWith('Split');
+    expect(document.querySelector('.callout-flash')).toBeNull();
+  });
+});

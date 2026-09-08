@@ -3250,6 +3250,143 @@ button:disabled, .btn:disabled {
   border-top: 1px solid var(--card-border);
 }
 
+/* ── Split Score ── */
+.split-darts {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+.split-dart {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid var(--card-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: var(--text-body);
+  color: var(--text-secondary);
+}
+.split-dart.is-hit {
+  border-color: var(--text-success);
+  color: var(--text-success);
+  background: color-mix(in srgb, var(--text-success) 14%, transparent);
+}
+.split-dart.is-miss {
+  border-color: var(--text-danger);
+  color: var(--text-danger);
+}
+
+/* Die neun Ziele des Modus, erledigte und kommende. */
+.split-targets {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+.split-target {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--space-2) var(--space-1);
+  border-radius: var(--radius-xs);
+  background: var(--surface-card);
+  border: 2px solid transparent;
+  min-height: 48px;
+  justify-content: center;
+}
+.split-target-label {
+  font-size: var(--text-label);
+  color: var(--text-secondary);
+  line-height: 1;
+}
+.split-target-value {
+  font-family: var(--font-mono);
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  color: var(--text-secondary);
+  line-height: 1;
+}
+.split-target.is-hit { background: var(--surface-hover); }
+.split-target.is-hit .split-target-value { color: var(--text-success); }
+.split-target.is-split { background: color-mix(in srgb, var(--text-danger) 12%, transparent); }
+.split-target.is-split .split-target-value { color: var(--text-danger); font-size: var(--text-label); }
+.split-target.is-current {
+  border-color: var(--accent-primary);
+  background: var(--bg-accent-muted);
+}
+.split-target.is-current .split-target-value { color: var(--accent-primary); }
+
+/* Ein Fehlwurf ist die einzige wirklich negative Taste hier — Triple und Bull
+   trugen vorher ebenfalls Rot, ohne dass es etwas bedeutet hätte (§1). */
+.num-btn.is-miss { color: var(--text-danger); }
+
+/* ── Der große Zuruf ──
+   „SPLIT", „GAME SHOT", „BUST": kurz, mittig, über allem. Markup:
+   components/ui/CallOut.tsx. */
+@keyframes calloutIn {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+  55%  { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+  70%  { transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+@keyframes calloutShake {
+  0%, 100% { margin-left: 0; }
+  25% { margin-left: -10px; }
+  75% { margin-left: 10px; }
+}
+
+.callout-flash {
+  position: fixed;
+  top: 42%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: var(--z-screen-effect);
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  text-align: center;
+  animation: calloutIn 0.35s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.callout-flash-text {
+  font-family: var(--font-mono);
+  font-size: clamp(3rem, 18vw, 8rem);
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.08em;
+  line-height: 1;
+}
+.callout-flash-detail {
+  font-size: var(--text-body-lg);
+  color: var(--text-secondary);
+}
+
+.callout-flash.tone-accent .callout-flash-text {
+  color: var(--accent-primary);
+  text-shadow: 0 0 40px var(--primary-glow);
+}
+.callout-flash.tone-good .callout-flash-text {
+  color: var(--text-success);
+  text-shadow: 0 0 40px color-mix(in srgb, var(--text-success) 45%, transparent);
+}
+/* Der schlechte Fall rüttelt zusätzlich — man soll ihn nicht übersehen. */
+.callout-flash.tone-bad .callout-flash-text {
+  color: var(--text-danger);
+  text-shadow: 0 0 40px color-mix(in srgb, var(--text-danger) 45%, transparent);
+  animation: calloutShake 0.3s ease-in-out 0.2s 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .callout-flash,
+  .callout-flash.tone-bad .callout-flash-text { animation: none; }
+}
+
 /* ═══ Power Scoring ═══
    Der aktive Spieler bekommt die volle Karte mit dem Runden-Raster, die
    Mitspieler nur eine Zeile. Bei bis zu vier Spielern und zwanzig Runden ist

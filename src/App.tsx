@@ -44,6 +44,8 @@ type MiniGameResult = {
   segmentHits?: Record<string, number>;
   dartsThrown?: number;
   triplesHit?: number;
+  splitLog?: { target: string; gained: number | null }[];
+  checkoutLog?: { target: number; darts: number | null }[];
 };
 
 /** Placeholder player rows so the result modal can render mini-game scores. */
@@ -248,6 +250,8 @@ export default function App() {
         ...(r.segmentHits ? { segmentHits: r.segmentHits } : {}),
         ...(r.dartsThrown ? { dartsThrown: r.dartsThrown } : {}),
         ...(r.triplesHit !== undefined ? { triplesHit: r.triplesHit } : {}),
+        ...(r.splitLog ? { splitLog: r.splitLog } : {}),
+        ...(r.checkoutLog ? { checkoutLog: r.checkoutLog } : {}),
         ...(gameType === 'checkoutTraining' ? { attempts: r.attempts, dartsUsed: r.dartsUsed } : {})
       }))
     };
