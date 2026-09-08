@@ -133,4 +133,34 @@ describe('2v2 Freeze Lock & Block Display Rules', () => {
     expect(screen.getAllByText('Geblockt').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText(/Beide Teams gegenseitig geblockt/i)).toBeInTheDocument();
   });
+  /**
+   * Der Sperrzustand geht im Leg mehrfach hin und her: sobald ein Gegner
+   * punktet, steigt die Gegnersumme und das eigene Team ist frei — trifft er
+   * daneben, ist es wieder gesperrt. Die "Entblockt"-Einblendung darf danach
+   * nicht hängenbleiben, denn sie unterdrückt die Block-Anzeige.
+   */
+  it('RULE 6: shows the block again after a short unblock', async () => {
+    const blocked = createPlayers([2, 50, 200, 50]);   // T1 gesperrt: P2=200 > 100
+    const free = createPlayers([2, 150, 200, 100]);    // T1 frei:     P2=200 < 250
+
+    const { rerender } = render(
+      <Scoreboard players={blocked} activePlayer={0} startingPlayerOfLeg={0} config={baseConfig} currentRoundDarts={[]} />
+    );
+    expect(screen.getAllByText('Geblockt').length).toBeGreaterThanOrEqual(1);
+
+    // Gegner punktet -> kurz frei
+    rerender(
+      <Scoreboard players={free} activePlayer={0} startingPlayerOfLeg={0} config={baseConfig} currentRoundDarts={[]} />
+    );
+    expect(screen.getByText(/wurde entblockt/i)).toBeInTheDocument();
+
+    // Gegner wirft daneben, Stand wie vorher -> wieder gesperrt, noch innerhalb
+    // der 2,2 Sekunden der Einblendung.
+    rerender(
+      <Scoreboard players={blocked} activePlayer={0} startingPlayerOfLeg={0} config={baseConfig} currentRoundDarts={[]} />
+    );
+
+    expect(screen.queryByText(/wurde entblockt/i)).not.toBeInTheDocument();
+    expect(screen.getAllByText('Geblockt').length).toBeGreaterThanOrEqual(1);
+  });
 });

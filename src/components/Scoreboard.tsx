@@ -12,6 +12,44 @@ interface ScoreboardProps {
   celebration?: { type: string, playerIndex: number } | null;
 }
 
+/** Dauer der „Entblockt"-Einblendung. */
+const UNLOCK_NOTICE_MS = 2200;
+
+/**
+ * True für einen Moment, nachdem `isBlocked` von true auf false gewechselt ist.
+ *
+ * Stand vorher zweimal ausgeschrieben, einmal je Team, und hatte zwei Fehler:
+ * der Zweig, der die Einblendung auslöste, aktualisierte `wasBlocked` nicht —
+ * und wurde das Team innerhalb der Einblendung wieder gesperrt, räumte React
+ * den Timer ab, ohne dass der neue Lauf das Flag zurücksetzte. Es blieb dann
+ * dauerhaft true.
+ *
+ * Das war nicht nur eine hängende Animation: die Einblendung unterdrückt im
+ * Markup die „Geblockt"- und die „Muss mind. X Pkt werfen"-Zeile. Ein Team,
+ * das kurz frei war und wieder gesperrt wurde, sah für den Rest des Legs
+ * unblockiert aus, obwohl die Engine das Auschecken weiter verweigerte.
+ */
+const useJustUnlocked = (isBlocked: boolean): boolean => {
+  const [justUnlocked, setJustUnlocked] = useState(false);
+  const wasBlocked = useRef(isBlocked);
+
+  useEffect(() => {
+    const previously = wasBlocked.current;
+    wasBlocked.current = isBlocked;
+    if (isBlocked || !previously) return;
+
+    setJustUnlocked(true);
+    const timer = setTimeout(() => setJustUnlocked(false), UNLOCK_NOTICE_MS);
+    return () => clearTimeout(timer);
+  }, [isBlocked]);
+
+  // Abgeleitet statt im Effekt zurückgesetzt: wird das Team wieder gesperrt,
+  // räumt React zwar den Timer ab, aber der Zustand ist damit ohnehin überholt.
+  // Die Verknüpfung hier sorgt dafür, dass eine hängende Einblendung die
+  // Block-Anzeige nicht verdecken kann — und spart ein setState im Effekt.
+  return justUnlocked && !isBlocked;
+};
+
 interface TeamSideProps {
   team: 1 | 2;
   total: number;
@@ -81,29 +119,8 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
   const isOnlySinglePersonBlocking = is2v2 && (throwerIndices.length === 1);
   const singleThrowerIndex = isOnlySinglePersonBlocking ? throwerIndices[0] : -1;
 
-  // Unlock animation state handling
-  const prevT1Blocked = useRef(isT1Blocked);
-  const prevT2Blocked = useRef(isT2Blocked);
-  const [t1JustUnlocked, setT1JustUnlocked] = useState(false);
-  const [t2JustUnlocked, setT2JustUnlocked] = useState(false);
-
-  useEffect(() => {
-    if (prevT1Blocked.current && !isT1Blocked) {
-      setT1JustUnlocked(true);
-      const timer = setTimeout(() => setT1JustUnlocked(false), 2200);
-      return () => clearTimeout(timer);
-    }
-    prevT1Blocked.current = isT1Blocked;
-  }, [isT1Blocked]);
-
-  useEffect(() => {
-    if (prevT2Blocked.current && !isT2Blocked) {
-      setT2JustUnlocked(true);
-      const timer = setTimeout(() => setT2JustUnlocked(false), 2200);
-      return () => clearTimeout(timer);
-    }
-    prevT2Blocked.current = isT2Blocked;
-  }, [isT2Blocked]);
+  const t1JustUnlocked = useJustUnlocked(isT1Blocked);
+  const t2JustUnlocked = useJustUnlocked(isT2Blocked);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', gap: '6px' }}>
