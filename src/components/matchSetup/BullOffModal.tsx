@@ -10,6 +10,15 @@ interface BullOffModalProps {
   /** Final line-up (already shuffled if "random order" was also chosen). */
   players: string[];
   profiles: Record<string, Profile>;
+  /**
+   * Indizes derer, die tatsächlich werfen. Im Einzel sind das alle; im 2v2
+   * wirft pro Team nur einer, nämlich der erste seines Teams — die Sitze 0 und
+   * 1, weil `startGame` die Teams über die Sitzparität vergibt.
+   *
+   * Der Gewinner beginnt Leg 1, und weil er in seinem Team vorne sitzt, wirft
+   * anschließend regulär abwechselnd weiter.
+   */
+  contenders?: number[];
   onResolved: (startingIndex: number) => void;
   onCancel: () => void;
 }
@@ -34,13 +43,22 @@ const categorize = (base: number, mult: number): BullResult => {
  * else (`throwAtTarget`), so a category from a bot and a category typed in by
  * a human are directly comparable.
  */
-export const BullOffModal: React.FC<BullOffModalProps> = ({ players, profiles, onResolved, onCancel }) => {
+export const BullOffModal: React.FC<BullOffModalProps> = ({
+  players,
+  profiles,
+  contenders,
+  onResolved,
+  onCancel
+}) => {
+  // Ohne Angabe wirft jeder — das ist der Einzelfall.
+  const throwers = contenders ?? players.map((_, i) => i);
   const [results, setResults] = useState<(BullResult | null)[]>(() => players.map(() => null));
-  const [pendingIndices, setPendingIndices] = useState<number[]>(() => players.map((_, i) => i));
+  const [pendingIndices, setPendingIndices] = useState<number[]>(() => throwers);
   const [tieMessage, setTieMessage] = useState<string | null>(null);
   const titleId = useId();
   const dialogRef = useModalA11y<HTMLDivElement>();
 
+  const isTeamBullOff = throwers.length < players.length;
   const currentIndex = pendingIndices.find(i => results[i] === null);
   const currentPlayer = currentIndex !== undefined ? players[currentIndex] : undefined;
   const isCurrentBot = currentPlayer ? !!profiles[currentPlayer]?.isBot : false;
@@ -99,11 +117,14 @@ export const BullOffModal: React.FC<BullOffModalProps> = ({ players, profiles, o
       >
         <h3 id={titleId} style={{ textAlign: 'center', marginBottom: '6px' }}>🎯 Ausbullen</h3>
         <p style={{ textAlign: 'center', color: 'var(--text-dim)', fontSize: '0.9em', marginBottom: '18px' }}>
-          {tieMessage ?? 'Wer den Bull am nächsten trifft, beginnt Leg 1'}
+          {tieMessage ?? (isTeamBullOff
+            ? 'Ein Wurf pro Team — das Team des Siegers beginnt Leg 1'
+            : 'Wer den Bull am nächsten trifft, beginnt Leg 1')}
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
-          {players.map((name, i) => {
+          {throwers.map(i => {
+            const name = players[i];
             const isPending = pendingIndices.includes(i);
             const result = results[i];
             const isActive = i === currentIndex;
@@ -126,10 +147,13 @@ export const BullOffModal: React.FC<BullOffModalProps> = ({ players, profiles, o
 
         {currentIndex !== undefined && !isCurrentBot && (
           <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-            <Button variant="primary" style={{ flex: 1 }} onClick={() => submitResult(currentIndex, 50)}>
+            {/* Drei gleichrangige Ergebnisse, keine primäre Aktion — §1 lässt
+                ohnehin nur eine gefüllte Akzentfläche pro Screen zu, und der
+                Dialog hat keine. */}
+            <Button variant="secondary" style={{ flex: 1 }} onClick={() => submitResult(currentIndex, 50)}>
               🎯 Bullseye
             </Button>
-            <Button variant="primary" style={{ flex: 1 }} onClick={() => submitResult(currentIndex, 25)}>
+            <Button variant="secondary" style={{ flex: 1 }} onClick={() => submitResult(currentIndex, 25)}>
               🔴 Bull
             </Button>
             <Button variant="secondary" style={{ flex: 1 }} onClick={() => submitResult(currentIndex, 0)}>

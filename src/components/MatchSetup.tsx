@@ -264,6 +264,8 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
         <BullOffModal
           players={bullOffPlayers}
           profiles={profiles}
+          /* Im 2v2 wirft einer pro Team: Sitz 0 führt Team 1, Sitz 1 Team 2. */
+          contenders={config.is2v2 ? [0, 1] : undefined}
           onResolved={startingIndex => {
             const players = bullOffPlayers;
             setBullOffPlayers(null);
