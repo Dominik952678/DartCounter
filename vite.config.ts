@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import pkg from './package.json' with { type: 'json' }
 
 export default defineConfig({
   server: {
@@ -8,7 +9,10 @@ export default defineConfig({
   },
   define: {
     global: 'window',
-    __APP_VERSION__: JSON.stringify('v1.4.0'),
+    // Aus package.json, nicht noch einmal hier hingeschrieben: die Nummer
+    // stand vorher an drei Stellen und musste von Hand synchron gehalten
+    // werden — beim Redesign blieben prompt alle drei auf 1.4.0 stehen.
+    __APP_VERSION__: JSON.stringify(`v${pkg.version}`),
     __BUILD_TIME__: JSON.stringify(new Date().toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' ' + new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })),
   },
   plugins: [
