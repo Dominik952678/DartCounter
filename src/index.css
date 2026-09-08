@@ -1,11 +1,13 @@
 /* Farbe, Typografie und Spacing kommen aus einer Datei — siehe DESIGN.md §1–3.
    Neue Farbwerte gehören dorthin, nicht hierher.
 
-   `vaporwave.css` und `cyberpunk.css` sind absichtlich nicht mehr eingebunden:
-   beide wirken fast ausschließlich über Klassennamen mit `!important`, die das
-   Redesign ersetzt, und sind deshalb aus dem Theme-Switcher genommen (siehe
-   useThemeStore.ts). Die Dateien bleiben für den Folge-Task liegen. */
+   Reihenfolge ist Absicht: tokens.css definiert die Rollen auf `:root`, die
+   beiden Themes überschreiben sie auf `[data-theme="…"]`. Weil die
+   Attribut-Selektoren spezifischer sind, gewinnt das aktive Theme, egal wo
+   seine Datei steht — die Reihenfolge macht nur die Leserichtung klar. */
 @import './styles/tokens.css';
+@import './styles/vaporwave.css';
+@import './styles/cyberpunk.css';
 
 /* ── Breakpoint-Skala ──
    Media-Queries können keine Custom-Properties lesen, die Zahlen stehen also

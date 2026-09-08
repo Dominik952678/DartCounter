@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { Routes, Route, useNavigate, Navigate, useLocation } from 'react-router-dom';
 import { HomeContainer } from './components/HomeContainer';
 import { MainMenu } from './components/MainMenu';
@@ -28,6 +28,7 @@ import { saveMatch, getMatchPage, syncMatchesAndProfilesForGuests, reconstructAl
 import { reportPersistenceError, useNotificationStore, type NotificationType } from './store/useNotificationStore';
 
 import { useProfiles } from './hooks/useProfiles';
+import { useThemeStore } from './store/useThemeStore';
 import { useGameEngine } from './hooks/useGameEngine';
 import { useAuthStore } from './store/useAuthStore';
 import { Button } from './components/ui';
@@ -75,6 +76,7 @@ export default function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, initialize } = useAuthStore();
+  const { theme, scanlines, gridAnimation } = useThemeStore();
   const notifications = useNotificationStore(s => s.notifications);
   const dismissNotification = useNotificationStore(s => s.dismiss);
 
@@ -274,8 +276,33 @@ export default function App() {
     ).catch(err => reportPersistenceError(err, 'Match konnte nicht mit Gästen synchronisiert werden'));
   }, [statsModalData, applyProfiles, user, refreshMatches]);
 
+  /* Die dekorativen Hintergründe der beiden Alt-Themes. `classic` hat keine,
+     deshalb null statt eines leeren Fragments. Beide Overlays lassen sich im
+     Profil einzeln abschalten. */
+  const themeOverlays = useMemo(() => {
+    if (theme === 'vaporwave') {
+      return (
+        <>
+          <div className="vaporwave-sun" aria-hidden="true" />
+          {gridAnimation && <div className="vaporwave-grid-floor" aria-hidden="true" />}
+          {scanlines && <div className="crt-scanlines" aria-hidden="true" />}
+        </>
+      );
+    }
+    if (theme === 'cyberpunk') {
+      return (
+        <>
+          {gridAnimation && <div className="cyberpunk-circuit-grid" aria-hidden="true" />}
+          {scanlines && <div className="cyberpunk-scanlines" aria-hidden="true" />}
+        </>
+      );
+    }
+    return null;
+  }, [theme, gridAnimation, scanlines]);
+
   return (
     <div className={`app-container ${isMatchActive ? 'app-container-match' : ''}`}>
+      {themeOverlays}
       {/* Inside the container, so the dock below stays put while a route loads. */}
       <Suspense fallback={<LoadingScreen message="Wird geladen…" />}>
         <Routes>

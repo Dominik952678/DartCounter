@@ -13,19 +13,25 @@ describe('useThemeStore Theme System', () => {
     expect(document.documentElement.getAttribute('data-theme')).toBe('classic');
   });
 
-  it('persists the theme and mirrors it onto data-theme', () => {
-    useThemeStore.getState().setTheme('classic');
-    expect(useThemeStore.getState().theme).toBe('classic');
-    expect(localStorage.getItem('dartcounter_theme')).toBe('classic');
-    expect(document.documentElement.getAttribute('data-theme')).toBe('classic');
-  });
+  // Alle drei sind wieder wählbar. Das `data-theme` am Wurzelelement ist der
+  // einzige Hebel, an dem die beiden Theme-Stylesheets hängen — bleibt es
+  // stehen, greift keine ihrer Regeln.
+  it.each(['classic', 'vaporwave', 'cyberpunk'] as const)(
+    'persists %s and mirrors it onto data-theme',
+    (theme) => {
+      useThemeStore.getState().setTheme(theme);
+      expect(useThemeStore.getState().theme).toBe(theme);
+      expect(localStorage.getItem('dartcounter_theme')).toBe(theme);
+      expect(document.documentElement.getAttribute('data-theme')).toBe(theme);
+    }
+  );
 
-  // Vaporwave und Cyberpunk sind während des Redesigns aus THEMES genommen.
-  // Wer eines von beiden gespeichert hat, darf nicht auf einem Theme
-  // festhängen, dessen Stylesheet gar nicht mehr geladen wird.
-  it.each(['vaporwave', 'cyberpunk'])('falls back to classic for the retired %s theme', (retired) => {
-    localStorage.setItem('dartcounter_theme', retired);
-    expect(readOneOf('theme', ['classic'] as const, 'classic')).toBe('classic');
+  // Ein Wert, den niemand kennt — etwa aus einer eingespielten Sicherung oder
+  // einem alten Build —, darf die App nicht auf einem Theme ohne Stylesheet
+  // festhalten.
+  it('falls back to classic for an unknown stored theme', () => {
+    localStorage.setItem('dartcounter_theme', 'synthwave');
+    expect(readOneOf('theme', ['classic', 'vaporwave', 'cyberpunk'] as const, 'classic')).toBe('classic');
   });
 
   it('toggles scanlines and gridAnimation', () => {

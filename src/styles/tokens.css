@@ -8,10 +8,14 @@
    · Neue Farbwerte gehören in diese Datei, nirgendwo sonst — kein ad-hoc-Hex
      in Komponenten oder in index.css.
 
-   Scope: ausschließlich das `classic`-Theme. `vaporwave.css` und
-   `cyberpunk.css` sind bewusst nicht auf dieses Rollen-System umgestellt und
-   deshalb aktuell nicht erreichbar (siehe useThemeStore.ts). Volle Parität für
-   diese beiden ist ein eigener Folge-Task.
+   Diese Datei ist das `classic`-Theme. `vaporwave.css` und `cyberpunk.css`
+   überschreiben dieselben Rollen auf `[data-theme="…"]` und regeln als
+   Klassenregel nur noch, was ein Token nicht ausdrückt. Ein neues Token gehört
+   deshalb hierher UND in beide Themes, sonst erbt dort still der classic-Wert.
+
+   DESIGN.md beschreibt classic. Für die zwei anderen ist davon die Struktur
+   verbindlich (Rollen, Komponenten, die Breakpoints aus §6), nicht das
+   Erscheinungsbild — Versalien und schwere Gewichte sind dort das Motiv.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
@@ -156,13 +160,15 @@
   --safe-left: env(safe-area-inset-left, 0px);
 
   /* ─────────────────────────────────────────────────────────────────────────
-     Legacy-Aliasse — Abbau in Phase 2–5
+     Legacy-Aliasse
 
-     Die Alt-Namen zeigen auf die Rollen, deren Bedeutung sie heute schon
-     tragen. Dadurch gibt es keine zwei parallelen Farbsysteme: wer noch
-     `var(--text-dim)` schreibt, bekommt bereits den DESIGN.md-Wert. Beim
-     Migrieren eines Screens wird der Alt-Name durch die Rolle ersetzt; ist ein
-     Alias nirgends mehr referenziert, fliegt er hier raus.
+     Die Alt-Namen zeigen auf die Rollen, deren Bedeutung sie tragen. Weil sie
+     per `var()` verweisen und `:root` und `html[data-theme="…"]` dasselbe
+     Element sind, folgen sie automatisch dem aktiven Theme — ein Theme muss sie
+     also nicht einzeln überschreiben.
+
+     Der Abbau ist weitgehend erledigt; was noch darauf zeigt, sind die Stellen,
+     die das Redesign nicht angefasst hat.
      ───────────────────────────────────────────────────────────────────────── */
   --bg: var(--bg-base);
   --card: var(--surface-card);
@@ -176,34 +182,30 @@
 
   /* Bewusst NICHT aliasiert: --blue, --orange, --purple.
 
-     DESIGN.md §1 ersetzt genau diese vier Screen-abhängigen Farben durch feste
-     Rollen — und das ist semantische Arbeit, keine mechanische Umbenennung.
-     Dasselbe `var(--blue)` steht heute je nach Fundstelle für ein Multiplayer-
-     Icon (→ --accent-info), einen Auswahl-Zustand (→ --accent-primary) oder
-     reine Dekoration (→ ersatzlos weg). Ein pauschaler Alias würde die falsche
-     Bedeutung festschreiben. Diese drei werden pro Screen in Phase 5 aufgelöst
-     und verschwinden dann. --green und --red sind dagegen aliasiert, weil ihre
-     DESIGN.md-Rolle und ihr heutiger Wert exakt übereinstimmen. */
+     §1 ersetzt genau diese Screen-abhängigen Farben durch Rollen, und das war
+     semantische Arbeit statt einer Umbenennung — dasselbe `var(--blue)` stand
+     je nach Fundstelle für ein Multiplayer-Icon, einen Auswahl-Zustand oder
+     reine Dekoration. Nach Phase 5 liest sie nur noch die Legende der
+     Dartboard-Heatmap, die als Kernstück der App unverändert bleibt (§7). Weil
+     kein Theme sie überschreibt, trägt die Legende dort in allen drei Themes
+     denselben Ton; das ist bekannt und Teil der Entscheidung, das Widget nicht
+     anzufassen. */
   --blue: #3B82F6;
   --orange: #F97316;
   --purple: #8B5CF6;
 
-  /* Ohne Rolle in DESIGN.md — unverändert übernommen, damit Phase 1 nichts
-     kaputt macht. Was davon bleibt, entscheidet sich in Phase 2 (Karten-Border,
-     Hover-Zustände) bzw. beim jeweiligen Screen. */
+  /* Ohne eigene Rolle in DESIGN.md, aber in Gebrauch — und deshalb von beiden
+     Themes überschrieben. */
   --bg-surface: #111827;                      /* deckend; Modals, Overlays */
-  --card-hover: rgba(30, 41, 59, 0.92);
   --card-border: rgba(148, 163, 184, 0.12);
   --card-border-glow: rgba(251, 191, 36, 0.3);
   --surface-hover: rgba(148, 163, 184, 0.12);
   --text-muted: #64748B;
   --primary-glow: rgba(var(--accent-primary-rgb), 0.3);
-  --primary-dark: #D97706;
-  --green-glow: rgba(16, 185, 129, 0.25);
-  --blue-glow: rgba(59, 130, 246, 0.25);
-  --orange-glow: rgba(249, 115, 22, 0.25);
-  --red-glow: rgba(239, 68, 68, 0.25);
-  --purple-glow: rgba(139, 92, 246, 0.25);
+  --red-glow: rgba(var(--text-danger-rgb), 0.25);
+  /* --card-hover, --primary-dark und die Glows zu blau, orange, violett und
+     grün sind entfallen: nach dem Redesign las sie niemand mehr, und ein Token,
+     das nichts einfärbt, muss auch kein Theme überschreiben. */
 
   /* Radius-Stufen jenseits der Karte: DESIGN.md kennt nur den Card-Radius.
      Bis geklärt ist, was Pills und Modals bekommen, bleiben sie wie gehabt. */

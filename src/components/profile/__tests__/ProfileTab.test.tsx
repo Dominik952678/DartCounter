@@ -38,7 +38,7 @@ describe('ProfileTab', () => {
 
     expect(screen.getByText('Neues Profil erstellen')).toBeInTheDocument();
     expect(screen.getByText('Vorhandene Profile')).toBeInTheDocument();
-    expect(screen.getByText('🎨 Design & Theme')).toBeInTheDocument();
+    expect(screen.getByText('Design & Theme')).toBeInTheDocument();
     expect(screen.getByText('Testdaten & Demospiele')).toBeInTheDocument();
   });
 
