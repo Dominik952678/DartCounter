@@ -42,6 +42,26 @@ security is what protects the data (see below).
 | `npm run lint` | ESLint over the repo |
 | `npm run ci` | typecheck → lint → tests → build; the gate every change passes |
 
+## Versioning
+
+Major.Minor.Fix.
+
+| Segment | When |
+|---|---|
+| **Major** | Breaking changes — a stored format that no longer reads, a feature removed |
+| **Minor** | New features, or a completed piece of work such as the UI redesign |
+| **Fix** | Bug fixes |
+
+The number lives in **`package.json` and nowhere else**. `vite.config.ts` reads
+it from there into `__APP_VERSION__`, and `src/version.ts` exposes it to the app
+as `APP_VERSION`; the main menu prints it next to the build time. It used to be
+written out in all three files and had to be edited in step, which is how ten
+phases of redesign shipped while every copy still said 1.4.0.
+
+`__BUILD_TIME__` needs no maintenance — `vite.config.ts` stamps it from
+`new Date()` on every build. The `'dev'` fallbacks in `src/version.ts` only
+apply where Vite's `define` is absent, which is Vitest.
+
 ## Supabase
 
 One table carries everything:
