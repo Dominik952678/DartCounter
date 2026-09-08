@@ -19,21 +19,21 @@ export const BREAKPOINTS = {
   /** iPad Air Querformat und iPad 13" Hochformat. Ab hier Sidebar statt Dock. */
   tablet: 900,
   /** iPad Air 13" Querformat und größer. Inhalt bekommt ~960px Maximalbreite. */
-  wide: 1200
+  wide: 1200,
 } as const;
 
 /**
  * Die Basis-Stufe hat keine Zahl — sie ist alles unterhalb von
  * `phoneLandscape` und damit iPhone im Hochformat.
  */
-export type Breakpoint = 'base' | keyof typeof BREAKPOINTS;
+export type Breakpoint = "base" | keyof typeof BREAKPOINTS;
 
 /** Aufsteigend. Die Reihenfolge trägt Bedeutung, siehe `isAtLeast`. */
 export const BREAKPOINT_ORDER: readonly Breakpoint[] = [
-  'base',
-  'phoneLandscape',
-  'tablet',
-  'wide'
+  "base",
+  "phoneLandscape",
+  "tablet",
+  "wide",
 ];
 
 /** Die Media-Query zu einer Stufe, in derselben Form wie in index.css. */

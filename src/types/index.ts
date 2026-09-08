@@ -142,6 +142,13 @@ export interface PlayerStats {
   score?: number;
   attempts?: number;
   dartsUsed?: number;
+  /**
+   * Punkte je Runde, in Wurfreihenfolge. `null` steht für eine Runde, die
+   * nicht mehr geworfen wurde — beim Abbruch oder wenn ein Spieler in der
+   * letzten Runde nicht mehr drankam.
+   */
+  roundScores?: (number | null)[];
+  dartsThrown?: number;
 }
 
 export interface MatchHistory {

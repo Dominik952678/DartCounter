@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useModalA11y } from '../hooks/useModalA11y';
 import type { Player, MatchHistory } from '../types';
 import { DartboardHeatmap } from './DartboardHeatmap';
 import { checkoutQuote } from '../utils/stats';
-import { Button } from './ui';
+import { Button, ChoiceGroup } from './ui';
+import { PowerScoringImageExport } from './PowerScoringImageExport';
+
+const STORY_EXPORT_ID = 'power-scoring-story';
 
 export const StatsModal: React.FC<{
   isOpen: boolean;
@@ -14,6 +17,9 @@ export const StatsModal: React.FC<{
   onRematch?: () => void;
   onUndoLastDart?: () => void;
 }> = ({ isOpen, winnerIndex, players, matchData, onClose, onRematch, onUndoLastDart }) => {
+  const [exportName, setExportName] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+
   const isReady = isOpen && winnerIndex !== null && !!matchData;
   // Escape is deliberately not wired: closing this dialog books the match and
   // navigates away, which is not what a stray key press should do.
@@ -22,6 +28,27 @@ export const StatsModal: React.FC<{
   if (!isReady || winnerIndex === null || !matchData) return null;
 
   const winnerName = players[winnerIndex]?.name || matchData.winner;
+
+  // Nur Power Scoring liefert bisher Rundenwerte; ohne sie hätte das Bild
+  // nichts zu zeigen, deshalb erscheint der Block gar nicht erst.
+  const exportablePlayers = matchData.gameType === 'powerScoring'
+    ? matchData.players.filter(p => p.roundScores && p.roundScores.length > 0)
+    : [];
+  const canExportStory = exportablePlayers.length > 0;
+  const exportTarget = canExportStory
+    ? exportablePlayers.find(p => p.name === exportName) ?? exportablePlayers[0]
+    : null;
+
+  const handleStoryExport = async () => {
+    if (!exportTarget) return;
+    setIsExporting(true);
+    try {
+      const { exportElementAsImage } = await import('../utils/exportImage');
+      await exportElementAsImage(STORY_EXPORT_ID, `Dartcounter-PowerScoring-${exportTarget.name}.png`);
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   return (
     <>
@@ -160,6 +187,29 @@ export const StatsModal: React.FC<{
             })}
           </div>
           
+          {canExportStory && (
+            <div className="story-export">
+              <span className="section-label">Als Bild teilen</span>
+              {exportablePlayers.length > 1 && (
+                <ChoiceGroup
+                  name="storyExportPlayer"
+                  value={exportTarget?.name ?? ''}
+                  options={exportablePlayers.map(p => ({ value: p.name, label: p.name }))}
+                  onChange={setExportName}
+                  ariaLabel="Wessen Statistik exportiert wird"
+                />
+              )}
+              <Button
+                variant="secondary"
+                fullWidth
+                disabled={isExporting}
+                onClick={handleStoryExport}
+              >
+                {isExporting ? 'Bild wird erstellt…' : '📸 Story-Bild erstellen'}
+              </Button>
+            </div>
+          )}
+
           {/* Action Buttons: Start Again, Undo last throw, Back to Menu */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '12px' }}>
             {onRematch && (
@@ -192,6 +242,18 @@ export const StatsModal: React.FC<{
           </div>
         </div>
       </div>
+
+      {/* Liegt außerhalb des Sichtbereichs; html2canvas filmt genau diesen
+          Knoten ab. Nur der gewählte Spieler wird gerendert, sonst stünden bis
+          zu vier 1080×1920-Bäume im DOM. */}
+      {exportTarget && (
+        <PowerScoringImageExport
+          exportId={STORY_EXPORT_ID}
+          player={exportTarget}
+          date={matchData.date}
+          isWinner={exportTarget.name === matchData.winner}
+        />
+      )}
     </>
   );
 };

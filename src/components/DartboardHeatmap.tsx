@@ -7,6 +7,12 @@ interface DartboardHeatmapProps {
   profile?: Profile;
   customHits?: Record<string, number>;
   title?: string;
+  /**
+   * Nur das Board, ohne Filter-Chips und ohne Hover-Anzeige — für den
+   * Bild-Export, wo nichts bedienbar ist. Die Visualisierung selbst ist
+   * identisch.
+   */
+  staticView?: boolean;
 }
 
 // Standard PDC sector order clockwise from the top (12 o'clock)
@@ -28,7 +34,7 @@ const resolveSegmentHits = (segmentHits: Record<string, number>, key: string): n
 
 const EMPTY_HITS: Record<string, number> = {};
 
-export const DartboardHeatmap: React.FC<DartboardHeatmapProps> = ({ profile, customHits, title = "2D Treffer-Heatmap" }) => {
+export const DartboardHeatmap: React.FC<DartboardHeatmapProps> = ({ profile, customHits, title = "2D Treffer-Heatmap", staticView = false }) => {
   const [filterMode, setFilterMode] = useState<'all' | 'triples' | 'doubles'>('all');
   const [hoveredSegment, setHoveredSegment] = useState<{ label: string; count: number; percent: number } | null>(null);
 
@@ -121,7 +127,7 @@ export const DartboardHeatmap: React.FC<DartboardHeatmapProps> = ({ profile, cus
         {/* Filter (§5: ein Selected-State fuer alles). Vorher drei Kopien
             desselben Chips mit blauer Vollflaeche, Inline-Farben und 28px
             Hoehe — unter der 44pt-Grenze aus §4. */}
-        <ChoiceGroup
+        {!staticView && <ChoiceGroup
           name="heatmapFilter"
           value={filterMode}
           options={[
@@ -131,7 +137,7 @@ export const DartboardHeatmap: React.FC<DartboardHeatmapProps> = ({ profile, cus
           ]}
           onChange={setFilterMode}
           ariaLabel="Trefferfilter"
-        />
+        />}
       </div>
 
       {totalRecordedHits === 0 ? (

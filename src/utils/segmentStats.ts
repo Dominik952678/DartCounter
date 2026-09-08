@@ -32,3 +32,38 @@ export const countedSegmentHits = (hits: Record<string, number>): Record<string,
 /** How many darts the record actually represents. */
 export const totalSegmentHits = (hits: Record<string, number>): number =>
   Object.values(countedSegmentHits(hits)).reduce((sum, value) => sum + (value || 0), 0);
+
+/**
+ * Der Schlüssel, unter dem ein Wurf gezählt wird: `T20`, `D16`, `S5`, `DB`,
+ * `SB` oder `Miss`.
+ *
+ * Stand nur in der X01-Engine, während die Trainingsmodi gar keine
+ * Segmenttreffer sammelten. Damit deren Heatmap dieselbe Form hat wie die aus
+ * einem Match, liegt die Regel jetzt hier.
+ */
+export const segmentKeyFor = (dart: { base: number; mult: number }): string => {
+  if (dart.base === 25) return dart.mult === 2 ? 'DB' : 'SB';
+  if (dart.base === 0) return 'Miss';
+  const prefix = dart.mult === 3 ? 'T' : dart.mult === 2 ? 'D' : 'S';
+  return `${prefix}${dart.base}`;
+};
+
+/**
+ * Zählt einen Wurf in einen Trefferdatensatz — als neues Objekt, damit sich
+ * ein Snapshot im Undo-Verlauf nicht mitverändert.
+ *
+ * Geschrieben werden zwei Schlüssel je Wurf: der genaue und die nackte Zahl,
+ * die Radar und Heatmap lesen. `countedSegmentHits` oben trennt sie wieder,
+ * damit nichts doppelt gezählt wird.
+ */
+export const withDartRecorded = (
+  hits: Record<string, number>,
+  dart: { base: number; mult: number }
+): Record<string, number> => {
+  const next = { ...hits };
+  const key = segmentKeyFor(dart);
+  next[key] = (next[key] || 0) + 1;
+  const baseKey = String(dart.base);
+  next[baseKey] = (next[baseKey] || 0) + 1;
+  return next;
+};

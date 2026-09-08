@@ -6,12 +6,21 @@ import { getBotDart } from '../utils/bot';
 import { playDartHitSound, playSciFiHitSound, speak, play180Sound, isSoundEnabled, setSoundEnabled } from '../utils/audio';
 import { ConfirmModal } from './ConfirmModal';
 import { Button } from './ui';
+import { withDartRecorded } from '../utils/segmentStats';
+import { playerColorBySeat } from '../utils/playerColors';
 
 interface PowerScoringProps {
   players: string[];
   profiles: Record<string, Profile>;
   rounds: number;
-  onFinish: (results: { name: string; score: number }[]) => void;
+  onFinish: (results: {
+    name: string;
+    score: number;
+    roundScores: (number | null)[];
+    segmentHits: Record<string, number>;
+    dartsThrown: number;
+    triplesHit: number;
+  }[]) => void;
   onAbort: () => void;
   isOnline?: boolean;
   isHost?: boolean;
@@ -25,6 +34,16 @@ interface PlayerState {
   isBot: boolean;
   targetAverage: number;
   color?: string;
+  /**
+   * Punkte je Runde, `null` solange nicht geworfen. Die Länge steht von Anfang
+   * an fest, damit das Raster unten alle Runden zeigen kann — auch die, die
+   * noch kommen.
+   */
+  roundScores: (number | null)[];
+  /** Für die Heatmap auf dem Story-Bild. */
+  segmentHits: Record<string, number>;
+  dartsThrown: number;
+  triplesHit: number;
 }
 
 interface HistorySnapshot {
@@ -33,6 +52,56 @@ interface HistorySnapshot {
   currentRound: number;
   currentRoundDarts: Dart[];
 }
+
+interface PlayerCardProps {
+  player: PlayerState;
+  seat: number;
+  currentRound: number;
+  /** Punkte der laufenden Runde, noch nicht gebucht. */
+  liveRoundScore: number;
+}
+
+/**
+ * Der Spieler, der gerade wirft: Name, Gesamtpunktzahl und darunter jede Runde
+ * als eigener Kasten.
+ *
+ * Alle Runden sind von Beginn an zu sehen — die noch offenen als „–". Dadurch
+ * weiß man jederzeit, wie viel Spiel noch übrig ist, statt es aus „Runde 3 / 10"
+ * ableiten zu müssen. Fünf Kästen je Reihe.
+ */
+const PowerScoringPlayerCard: React.FC<PlayerCardProps> = ({
+  player,
+  seat,
+  currentRound,
+  liveRoundScore
+}) => {
+  const accent = player.color || playerColorBySeat(seat);
+
+  return (
+    <div className="ps-card" style={{ '--player-color': accent } as React.CSSProperties}>
+      <div className="ps-card-head">
+        <span className="ps-card-name">{player.isBot ? '🤖 ' : ''}{player.name}</span>
+        <span className="ps-card-total">{player.score + liveRoundScore}</span>
+      </div>
+
+      <ol className="ps-rounds">
+        {player.roundScores.map((value, idx) => {
+          const isCurrent = idx === currentRound - 1;
+          const shown = value ?? (isCurrent && liveRoundScore > 0 ? liveRoundScore : null);
+          return (
+            <li
+              key={idx}
+              className={`ps-round ${isCurrent ? 'is-current' : ''} ${shown !== null ? 'is-filled' : ''}`}
+            >
+              <span className="ps-round-no">{idx + 1}</span>
+              <span className="ps-round-value">{shown ?? '–'}</span>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+};
 
 export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, rounds, onFinish, onAbort, isOnline, isHost, roomChannel, myUsername }) => {
   const [showAbortConfirm, setShowAbortConfirm] = useState(false);
@@ -43,7 +112,11 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
       score: 0,
       isBot: profiles[p]?.isBot || false,
       targetAverage: profiles[p]?.targetAverage || 40,
-      color: profiles[p]?.color
+      color: profiles[p]?.color,
+      roundScores: Array<number | null>(rounds).fill(null),
+      segmentHits: {},
+      dartsThrown: 0,
+      triplesHit: 0
     }))
   );
   
@@ -58,6 +131,7 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
   const finishTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const activeP = gameState[activePlayer];
+  const liveRoundScore = currentRoundDarts.reduce((sum, d) => sum + d.value, 0);
   const isMyTurn = isOnline ? (activeP.name === myUsername) : true;
 
   const stateRef = React.useRef({ gameState, activePlayer, currentRound, currentRoundDarts, isProcessing, currentMultiplier });
@@ -86,16 +160,44 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
     // previous state, and StrictMode's second invocation booked the round
     // twice. The final results are read from this same value, which is why the
     // last round used to be counted once more on top.
-    const nextState = st.gameState.map((p, i) =>
-      i === st.activePlayer ? { ...p, score: p.score + roundScore } : p
-    );
+    const nextState = st.gameState.map((p, i) => {
+      if (i !== st.activePlayer) return p;
+
+      // Trefferdatensatz und Rundenliste werden neu aufgebaut, nicht mutiert:
+      // die Snapshots im Undo-Verlauf teilen sich sonst dieselben Objekte.
+      let segmentHits = p.segmentHits;
+      let triplesHit = p.triplesHit;
+      for (const dart of darts) {
+        segmentHits = withDartRecorded(segmentHits, dart);
+        if (dart.mult === 3) triplesHit += 1;
+      }
+
+      const roundScores = [...p.roundScores];
+      roundScores[st.currentRound - 1] = roundScore;
+
+      return {
+        ...p,
+        score: p.score + roundScore,
+        roundScores,
+        segmentHits,
+        triplesHit,
+        dartsThrown: p.dartsThrown + darts.length
+      };
+    });
     setGameState(nextState);
 
     if (st.activePlayer === players.length - 1) {
       if (st.currentRound === rounds) {
         setCurrentRoundDarts([]);
         setIsProcessing(true);
-        const finalResults = nextState.map(p => ({ name: p.name, score: p.score }));
+        const finalResults = nextState.map(p => ({
+          name: p.name,
+          score: p.score,
+          roundScores: p.roundScores,
+          segmentHits: p.segmentHits,
+          dartsThrown: p.dartsThrown,
+          triplesHit: p.triplesHit
+        }));
         finishTimeoutRef.current = setTimeout(() => onFinish(finalResults), 500);
         return;
       } else {
@@ -271,24 +373,29 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
 
         <div className="game-screen-body">
           <div className="game-screen-left">
-            <div className="scoreboard" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px', padding: '10px 0' }}>
-              {gameState.map((p, i) => (
-                <div 
-                  key={i} 
-                  className={`player ${i === activePlayer ? 'active' : ''}`}
-                  style={{ flex: 1, minWidth: '140px', borderLeftColor: i === activePlayer ? p.color : undefined }}
-                >
-                  <h3 className="player-name">{p.isBot ? '🤖 ' : ''}{p.name}</h3>
-                  <div className="score" style={{ fontSize: '3em', margin: '10px 0' }}>
-                    {p.score + (i === activePlayer ? currentRoundDarts.reduce((s, d) => s + d.value, 0) : 0)}
-                  </div>
-                  {i === activePlayer && (
-                     <div className="round-delta">
-                       Diese Runde: {currentRoundDarts.reduce((s, d) => s + d.value, 0)}
-                     </div>
-                  )}
-                </div>
-              ))}
+            <div className="ps-board">
+              <PowerScoringPlayerCard
+                player={activeP}
+                seat={activePlayer}
+                currentRound={currentRound}
+                liveRoundScore={liveRoundScore}
+              />
+
+              {gameState.length > 1 && (
+                <ul className="ps-others">
+                  {gameState.map((p, i) => i === activePlayer ? null : (
+                    <li key={i} className="ps-other">
+                      <span
+                        className="ps-other-dot"
+                        style={{ backgroundColor: p.color || playerColorBySeat(i) }}
+                        aria-hidden="true"
+                      />
+                      <span className="ps-other-name">{p.isBot ? '🤖 ' : ''}{p.name}</span>
+                      <span className="ps-other-score">{p.score}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           </div>
 

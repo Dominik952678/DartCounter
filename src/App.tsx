@@ -39,6 +39,11 @@ type MiniGameResult = {
   attempts?: number;
   dartsUsed?: number;
   roundsCompleted?: number;
+  /** Power Scoring liefert zusätzlich das, was das Story-Bild braucht. */
+  roundScores?: (number | null)[];
+  segmentHits?: Record<string, number>;
+  dartsThrown?: number;
+  triplesHit?: number;
 };
 
 /** Placeholder player rows so the result modal can render mini-game scores. */
@@ -47,7 +52,8 @@ const toModalPlayer = (r: MiniGameResult): Player => ({
   legPts: 0, legDarts: 0, matchPts: 0, matchDarts: 0, legHistory: [],
   matchFirst9Pts: 0, matchFirst9Darts: 0, sixtyPlus: 0, hundredPlus: 0,
   oneFortyPlus: 0, oneEighty: 0, checkoutAttempts: 0, checkoutSuccesses: 0,
-  highestCheckout: 0, segmentHits: {}
+  highestCheckout: 0, segmentHits: r.segmentHits ?? {},
+  triplesHit: r.triplesHit
 });
 
 const TOAST_ICON: Record<NotificationType, string> = {
@@ -236,6 +242,12 @@ export default function App() {
       players: results.map(r => ({
         name: r.name, sets: 0, legs: 0, avg: '0.0', first9: '0.0',
         score: r.score,
+        // Wandert mit in die Historie, damit das Story-Bild auch später noch
+        // aus einem gespeicherten Ergebnis gebaut werden kann.
+        ...(r.roundScores ? { roundScores: r.roundScores } : {}),
+        ...(r.segmentHits ? { segmentHits: r.segmentHits } : {}),
+        ...(r.dartsThrown ? { dartsThrown: r.dartsThrown } : {}),
+        ...(r.triplesHit !== undefined ? { triplesHit: r.triplesHit } : {}),
         ...(gameType === 'checkoutTraining' ? { attempts: r.attempts, dartsUsed: r.dartsUsed } : {})
       }))
     };

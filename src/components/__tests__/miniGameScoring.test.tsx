@@ -24,6 +24,14 @@ const press = (name: string) => {
 const shownScore = (container: HTMLElement) =>
   container.querySelector('.score')?.textContent?.trim();
 
+/** Power Scoring zeigt die Gesamtpunktzahl in der Karte des aktiven Spielers. */
+const shownTotal = (container: HTMLElement) =>
+  container.querySelector('.ps-card-total')?.textContent?.trim();
+
+/** Die Werte der Runden-Kästen, `–` für noch nicht geworfen. */
+const shownRounds = (container: HTMLElement) =>
+  Array.from(container.querySelectorAll('.ps-round-value')).map(el => el.textContent?.trim());
+
 describe('PowerScoring scoring', () => {
   beforeEach(() => { vi.useFakeTimers(); });
   afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); });
@@ -54,7 +62,45 @@ describe('PowerScoring scoring', () => {
     await advance(1600);
 
     expect(onFinish).toHaveBeenCalledTimes(1);
-    expect(onFinish).toHaveBeenCalledWith([{ name: 'Tester', score: 60 }]);
+    expect(onFinish).toHaveBeenCalledWith([
+      expect.objectContaining({ name: 'Tester', score: 60 })
+    ]);
+  });
+
+  // Das Story-Bild und das Runden-Raster lesen beide aus diesen Feldern; ohne
+  // sie zeigt das Raster dauerhaft „–" und das Bild eine leere Heatmap.
+  it('records every round, the darts and the segments hit', async () => {
+    const onFinish = vi.fn();
+    render(
+      <StrictMode>
+        <PowerScoring players={['Tester']} profiles={profiles} rounds={1} onFinish={onFinish} onAbort={vi.fn()} />
+      </StrictMode>
+    );
+
+    press('Triple');
+    press('Triple 20');
+    press('20');
+    press('5');
+
+    await advance(1600);
+
+    const result = onFinish.mock.calls[0][0][0];
+    expect(result.score).toBe(85);
+    expect(result.roundScores).toEqual([85]);
+    expect(result.dartsThrown).toBe(3);
+    expect(result.triplesHit).toBe(1);
+    // Genauer Schluessel plus nackte Zahl, wie im X01-Match.
+    expect(result.segmentHits).toMatchObject({ T20: 1, S20: 1, S5: 1, '20': 2, '5': 1 });
+  });
+
+  it('shows every configured round from the start, unthrown ones as a dash', () => {
+    const { container } = render(
+      <StrictMode>
+        <PowerScoring players={['Tester']} profiles={profiles} rounds={7} onFinish={vi.fn()} onAbort={vi.fn()} />
+      </StrictMode>
+    );
+
+    expect(shownRounds(container)).toEqual(['–', '–', '–', '–', '–', '–', '–']);
   });
 
   it('adds each round exactly once across several rounds', async () => {
@@ -73,13 +119,17 @@ describe('PowerScoring scoring', () => {
 
     press('20'); press('20'); press('20');
     await advance(1100);
-    expect(shownScore(container)).toBe('60');
+    expect(shownTotal(container)).toBe('60');
+    // Erste Runde gebucht, die zweite steht noch offen.
+    expect(shownRounds(container)).toEqual(['60', '–']);
 
     press('10'); press('10'); press('10');
     await advance(1600);
 
     expect(onFinish).toHaveBeenCalledTimes(1);
-    expect(onFinish).toHaveBeenCalledWith([{ name: 'Tester', score: 90 }]);
+    expect(onFinish).toHaveBeenCalledWith([
+      expect.objectContaining({ name: 'Tester', score: 90, roundScores: [60, 30] })
+    ]);
   });
 });
 

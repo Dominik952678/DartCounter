@@ -3240,6 +3240,158 @@ button:disabled, .btn:disabled {
    Erfolgsmeldungen, Sieg-Screen und positive Deltas frei. */
 .stat-value.is-success { color: var(--text-success); }
 
+/* Der Bild-Export im Ergebnis-Dialog. */
+.story-export {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--card-border);
+}
+
+/* ═══ Power Scoring ═══
+   Der aktive Spieler bekommt die volle Karte mit dem Runden-Raster, die
+   Mitspieler nur eine Zeile. Bei bis zu vier Spielern und zwanzig Runden ist
+   das der einzige Zuschnitt, bei dem das Keypad groß bleibt. */
+
+.ps-board {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-height: 0;
+  padding: var(--space-2) 0;
+}
+
+.ps-card {
+  background: var(--surface-card);
+  border: 1px solid var(--card-border);
+  border-left: 4px solid var(--player-color);
+  border-radius: var(--radius-card);
+  padding: var(--card-padding);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-height: 0;
+}
+
+.ps-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.ps-card-name {
+  font-size: var(--text-body-lg);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Die eine große Zahl des Screens (§2), wie der Live-Score im Match. */
+.ps-card-total {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(var(--text-display), min(9vw, 12vh), 4rem);
+  font-weight: var(--weight-medium);
+  line-height: 1;
+  color: var(--player-color);
+}
+
+/* ── Runden-Raster ──
+   Fünf je Reihe, alle Runden von Beginn an sichtbar. Offene Runden zeigen „–",
+   damit man sieht, wie viel Spiel noch kommt. */
+.ps-rounds {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--space-2);
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.ps-round {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: var(--space-2) var(--space-1);
+  border-radius: var(--radius-xs);
+  background: var(--surface-card);
+  border: 2px solid transparent;
+  min-height: 48px;
+}
+.ps-round-no {
+  font-size: var(--text-label);
+  color: var(--text-secondary);
+  line-height: 1;
+}
+.ps-round-value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-body-lg);
+  font-weight: var(--weight-medium);
+  color: var(--text-secondary);
+  line-height: 1;
+}
+/* Geworfen: die Zahl tritt nach vorn. */
+.ps-round.is-filled { background: var(--surface-hover); }
+.ps-round.is-filled .ps-round-value { color: var(--text-primary); }
+/* Die laufende Runde trägt denselben Rahmen wie jede Auswahl (§5). */
+.ps-round.is-current {
+  border-color: var(--accent-primary);
+  background: var(--bg-accent-muted);
+}
+.ps-round.is-current .ps-round-value { color: var(--accent-primary); }
+
+/* ── Mitspieler ── */
+.ps-others {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.ps-other {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 1 1 140px;
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-card);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-card);
+  font-size: var(--text-body);
+  min-height: 44px;
+}
+.ps-other-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.ps-other-name {
+  flex: 1;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ps-other-score {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+}
+
+/* Auf dem Telefon im Querformat ist die Höhe knapp: die Kästen werden flacher
+   und das Raster scrollt, statt das Keypad zu verdrängen. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .ps-round { min-height: 36px; padding: var(--space-1); }
+  .ps-round-no { display: none; }
+}
+
 /* ── Kopfzeile der Match-Screens ──
    Titel und Meta standen in GameScreen, PowerScoring, SplitScore und
    CheckoutTraining vier Mal identisch inline, mit font-weight 800 und einem
