@@ -153,7 +153,7 @@ export interface PlayerStats {
    * Split Score, Runde für Runde. `gained: null` heißt: nicht getroffen, der
    * Punktestand wurde halbiert.
    */
-  splitLog?: { target: string; gained: number | null }[];
+  splitLog?: { target: string; gained: number | null; hits?: number }[];
   /**
    * Checkout Training, Ziel für Ziel. `darts: null` heißt: in den erlaubten
    * Runden nicht gefinisht.

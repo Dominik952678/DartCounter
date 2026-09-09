@@ -87,3 +87,41 @@ describe.each(boards)('$name: Board auf dem Telefon', ({ grid, render: renderBoa
     expect(container.querySelectorAll('.ps-other')).toHaveLength(1);
   });
 });
+
+/**
+ * Board und Story-Bild lesen dieselbe Funktion (`liveStats`), damit die
+ * Kennzahl am Ende nicht anders gerechnet ist als die, auf die man beim Werfen
+ * geschaut hat.
+ */
+describe('Kennzahlen laufen mit', () => {
+  const strip = (container: HTMLElement) =>
+    Array.from(container.querySelectorAll('.stat-strip-label')).map(el => el.textContent);
+
+  it('shows the average in Power Scoring from the first moment', () => {
+    const { container } = render(
+      <PowerScoring players={['Anna']} profiles={profiles} rounds={10} onFinish={vi.fn()} onAbort={vi.fn()} />
+    );
+    expect(strip(container)).toContain('Average');
+  });
+
+  it('shows the hit quote in Split Score', () => {
+    const { container } = render(
+      <SplitScore players={['Anna']} profiles={profiles} onFinish={vi.fn()} onAbort={vi.fn()} />
+    );
+    expect(strip(container)).toContain('Trefferquote');
+  });
+
+  it('shows the check quote and the dart average in Checkout', () => {
+    const { container } = render(
+      <CheckoutTraining
+        players={['Anna']}
+        profiles={profiles}
+        checkoutTargets={5}
+        checkoutRounds={2}
+        onFinish={vi.fn()}
+        onAbort={vi.fn()}
+      />
+    );
+    expect(strip(container)).toEqual(expect.arrayContaining(['Checkquote', 'Ø Darts']));
+  });
+});

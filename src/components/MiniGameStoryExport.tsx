@@ -1,5 +1,6 @@
 import React from 'react';
 import { DartboardHeatmap } from './DartboardHeatmap';
+import type { StoryStat } from '../utils/storyExport';
 
 /**
  * Ein Eintrag im Runden-Raster des Bildes.
@@ -17,11 +18,6 @@ export interface StoryEntry {
   state: 'hit' | 'miss' | 'open';
 }
 
-export interface StoryStat {
-  label: string;
-  value: string;
-}
-
 interface MiniGameStoryExportProps {
   exportId: string;
   /** Zeile ganz oben, z. B. „🔥 POWER SCORING". */
@@ -32,8 +28,8 @@ interface MiniGameStoryExportProps {
   /** Die große Zahl in der Mitte und ihre Beschriftung. */
   headline: string;
   headlineLabel: string;
-  /** Genau drei — mehr passt nicht nebeneinander. */
-  stats: [StoryStat, StoryStat, StoryStat];
+  /** Beliebig viele; hier zu dritt je Reihe gesetzt. */
+  stats: StoryStat[];
   segmentHits: Record<string, number>;
   entriesLabel: string;
   entries: StoryEntry[];
@@ -71,15 +67,15 @@ const StatTile: React.FC<StoryStat & { accent?: boolean }> = ({ label, value, ac
       flex: 1,
       background: 'rgba(255, 255, 255, 0.04)',
       border: `1px solid ${accent ? 'rgba(245, 158, 11, 0.25)' : 'rgba(255,255,255,0.08)'}`,
-      borderRadius: '20px',
-      padding: '28px 20px',
+      borderRadius: '18px',
+      padding: '20px 14px',
       textAlign: 'center'
     }}
   >
-    <div style={{ fontSize: '24px', color: MUTED, marginBottom: '10px' }}>{label}</div>
+    <div style={{ fontSize: '21px', color: MUTED, marginBottom: '8px' }}>{label}</div>
     <div
       style={{
-        fontSize: '52px',
+        fontSize: '40px',
         fontWeight: 600,
         color: accent ? ACCENT : TEXT,
         fontVariantNumeric: 'tabular-nums',
@@ -138,10 +134,10 @@ export const MiniGameStoryExport: React.FC<MiniGameStoryExportProps> = ({
         <div style={{ fontSize: '26px', color: MUTED, marginTop: '12px' }}>{date}</div>
       </div>
 
-      <div style={{ textAlign: 'center', margin: '40px 0 32px' }}>
+      <div style={{ textAlign: 'center', margin: '32px 0 28px' }}>
         <div
           style={{
-            fontSize: '200px',
+            fontSize: '170px',
             fontWeight: 700,
             color: ACCENT,
             lineHeight: 1,
@@ -154,10 +150,19 @@ export const MiniGameStoryExport: React.FC<MiniGameStoryExportProps> = ({
         <div style={{ fontSize: '28px', color: MUTED, letterSpacing: '4px' }}>{headlineLabel}</div>
       </div>
 
-      <div style={{ display: 'flex', gap: '20px', marginBottom: '36px' }}>
-        <StatTile {...stats[0]} accent />
-        <StatTile {...stats[1]} />
-        <StatTile {...stats[2]} />
+      {/* Drei je Reihe: bei sechs Kennzahlen zwei Reihen, ohne dass eine
+          Kachel schmaler wird als die anderen. */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: '16px',
+          marginBottom: '32px'
+        }}
+      >
+        {stats.map((stat, i) => (
+          <StatTile key={stat.label} {...stat} accent={i === 0} />
+        ))}
       </div>
 
       <div

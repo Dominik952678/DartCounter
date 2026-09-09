@@ -3,8 +3,9 @@ import type { RealtimeChannel } from '@supabase/supabase-js';
 import type { Profile, Dart } from '../types';
 import { playDartHitSound, playSciFiHitSound, speak, play180Sound, isSoundEnabled, setSoundEnabled } from '../utils/audio';
 import { ConfirmModal } from './ConfirmModal';
-import { Button, CallOut } from './ui';
+import { Button, CallOut, StatStrip } from './ui';
 import { withDartRecorded } from '../utils/segmentStats';
+import { liveStats } from '../utils/storyExport';
 import { playerColorBySeat } from '../utils/playerColors';
 
 interface SplitScoreProps {
@@ -13,7 +14,7 @@ interface SplitScoreProps {
   onFinish: (results: {
     name: string;
     score: number;
-    splitLog: { target: string; gained: number | null }[];
+    splitLog: { target: string; gained: number | null; hits: number }[];
     segmentHits: Record<string, number>;
     dartsThrown: number;
     triplesHit: number;
@@ -31,8 +32,12 @@ interface PlayerState {
   isBot: boolean;
   targetAverage: number;
   color?: string;
-  /** Ziel für Ziel: `gained: null` heißt halbiert. Länge = TARGETS.length. */
-  splitLog: { target: string; gained: number | null }[];
+  /**
+   * Ziel für Ziel. `gained: null` heißt halbiert; `hits` zählt die Darts, die
+   * im Ziel lagen — einfach, unabhängig von Single, Double oder Triple.
+   * Länge = TARGETS.length.
+   */
+  splitLog: { target: string; gained: number | null; hits: number }[];
   segmentHits: Record<string, number>;
   dartsThrown: number;
   triplesHit: number;
@@ -67,7 +72,7 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
       isBot: profiles[p]?.isBot || false,
       targetAverage: profiles[p]?.targetAverage || 40,
       color: profiles[p]?.color,
-      splitLog: TARGETS.map(t => ({ target: t.label, gained: null as number | null })),
+      splitLog: TARGETS.map(t => ({ target: t.label, gained: null as number | null, hits: 0 })),
       segmentHits: {},
       dartsThrown: 0,
       triplesHit: 0
@@ -106,22 +111,25 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
 
   const processRoundEnd = React.useCallback((darts: Dart[]) => {
     let roundScore = 0;
-    let hitAny = false;
+    // Getroffene Darts, nicht Punkte: für die Trefferquote zählt jeder Dart im
+    // Ziel einfach, ob Single, Double oder Triple.
+    let hits = 0;
     const cTarget = TARGETS[stateRef.current.currentRoundIndex];
 
     for (const d of darts) {
       if (cTarget.type === 'number') {
         if (d.base === cTarget.val) {
           roundScore += d.value;
-          hitAny = true;
+          hits += 1;
         }
       } else if (cTarget.type === 'modifier') {
         if (d.mult === cTarget.val && d.base !== 0) {
           roundScore += d.value;
-          hitAny = true;
+          hits += 1;
         }
       }
     }
+    const hitAny = hits > 0;
     
     if (hitAny) {
       if (roundScore === 180) play180Sound();
@@ -154,7 +162,8 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
       const splitLog = [...p.splitLog];
       splitLog[st.currentRoundIndex] = {
         target: TARGETS[st.currentRoundIndex].label,
-        gained: hitAny ? roundScore : null
+        gained: hitAny ? roundScore : null,
+        hits
       };
 
       return {
@@ -431,6 +440,21 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
                  })}
                   </div>
                 </div>
+
+                {/* Trefferquote und Co. laufen mit — dieselbe Rechnung wie
+                    auf dem Story-Bild. */}
+                <StatStrip
+                  items={liveStats(
+                    {
+                      name: activeP?.name ?? '', sets: 0, legs: 0, avg: '0.0', first9: '0.0',
+                      score: activeP?.score ?? 0,
+                      splitLog: activeSplitLog,
+                      dartsThrown: activeP?.dartsThrown ?? 0,
+                      triplesHit: activeP?.triplesHit ?? 0
+                    },
+                    'splitScore'
+                  )}
+                />
 
                 {/* Alle neun Ziele auf einen Blick: erledigte, das laufende
                     und die kommenden. Scrollt innerhalb der Karte. */}

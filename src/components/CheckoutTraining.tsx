@@ -6,8 +6,9 @@ import { getCheckoutSuggestion } from '../utils/checkouts';
 import { getBotDart } from '../utils/bot';
 import { playDartHitSound, playSciFiHitSound, speak, isSoundEnabled, setSoundEnabled } from '../utils/audio';
 import { ConfirmModal } from './ConfirmModal';
-import { Button, CallOut } from './ui';
+import { Button, CallOut, StatStrip } from './ui';
 import { withDartRecorded } from '../utils/segmentStats';
+import { liveStats } from '../utils/storyExport';
 import { playerColorBySeat } from '../utils/playerColors';
 
 interface CheckoutTrainingProps {
@@ -543,13 +544,21 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
                     <span className="stat-label">Runde</span>{' '}
                     {Math.min((activeP?.roundsOnCurrentTarget ?? 0) + 1, checkoutRounds)}/{checkoutRounds}
                   </span>
-                  <span className="co-chip">
-                    <span className="stat-label">Ø Darts</span>{' '}
-                    {(activeP?.roundsCompleted ?? 0) > 0
-                      ? ((activeP?.dartsUsed ?? 0) / (activeP?.roundsCompleted ?? 1)).toFixed(1)
-                      : '–'}
-                  </span>
                 </div>
+
+                {/* Checkquote, Ø Darts und der Rest laufen durchgehend mit —
+                    dieselbe Rechnung wie auf dem Story-Bild. */}
+                <StatStrip
+                  items={liveStats(
+                    {
+                      name: activeP?.name ?? '', sets: 0, legs: 0, avg: '0.0', first9: '0.0',
+                      checkoutLog: activeP?.checkoutLog ?? [],
+                      dartsThrown: activeP?.dartsThrown ?? 0,
+                      triplesHit: activeP?.triplesHit ?? 0
+                    },
+                    'checkoutTraining'
+                  )}
+                />
 
                 {/* Alle Ziele der Sitzung: erledigte mit den benötigten Darts,
                     das laufende, die kommenden. */}

@@ -44,7 +44,7 @@ type MiniGameResult = {
   segmentHits?: Record<string, number>;
   dartsThrown?: number;
   triplesHit?: number;
-  splitLog?: { target: string; gained: number | null }[];
+  splitLog?: { target: string; gained: number | null; hits?: number }[];
   checkoutLog?: { target: number; darts: number | null }[];
 };
 

@@ -17,5 +17,8 @@ export type { ChoiceProps, ChoiceGroupProps, ChoiceOption } from './Choice';
 export { CallOut } from './CallOut';
 export type { CallOutTone } from './CallOut';
 
+export { StatStrip } from './StatStrip';
+export type { StatStripItem } from './StatStrip';
+
 export { NavItem } from './NavItem';
 export type { NavItemProps } from './NavItem';

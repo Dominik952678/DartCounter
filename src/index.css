@@ -3439,6 +3439,47 @@ button:disabled, .btn:disabled {
 }
 .co-target.is-current .co-target-value { color: var(--accent-primary); }
 
+/* ── Kennzahlen-Leiste ──
+   Läuft während des Spiels unter der Karte mit. Scrollt seitlich, statt
+   umzubrechen: auf einem Telefon passen drei bis vier nebeneinander, und die
+   restlichen sollen erreichbar bleiben, ohne Höhe zu kosten. */
+.stat-strip {
+  display: flex;
+  gap: var(--space-2);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  flex-shrink: 0;
+  scrollbar-width: none;
+}
+.stat-strip::-webkit-scrollbar { display: none; }
+
+.stat-strip-item {
+  flex: 1 0 auto;
+  min-width: 64px;
+  text-align: center;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-xs);
+  background: var(--surface-card);
+}
+.stat-strip-label {
+  font-size: var(--text-label);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.stat-strip-value {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-body-lg);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+@media (max-height: 740px) {
+  .stat-strip-value { font-size: var(--text-body); }
+}
+
 /* ── Der große Zuruf ──
    „SPLIT", „GAME SHOT", „BUST": kurz, mittig, über allem. Markup:
    components/ui/CallOut.tsx. */

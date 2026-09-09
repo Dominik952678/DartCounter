@@ -5,8 +5,9 @@ import { Keypad } from './Keypad';
 import { getBotDart } from '../utils/bot';
 import { playDartHitSound, playSciFiHitSound, speak, play180Sound, isSoundEnabled, setSoundEnabled } from '../utils/audio';
 import { ConfirmModal } from './ConfirmModal';
-import { Button } from './ui';
+import { Button, StatStrip } from './ui';
 import { withDartRecorded } from '../utils/segmentStats';
+import { liveStats } from '../utils/storyExport';
 import { playerColorBySeat } from '../utils/playerColors';
 
 interface PowerScoringProps {
@@ -83,6 +84,21 @@ const PowerScoringPlayerCard: React.FC<PlayerCardProps> = ({
         <span className="ps-card-name">{player.isBot ? '🤖 ' : ''}{player.name}</span>
         <span className="ps-card-total">{player.score + liveRoundScore}</span>
       </div>
+
+      {/* Dieselbe Rechnung wie auf dem Story-Bild — Average durchgehend
+          sichtbar, nicht erst am Ende. */}
+      <StatStrip
+        items={liveStats(
+          {
+            name: player.name, sets: 0, legs: 0, avg: '0.0', first9: '0.0',
+            score: player.score,
+            roundScores: player.roundScores,
+            dartsThrown: player.dartsThrown,
+            triplesHit: player.triplesHit
+          },
+          'powerScoring'
+        )}
+      />
 
       <ol className="ps-rounds">
         {player.roundScores.map((value, idx) => {

@@ -29,9 +29,13 @@ describe('buildStoryData: Power Scoring', () => {
       'powerScoring'
     );
     expect(data.headline).toBe('180');
-    expect(data.stats[0]).toEqual({ label: 'Average', value: '60.0' });
-    expect(data.stats[1]).toEqual({ label: 'Triple-Quote', value: '33 %' });
-    expect(data.stats[2]).toEqual({ label: 'Beste Runde', value: '75' });
+    const by = Object.fromEntries(data.stats.map(s => [s.label, s.value]));
+    expect(by['Average']).toBe('60.0');          // 180 Punkte / 9 Darts * 3
+    expect(by['Ø Runde']).toBe('60.0');          // 180 / 3 geworfene Runden
+    expect(by['Beste Runde']).toBe('75');
+    expect(by['Triple-Quote']).toBe('33 %');
+    expect(by['100+']).toBe('0');
+    expect(by['Darts']).toBe('9');
     expect(data.entries.map(e => e.value)).toEqual(['60', '45', '75', '–']);
     expect(data.entries.map(e => e.state)).toEqual(['hit', 'hit', 'hit', 'open']);
   });
@@ -43,9 +47,9 @@ describe('buildStoryData: Split Score', () => {
       row({
         score: 95,
         splitLog: [
-          { target: '15', gained: 30 },
-          { target: '16', gained: null },
-          { target: 'Double', gained: 40 }
+          { target: '15', gained: 30, hits: 2 },
+          { target: '16', gained: null, hits: 0 },
+          { target: 'Double', gained: 40, hits: 2 }
         ],
         dartsThrown: 9,
         triplesHit: 0
@@ -53,8 +57,12 @@ describe('buildStoryData: Split Score', () => {
       'splitScore'
     );
     expect(data.mode).toContain('SPLIT SCORE');
-    expect(data.stats[0]).toEqual({ label: 'Treffer', value: '2/3' });
-    expect(data.stats[1]).toEqual({ label: 'Splits', value: '1' });
+    const by = Object.fromEntries(data.stats.map(s => [s.label, s.value]));
+    // Vier Darts im Ziel bei neun geworfenen.
+    expect(by['Trefferquote']).toBe('44 %');
+    expect(by['Treffer']).toBe('4/9');
+    expect(by['Splits']).toBe('1');
+    expect(by['Ziele']).toBe('2/3');
     expect(data.entries.map(e => e.value)).toEqual(['+30', 'SPLIT', '+40']);
     expect(data.entries.map(e => e.state)).toEqual(['hit', 'miss', 'hit']);
     expect(data.footnote).toContain('1 Split');
@@ -84,11 +92,13 @@ describe('buildStoryData: Checkout Training', () => {
       'checkoutTraining'
     );
     expect(data.headline).toBe('2/3');
-    expect(data.stats[0]).toEqual({ label: 'Trefferquote', value: '67 %' });
+    const by = Object.fromEntries(data.stats.map(s => [s.label, s.value]));
+    expect(by['Checkquote']).toBe('67 %');
     // Nur die gefinishten zählen in den Schnitt: (3 + 5) / 2.
-    expect(data.stats[1]).toEqual({ label: 'Ø Darts', value: '4.0' });
+    expect(by['Ø Darts']).toBe('4.0');
     // Das verpasste 120er zählt nicht als höchstes Finish.
-    expect(data.stats[2]).toEqual({ label: 'Höchstes Finish', value: '80' });
+    expect(by['Höchstes Finish']).toBe('80');
+    expect(by['Bestes Finish']).toBe('3 Darts');
     expect(data.entries.map(e => e.value)).toEqual(['3D', '✗', '5D']);
   });
 
@@ -98,7 +108,44 @@ describe('buildStoryData: Checkout Training', () => {
       'checkoutTraining'
     );
     expect(data.headline).toBe('0/1');
-    expect(data.stats[1].value).toBe('–');
-    expect(data.stats[2].value).toBe('–');
+    const by = Object.fromEntries(data.stats.map(s => [s.label, s.value]));
+    expect(by['Ø Darts']).toBe('–');
+    expect(by['Höchstes Finish']).toBe('–');
+    expect(by['Bestes Finish']).toBe('–');
+  });
+});
+
+/**
+ * Die Trefferquote im Split Score zählt Darts, nicht Punkte: ein Triple im Ziel
+ * ist ein Treffer, genau wie ein Single. Bei neun Zielen à drei Darts ist der
+ * Nenner eine volle Sitzung lang 27.
+ */
+describe('Split Score: Trefferquote', () => {
+  it('counts a treble in the target as one hit, not three', () => {
+    const data = buildStoryData(
+      row({
+        // Runde eins: alle drei im Ziel, davon Treffer als Triple.
+        splitLog: [{ target: '20', gained: 180, hits: 3 }],
+        dartsThrown: 3,
+        triplesHit: 3
+      }),
+      'splitScore'
+    );
+    const by = Object.fromEntries(data.stats.map(s => [s.label, s.value]));
+    expect(by['Trefferquote']).toBe('100 %');
+    expect(by['Treffer']).toBe('3/3');
+  });
+
+  it('reaches 27 darts over a full session', () => {
+    const data = buildStoryData(
+      row({
+        splitLog: Array.from({ length: 9 }, (_, i) => ({ target: String(i), gained: 20, hits: 2 })),
+        dartsThrown: 27
+      }),
+      'splitScore'
+    );
+    const by = Object.fromEntries(data.stats.map(s => [s.label, s.value]));
+    expect(by['Treffer']).toBe('18/27');
+    expect(by['Trefferquote']).toBe('67 %');
   });
 });

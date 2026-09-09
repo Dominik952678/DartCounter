@@ -8,15 +8,30 @@ export interface StoryEntry {
   state: 'hit' | 'miss' | 'open';
 }
 
+export interface StoryStat {
+  label: string;
+  value: string;
+}
+
 export interface StoryData {
   mode: string;
   headline: string;
   headlineLabel: string;
-  stats: [{ label: string; value: string }, { label: string; value: string }, { label: string; value: string }];
+  /** Beliebig viele; das Bild setzt sie zu dritt je Reihe. */
+  stats: StoryStat[];
   entriesLabel: string;
   entries: StoryEntry[];
   footnote: string;
 }
+
+/**
+ * Die Kennzahlen, die auch live auf dem Board stehen.
+ *
+ * Board und Bild lesen dieselbe Funktion, damit die Zahl auf dem Bild nicht
+ * anders gerechnet wird als die, auf die man beim Spielen geschaut hat.
+ */
+export const liveStats = (player: PlayerStats, gameType: MiniGameType): StoryStat[] =>
+  buildStoryData(player, gameType).stats;
 
 /** Ob aus diesem Ergebnis überhaupt ein Bild gebaut werden kann. */
 export const hasStoryData = (player: PlayerStats, gameType: MatchHistory['gameType']): boolean => {
@@ -56,8 +71,11 @@ export const buildStoryData = (
       headlineLabel: 'PUNKTE',
       stats: [
         { label: 'Average', value: darts > 0 ? ((total / darts) * 3).toFixed(1) : '–' },
+        { label: 'Ø Runde', value: thrown.length > 0 ? (total / thrown.length).toFixed(1) : '–' },
+        { label: 'Beste Runde', value: thrown.length > 0 ? String(Math.max(...thrown)) : '–' },
         { label: 'Triple-Quote', value: tripleQuote(player) },
-        { label: 'Beste Runde', value: thrown.length > 0 ? String(Math.max(...thrown)) : '–' }
+        { label: '100+', value: String(thrown.filter(r => r >= 100).length) },
+        { label: 'Darts', value: String(darts) }
       ],
       entriesLabel: 'Runden',
       entries: rounds.map((value, i) => ({
@@ -73,13 +91,20 @@ export const buildStoryData = (
     const log = player.splitLog ?? [];
     const hit = log.filter(r => r.gained !== null);
     const splits = log.length - hit.length;
+    // Jeder Dart im Ziel zählt einfach, unabhängig von Single, Double oder
+    // Triple — bei neun Zielen à drei Darts also aus 27.
+    const dartsOnTarget = log.reduce((sum, r) => sum + (r.hits ?? 0), 0);
+    const bestRound = hit.length > 0 ? Math.max(...hit.map(r => r.gained ?? 0)) : 0;
     return {
       mode: '➗ SPLIT SCORE',
       headline: String(total),
       headlineLabel: 'PUNKTE',
       stats: [
-        { label: 'Treffer', value: `${hit.length}/${log.length}` },
+        { label: 'Trefferquote', value: percent(dartsOnTarget, darts) },
+        { label: 'Treffer', value: `${dartsOnTarget}/${darts}` },
         { label: 'Splits', value: String(splits) },
+        { label: 'Ziele', value: `${hit.length}/${log.length}` },
+        { label: 'Beste Runde', value: bestRound > 0 ? `+${bestRound}` : '–' },
         { label: 'Triple-Quote', value: tripleQuote(player) }
       ],
       entriesLabel: 'Ziele',
@@ -100,12 +125,15 @@ export const buildStoryData = (
     headline: `${finished.length}/${log.length}`,
     headlineLabel: 'FINISHES',
     stats: [
-      { label: 'Trefferquote', value: percent(finished.length, log.length) },
+      { label: 'Checkquote', value: percent(finished.length, log.length) },
       {
         label: 'Ø Darts',
         value: finished.length > 0 ? (dartsOnFinished / finished.length).toFixed(1) : '–'
       },
-      { label: 'Höchstes Finish', value: finished.length > 0 ? String(Math.max(...finished.map(r => r.target))) : '–' }
+      { label: 'Höchstes Finish', value: finished.length > 0 ? String(Math.max(...finished.map(r => r.target))) : '–' },
+      { label: 'Bestes Finish', value: finished.length > 0 ? `${Math.min(...finished.map(r => r.darts ?? 99))} Darts` : '–' },
+      { label: 'Triple-Quote', value: tripleQuote(player) },
+      { label: 'Darts', value: String(darts) }
     ],
     entriesLabel: 'Ziele',
     entries: log.map(r => ({
