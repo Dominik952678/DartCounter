@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { GameConfig, Profile } from '../types';
 import { useAuthStore } from '../store/useAuthStore';
 import { getActiveUserSyncInfo, removeLinkedGuestProfiles, saveProfiles, validateGuestSyncTokens } from '../db';
@@ -14,6 +14,7 @@ import { useLineup } from './matchSetup/useLineup';
 import { toGameConfig, useMatchSetupConfig } from './matchSetup/useMatchSetupConfig';
 import { Button, Icons } from './ui';
 import { DEFAULT_BOT_AVERAGE } from '../utils/botProfiles';
+import { configPills } from './matchSetup/configSummary';
 
 interface MatchSetupProps {
   profiles: Record<string, Profile>;
@@ -22,6 +23,17 @@ interface MatchSetupProps {
   onResumeGame?: () => void;
   onDiscardSavedGame?: () => void;
   setProfiles?: (profiles: Record<string, Profile>) => void;
+  /**
+   * Startet das Match, sobald die Aufstellung steht — der „Ein Tap"-Weg von der
+   * Weiter-Karte des Start-Screens.
+   *
+   * Der Weg führt bewusst durch diesen Screen und nicht um ihn herum: hier
+   * liegen die Vorprüfungen (gekoppelte Cloud-Profile, gültige Gast-Tokens, ein
+   * noch laufendes Match, das Anlegen von Gastprofilen). Blockt eine davon,
+   * bleibt der Nutzer genau hier stehen und sieht die Meldung — statt in ein
+   * Match zu fallen, das nicht hätte starten dürfen.
+   */
+  autoStart?: boolean;
 }
 
 /**
@@ -38,7 +50,8 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
   hasSavedGame,
   onResumeGame,
   onDiscardSavedGame,
-  setProfiles
+  setProfiles,
+  autoStart = false
 }) => {
   const { user } = useAuthStore();
   const isGuest = !user;
@@ -58,6 +71,22 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
 
   /** Die Karte oben verschiebt die primäre Aktion, siehe unten beim Button. */
   const showSavedBanner = Boolean(hasSavedGame && !isSavedBannerDismissed && savedMatch);
+
+  /* ── Der „Ein Tap"-Start von der Weiter-Karte ──
+
+     Nicht sofort beim Mounten: die Profile kommen asynchron (lokaler Cache
+     zuerst, Cloud danach), und `useLineup` leitet die Sitzplätze daraus ab. Ein
+     Start im ersten Render träfe eine Aufstellung aus leeren Namen und
+     scheiterte an genau der Prüfung, die dafür da ist.
+
+     Der Ref sorgt dafür, dass es bei einem Versuch bleibt — und er hält den
+     Handler, damit die Abhängigkeit des Effekts eine Bedingung ist und nicht
+     eine Funktion, die sich bei jedem Render neu bildet. */
+  const autoStartedRef = useRef(false);
+  const startGameRef = useRef<() => Promise<void>>(async () => {});
+
+  const readyToAutoStart =
+    autoStart && lineup.selectedPlayers.slice(0, config.playerCount).every(p => p && p.trim());
 
   const discardSavedGame = () => {
     if (onDiscardSavedGame) onDiscardSavedGame();
@@ -172,6 +201,16 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
     proceedToStart();
   };
 
+  useLayoutEffect(() => {
+    startGameRef.current = handleStartGame;
+  });
+
+  useEffect(() => {
+    if (!readyToAutoStart || autoStartedRef.current) return;
+    autoStartedRef.current = true;
+    void startGameRef.current();
+  }, [readyToAutoStart]);
+
   /** Lists a freshly redeemed cloud guest and seats them in the first free slot. */
   const addImportedGuest = (username: string, profile: Profile) => {
     if (setProfiles) {
@@ -227,13 +266,20 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
       </div>
 
       <div className="sticky-action-bar">
+        {/* Dieselben Worte wie auf der Weiter-Karte des Start-Screens, aus
+            derselben Funktion — wer hier etwas umstellt, soll die Zeile sehen,
+            die ihn morgen auf dem Start-Screen wieder begrüßt. */}
+        <span className="setup-summary">
+          Startet:{' '}
+          <strong>{configPills(config).join(' · ')}</strong>
+        </span>
+
         {/* §1 lässt eine gefüllte Akzentfläche pro Screen zu. Steht die Karte
             oben, hält sie mit „Spiel fortsetzen" die dringlichere Aktion und
             bekommt sie — dieser Button tritt dann zurück. */}
         <Button
           variant={showSavedBanner ? 'secondary' : 'primary'}
           size="large"
-          fullWidth
           onClick={handleStartGame}
         >
           <Icons.IconPlayFilled size={20} /> Spiel starten

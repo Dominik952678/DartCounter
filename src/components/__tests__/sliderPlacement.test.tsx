@@ -26,13 +26,17 @@ const profiles: Record<string, Profile> = {
 beforeEach(() => { localStorage.clear(); });
 
 describe('Match-Setup', () => {
-  it('puts a slider on start score, out mode and player count', () => {
+  it('puts a slider on the mode, start score, out mode and player count', () => {
     const { container } = render(<MatchSetup profiles={profiles} onStartGame={vi.fn()} />);
 
     const names = Array.from(container.querySelectorAll('.slider input[type="radio"]'))
       .map(input => input.getAttribute('name'));
 
-    expect(new Set(names)).toEqual(new Set(['startScore', 'outMode', 'playerCount']));
+    // `matchMode2v2` ist der Einzel/2v2-Umschalter: genau zwei Optionen, also
+    // der Fall, den der Prototyp als Slider zeigt.
+    expect(new Set(names)).toEqual(
+      new Set(['matchMode2v2', 'startScore', 'outMode', 'playerCount'])
+    );
   });
 
   /** Offener Zahlenbereich bis 10 bzw. 15 — dafür gibt es keine kurze Reihe. */

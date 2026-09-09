@@ -4435,455 +4435,347 @@ body:has(.app-nav-vertical) .app-container {
   animation: scoreboardFadeInSlide 0.2s ease-out forwards;
 }
 
-/* ── Main Menu ─────────────────────────────── */
-/* Der Screen folgt allein der Breiten-Kette aus DESIGN.md §6. Die früheren
-   `orientation: landscape`-Regeln sind ersatzlos weg: sie gaben dem iPhone im
-   Querformat (874px) das Tablet-Layout und dem iPad 13" hochkant (1024px)
-   nicht, also genau verkehrt herum. Einzig der Live-Match-Screen behält eine
-   Querformat-Ausnahme, dort ist sie in §6 ausdrücklich vorgesehen. */
+/* ═══════════════════════════════════════════════════════════════════════════
+   Start-Screen
+   Markup: components/MainMenu.tsx
 
-.hero-glow-bg {
+   Hier stand das alte Hauptmenü: Wortmarke, ein „Neues Spiel starten"-Button
+   auf den Setup-Screen, zwei Kachel-Spalten und eine Trainings-Reihe, ab 900px
+   in drei Spalten umgeschichtet. Der Screen folgt weiterhin allein der
+   Breiten-Kette aus DESIGN.md §6 — die früheren `orientation: landscape`-Regeln
+   sind ersatzlos weg, weil sie dem iPhone im Querformat (874px) das
+   Tablet-Layout gaben und dem iPad 13" hochkant (1024px) nicht.
+
+   Neu ist, dass der häufigste Fall hier endet statt hier anzufangen: die große
+   Karte trägt die gespeicherte Konfiguration und startet sie.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.home-screen {
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Zwei Radial-Gradienten als ein Element mit zwei Ebenen, nicht als zwei
+   Kreis-Divs: Amber oben rechts, Grün unten links, beide über den Rand hinaus
+   angesetzt, damit man den Kreisbogen nicht als Form wahrnimmt.
+
+   `inset: 0` plus `position: absolute` statt `fixed` — der Schein gehört zum
+   Screen und soll beim Scrollen mitgehen, nicht am Fenster kleben.
+
+   `pointer-events: none` ist der wichtige Teil: ohne das fängt die Fläche jeden
+   Tap ab, der neben eine Karte geht, und der halbe Screen wirkt tot. */
+.home-ambient {
   position: absolute;
-  top: -100px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(500px, 90vw);
-  height: 350px;
-  /* Nur noch ein Ton. Der zweite Farbstopp war Blau, und Blau hat seit §1
-     keine Rolle mehr. */
-  background: radial-gradient(circle, var(--bg-accent-muted) 0%, transparent 70%);
+  inset: 0;
   pointer-events: none;
   z-index: 0;
+  background:
+    radial-gradient(
+      520px circle at calc(100% + 120px) -170px,
+      rgba(var(--accent-primary-rgb), 0.14) 0%,
+      transparent 68%
+    ),
+    radial-gradient(
+      460px circle at -110px calc(100% + 190px),
+      rgba(93, 202, 165, 0.09) 0%,
+      transparent 66%
+    );
 }
 
-.main-menu-screen {
-  display: flex;
-  flex-direction: column;
-}
-
-.main-menu-card {
+.home-body {
   position: relative;
-  z-index: 1;
-  width: 100%;
-  max-width: 100%;
-  flex: 1;
+  z-index: var(--z-content);
   display: flex;
   flex-direction: column;
+  gap: var(--space-6);
+}
+
+.home-head p.home-greeting {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  color: var(--text-secondary);
+}
+
+/* ── Die Weiter-Karte ──
+   Die eine gefüllte Akzentfläche dieses Screens (§1). Sie ist bewusst groß:
+   sie ist die Aktion, die neunmal von zehn gemeint ist. */
+.home-top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  align-items: stretch;
+}
+
+.home-resume {
+  /* Bricht als Erstes um, wenn es eng wird — die Basis von 420px ist die
+     Breite, unter der die Pillen-Reihe dreizeilig würde. */
+  flex: 1 1 420px;
+  min-width: min(100%, 280px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: var(--space-6);
+  border: none;
+  border-radius: var(--radius-card);
+  background: var(--accent-primary);
+  color: var(--on-accent-primary);
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 18px 44px rgba(var(--accent-primary-rgb), 0.22);
+  transition: box-shadow var(--motion-color) ease, transform 0.1s ease-out;
+}
+.home-resume:hover { box-shadow: 0 22px 56px rgba(var(--accent-primary-rgb), 0.34); }
+.home-resume:active { transform: scale(0.988); }
+
+.home-resume-head {
+  display: flex;
+  align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-4);
 }
 
-/* ── Wortmarke ──
-   Bewusst Versalien: §2 nimmt den Logo-Schriftzug von der Sentence-case-Regel
-   aus. Alles andere auf diesem Screen ist Sentence case. */
-.menu-header-area {
-  flex-shrink: 0;
-  width: 100%;
-  text-align: center;
+.home-resume-kicker {
+  display: block;
+  font-size: var(--text-label);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  /* Auf der gefüllten Fläche gibt es keinen zweiten Textton — die Abstufung
+     macht die Deckkraft, sonst bräuchte jede Akzentfarbe ihre eigene. */
+  opacity: 0.72;
 }
 
-.menu-header-flex {
+.home-resume-title {
+  display: block;
+  margin-top: var(--space-2);
+  font-family: var(--font-heading);
+  font-weight: var(--weight-regular);
+  font-size: clamp(22px, 2.5vw, 30px);
+  line-height: 1.14;
+  letter-spacing: var(--tracking-heading);
+  text-wrap: balance;
+}
+
+.home-resume-play {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.menu-header-icon {
-  display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 56px;
   height: 56px;
-  border-radius: var(--radius-card);
-  background: var(--surface-card);
-  border: 1px solid var(--card-border);
-  margin-bottom: var(--space-2);
-  font-size: 1.6rem;
+  flex: none;
+  border-radius: var(--radius-pill);
+  /* Aus dem Kontrast-Token abgeleitet statt aus einem eigenen Schwarzwert — so
+     bleibt die Vertiefung an die Akzentfarbe gebunden (§5). */
+  background: color-mix(in srgb, var(--on-accent-primary) 16%, transparent);
 }
 
-.menu-header-title {
-  font-size: var(--text-display);
-  font-weight: var(--weight-medium);
-  letter-spacing: 0.02em;
-  color: var(--accent-primary);
-  margin: 0;
-  line-height: 1.15;
-}
-
-.menu-header-subtitle {
-  color: var(--text-secondary);
-  font-size: var(--text-body);
-  font-weight: var(--weight-regular);
-  margin-top: var(--space-1);
-}
-
-.menu-middle-wrapper {
-  flex: 1;
-  /* Kein `min-height: 0` mehr: das gehörte zum früheren Querformat-Layout mit
-     fester Höhe und `overflow: hidden`. Ohne das würde der Inhalt hier
-     zusammengedrückt statt zu überlaufen — und überlaufen darf er, seit der
-     Screen nur noch der Breiten-Kette folgt. */
-  width: 100%;
+.home-resume-pills {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: var(--space-3);
+  flex-wrap: wrap;
+  gap: var(--space-2);
 }
 
-/* ── 1. Hero-CTA ──
-   Die eine gefüllte Akzentfläche dieses Screens (§1). Solide, kein Verlauf,
-   und der Text ist der dunkelste Ton derselben Farbfamilie statt Schwarz (§5). */
-.hero-cta-tile {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  padding: var(--space-4) var(--space-5);
-  border-radius: var(--radius-card);
-  background: var(--accent-primary);
-  color: var(--on-accent-primary);
-  border: none;
-  cursor: pointer;
-  transition: transform 0.15s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.2s ease;
-  width: 100%;
-  /* §4: primäre Spielaktion, also mindestens 64pt statt der 44er Untergrenze. */
-  min-height: 72px;
-  box-sizing: border-box;
-  text-align: left;
-  animation: ctaPulse 3s infinite ease-in-out;
-}
-.hero-cta-tile:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px var(--primary-glow);
-}
-.hero-cta-tile:active { transform: scale(0.98); }
-
-.hero-cta-body {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  min-width: 0;
-}
-
-.hero-cta-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: var(--radius-card);
-  /* Aus dem Kontrast-Token abgeleitet statt aus einem eigenen Schwarzwert —
-     so bleibt die Vertiefung an die Akzentfarbe gebunden (§5). */
+.home-resume-pill {
+  padding: 7px 15px;
+  border-radius: var(--radius-pill);
   background: color-mix(in srgb, var(--on-accent-primary) 14%, transparent);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.6rem;
-  flex-shrink: 0;
-}
-
-.hero-cta-title {
-  display: block;
-  font-size: var(--text-card-title);
-  font-weight: var(--weight-medium);
-  color: var(--on-accent-primary);
-}
-
-.hero-cta-desc {
-  display: block;
   font-size: var(--text-body);
-  font-weight: var(--weight-regular);
-  /* Derselbe Ton wie der Titel, nur zurückgenommen — nicht rgba(0,0,0,…), das
-     wäre wieder Schwarz auf der Akzentfläche (§5). */
-  color: var(--on-accent-primary);
-  opacity: 0.75;
-  margin-top: 2px;
-}
-
-.hero-cta-arrow {
-  font-size: var(--text-card-title);
-  color: var(--on-accent-primary);
-  flex-shrink: 0;
-}
-
-/* ── 2. Sekundäre Kacheln ──
-   §1: alles außer der einen CTA ist --surface-card mit Icon-Akzent. Die
-   Kacheln tragen ihre Kategorie also im Icon, nicht in Fläche und Rand. */
-.menu-secondary-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-3);
-  width: 100%;
-  /* §3: Karten einer Reihe sind gleich hoch. */
-  align-items: stretch;
-}
-
-.secondary-tile {
-  display: flex;
-  flex-direction: column;
-  /* §3: kürzerer Inhalt wird zentriert, nicht der Container gestreckt.
-     Vorher stand hier space-between — das war das „Content-getriebene
-     Ungleichgewicht", das §3 an diesem Screen ausdrücklich benennt. */
-  justify-content: center;
-  gap: var(--space-2);
-  padding: var(--card-padding);
-  border-radius: var(--radius-card);
-  background: var(--surface-card);
-  border: 1px solid var(--card-border);
-  cursor: pointer;
-  transition: transform 0.15s ease, border-color 0.2s, box-shadow 0.2s;
-  color: var(--text-primary);
-  box-sizing: border-box;
-  min-height: 96px;
-  height: 100%;
-  text-align: left;
-  width: 100%;
-}
-
-.secondary-tile:hover {
-  transform: translateY(-2px);
-  border-color: var(--card-border-glow);
-}
-.secondary-tile:active { transform: scale(0.98); }
-
-.secondary-tile-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.secondary-tile-icon {
-  width: 38px;
-  height: 38px;
-  border-radius: var(--radius-card);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.3rem;
-  background: var(--surface-hover);
-}
-
-.secondary-tile-arrow {
-  font-size: var(--text-body-lg);
-  color: var(--text-secondary);
-}
-
-.secondary-tile-title {
-  display: block;
-  font-size: var(--text-body-lg);
-  font-weight: var(--weight-medium);
-  color: var(--text-primary);
-}
-
-.secondary-tile-desc {
-  display: block;
-  font-size: var(--text-label);
-  color: var(--text-secondary);
-  margin-top: 2px;
+  font-weight: var(--weight-semibold);
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-/* Kategorische Kennzeichnung nach §1 — ausschließlich am Icon.
-   `--accent-info` und `--accent-pro` sind dort mit genau diesen zwei
-   Beispielen belegt: Multiplayer-Icon und Statistik-Icon. */
-.tile-online .secondary-tile-icon,
-.tile-online .secondary-tile-arrow { color: var(--accent-info); }
-.tile-stats .secondary-tile-icon,
-.tile-stats .secondary-tile-arrow { color: var(--accent-pro); }
-/* Account hat in §1 keine kategorische Rolle und bleibt deshalb neutral —
-   lieber ohne Akzent als mit einem erfundenen. */
-.tile-auth .secondary-tile-icon,
-.tile-auth .secondary-tile-arrow { color: var(--text-secondary); }
+.home-resume-sub {
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  opacity: 0.8;
+}
 
-/* ── 3. Schnellstart Training ── */
-.menu-training-container { width: 100%; }
+/* ── Die Spalte daneben ── */
+.home-side {
+  flex: 1 1 280px;
+  min-width: min(100%, 240px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
 
-.training-section-label {
+/* Die gemeinsame Grundform aller nicht-primären Flächen dieses Screens.
+   Kategorie steckt im Icon, nicht in der Fläche (§1). */
+.home-tile {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-tile);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  text-align: left;
+  transition: background-color var(--motion-color) ease, transform 0.1s ease-out;
+}
+
+button.home-tile { cursor: pointer; }
+button.home-tile:hover { background: var(--surface-hover); }
+button.home-tile:active { transform: scale(0.99); }
+
+.home-tile-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: var(--radius-pill);
+  background: var(--bg-accent-muted);
+  color: var(--accent-primary);
+}
+
+.home-tile-title {
+  display: block;
+  font-size: var(--text-body-lg);
+  font-weight: var(--weight-semibold);
+}
+
+.home-tile-desc {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--text-body);
+  color: var(--text-secondary);
+}
+
+.home-tile-label {
+  display: block;
+  font-size: var(--text-label);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-3);
+}
+
+/* ── Die Heute-Kachel ── */
+.home-today {
+  flex: 1;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+}
+.home-today .home-tile-label { margin-bottom: var(--space-4); }
+
+.home-today-figures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-6);
+}
+
+.home-figure { display: block; }
+
+.home-figure-label {
   display: block;
   font-size: var(--text-label);
   color: var(--text-secondary);
-  font-weight: var(--weight-regular);
-  margin-bottom: var(--space-2);
 }
 
-.training-chips-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-2);
-  align-items: stretch;
-}
-
-.training-chip {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-1);
-  padding: var(--space-3) var(--space-2);
-  /* §4 nennt genau diese Kacheln als den konkreten Fehler: sie waren
-     Text+Icon-Pills um die 36px. Untergrenze ist hier 64pt, nicht 44. */
-  min-height: 72px;
-  height: 100%;
-  background: var(--surface-card);
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius-card);
-  cursor: pointer;
-  transition: transform 0.15s ease, border-color 0.2s, background-color 0.2s;
+/* Die Zahl selbst trägt `.num-lg` — Mono mit tabular-nums, damit die Kachel
+   beim Wechsel von 9 auf 10 nicht die Spalte daneben verschiebt. */
+.home-figure-value {
+  display: block;
+  margin-top: 2px;
+  font-size: 27px;
   color: var(--text-primary);
-  box-sizing: border-box;
-  text-align: center;
 }
+.home-figure-value.is-accent { color: var(--accent-primary); }
+.home-figure-value.is-success { color: var(--text-success); }
 
-.training-chip:hover {
-  background: var(--surface-hover);
-  transform: translateY(-2px);
-  border-color: var(--card-border-glow);
-}
-.training-chip:active { transform: scale(0.97); }
+/* ── Training und die zwei Verweise ── */
+.home-section { min-width: 0; }
 
-.training-chip-icon {
-  font-size: 1.5rem;
-  line-height: 1;
-}
-
-.training-chip-title {
-  font-size: var(--text-body);
-  font-weight: var(--weight-regular);
-}
-
-/* ── 4. Statusleiste ── */
-.menu-status-bar {
+.home-training,
+.home-links {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-wrap: wrap;
   gap: var(--space-3);
-  padding: var(--space-2) var(--space-3);
-  background: var(--surface-card);
-  border-radius: var(--radius-card);
-  border: 1px solid var(--card-border);
-  width: 100%;
-  box-sizing: border-box;
 }
 
-.menu-status-body {
+.home-training-tile,
+.home-link {
+  /* 200px ist die Breite, ab der Titel und Beschreibung nebeneinander noch
+     lesbar sind; darunter bricht die Reihe um statt zu quetschen. */
+  flex: 1 1 200px;
+  min-width: min(100%, 200px);
+  /* §4 verlangt für die Trainings-Schnellstarts mindestens 64pt. */
+  min-height: 84px;
+}
+
+/* Die drei Trainingsmodi behalten ihre kategorischen Töne aus §1 — die Farbe
+   sitzt im Icon, die Fläche bleibt neutral. */
+.tone-info .home-tile-icon {
+  background: color-mix(in srgb, var(--accent-info) 14%, transparent);
+  color: var(--accent-info);
+}
+.tone-pro .home-tile-icon {
+  background: color-mix(in srgb, var(--accent-pro) 16%, transparent);
+  color: var(--accent-pro);
+}
+
+.home-link-arrow {
+  margin-left: auto;
+  color: var(--text-secondary);
+}
+
+/* ── Fußzeile ── */
+.home-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--card-border);
+}
+
+.home-status {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  min-width: 0;
-  overflow: hidden;
+  margin-right: auto;
 }
 
-.menu-status-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  flex-shrink: 0;
+.home-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-pill);
   background: var(--text-secondary);
 }
-.menu-status-dot.is-online {
-  background: var(--accent-primary);
-  box-shadow: 0 0 8px var(--primary-glow);
+.home-status-dot.is-online {
+  background: var(--text-success);
+  box-shadow: 0 0 8px var(--text-success);
 }
 
-.menu-status-text {
+.home-status-text {
   font-size: var(--text-body);
   color: var(--text-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.menu-status-text strong {
-  color: var(--text-primary);
-  font-weight: var(--weight-medium);
-}
-
-.menu-footer-area {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  width: 100%;
-  align-items: center;
-  flex-shrink: 0;
 }
 
 /* Der Ghost-Variant bringt einen Rahmen mit; für eine Versionszeile, die wie
    Text aussehen soll, ist der zu viel. */
-.menu-version {
+.home-version {
   font-size: var(--text-label);
   color: var(--text-secondary);
   gap: var(--space-1);
   border-color: transparent;
 }
 
-/* ── ≥900px: drei Spalten (§6) ──
-   Die Schwelle ist die Breite, nicht die Orientierung. Damit bekommt das
-   iPad Air 11" im Querformat (1180px) und das 13" hochkant (1024px) die drei
-   Spalten, und das iPhone im Querformat (874px) behält die gestapelte
-   Anordnung — vorher war beides genau andersherum. */
+/* Ab Tablet liegen Weiter-Karte und Spalte sicher nebeneinander, und die
+   Kachel-Reihen bekommen ihre volle Breite. Eine eigene Spalten-Umschichtung
+   braucht der Screen nicht mehr: `flex-wrap` mit den Basisbreiten oben macht
+   aus einer Spalte zwei und aus zwei drei, ohne dass ein Breakpoint sagen muss,
+   wann. Das alte Menü brauchte dafür einen 900px-Block mit acht Regeln. */
 @media (min-width: 900px) {
-  .main-menu-card { gap: var(--space-6); }
-
-  .menu-header-flex {
-    flex-direction: row;
-    gap: var(--space-3);
-  }
-  .menu-header-icon { margin-bottom: 0; }
-
-  .menu-middle-wrapper {
-    display: grid;
-    grid-template-columns: 1.2fr 1fr 1fr;
-    gap: var(--space-4);
-    align-items: stretch;
-    /* Hier darf gestaucht werden: die drei Spalten sollen die Höhe des
-       Screens teilen, nicht ihn sprengen. */
-    min-height: 0;
-  }
-
-  /* In der Spalte steht der Pfeil auf eigener Zeile und liest sich als
-     verirrtes Zeichen statt als Hinweis. */
-  .hero-cta-arrow { display: none; }
-
-  .hero-cta-tile {
-    height: 100%;
-    flex-direction: column;
-    justify-content: center;
-    text-align: center;
-    gap: var(--space-3);
-  }
-  .hero-cta-body { flex-direction: column; text-align: center; }
-  .hero-cta-icon { width: 56px; height: 56px; font-size: 2rem; }
-
-  .menu-secondary-grid {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    gap: var(--space-3);
-  }
-  .secondary-tile { flex: 1; }
-
-  .menu-training-col,
-  .menu-training-container {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-  }
-
-  .training-chips-grid {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    gap: var(--space-3);
-  }
-
-  /* Nebeneinander statt übereinander, wenn die Kachel breit und flach wird —
-     die 64pt aus §4 bleiben davon unberührt. */
-  .training-chip {
-    flex: 1;
-    flex-direction: row;
-    gap: var(--space-3);
-  }
-  .training-chip-icon { font-size: 1.7rem; }
+  .home-body { gap: var(--space-8); }
+  .home-resume { padding: var(--space-8); }
 }
+
 
 /* ── Ergebnis-Dialog ── */
 /* §1 nennt den Sieg-Screen ausdrücklich als Ort für --text-success — das ist

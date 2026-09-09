@@ -325,7 +325,7 @@ export default function App() {
       {/* Inside the container, so the dock below stays put while a route loads. */}
       <Suspense fallback={<LoadingScreen message="Wird geladen…" />}>
         <Routes>
-          <Route path="/" element={<MainMenu />} />
+          <Route path="/" element={<MainMenu matches={savedMatches} />} />
           <Route path="/auth" element={<AuthScreen />} />
           <Route path="/auth/reset" element={<PasswordResetScreen />} />
           <Route path="/stats" element={<StatsPage />} />

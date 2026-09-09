@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import type { Profile } from '../../types';
 import type { Lineup } from './useLineup';
-import { Button, Card, CardHeader, ChoiceGroup, Slider, Icons } from '../ui';
+import { Button, Card, CardHeader, Slider, Icons } from '../ui';
 import { botRosterLabel } from '../../utils/botProfiles';
 import { playerColorByName, teamColor } from '../../utils/playerColors';
 
@@ -44,7 +44,11 @@ export const PlayerSelection: React.FC<PlayerSelectionProps> = ({
       <CardHeader heading="Modus & Spieler" />
 
       <div style={{ marginBottom: 'var(--space-4)' }}>
-        <ChoiceGroup
+        {/* Zwei Optionen, also der Fall, den der Prototyp als Slider zeigt: eine
+            Fläche, die zwischen „Einzel" und „2v2 Doppel" hin- und herfährt. Bei
+            genau zwei Möglichkeiten ist die Bewegung die deutlichste Auskunft
+            darüber, welche gerade gilt. */}
+        <Slider
           name="matchMode2v2"
           value={is2v2 ? 'team' : 'single'}
           options={[

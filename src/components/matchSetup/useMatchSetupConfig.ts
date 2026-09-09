@@ -37,7 +37,15 @@ export type MatchSetupAction =
 /** The player count last chosen for singles; 2v2 always seats four. */
 const readSinglesPlayerCount = (): number => readInt('x01PlayerCount', 2, { min: 1, max: 4 });
 
-const initialConfig = (): MatchSetupConfig => {
+/**
+ * Die zuletzt benutzte Konfiguration, aus dem Speicher gelesen.
+ *
+ * Öffentlich, weil der Start-Screen genau das braucht: seine Weiter-Karte zeigt,
+ * was ein Tap startet, und muss dieselbe Quelle lesen wie der Setup-Screen. Eine
+ * eigene Leseroutine dort hätte eine zweite Auslegung dessen ergeben, was ein
+ * gespeicherter, aber unzulässiger Wert bedeutet.
+ */
+export const readStoredMatchConfig = (): MatchSetupConfig => {
   const is2v2 = readBoolean('x01Is2v2', false);
   const startScore = readInt('x01StartScore', 501);
   return {
@@ -83,7 +91,7 @@ const reduce = (state: MatchSetupConfig, action: MatchSetupAction): MatchSetupCo
  * own parsing of the stored value.
  */
 export const useMatchSetupConfig = (): [MatchSetupConfig, React.Dispatch<MatchSetupAction>] => {
-  const [config, dispatch] = useReducer(reduce, undefined, initialConfig);
+  const [config, dispatch] = useReducer(reduce, undefined, readStoredMatchConfig);
 
   useEffect(() => {
     write('x01Is2v2', config.is2v2);

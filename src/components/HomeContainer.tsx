@@ -32,10 +32,18 @@ export const HomeContainer: React.FC<HomeContainerProps> = ({
   const [searchParams] = useSearchParams();
   const tabParam = searchParams.get('tab');
   const modeParam = searchParams.get('mode') as MiniGameMode | null;
+  /* `?start=1` kommt von der Weiter-Karte des Start-Screens. Beim Mounten
+     gelesen und festgehalten: der Parameter darf den Start genau einmal
+     auslösen, nicht wieder, wenn der Nutzer nach dem Match hierher zurückkommt
+     und die URL noch dieselbe ist. */
+  const [autoStartMatch] = useState(() => searchParams.get('start') === '1');
 
   // `?tab=` only seeds the initial tab. Keeping it authoritative would freeze
   // the switcher whenever the screen was opened from a quickstart link.
   const [effectiveSubTab, setActiveSubTab] = useState<'match' | 'training'>(() => {
+    // Ein Direktstart gilt immer dem X01-Match, egal welcher Bereich zuletzt
+    // offen war — sonst startete die Weiter-Karte ein Training.
+    if (searchParams.get('start') === '1') return 'match';
     if (tabParam === 'training' || tabParam === 'match') return tabParam;
     return readOneOf('offlineSubtab', OFFLINE_SUBTABS, defaultTab);
   });
@@ -68,6 +76,7 @@ export const HomeContainer: React.FC<HomeContainerProps> = ({
             hasSavedGame={hasSavedGame}
             onResumeGame={onResumeGame}
             onDiscardSavedGame={onDiscardSavedGame}
+            autoStart={autoStartMatch}
           />
         ) : (
           <TrainingHub 
