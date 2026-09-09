@@ -50,7 +50,7 @@ describe('Match-Setup', () => {
 });
 
 describe('Training-Setup', () => {
-  it('puts a slider on the player count and on every parameter set', () => {
+  it('puts a slider on the mode, the player count and every parameter set', () => {
     const { container } = render(
       <TrainingHub profiles={profiles} onStartMiniGame={vi.fn()} initialMode="checkout" />
     );
@@ -59,7 +59,24 @@ describe('Training-Setup', () => {
       .map(input => input.getAttribute('name'));
 
     // Checkout bringt zwei Parameter mit: Anzahl Ziele und Versuche je Finish.
-    expect(new Set(names)).toEqual(new Set(['playerCount', 'checkoutTargets', 'checkoutRounds']));
+    expect(new Set(names)).toEqual(
+      new Set(['trainingMode', 'playerCount', 'checkoutTargets', 'checkoutRounds'])
+    );
+  });
+
+  /**
+   * Der Modus-Slider ersetzt drei gestapelte Karten. Die Beschreibung, die
+   * vorher auf jeder Karte stand, erscheint jetzt nur für den gewählten Modus —
+   * sie darf dabei nicht verloren gehen.
+   */
+  it('describes the mode the slider is on', () => {
+    const { container } = render(
+      <TrainingHub profiles={profiles} onStartMiniGame={vi.fn()} initialMode="splitscore" />
+    );
+
+    expect(container.querySelectorAll('.training-mode-hint')).toHaveLength(1);
+    expect(container.querySelector('.training-mode-hint')?.textContent)
+      .toContain('halbieren');
   });
 });
 

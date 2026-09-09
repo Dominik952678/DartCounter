@@ -4,7 +4,7 @@ import type { GameConfig, Profile } from '../types';
 import { MatchSetup } from './MatchSetup';
 import { TrainingHub, type MiniGameMode } from './TrainingHub';
 import { readOneOf, write } from '../utils/storage';
-import { ChoiceGroup } from './ui';
+import { Slider } from './ui';
 
 interface HomeContainerProps {
   profiles: Record<string, Profile>;
@@ -54,8 +54,10 @@ export const HomeContainer: React.FC<HomeContainerProps> = ({
 
   return (
     <div className="home-container" style={{ paddingBottom: '20px' }}>
-      <div style={{ maxWidth: '400px', margin: '0 auto 16px auto', padding: '0 12px' }}>
-        <ChoiceGroup
+      {/* Zwei Bereiche, also der Fall für den Slider: die Fläche fährt zwischen
+          „X01 Match" und „Training", und die Bewegung sagt, von wo man kommt. */}
+      <div className="offline-tabs">
+        <Slider
           name="offlineSubTab"
           value={effectiveSubTab}
           options={[

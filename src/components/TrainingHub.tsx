@@ -3,7 +3,7 @@ import type { Profile } from '../types';
 import { useAuthStore } from '../store/useAuthStore';
 import { getActiveUserSyncInfo } from '../db';
 import { readInt, readOneOf, write } from '../utils/storage';
-import { Button, Card, CardHeader, Choice, Slider, Icons } from './ui';
+import { Button, Card, CardHeader, Slider, Icons } from './ui';
 import type { IconProps } from './ui';
 import { playerColorByName } from '../utils/playerColors';
 import { DEFAULT_BOT_AVERAGE, botRosterLabel } from '../utils/botProfiles';
@@ -12,25 +12,39 @@ export type MiniGameMode = 'checkout' | 'powerscoring' | 'splitscore';
 
 const MINI_GAME_MODES: readonly MiniGameMode[] = ['checkout', 'powerscoring', 'splitscore'];
 
-/** Die drei Modus-Karten. §5 gibt ihnen denselben Selected-State wie den Chips. */
-const MODE_CHOICES: readonly { mode: MiniGameMode; icon: React.FC<IconProps>; title: string; desc: string }[] = [
+/**
+ * Die drei Modi. `title` ist kurz, weil er auf einem Slider steht — dort ist
+ * neben zwei anderen Namen kein Platz für „Split Score (Halve-It)". Die
+ * Langfassung steht in `desc` unter dem Slider, wo sie nur für den gewählten
+ * Modus erscheint und deshalb ausführlich sein darf.
+ */
+const MODE_CHOICES: readonly {
+  mode: MiniGameMode;
+  icon: React.FC<IconProps>;
+  title: string;
+  desc: string;
+  tone: 'primary' | 'info' | 'pro';
+}[] = [
   {
     mode: 'checkout',
     icon: Icons.IconTarget,
-    title: 'Checkout Training',
-    desc: 'Zufällige Checkouts unter Druck treffen'
+    title: 'Checkout',
+    desc: 'Zufällige Checkouts unter Druck treffen — jeder Spieler bekommt dieselben Ziele.',
+    tone: 'primary'
   },
   {
     mode: 'powerscoring',
     icon: Icons.IconBars,
     title: 'Power Scoring',
-    desc: 'Maximale Punkte in festen Runden sammeln'
+    desc: 'Maximale Punkte in festen Runden sammeln.',
+    tone: 'info'
   },
   {
     mode: 'splitscore',
     icon: Icons.IconSplit,
-    title: 'Split Score (Halve-It)',
-    desc: 'Vorgegebene Segmente treffen oder Punkte halbieren'
+    title: 'Split Score',
+    desc: 'Vorgegebene Segmente treffen oder Punkte halbieren.',
+    tone: 'pro'
   }
 ];
 
@@ -50,6 +64,9 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
     if (initialMode && MINI_GAME_MODES.includes(initialMode)) return initialMode;
     return readOneOf('trainingMode', MINI_GAME_MODES, 'checkout');
   });
+
+  /** Der gewählte Modus als Datensatz — für Beschreibung, Icon und Ton darunter. */
+  const activeMode = MODE_CHOICES.find(m => m.mode === selectedMode) ?? MODE_CHOICES[0];
 
   const [playerCount, setPlayerCount] = useState<number>(
     () => readInt('trainingPlayerCount', 1, { min: 1, max: 4 })
@@ -226,25 +243,27 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
       </div>
 
       <div className="training-hub-grid">
-        {/* Modes Column */}
+        {/* Modus-Wahl
+            Vorher drei gestapelte Karten mit Icon, Titel und Beschreibung — eine
+            Liste, die die halbe Spalte füllte, um eine von drei Möglichkeiten zu
+            treffen. Jetzt ein Slider mit den drei Namen und darunter die
+            Beschreibung des gewählten Modus. Das ist derselbe Inhalt in einem
+            Viertel der Fläche; der Rest gehört den Einstellungen. */}
         <Card>
           <CardHeader heading={"Modus wählen"} />
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-            {MODE_CHOICES.map(({ mode, icon: Icon, title, desc }) => (
-              <Choice
-                key={mode}
-                className="training-mode-btn"
-                selected={selectedMode === mode}
-                onClick={() => setSelectedMode(mode)}
-              >
-                <span className="training-mode-icon" aria-hidden="true"><Icon size={22} /></span>
-                <span>
-                  <span className="training-mode-title">{title}</span>
-                  <span className="training-mode-desc">{desc}</span>
-                </span>
-              </Choice>
-            ))}
-          </div>
+          <Slider
+            name="trainingMode"
+            value={selectedMode}
+            options={MODE_CHOICES.map(({ mode, title }) => ({ value: mode, label: title }))}
+            onChange={setSelectedMode}
+            ariaLabel="Trainingsmodus"
+          />
+          <p className="training-mode-hint">
+            <span className={`training-mode-icon tone-${activeMode.tone}`} aria-hidden="true">
+              <activeMode.icon size={20} />
+            </span>
+            <span>{activeMode.desc}</span>
+          </p>
         </Card>
 
         {/* Settings Column */}

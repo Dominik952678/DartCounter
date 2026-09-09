@@ -621,16 +621,65 @@ select:focus, input:focus {
    jetzt hier, weil sie zur Leiste gehört: ohne sie bleibt in einem kurzen
    zweispaltigen Layout zu wenig Seitenhöhe für die natürliche Flussposition
    des Buttons, er klebt zu früh und verdeckt die letzte Zeile des Formulars. */
+/* Die Leiste über dem Dock: links die Zusammenfassung, rechts der Start-Button.
+
+   Sie war eine Box mit Padding und einem Button darin, der die ganze Breite
+   nahm. Als die Zusammenfassungszeile dazukam, hatte sie keine Anordnung — zwei
+   Kinder ohne Flex, also lag der Text hinter dem Button. Deshalb steht hier
+   jetzt eine Anordnung und keine Höhe: die Zeile darf umbrechen, und das
+   Freihalten unten rechnet mit dem, was daraus wird.
+
+   Der Verlauf nach unten ist kein Zierrat: die Leiste klebt über scrollendem
+   Inhalt, und ohne ihn schiebt sich eine Karte sichtbar unter den Button. */
 .sticky-action-bar {
   position: sticky;
   bottom: var(--dock-space);
   z-index: var(--z-sticky);
-  padding: 0 var(--space-2);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-2) var(--space-2);
+  background: linear-gradient(to top, var(--bg-base) 42%, transparent);
 }
 
+/* Die Zusammenfassung nimmt den Platz links und schiebt den Button nach rechts.
+   `flex: 1 1 12rem` heißt: sie darf schrumpfen, aber unter 12rem bricht sie
+   lieber auf eine eigene Zeile — zusammengequetscht zwischen „Startet:" und dem
+   Button wäre sie unlesbar. */
+.setup-summary {
+  flex: 1 1 12rem;
+  min-width: 0;
+  font-size: var(--text-body);
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+.setup-summary strong {
+  color: var(--text-primary);
+  font-weight: var(--weight-semibold);
+}
+
+.sticky-action-bar .btn,
+.sticky-action-bar button {
+  margin-left: auto;
+  flex: 0 0 auto;
+}
+
+/* Platz für die Leiste, damit sie nichts verdeckt, was man noch bedienen muss.
+   Zwei Zeilen mal 48px plus die Polster der Leiste — die Leiste bricht auf
+   einem Telefon um, und mit den früheren 64px lag ihre zweite Zeile über der
+   letzten Karte. */
 .match-setup-grid-sticky-clearance,
 .training-hub-grid-sticky-clearance {
-  margin-bottom: calc(64px + var(--space-3));
+  margin-bottom: calc(112px + var(--space-3));
+}
+
+@media (min-width: 600px) {
+  /* Ab hier passen Zeile und Button nebeneinander, die Leiste bleibt einzeilig. */
+  .match-setup-grid-sticky-clearance,
+  .training-hub-grid-sticky-clearance {
+    margin-bottom: calc(64px + var(--space-3));
+  }
 }
 
 @media (min-width: 900px) {
@@ -3202,6 +3251,15 @@ body:has(.app-nav-vertical) .app-container {
   grid-template-columns: 1fr;
   gap: var(--space-4);
 }
+
+/* Die Umschaltung X01 / Training über den beiden Setup-Screens. Mittig und nicht
+   breiter als nötig — zwei Optionen über die ganze Tabletbreite gezogen wären
+   zwei sehr flache Flächen. */
+.offline-tabs {
+  max-width: 400px;
+  margin: 0 auto var(--space-4);
+  padding: 0 var(--space-3);
+}
 /* §6 setzt die zweispaltigen Formulare auf die 900px-Stufe, nicht auf 768.
    Bei 768 bekäme das iPad Air 11" hochkant zwei Spalten von je ~340px —
    „beide Spalten nebeneinander mit mehr Breite" ist damit nicht erfüllt. */
@@ -3212,45 +3270,36 @@ body:has(.app-nav-vertical) .app-container {
     align-items: start;
   }
 }
-/* ── Trainings-Modus-Karten ──
-   §5 nennt sie beim Namen: „Gilt für Tabs, Auswahl-Chips … und
-   Trainings-Modus-Karten gleichermaßen." Vorher trug jeder Modus seine eigene
-   Farbe im ausgewählten Zustand — Blau, Rot, Orange — also drei Bedeutungen
-   für einen einzigen Zustand. Fläche und Rand kommen jetzt von `.choice`,
-   diese Regel steuert nur noch das Layout innerhalb der Karte. */
-.training-mode-btn {
-  padding: var(--card-padding);
-  text-align: left;
+/* ── Beschreibung des gewählten Trainingsmodus ──
+
+   Hier standen drei gestapelte Modus-Karten à 72px Mindesthöhe, um eine von
+   drei Möglichkeiten zu treffen: über 250px Fläche für eine Auswahl, die in eine
+   Zeile passt. Jetzt nimmt der Slider eine Zeile und diese Zeile eine zweite;
+   der gewonnene Platz gehört den Einstellungen darunter.
+
+   §5 nannte die Modus-Karten ausdrücklich als dritten Ort des einen
+   Selected-States. Den gibt es hier weiter — er sitzt nur im Slider-Thumb statt
+   in drei Kartenrahmen. */
+.training-mode-hint {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  width: 100%;
-  /* §4: das ist die Wahl, mit der das Training beginnt — großzügig. */
-  min-height: 72px;
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-body);
+  line-height: 1.45;
+  color: var(--text-secondary);
 }
-.training-mode-btn:hover { transform: translateY(-2px); }
 
 .training-mode-icon {
-  font-size: 1.8rem;
-  line-height: 1;
-  padding: var(--space-2);
-  border-radius: var(--radius-card);
-  background: var(--surface-hover);
-  flex-shrink: 0;
-}
-
-.training-mode-title {
-  display: block;
-  font-size: var(--text-body-lg);
-  font-weight: var(--weight-medium);
-  color: var(--text-primary);
-}
-
-.training-mode-desc {
-  display: block;
-  font-size: var(--text-label);
-  color: var(--text-secondary);
-  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: var(--radius-pill);
+  background: var(--bg-accent-muted);
+  color: var(--accent-primary);
 }
 
 /* ── 2v2-Teamleiste ──
@@ -4709,11 +4758,16 @@ button.home-tile:active { transform: scale(0.99); }
 }
 
 /* Die drei Trainingsmodi behalten ihre kategorischen Töne aus §1 — die Farbe
-   sitzt im Icon, die Fläche bleibt neutral. */
+   sitzt im Icon, die Fläche bleibt neutral. Gilt für die Kacheln auf dem
+   Start-Screen und für das Icon neben der Modus-Beschreibung im Training. */
+.tone-info.home-tile-icon,
+.tone-info.training-mode-icon,
 .tone-info .home-tile-icon {
   background: color-mix(in srgb, var(--accent-info) 14%, transparent);
   color: var(--accent-info);
 }
+.tone-pro.home-tile-icon,
+.tone-pro.training-mode-icon,
 .tone-pro .home-tile-icon {
   background: color-mix(in srgb, var(--accent-pro) 16%, transparent);
   color: var(--accent-pro);

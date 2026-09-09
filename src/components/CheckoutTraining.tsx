@@ -70,12 +70,34 @@ interface HistorySnapshot {
 
 const generateRandomScore = () => Math.floor(Math.random() * (120 - 2 + 1)) + 2;
 
+/**
+ * Die Ziele einer Sitzung — einmal gezogen, für alle Spieler dieselben.
+ *
+ * Vorher würfelte jeder Spieler bei jedem Zielwechsel seinen eigenen Rest aus.
+ * Damit war das Ergebnis am Ende nicht vergleichbar: wer 32, 40 und 36 bekam,
+ * hatte eine andere Sitzung gespielt als wer 117, 98 und 113 bekam, und der
+ * bessere Schnitt sagte über das Können nichts. Ein Trainingsmodus, der zwei
+ * Leute nebeneinander stellt, muss beiden dieselbe Aufgabe geben.
+ *
+ * Sie werden außerdem vollständig im Voraus gezogen und stehen von der ersten
+ * Sekunde im Raster. Man sieht, was kommt — und das ist beim Checkout kein
+ * Komfort, sondern Teil des Trainings: eine 96 will anders angegangen werden als
+ * eine 40, und wer das erst beim Umblättern erfährt, übt etwas anderes.
+ */
+const drawTargets = (count: number): number[] =>
+  Array.from({ length: Math.max(0, count) }, generateRandomScore);
+
 export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, profiles, checkoutRounds, checkoutTargets, onFinish, onAbort, isOnline, isHost, roomChannel, myUsername }) => {
   const [showAbortConfirm, setShowAbortConfirm] = useState(false);
   const [soundOn, setSoundOn] = useState(isSoundEnabled());
+  /* Konstant für die Sitzung: `useState` ohne Setter, damit ein Re-Render nicht
+     neu würfelt. Die Komponente wird pro Sitzung neu gemountet (`key` in
+     App.tsx), ein Effekt zum Nachziehen wäre also nur eine Fehlerquelle. */
+  const [targets] = useState<number[]>(() => drawTargets(checkoutTargets));
+
   const [gameState, setGameState] = useState<PlayerState[]>(() => 
     players.map(p => {
-        const target = generateRandomScore();
+        const target = targets[0] ?? generateRandomScore();
         return {
             name: p,
             isBot: profiles[p]?.isBot || false,
@@ -176,10 +198,8 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
     const newBestCheckout = Math.max(p.bestCheckout, p.targetScore);
     const newDartsUsed = p.dartsUsed + totalDartsForThisTarget;
 
-    let nextTarget = p.targetScore;
-    if (newAttempts < checkoutTargets) {
-      nextTarget = generateRandomScore();
-    }
+    // Das nächste Ziel steht schon fest — dieselbe Reihe für jeden Spieler.
+    const nextTarget = targets[newAttempts] ?? p.targetScore;
 
     const updatedPlayer: PlayerState = {
       ...p,
@@ -200,7 +220,7 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
     setGameState(nextGameState);
 
     advanceToNextPlayerOrFinish(nextGameState);
-  }, [checkoutTargets, advanceToNextPlayerOrFinish]);
+  }, [targets, advanceToNextPlayerOrFinish]);
 
   const processBust = React.useCallback((dartsInThisTurn: number) => {
     speak("No Score");
@@ -217,10 +237,7 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
       setCallOut(c => ({ n: c.n + 1, text: 'VERPASST', detail: `${p.targetScore} nicht gefinisht`, tone: 'bad' }));
       const newAttempts = p.attempts + 1;
       const totalDartsForThisTarget = p.dartsOnCurrentTarget + dartsInThisTurn;
-      let nextTarget = p.targetScore;
-      if (newAttempts < checkoutTargets) {
-        nextTarget = generateRandomScore();
-      }
+      const nextTarget = targets[newAttempts] ?? p.targetScore;
 
       updatedPlayer = {
         ...p,
@@ -248,7 +265,7 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
     setGameState(nextGameState);
 
     advanceToNextPlayerOrFinish(nextGameState);
-  }, [checkoutRounds, checkoutTargets, advanceToNextPlayerOrFinish]);
+  }, [checkoutRounds, targets, advanceToNextPlayerOrFinish]);
 
   const processEndTurn = React.useCallback((darts: Dart[]) => {
     const roundScore = darts.reduce((s, d) => s + d.value, 0);
@@ -273,10 +290,7 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
       setCallOut(c => ({ n: c.n + 1, text: 'VERPASST', detail: `${p.targetScore} nicht gefinisht`, tone: 'bad' }));
       const newAttempts = p.attempts + 1;
       const totalDartsForThisTarget = p.dartsOnCurrentTarget + darts.length;
-      let nextTarget = p.targetScore;
-      if (newAttempts < checkoutTargets) {
-        nextTarget = generateRandomScore();
-      }
+      const nextTarget = targets[newAttempts] ?? p.targetScore;
 
       updatedPlayer = {
         ...p,
@@ -305,7 +319,7 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
     setGameState(nextGameState);
 
     advanceToNextPlayerOrFinish(nextGameState);
-  }, [checkoutRounds, checkoutTargets, advanceToNextPlayerOrFinish]);
+  }, [checkoutRounds, targets, advanceToNextPlayerOrFinish]);
 
   const handleDart = React.useCallback((base: number, overrideMult?: number) => {
     if (stateRef.current.isProcessing) return;
@@ -561,10 +575,13 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
                   )}
                 />
 
-                {/* Alle Ziele der Sitzung: erledigte mit den benötigten Darts,
-                    das laufende, die kommenden. */}
+                {/* Alle Ziele der Sitzung, mit ihrer Zahl — auch die kommenden.
+                    Vorher stand in einem noch nicht gespielten Kasten die
+                    laufende Nummer („4"), also eine Zahl, die aussah wie ein
+                    Rest, aber keiner war. Jetzt steht überall das Ziel selbst
+                    und darunter, was daraus geworden ist. */}
                 <ol className="co-targets">
-                  {Array.from({ length: checkoutTargets }).map((_, idx) => {
+                  {targets.map((target, idx) => {
                     const done = activeP?.checkoutLog[idx];
                     const isCurrent = idx === (activeP?.attempts ?? 0);
                     return (
@@ -574,9 +591,7 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
                           done ? (done.darts === null ? 'is-missed' : 'is-hit') : ''
                         }`}
                       >
-                        <span className="co-target-label">
-                          {done ? done.target : isCurrent ? activeP?.targetScore : idx + 1}
-                        </span>
+                        <span className="co-target-label">{target}</span>
                         <span className="co-target-value">
                           {done ? (done.darts === null ? '\u00d7' : `${done.darts}D`) : isCurrent ? '…' : '–'}
                         </span>
