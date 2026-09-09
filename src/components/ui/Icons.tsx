@@ -11,14 +11,14 @@
    aufgeben, der dafür sorgt, dass Größe, Strichstärke, Farbe und die zwei
    Accessibility-Attribute an einer Stelle stehen. Die Regel betrifft allein den
    Komfort von Hot Reload. */
-import React from 'react';
-import { HugeiconsIcon, type IconSvgElement } from '@hugeicons/react';
+import React from "react";
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import {
   // Navigation & Marke
   Home01Icon,
   PlayIcon,
   GlobeIcon,
-  BarChartIcon,
+  ChartIcon,
   UserIcon,
   UserMultipleIcon,
   Dumbbell01Icon,
@@ -40,6 +40,7 @@ import {
   ArrowTurnBackwardIcon,
   Refresh01Icon,
   ShuffleIcon,
+  ArrowReloadHorizontalIcon,
   Delete01Icon,
   Eraser01Icon,
   Copy01Icon,
@@ -67,9 +68,9 @@ import {
   // Spieler
   BotIcon,
   UserCircleIcon,
-  DartIcon,
-  FlaskConicalIcon
-} from '@hugeicons/core-free-icons';
+  Target02Icon,
+  FlaskConicalIcon,
+} from "@hugeicons/core-free-icons";
 
 /**
  * Das Icon-Set der App — eine Datei, eine Bildsprache.
@@ -142,8 +143,16 @@ const strokeFor = (size: number): number => (size < 18 ? 3 : 2.75);
  * Der Name ist Absicht — ohne `displayName` stünden in den React-Devtools und in
  * jedem Stacktrace fünfzig gleichnamige Komponenten.
  */
-const wrap = (icon: IconSvgElement, displayName: string): React.FC<IconProps> => {
-  const Wrapped: React.FC<IconProps> = ({ size = 22, className, style, strokeWidth }) => (
+const wrap = (
+  icon: IconSvgElement,
+  displayName: string,
+): React.FC<IconProps> => {
+  const Wrapped: React.FC<IconProps> = ({
+    size = 22,
+    className,
+    style,
+    strokeWidth,
+  }) => (
     <HugeiconsIcon
       icon={icon}
       size={size}
@@ -154,7 +163,7 @@ const wrap = (icon: IconSvgElement, displayName: string): React.FC<IconProps> =>
          Flex-Container werden), `vertical-align: middle` gegen die Grundlinie,
          und `flex: none`, damit es in einer engen Flex-Zeile nicht als erstes
          zusammengedrückt wird. */
-      className={['icon', className].filter(Boolean).join(' ')}
+      className={["icon", className].filter(Boolean).join(" ")}
       style={style}
       aria-hidden="true"
       focusable="false"
@@ -175,10 +184,10 @@ const HandDrawn: React.FC<IconProps & { children: React.ReactNode }> = ({
   className,
   style,
   strokeWidth,
-  children
+  children,
 }) => (
   <svg
-    className={['icon', className].filter(Boolean).join(' ')}
+    className={["icon", className].filter(Boolean).join(" ")}
     style={style}
     width={size}
     height={size}
@@ -211,7 +220,7 @@ const HandDrawn: React.FC<IconProps & { children: React.ReactNode }> = ({
  * Der Punkt in der Mitte nutzt `fill="currentColor"`, weil ein Bull mit 2.75er
  * Linie bei dieser Größe zu einem grauen Fleck zuläuft.
  */
-export const IconTarget: React.FC<IconProps> = props => (
+export const IconTarget: React.FC<IconProps> = (props) => (
   <HandDrawn {...props}>
     <circle cx="12" cy="12" r="9" />
     <circle cx="12" cy="12" r="4.6" />
@@ -226,7 +235,7 @@ export const IconTarget: React.FC<IconProps> = props => (
  * triffst" keine Bibliotheks-Bedeutung ist. Ein Divisions- oder Schere-Symbol
  * hätte den Modus benannt, ohne ihn zu erklären.
  */
-export const IconSplit: React.FC<IconProps> = props => (
+export const IconSplit: React.FC<IconProps> = (props) => (
   <HandDrawn {...props}>
     <path d="M5 12h14" />
     <circle cx="12" cy="6.5" r="1.4" fill="currentColor" stroke="none" />
@@ -238,8 +247,8 @@ export const IconSplit: React.FC<IconProps> = props => (
    Navigation
    ═══════════════════════════════════════════════════════════════════════════ */
 
-export const IconHome = wrap(Home01Icon, 'IconHome');
-export const IconPlay = wrap(PlayIcon, 'IconPlay');
+export const IconHome = wrap(Home01Icon, "IconHome");
+export const IconPlay = wrap(PlayIcon, "IconPlay");
 
 /**
  * Die betonte Variante für die primäre Aktion.
@@ -249,27 +258,37 @@ export const IconPlay = wrap(PlayIcon, 'IconPlay');
  * echte kleine Einbuße gegenüber dem gefüllten Dreieck von vorher — auf der
  * Weiter-Karte trägt die Wucht jetzt der amberne Kreis darum, nicht das Zeichen.
  */
-export const IconPlayFilled: React.FC<IconProps> = ({ size = 22, strokeWidth, ...rest }) => {
+export const IconPlayFilled: React.FC<IconProps> = ({
+  size = 22,
+  strokeWidth,
+  ...rest
+}) => {
   const Play = IconPlay;
-  return <Play size={size} strokeWidth={strokeWidth ?? strokeFor(size) + 0.5} {...rest} />;
+  return (
+    <Play
+      size={size}
+      strokeWidth={strokeWidth ?? strokeFor(size) + 0.5}
+      {...rest}
+    />
+  );
 };
 
-export const IconGlobe = wrap(GlobeIcon, 'IconGlobe');
+export const IconGlobe = wrap(GlobeIcon, "IconGlobe");
 
 /** Drei steigende Balken — dasselbe Bild für Statistik und für Power Scoring. */
-export const IconBars = wrap(BarChartIcon, 'IconBars');
+export const IconBars = wrap(ChartIcon, "IconBars");
 
-export const IconUser = wrap(UserIcon, 'IconUser');
+export const IconUser = wrap(UserIcon, "IconUser");
 
 /**
  * Mehrere Spieler. `UserMultipleIcon` zeigt zwei Personen, die vordere ganz und
  * die hintere angeschnitten — genau das Bild von vorher. `UserGroupIcon` wäre
  * eine Gruppe zu drei und bei 15px ein Knäuel.
  */
-export const IconUsers = wrap(UserMultipleIcon, 'IconUsers');
+export const IconUsers = wrap(UserMultipleIcon, "IconUsers");
 
 /** Training allgemein — eine Hantel. */
-export const IconTraining = wrap(Dumbbell01Icon, 'IconTraining');
+export const IconTraining = wrap(Dumbbell01Icon, "IconTraining");
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Richtung
@@ -280,33 +299,33 @@ export const IconTraining = wrap(Dumbbell01Icon, 'IconTraining');
    statt einer.
    ═══════════════════════════════════════════════════════════════════════════ */
 
-export const IconChevronUp = wrap(ArrowUp01Icon, 'IconChevronUp');
-export const IconChevronDown = wrap(ArrowDown01Icon, 'IconChevronDown');
-export const IconChevronLeft = wrap(ArrowLeft01Icon, 'IconChevronLeft');
-export const IconChevronRight = wrap(ArrowRight01Icon, 'IconChevronRight');
+export const IconChevronUp = wrap(ArrowUp01Icon, "IconChevronUp");
+export const IconChevronDown = wrap(ArrowDown01Icon, "IconChevronDown");
+export const IconChevronLeft = wrap(ArrowLeft01Icon, "IconChevronLeft");
+export const IconChevronRight = wrap(ArrowRight01Icon, "IconChevronRight");
 
-export const IconArrowUp = wrap(ArrowUp02Icon, 'IconArrowUp');
-export const IconArrowDown = wrap(ArrowDown02Icon, 'IconArrowDown');
-export const IconArrowLeft = wrap(ArrowLeft02Icon, 'IconArrowLeft');
-export const IconArrowRight = wrap(ArrowRight02Icon, 'IconArrowRight');
+export const IconArrowUp = wrap(ArrowUp02Icon, "IconArrowUp");
+export const IconArrowDown = wrap(ArrowDown02Icon, "IconArrowDown");
+export const IconArrowLeft = wrap(ArrowLeft02Icon, "IconArrowLeft");
+export const IconArrowRight = wrap(ArrowRight02Icon, "IconArrowRight");
 
 /** Verlässt die App — Pfeil aus einem Rahmen heraus. */
-export const IconExternal = wrap(ExternalLinkIcon, 'IconExternal');
+export const IconExternal = wrap(ExternalLinkIcon, "IconExternal");
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Aktionen
    ═══════════════════════════════════════════════════════════════════════════ */
 
-export const IconPlus = wrap(PlusSignIcon, 'IconPlus');
-export const IconMinus = wrap(MinusSignIcon, 'IconMinus');
-export const IconClose = wrap(Cancel01Icon, 'IconClose');
+export const IconPlus = wrap(PlusSignIcon, "IconPlus");
+export const IconMinus = wrap(MinusSignIcon, "IconMinus");
+export const IconClose = wrap(Cancel01Icon, "IconClose");
 
 /**
  * Der Haken. `Tick02Icon` sind zwei klare Segmente wie im handgezeichneten
  * Original; `Tick01Icon` hat einen dekorativen Anstrich am unteren Ende, der bei
  * 17px wie ein Zeichenfehler wirkt.
  */
-export const IconCheck = wrap(Tick02Icon, 'IconCheck');
+export const IconCheck = wrap(Tick02Icon, "IconCheck");
 
 /**
  * Rückgängig — „Wurf zurücknehmen".
@@ -315,19 +334,20 @@ export const IconCheck = wrap(Tick02Icon, 'IconCheck');
  * `Undo02Icon` wäre ein Kreis mit Pfeilspitze und liest sich als „neu laden",
  * was neben dem Neuladen-Icon der Versionszeile eine Verwechslung wäre.
  */
-export const IconUndo = wrap(ArrowTurnBackwardIcon, 'IconUndo');
+export const IconUndo = wrap(ArrowTurnBackwardIcon, "IconUndo");
 
-export const IconRefresh = wrap(Refresh01Icon, 'IconRefresh');
+export const IconRefresh = wrap(Refresh01Icon, "IconRefresh");
 
 /** Reihenfolge auslosen — zwei Wege, die sich kreuzen. */
-export const IconShuffle = wrap(ShuffleIcon, 'IconShuffle');
+export const IconShuffle = wrap(ArrowReloadHorizontalIcon, "IconShuffle");
+export const IconOneTimeShuffle = wrap(ShuffleIcon, "IconOneTimeShuffle");
 
 /**
  * Löschen. `Delete01Icon` ist Korpus, Deckel und Griff — das
  * handgezeichnete Bild. `Delete02Icon` legt Streifen in den Korpus, und die
  * laufen bei 16px zu einem Grau zusammen.
  */
-export const IconTrash = wrap(Delete01Icon, 'IconTrash');
+export const IconTrash = wrap(Delete01Icon, "IconTrash");
 
 /**
  * Rücktaste im Zahlenfeld.
@@ -336,15 +356,15 @@ export const IconTrash = wrap(Delete01Icon, 'IconTrash');
  * Kreuz darin und damit dieselbe Aussage; nur ist ihr Umriss ein Rechteck mit
  * runden Ecken statt des Fünfecks mit der Spitze nach links.
  */
-export const IconBackspace = wrap(Eraser01Icon, 'IconBackspace');
+export const IconBackspace = wrap(Eraser01Icon, "IconBackspace");
 
-export const IconCopy = wrap(Copy01Icon, 'IconCopy');
+export const IconCopy = wrap(Copy01Icon, "IconCopy");
 
 /** Bild teilen / exportieren. */
-export const IconCamera = wrap(Camera01Icon, 'IconCamera');
+export const IconCamera = wrap(Camera01Icon, "IconCamera");
 
-export const IconDownload = wrap(Download01Icon, 'IconDownload');
-export const IconUpload = wrap(Upload01Icon, 'IconUpload');
+export const IconDownload = wrap(Download01Icon, "IconDownload");
+export const IconUpload = wrap(Upload01Icon, "IconUpload");
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Zustand
@@ -358,10 +378,10 @@ export const IconUpload = wrap(Upload01Icon, 'IconUpload');
  * nichts und würde neben dem Info-Kreis wie eine zweite Stufe wirken, die es
  * nicht gibt.
  */
-export const IconAlert = wrap(AlertCircleIcon, 'IconAlert');
+export const IconAlert = wrap(AlertCircleIcon, "IconAlert");
 
 /** Hinweis, Tipp — derselbe Kreis, Punkt oben. */
-export const IconInfo = wrap(InformationCircleIcon, 'IconInfo');
+export const IconInfo = wrap(InformationCircleIcon, "IconInfo");
 
 /**
  * Auf und zu — und zwar als Paar.
@@ -373,8 +393,8 @@ export const IconInfo = wrap(InformationCircleIcon, 'IconInfo');
  * Dinge. `LockIcon` wäre ein Schlüsselloch im Kreis und hat kein offenes
  * Gegenstück im freien Satz.
  */
-export const IconLock = wrap(SquareLock01Icon, 'IconLock');
-export const IconUnlock = wrap(SquareUnlock01Icon, 'IconUnlock');
+export const IconLock = wrap(SquareLock01Icon, "IconLock");
+export const IconUnlock = wrap(SquareUnlock01Icon, "IconUnlock");
 
 /**
  * Geblockt (2v2-Freeze) — eine Schneeflocke.
@@ -383,39 +403,39 @@ export const IconUnlock = wrap(SquareUnlock01Icon, 'IconUnlock');
  * und keine Sicherheit. Die Flocke war schon vorher das Zeichen dafür (davor das
  * Emoji ❄️), und `SnowIcon` ist ihre Entsprechung im Katalog.
  */
-export const IconFrozen = wrap(SnowIcon, 'IconFrozen');
+export const IconFrozen = wrap(SnowIcon, "IconFrozen");
 
 /**
  * Sieg. `ChampionIcon` ist der Pokal mit Henkeln und Fuß, also das
  * handgezeichnete Bild. `Award01Icon` wäre eine Medaille an Bändern — das
  * ist eine Auszeichnung, kein gewonnenes Match.
  */
-export const IconTrophy = wrap(ChampionIcon, 'IconTrophy');
+export const IconTrophy = wrap(ChampionIcon, "IconTrophy");
 
-export const IconKey = wrap(Key01Icon, 'IconKey');
-export const IconMail = wrap(Mail01Icon, 'IconMail');
-export const IconCloud = wrap(CloudIcon, 'IconCloud');
+export const IconKey = wrap(Key01Icon, "IconKey");
+export const IconMail = wrap(Mail01Icon, "IconMail");
+export const IconCloud = wrap(CloudIcon, "IconCloud");
 
 /** Das gekoppelte Host-Gerät im Gast-Sync. */
-export const IconDevice = wrap(SmartPhone01Icon, 'IconDevice');
+export const IconDevice = wrap(SmartPhone01Icon, "IconDevice");
 
-export const IconLink = wrap(Link01Icon, 'IconLink');
+export const IconLink = wrap(Link01Icon, "IconLink");
 
 /** Verlauf, gespeicherte Matches. */
-export const IconHistory = wrap(HistoryIcon, 'IconHistory');
+export const IconHistory = wrap(HistoryIcon, "IconHistory");
 
 /** Kurvendiagramm — Achse plus steigende Linie, wie im Original. */
-export const IconChart = wrap(ChartLineData01Icon, 'IconChart');
+export const IconChart = wrap(ChartLineData01Icon, "IconChart");
 
 /** Erscheinungsbild / Theme. */
-export const IconPalette = wrap(PaintBoardIcon, 'IconPalette');
+export const IconPalette = wrap(PaintBoardIcon, "IconPalette");
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Ton
    ═══════════════════════════════════════════════════════════════════════════ */
 
-export const IconSoundOn = wrap(VolumeHighIcon, 'IconSoundOn');
-export const IconSoundOff = wrap(VolumeOffIcon, 'IconSoundOff');
+export const IconSoundOn = wrap(VolumeHighIcon, "IconSoundOn");
+export const IconSoundOff = wrap(VolumeOffIcon, "IconSoundOff");
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Spieler
@@ -427,14 +447,14 @@ export const IconSoundOff = wrap(VolumeOffIcon, 'IconSoundOff');
  * Schultern und damit näher an einem Menschen, was hier genau der Unterschied
  * ist, den das Icon machen soll.
  */
-export const IconBot = wrap(BotIcon, 'IconBot');
+export const IconBot = wrap(BotIcon, "IconBot");
 
 /**
  * Gast — Kopf und Schultern im Kreis. `UserCircleIcon` ist genau das
  * handgezeichnete Bild. `UserQuestion01Icon` mit dem Fragezeichen hätte
  * „unbekannt" gesagt; ein Gast ist bekannt, nur nicht angemeldet.
  */
-export const IconGuest = wrap(UserCircleIcon, 'IconGuest');
+export const IconGuest = wrap(UserCircleIcon, "IconGuest");
 
 /**
  * Der Bull beim Ausbullen — ein Dart im Flug.
@@ -444,11 +464,11 @@ export const IconGuest = wrap(UserCircleIcon, 'IconGuest');
  * nebeneinander sagen weniger als eins. „Ausbullen" ist außerdem der Wurf, nicht
  * das Feld.
  */
-export const IconBull = wrap(DartIcon, 'IconBull');
+export const IconBull = wrap(Target02Icon, "IconBull");
 
 /**
  * Testdaten. `FlaskConicalIcon` ist der Erlenmeyerkolben mit Füllstandslinie —
  * das handgezeichnete Bild. `TestTube01Icon` wäre ein Reagenzglas und bei 17px
  * kaum von einem Ausrufezeichen zu unterscheiden.
  */
-export const IconFlask = wrap(FlaskConicalIcon, 'IconFlask');
+export const IconFlask = wrap(FlaskConicalIcon, "IconFlask");

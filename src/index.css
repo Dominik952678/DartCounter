@@ -5,9 +5,9 @@
    beiden Themes überschreiben sie auf `[data-theme="…"]`. Weil die
    Attribut-Selektoren spezifischer sind, gewinnt das aktive Theme, egal wo
    seine Datei steht — die Reihenfolge macht nur die Leserichtung klar. */
-@import './styles/tokens.css';
-@import './styles/vaporwave.css';
-@import './styles/cyberpunk.css';
+@import "./styles/tokens.css";
+@import "./styles/vaporwave.css";
+@import "./styles/cyberpunk.css";
 
 /* ── Breakpoint-Skala ──
    Media-Queries können keine Custom-Properties lesen, die Zahlen stehen also
@@ -32,10 +32,12 @@
    Telefons ist. Orientierungs-Regeln kombinieren `(orientation: landscape)`
    mit einer `max-height`, nicht mit einer Breite. */
 
-*, *::before, *::after { 
-  box-sizing: border-box; 
-  margin: 0; 
-  padding: 0; 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 body {
@@ -68,7 +70,9 @@ body {
    dieselbe Richtung, deshalb stehen sie nebeneinander. Nicht `none`, damit eine
    Einblend-Keyframe ihren Zielzustand noch erreicht statt unsichtbar zu bleiben. */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
@@ -91,7 +95,8 @@ body {
 
    Die zwei Retro-Themes setzen --font-heading auf Orbitron und ihre eigenen
    Versalien-Regeln — die Struktur ist geteilt, das Erscheinungsbild nicht. */
-h1, h2 {
+h1,
+h2 {
   font-family: var(--font-heading);
   font-weight: var(--weight-regular);
   line-height: var(--leading-heading);
@@ -107,15 +112,21 @@ h2 {
   letter-spacing: var(--tracking-heading);
 }
 
-h3, h4 {
+h3,
+h4 {
   font-family: var(--font);
   font-weight: var(--weight-semibold);
   letter-spacing: normal;
   line-height: 1.35;
   margin: 0;
 }
-h3 { font-size: var(--text-body-lg); color: var(--text-primary); }
-h4 { font-size: var(--text-body); }
+h3 {
+  font-size: var(--text-body-lg);
+  color: var(--text-primary);
+}
+h4 {
+  font-size: var(--text-body);
+}
 
 /* ── Zahlen ──
 
@@ -133,8 +144,13 @@ h4 { font-size: var(--text-body); }
   font-variant-numeric: tabular-nums;
   font-weight: var(--weight-medium);
 }
-.num { letter-spacing: -0.01em; }
-.num-lg { letter-spacing: -0.03em; line-height: 0.95; }
+.num {
+  letter-spacing: -0.01em;
+}
+.num-lg {
+  letter-spacing: -0.03em;
+  line-height: 0.95;
+}
 
 /* ── Icons ──
 
@@ -181,9 +197,16 @@ h4 { font-size: var(--text-body); }
 }
 
 @keyframes checkoutGlow {
-  0% { border-color: rgba(16, 185, 129, 0.2); }
-  50% { border-color: rgba(16, 185, 129, 0.6); box-shadow: 0 0 16px rgba(16, 185, 129, 0.3); }
-  100% { border-color: rgba(16, 185, 129, 0.2); }
+  0% {
+    border-color: rgba(16, 185, 129, 0.2);
+  }
+  50% {
+    border-color: rgba(16, 185, 129, 0.6);
+    box-shadow: 0 0 16px rgba(16, 185, 129, 0.3);
+  }
+  100% {
+    border-color: rgba(16, 185, 129, 0.2);
+  }
 }
 
 .animate-cta-pulse {
@@ -191,7 +214,10 @@ h4 { font-size: var(--text-body); }
 }
 
 .interactive-card {
-  transition: transform 0.15s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+  transition:
+    transform 0.15s cubic-bezier(0.2, 0, 0, 1),
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
 }
 .interactive-card:active {
   transform: scale(0.98);
@@ -222,7 +248,9 @@ h4 { font-size: var(--text-body); }
      das regelt `body:has(.app-nav-vertical)` beim Navigations-Block. */
   --dock-height: 58px;
   --dock-offset: 0px;
-  --dock-space: calc(var(--dock-height) + var(--dock-offset) + var(--safe-bottom) + 20px);
+  --dock-space: calc(
+    var(--dock-height) + var(--dock-offset) + var(--safe-bottom) + 20px
+  );
 
   /* Die Stufen unten stellen nur noch --gutter und --gutter-min um; wie daraus
      mit den Safe-Areas ein Padding wird, steht genau einmal hier.
@@ -236,14 +264,24 @@ h4 { font-size: var(--text-body); }
   --gutter-x: 12px;
   --gutter-x-min: 16px;
 
-  --shell-pad-top: max(calc(var(--safe-top) + var(--gutter-top)), var(--gutter-top-min));
+  --shell-pad-top: max(
+    calc(var(--safe-top) + var(--gutter-top)),
+    var(--gutter-top-min)
+  );
   --shell-pad-bottom: var(--dock-space);
-  --shell-pad-left: max(calc(var(--safe-left) + var(--gutter-x)), var(--gutter-x-min));
-  --shell-pad-right: max(calc(var(--safe-right) + var(--gutter-x)), var(--gutter-x-min));
+  --shell-pad-left: max(
+    calc(var(--safe-left) + var(--gutter-x)),
+    var(--gutter-x-min)
+  );
+  --shell-pad-right: max(
+    calc(var(--safe-right) + var(--gutter-x)),
+    var(--gutter-x-min)
+  );
 
   max-width: 600px;
   margin: 0 auto;
-  padding: var(--shell-pad-top) var(--shell-pad-right) var(--shell-pad-bottom) var(--shell-pad-left);
+  padding: var(--shell-pad-top) var(--shell-pad-right) var(--shell-pad-bottom)
+    var(--shell-pad-left);
   min-height: 100vh;
   min-height: 100dvh;
   position: relative;
@@ -270,8 +308,10 @@ h4 { font-size: var(--text-body); }
 /* iPhone Hochformat (17 Pro: 402pt) — engere Gutter, mehr Platz zum Scoren. */
 @media (max-width: 500px) {
   .app-container {
-    --gutter-top: 6px;  --gutter-top-min: 8px;
-    --gutter-x: 10px;   --gutter-x-min: 14px;
+    --gutter-top: 6px;
+    --gutter-top-min: 8px;
+    --gutter-x: 10px;
+    --gutter-x-min: 14px;
   }
 }
 
@@ -279,8 +319,10 @@ h4 { font-size: var(--text-body); }
 @media (min-width: 600px) {
   .app-container {
     --dock-offset: 12px;
-    --gutter-top: 6px;  --gutter-top-min: 10px;
-    --gutter-x: 12px;   --gutter-x-min: 16px;
+    --gutter-top: 6px;
+    --gutter-top-min: 10px;
+    --gutter-x: 12px;
+    --gutter-x-min: 16px;
     max-width: 600px;
   }
 }
@@ -298,8 +340,10 @@ h4 { font-size: var(--text-body); }
 @media (min-width: 768px) and (orientation: portrait) {
   .app-container {
     --dock-offset: 20px;
-    --gutter-top: 20px; --gutter-top-min: 24px;
-    --gutter-x: 24px;   --gutter-x-min: 32px;
+    --gutter-top: 20px;
+    --gutter-top-min: 24px;
+    --gutter-x: 24px;
+    --gutter-x-min: 32px;
     max-width: 720px;
   }
 }
@@ -307,11 +351,13 @@ h4 { font-size: var(--text-body); }
 /* ≥900px — Sidebar-Stufe. Mehr Breite für die zweispaltigen Formulare (§6). */
 @media (min-width: 900px) {
   .app-container {
-    --gutter-top: 12px; --gutter-top-min: 16px;
+    --gutter-top: 12px;
+    --gutter-top-min: 16px;
     /* Muss hier stehen: die 24/32 kommen sonst nur aus der 768px-Regel, und
        die gilt nur im Hochformat — das iPad im Querformat fiele auf die
        schmalen 12/16 der 600px-Stufe zurück. */
-    --gutter-x: 24px;   --gutter-x-min: 32px;
+    --gutter-x: 24px;
+    --gutter-x-min: 32px;
     max-width: 960px;
   }
 }
@@ -354,7 +400,10 @@ h4 { font-size: var(--text-body); }
   padding: var(--card-padding);
   margin-bottom: var(--space-4);
   box-shadow: var(--shadow-md);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.15s ease;
 }
 
 /* Karten in einer Reihe sind gleich hoch (§3). Die Höhe kommt vom Grid, die
@@ -368,13 +417,20 @@ h4 { font-size: var(--text-body); }
   justify-content: center;
 }
 
-.card-flush { padding: 0; }
+.card-flush {
+  padding: 0;
+}
 
 .card-interactive {
   cursor: pointer;
-  transition: transform 0.15s cubic-bezier(0.2, 0, 0, 1), border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.15s cubic-bezier(0.2, 0, 0, 1),
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
-.card-interactive:active { transform: scale(0.98); }
+.card-interactive:active {
+  transform: scale(0.98);
+}
 
 .card-header {
   display: flex;
@@ -396,35 +452,39 @@ h4 { font-size: var(--text-body); }
   line-height: 1;
   flex-shrink: 0;
 }
-.card-badge { 
-  background: var(--surface); 
+.card-badge {
+  background: var(--surface);
   border: 1px solid var(--card-border);
-  padding: 3px 10px; 
-  border-radius: 20px; 
-  font-size: 0.8em; 
-  color: var(--text-dim); 
-  font-weight: var(--weight-medium); 
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.8em;
+  color: var(--text-dim);
+  font-weight: var(--weight-medium);
 }
-.stat-card { 
-  text-align: center; 
-  min-height: 84px; 
-  display: flex; 
-  flex-direction: column; 
-  justify-content: center; 
-  align-items: center; 
+.stat-card {
+  text-align: center;
+  min-height: 84px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   background: var(--surface);
   border: 1px solid var(--card-border);
   border-radius: var(--radius-sm);
   padding: 12px;
 }
-.stat-value { 
-  font-size: 1.45em; 
-  font-weight: var(--weight-medium); 
-  margin-top: 4px; 
+.stat-value {
+  font-size: 1.45em;
+  font-weight: var(--weight-medium);
+  margin-top: 4px;
 }
 
 /* ── Form Elements & Modern Inputs ─────────────────────── */
-select, input[type='text'], input[type='number'], input[type='password'], input[type='email'] {
+select,
+input[type="text"],
+input[type="number"],
+input[type="password"],
+input[type="email"] {
   width: 100%;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--card-border);
@@ -438,8 +498,9 @@ select, input[type='text'], input[type='number'], input[type='password'], input[
   margin: 0;
   min-height: 48px;
 }
-select:focus, input:focus { 
-  border-color: var(--primary); 
+select:focus,
+input:focus {
+  border-color: var(--primary);
   background: rgba(148, 163, 184, 0.08);
   box-shadow: 0 0 0 3px var(--primary-glow);
 }
@@ -463,9 +524,20 @@ select:focus, input:focus {
   margin-top: var(--space-2);
 }
 
-.input-row { display: flex; gap: 12px; }
-.input-row > div { flex: 1; text-align: left; }
-.input-row label { font-size: 0.85em; color: var(--text-dim); margin-bottom: 6px; display: block; }
+.input-row {
+  display: flex;
+  gap: 12px;
+}
+.input-row > div {
+  flex: 1;
+  text-align: left;
+}
+.input-row label {
+  font-size: 0.85em;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+  display: block;
+}
 
 /* .hero-glow-bg-profile stand hier ein zweites Mal und wurde von der
    zusammengelegten Glow-Regel weiter unten ohnehin überschrieben. */
@@ -501,7 +573,11 @@ select:focus, input:focus {
   transform: translateX(-50%);
   width: min(500px, 90vw);
   height: 300px;
-  background: radial-gradient(circle, var(--bg-accent-muted) 0%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    var(--bg-accent-muted) 0%,
+    transparent 70%
+  );
   pointer-events: none;
   z-index: 0;
 }
@@ -552,7 +628,9 @@ select:focus, input:focus {
    War eine blau umrandete Karte mit blauem Verlauf, eigenem 16px-Radius und
    #fff-Überschrift. Jetzt eine normale Karte; die einzige Farbe darin ist die
    des jeweiligen Spielers. */
-.saved-game-card { margin-bottom: var(--space-5); }
+.saved-game-card {
+  margin-bottom: var(--space-5);
+}
 
 .saved-game-header {
   display: flex;
@@ -567,7 +645,10 @@ select:focus, input:focus {
   gap: var(--space-3);
   min-width: 0;
 }
-.saved-game-icon { font-size: 1.6rem; flex-shrink: 0; }
+.saved-game-icon {
+  font-size: 1.6rem;
+  flex-shrink: 0;
+}
 .saved-game-meta {
   display: block;
   font-size: var(--text-label);
@@ -689,14 +770,29 @@ select:focus, input:focus {
 }
 
 @keyframes pulse-soft {
-  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
-  50% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
-  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+  }
 }
 
 @keyframes slide-down {
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .player-slot {
@@ -760,7 +856,9 @@ select:focus, input:focus {
   font-size: var(--text-label);
   line-height: 1;
 }
-.seat-move-btn:disabled { opacity: 0.25; }
+.seat-move-btn:disabled {
+  opacity: 0.25;
+}
 
 .team-badge {
   padding: 2px var(--space-2);
@@ -800,7 +898,9 @@ select:focus, input:focus {
   margin-bottom: var(--space-4);
 }
 
-.stats-filter-bar { margin-bottom: var(--space-5); }
+.stats-filter-bar {
+  margin-bottom: var(--space-5);
+}
 
 /* ── Options-Schalter ──
    Ein An/Aus mit Erklärung. §5 gibt auch dafür den einen Selected-State vor;
@@ -814,7 +914,9 @@ select:focus, input:focus {
   border: 2px solid transparent;
   border-radius: var(--radius-card);
   cursor: pointer;
-  transition: background-color 0.2s, border-color 0.2s;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s;
   user-select: none;
   min-height: 64px;
 }
@@ -826,7 +928,7 @@ select:focus, input:focus {
   outline: 2px solid var(--accent-primary);
   outline-offset: 2px;
 }
-.option-toggle input[type='checkbox'] {
+.option-toggle input[type="checkbox"] {
   width: 20px;
   height: 20px;
   accent-color: var(--accent-primary);
@@ -996,7 +1098,8 @@ select:focus, input:focus {
 }
 
 /* ── Segment Controls (Radio Groups) ───── */
-.radio-group, .segment-control {
+.radio-group,
+.segment-control {
   display: flex;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--card-border);
@@ -1005,14 +1108,18 @@ select:focus, input:focus {
   gap: 4px;
   margin-bottom: 10px;
 }
-.radio-group label, .segment-control label {
+.radio-group label,
+.segment-control label {
   flex: 1;
   text-align: center;
   padding: 11px 8px;
   border: 2px solid transparent;
   border-radius: 10px;
   cursor: pointer;
-  transition: background-color 0.2s cubic-bezier(0.2, 0, 0, 1), border-color 0.2s, color 0.2s;
+  transition:
+    background-color 0.2s cubic-bezier(0.2, 0, 0, 1),
+    border-color 0.2s,
+    color 0.2s;
   background: var(--surface-card);
   color: var(--text-secondary);
   font-size: var(--text-body);
@@ -1027,7 +1134,8 @@ select:focus, input:focus {
 }
 /* Kept in the DOM and tab order — `display: none` also removes a control from
    the accessibility tree, which took every one of these out of keyboard reach. */
-.radio-group input[type='radio'], .segment-control input[type='radio'] {
+.radio-group input[type="radio"],
+.segment-control input[type="radio"] {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -1053,7 +1161,9 @@ select:focus, input:focus {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
-.segment-control span { pointer-events: none; }
+.segment-control span {
+  pointer-events: none;
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Slider — segmentierte Auswahl mit gleitendem Thumb
@@ -1106,7 +1216,9 @@ select:focus, input:focus {
 
 /* Kein Wert trifft eine Option. Ausgeblendet statt entfernt, damit der Thumb
    beim nächsten Wechsel von Position 0 heranfährt. */
-.slider-thumb.is-hidden { opacity: 0; }
+.slider-thumb.is-hidden {
+  opacity: 0;
+}
 
 .slider label {
   position: relative;
@@ -1133,11 +1245,13 @@ select:focus, input:focus {
 }
 
 /* Auf der gefüllten Akzentfläche gilt der Kontrast-Ton aus §5, nie Schwarz. */
-.slider label.active { color: var(--on-accent-primary); }
+.slider label.active {
+  color: var(--on-accent-primary);
+}
 
 /* Bleibt im DOM und in der Tab-Reihenfolge — `display: none` nähme das Control
    auch aus dem Accessibility-Tree. */
-.slider input[type='radio'] {
+.slider input[type="radio"] {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -1180,7 +1294,10 @@ select:focus, input:focus {
   font-weight: var(--weight-regular);
   min-height: 44px;
   padding: var(--space-2) var(--space-4);
-  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s,
+    color 0.2s;
 }
 .choice.active {
   background: var(--bg-accent-muted);
@@ -1200,7 +1317,8 @@ select:focus, input:focus {
    Der nackte `button`-Selektor bleibt absichtlich stehen: Keypad, Dartboard und
    Dock rendern <button> ohne Design-System-Klasse und würden sonst ihr Styling
    verlieren. Er trägt nur noch Grundmaße, keine Farbentscheidung. */
-button, .btn {
+button,
+.btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1211,18 +1329,24 @@ button, .btn {
   font-family: inherit;
   border: none;
   cursor: pointer;
-  transition: transform 0.1s ease-out, box-shadow 0.15s ease, background-color 0.15s, opacity 0.15s;
+  transition:
+    transform 0.1s ease-out,
+    box-shadow 0.15s ease,
+    background-color 0.15s,
+    opacity 0.15s;
   color: var(--text-primary);
   background: var(--surface-card);
   /* §4: kein tappbares Element unter 44pt. */
   min-height: 48px;
   user-select: none;
 }
-button:active, .btn:active {
+button:active,
+.btn:active {
   transform: scale(0.97);
   opacity: 0.9;
 }
-button:disabled, .btn:disabled {
+button:disabled,
+.btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -1293,7 +1417,9 @@ button:disabled, .btn:disabled {
   min-height: 44px;
 }
 
-.btn-full { width: 100%; }
+.btn-full {
+  width: 100%;
+}
 /* ── App Header ──
    Der Screen-Titel aus §2: 24px, unabhängig davon ob der Screen ihn als h1
    oder h2 auszeichnet. */
@@ -1331,20 +1457,22 @@ button:disabled, .btn:disabled {
 }
 /* Der Spieler, der dran ist — hebt sich durch Gewicht und die eigene Farbe ab,
    die das Markup als Inline-Style hereinreicht. */
-.player-name.is-active { font-weight: var(--weight-medium); }
-.score { 
-  font-size: 3.2em; 
-  font-weight: var(--weight-medium); 
-  font-variant-numeric: tabular-nums; 
-  line-height: 1.05; 
-  margin: 6px 0; 
+.player-name.is-active {
+  font-weight: var(--weight-medium);
+}
+.score {
+  font-size: 3.2em;
+  font-weight: var(--weight-medium);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.05;
+  margin: 6px 0;
   letter-spacing: -0.03em;
 }
-.stats-preview { 
-  display: flex; 
-  gap: 16px; 
-  font-size: 0.85em; 
-  color: var(--text-dim); 
+.stats-preview {
+  display: flex;
+  gap: 16px;
+  font-size: 0.85em;
+  color: var(--text-dim);
 }
 /* Sitzt als normales Flex-Element in der Kopfzeile der Karte. Vorher stand es
    `absolute` bei top/right — ein Rest aus einem älteren Kartenlayout, durch den
@@ -1426,8 +1554,7 @@ button:disabled, .btn:disabled {
   /* Im Hochformat sind die seitlichen Insets null, die Rechnung ergibt also
      dieselben 10px wie vorher — sie steht hier, damit diese Regel nicht die
      einzige im Match-Screen ist, die ohne Safe-Area auskommt. */
-  padding:
-    max(calc(var(--safe-top) + 4px), 6px)
+  padding: max(calc(var(--safe-top) + 4px), 6px)
     max(calc(var(--safe-right) + 10px), 10px)
     max(calc(var(--safe-bottom) + 6px), 8px)
     max(calc(var(--safe-left) + 10px), 10px);
@@ -1491,41 +1618,50 @@ button:disabled, .btn:disabled {
 }
 
 /* ── Keypad (Full-Fill & Thumb Optimized) ──────────── */
-.keypad { 
-  max-width: 520px; 
+.keypad {
+  max-width: 520px;
   width: 100%;
   height: 100%;
-  margin: 0 auto; 
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   gap: 6px;
 }
-.dart-display { 
-  display: flex; 
-  gap: 8px; 
-  margin-bottom: 2px; 
-  align-items: center; 
-  justify-content: center; 
+.dart-display {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 2px;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
 .dart-box {
-  width: 46px; 
+  width: 46px;
   height: 46px;
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  background: transparent; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
   border: 2px dashed rgba(148, 163, 184, 0.15);
-  border-radius: var(--radius-key); 
-  font-size: 1.1em; 
+  border-radius: var(--radius-key);
+  font-size: 1.1em;
   font-weight: var(--weight-medium);
   transition: all 0.15s ease;
 }
 @keyframes dartBounce {
-  0% { transform: scale(0.8); opacity: 0.5; }
-  50% { transform: scale(1.15); opacity: 1; }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 .dart-filled {
   border-color: rgba(241, 245, 249, 0.3);
@@ -1553,9 +1689,19 @@ button:disabled, .btn:disabled {
   text-align: center;
 }
 @keyframes bustShake {
-  0%, 100% { transform: translateX(0); color: var(--red); }
-  20%, 60% { transform: translateX(-6px); }
-  40%, 80% { transform: translateX(6px); }
+  0%,
+  100% {
+    transform: translateX(0);
+    color: var(--red);
+  }
+  20%,
+  60% {
+    transform: translateX(-6px);
+  }
+  40%,
+  80% {
+    transform: translateX(6px);
+  }
 }
 /* Ein Überwurf ist eine Fehlermeldung — hier ist --text-danger die Rolle. */
 .bust-active {
@@ -1565,9 +1711,18 @@ button:disabled, .btn:disabled {
 }
 /* Die Rundensumme steigt in der Wertigkeit: neutral, Akzent, Erfolg. Vorher
    war die Mittelstufe Orange, das keine Rolle mehr hat. */
-.total-low { color: var(--text-primary); transition: color 0.4s ease; }
-.total-medium { color: var(--accent-primary); transition: color 0.4s ease; }
-.total-high { color: var(--text-success); transition: color 0.4s ease; }
+.total-low {
+  color: var(--text-primary);
+  transition: color 0.4s ease;
+}
+.total-medium {
+  color: var(--accent-primary);
+  transition: color 0.4s ease;
+}
+.total-high {
+  color: var(--text-success);
+  transition: color 0.4s ease;
+}
 
 .modifier-grid {
   display: grid;
@@ -1598,10 +1753,15 @@ button:disabled, .btn:disabled {
   border-color: var(--accent-primary) !important;
   font-weight: var(--weight-medium);
 }
-.mod-special { background: var(--surface-hover); color: var(--text-primary); }
+.mod-special {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+}
 /* Ein Fehlwurf ist kein destruktiver Vorgang — §1 hält --text-danger für
    Löschen und Hotspot-Segmente frei. */
-.mod-miss { color: var(--text-secondary); }
+.mod-miss {
+  color: var(--text-secondary);
+}
 
 /* §4 verlangt für die Score-Eingabe zweierlei: mindestens 64pt Tastenhöhe und
    mindestens 12px Abstand zwischen zwei Zielen. Bei einem 5×5-Raster passt
@@ -1646,7 +1806,10 @@ button:disabled, .btn:disabled {
    werden die Tasten kleiner — sichtbar und treffbar bleibt besser als
    abgeschnitten. */
 .keypad button {
-  transition: transform 0.05s ease-out, background-color 0.15s, border-color 0.2s;
+  transition:
+    transform 0.05s ease-out,
+    background-color 0.15s,
+    border-color 0.2s;
 }
 .keypad button:active {
   transform: scale(0.92);
@@ -1655,7 +1818,9 @@ button:disabled, .btn:disabled {
    Orange bzw. Rot, jetzt beide im Akzent. Unterschieden werden die zwei über
    die Modifikator-Taste selbst, die ihren Zustand trägt. */
 .modifier-active-2 .num-btn,
-.modifier-active-3 .num-btn { border-color: var(--accent-primary) !important; }
+.modifier-active-3 .num-btn {
+  border-color: var(--accent-primary) !important;
+}
 
 /* Undo key: one grid cell wide, so the label is optional chrome. */
 .btn-undo {
@@ -1681,7 +1846,10 @@ button:disabled, .btn:disabled {
   color: var(--text-muted);
   opacity: 0.5;
 }
-.btn-undo-icon { font-size: 1.15em; line-height: 1; }
+.btn-undo-icon {
+  font-size: 1.15em;
+  line-height: 1;
+}
 .btn-undo-label {
   font-size: 0.6em;
   line-height: 1;
@@ -1689,7 +1857,9 @@ button:disabled, .btn:disabled {
 }
 /* Too narrow for a word — the glyph alone stays legible. */
 @media (max-width: 340px) {
-  .btn-undo-label { display: none; }
+  .btn-undo-label {
+    display: none;
+  }
 }
 
 /* Abort button, less prominent. */
@@ -1719,15 +1889,16 @@ button:disabled, .btn:disabled {
   margin-bottom: var(--space-5);
 }
 
-.modal-overlay, .modal {
-  position: fixed; 
+.modal-overlay,
+.modal {
+  position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(20px); 
+  backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   z-index: var(--z-overlay);
-  display: flex; 
-  align-items: center; 
+  display: flex;
+  align-items: center;
   justify-content: center;
   padding: 16px;
 }
@@ -1737,9 +1908,9 @@ button:disabled, .btn:disabled {
   border-top: 3px solid var(--primary);
   border-radius: var(--radius-lg);
   padding: 26px 22px;
-  width: 100%; 
+  width: 100%;
   max-width: 480px;
-  max-height: 90vh; 
+  max-height: 90vh;
   overflow-y: auto;
   box-shadow: var(--shadow-lg);
   color: var(--text);
@@ -1807,7 +1978,10 @@ button:disabled, .btn:disabled {
     overflow-x: hidden !important;
     display: flex !important;
     flex-direction: column !important;
-    padding: max(calc(var(--safe-top) + 4px), 6px) max(calc(var(--safe-right) + 10px), 16px) max(calc(var(--safe-bottom) + 4px), 8px) max(calc(var(--safe-left) + 10px), 16px) !important;
+    padding: max(calc(var(--safe-top) + 4px), 6px)
+      max(calc(var(--safe-right) + 10px), 16px)
+      max(calc(var(--safe-bottom) + 4px), 8px)
+      max(calc(var(--safe-left) + 10px), 16px) !important;
     margin: 0 !important;
     box-sizing: border-box !important;
   }
@@ -1973,7 +2147,8 @@ button:disabled, .btn:disabled {
 
 /* Stufe 3 — Tablet und Desktop im Querformat: genug Höhe für großzügige
    Maße. Die 521px-Untergrenze grenzt gegen Stufe 2 ab. */
-@media (min-width: 768px) and (orientation: landscape) and (min-height: 521px), (min-width: 1200px) and (min-height: 800px) {
+@media (min-width: 768px) and (orientation: landscape) and (min-height: 521px),
+  (min-width: 1200px) and (min-height: 800px) {
   .game-screen-layout {
     width: 100vw !important;
     max-width: 100vw !important;
@@ -2084,7 +2259,9 @@ button:disabled, .btn:disabled {
 /* Kein Eintrag trifft den aktuellen Pfad — etwa auf einem Screen, den die
    Navigation nicht kennt. Ausgeblendet statt entfernt, damit sie beim nächsten
    Wechsel von Position 0 heranfährt und nicht aus dem Nichts erscheint. */
-.nav-indicator.is-hidden { opacity: 0; }
+.nav-indicator.is-hidden {
+  opacity: 0;
+}
 
 .nav-item {
   position: relative;
@@ -2115,8 +2292,12 @@ button:disabled, .btn:disabled {
   transition: transform var(--motion-color) ease;
 }
 
-.nav-item:hover { color: var(--text-primary); }
-.nav-item.active { color: var(--text-primary); }
+.nav-item:hover {
+  color: var(--text-primary);
+}
+.nav-item.active {
+  color: var(--text-primary);
+}
 
 /* ── Waagerecht: der Dock am unteren Rand ── */
 .app-nav-horizontal {
@@ -2133,7 +2314,8 @@ button:disabled, .btn:disabled {
   height: calc(var(--dock-height) + var(--safe-bottom));
   margin: 0 auto;
   align-items: center;
-  padding: var(--nav-pad) var(--nav-pad) calc(var(--nav-pad) + var(--safe-bottom));
+  padding: var(--nav-pad) var(--nav-pad)
+    calc(var(--nav-pad) + var(--safe-bottom));
   border-top: 1px solid var(--card-border);
 }
 
@@ -2149,7 +2331,9 @@ button:disabled, .btn:disabled {
   padding: var(--space-1) var(--space-2);
 }
 
-.app-nav-horizontal .nav-item.active .nav-icon { transform: scale(1.08); }
+.app-nav-horizontal .nav-item.active .nav-icon {
+  transform: scale(1.08);
+}
 
 .app-nav-horizontal .nav-indicator {
   top: var(--nav-pad);
@@ -2223,9 +2407,7 @@ button:disabled, .btn:disabled {
   margin: 0;
   flex-direction: column;
   justify-content: flex-start;
-  padding:
-    calc(var(--safe-top) + var(--space-6))
-    var(--nav-pad)
+  padding: calc(var(--safe-top) + var(--space-6)) var(--nav-pad)
     calc(var(--safe-bottom) + var(--space-4))
     calc(var(--safe-left) + var(--nav-pad));
   border-right: 1px solid var(--card-border);
@@ -2539,7 +2721,9 @@ body:has(.app-nav-vertical) .app-container {
 /* .accent-orange ist entfallen, weil Orange seit §1 keine Rolle mehr hat. Die
    Klasse wurde dabei auch aus ProfileDashboard entfernt — die 180er-Zahl liest
    sich jetzt wie jede andere Kennzahl. */
-.accent-green { color: var(--text-success) !important; }
+.accent-green {
+  color: var(--text-success) !important;
+}
 
 /* Der Dock in seiner letzten Ausbaustufe, bevor die Schiene übernimmt.
 
@@ -2562,13 +2746,13 @@ body:has(.app-nav-vertical) .app-container {
 /* ── Responsive Optimizations: iPad Air & Tablet (>= 768px) ── */
 @media (min-width: 768px) {
   .score {
-    font-size: 3.6em; 
+    font-size: 3.6em;
   }
-  .modal-overlay { 
-    padding: 32px; 
+  .modal-overlay {
+    padding: 32px;
   }
-  .form-curve-grid { 
-    grid-template-columns: repeat(3, 1fr) !important; 
+  .form-curve-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
   }
 }
 
@@ -2577,25 +2761,25 @@ body:has(.app-nav-vertical) .app-container {
   .app-container {
     /* Über die Gutter, nicht über padding-left/right direkt — sonst fällt auf
        diesen Geräten die Safe-Area-Rechnung aus dem Basis-Block weg. */
-    --gutter-x: 6px;    --gutter-x-min: 10px;
+    --gutter-x: 6px;
+    --gutter-x-min: 10px;
   }
-  .numpad-grid { 
-    gap: 4px; 
+  .numpad-grid {
+    gap: 4px;
   }
-  .num-btn { 
-    min-height: 46px; 
-    font-size: 1.2em; 
+  .num-btn {
+    min-height: 46px;
+    font-size: 1.2em;
   }
-  .dart-box { 
-    width: 48px; 
-    height: 48px; 
-    font-size: 1.05em; 
+  .dart-box {
+    width: 48px;
+    height: 48px;
+    font-size: 1.05em;
   }
-  .score { 
-    font-size: 2.5em; 
+  .score {
+    font-size: 2.5em;
   }
 }
-
 
 /* ═══════════════════════════════════════════════════════════════════════════
    SCOREBOARD GRID — orientation-aware
@@ -2613,9 +2797,15 @@ body:has(.app-nav-vertical) .app-container {
   gap: 8px;
   align-content: stretch;
 }
-.scoreboard[data-players="2"] { grid-template-columns: 1fr 1fr; }
-.scoreboard[data-players="3"] { grid-template-columns: repeat(3, 1fr); }
-.scoreboard[data-players="4"] { grid-template-columns: repeat(2, 1fr); }
+.scoreboard[data-players="2"] {
+  grid-template-columns: 1fr 1fr;
+}
+.scoreboard[data-players="3"] {
+  grid-template-columns: repeat(3, 1fr);
+}
+.scoreboard[data-players="4"] {
+  grid-template-columns: repeat(2, 1fr);
+}
 
 /* Gehört zur Querformat-Ausnahme oben: die Spieler-Kacheln im Board. */
 @media (orientation: landscape) {
@@ -2634,7 +2824,9 @@ body:has(.app-nav-vertical) .app-container {
 }
 
 @media (min-width: 768px) {
-  .scoreboard { gap: 12px; }
+  .scoreboard {
+    gap: 12px;
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -2648,7 +2840,11 @@ body:has(.app-nav-vertical) .app-container {
   transform: translateX(-50%);
   width: min(520px, 92vw);
   height: 300px;
-  background: radial-gradient(circle, var(--bg-accent-muted) 0%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    var(--bg-accent-muted) 0%,
+    transparent 70%
+  );
   pointer-events: none;
   z-index: 0;
 }
@@ -2678,7 +2874,9 @@ body:has(.app-nav-vertical) .app-container {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.page-header-spacer { min-width: 1px; }
+.page-header-spacer {
+  min-width: 1px;
+}
 .btn-back {
   justify-self: start;
   width: auto;
@@ -2688,7 +2886,9 @@ body:has(.app-nav-vertical) .app-container {
   white-space: nowrap;
 }
 
-.text-dim { color: var(--text-dim); }
+.text-dim {
+  color: var(--text-dim);
+}
 .hint-text {
   margin-top: var(--space-3);
   font-size: var(--text-label);
@@ -2700,7 +2900,9 @@ body:has(.app-nav-vertical) .app-container {
   font-weight: var(--weight-medium);
   color: var(--text-primary);
 }
-.full-width { width: 100%; }
+.full-width {
+  width: 100%;
+}
 /* .btn-compact stand hier ein zweites Mal und gewann als spätere Regel — mit
    min-height: 40px, also unter der 44pt-Grenze aus §4. Die eine gültige
    Definition steht jetzt oben bei den übrigen Button-Klassen. */
@@ -2786,10 +2988,22 @@ body:has(.app-nav-vertical) .app-container {
   gap: 14px;
   min-height: 70dvh;
 }
-.center-stage-title { font-size: 1.3rem; margin: 0; }
-.center-stage-text { color: var(--text-dim); font-size: 0.9rem; max-width: 34ch; line-height: 1.5; }
+.center-stage-title {
+  font-size: 1.3rem;
+  margin: 0;
+}
+.center-stage-text {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  max-width: 34ch;
+  line-height: 1.5;
+}
 
-@keyframes orbSpin { to { transform: rotate(360deg); } }
+@keyframes orbSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 .loading-orb {
   font-size: 2.6rem;
   animation: orbSpin 2.4s linear infinite;
@@ -2803,12 +3017,20 @@ body:has(.app-nav-vertical) .app-container {
 }
 /* Einspaltig bis zur ersten §6-Stufe statt ab einer eigenen 360er-Grenze —
    zwei Zahlenfelder nebeneinander sind auf einem 402px-Telefon ohnehin eng. */
-.config-grid { grid-template-columns: 1fr; }
-@media (min-width: 600px) {
-  .config-grid { grid-template-columns: 1fr 1fr; }
+.config-grid {
+  grid-template-columns: 1fr;
 }
-.config-item { min-width: 0; }
-.config-item .section-label { margin-top: 0; }
+@media (min-width: 600px) {
+  .config-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.config-item {
+  min-width: 0;
+}
+.config-item .section-label {
+  margin-top: 0;
+}
 
 /* Select in einer engen Zeile — die globale select-Regel ist volle Breite mit
    13px Padding und sprengt die Kopfzeile des Dashboards. */
@@ -2819,7 +3041,9 @@ body:has(.app-nav-vertical) .app-container {
   font-size: var(--text-body);
   min-height: 44px;
 }
-.room-code-card .section-label { margin-top: 0; }
+.room-code-card .section-label {
+  margin-top: 0;
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    MULTIPLAYER — lobby browser & room
@@ -2853,14 +3077,23 @@ body:has(.app-nav-vertical) .app-container {
   color: var(--on-accent-primary);
   background: var(--accent-primary);
 }
-.identity-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.identity-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
 .identity-name {
   font-weight: var(--weight-medium);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.identity-sub { font-size: var(--text-label); color: var(--text-secondary); }
+.identity-sub {
+  font-size: var(--text-label);
+  color: var(--text-secondary);
+}
 /* Hatte uppercase, letter-spacing und 700 — §2 verlangt Sentence case und
    nimmt Labels ausdrücklich die Caps. */
 .identity-label {
@@ -2877,7 +3110,10 @@ body:has(.app-nav-vertical) .app-container {
   font-size: 16px !important;
 }
 
-.join-row { display: flex; gap: var(--space-3); }
+.join-row {
+  display: flex;
+  gap: var(--space-3);
+}
 /* Der Raumcode bleibt in Versalien: er ist ein Bezeichner, keine Headline —
    die Eingabe wird ohnehin per JS uppercase normalisiert. */
 .join-code-input {
@@ -2891,7 +3127,12 @@ body:has(.app-nav-vertical) .app-container {
   padding-left: 0.35em !important;
 }
 
-.lobby-list { list-style: none; display: flex; flex-direction: column; gap: var(--space-3); }
+.lobby-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
 .lobby-list-item {
   display: flex;
   align-items: center;
@@ -2901,10 +3142,20 @@ body:has(.app-nav-vertical) .app-container {
   background: var(--surface);
   border: 1px solid var(--card-border);
   border-radius: var(--radius-sm);
-  transition: border-color 0.2s ease, background-color 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease;
 }
-.lobby-list-item:hover { border-color: var(--card-border-glow); background: var(--surface-hover); }
-.lobby-list-body { min-width: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.lobby-list-item:hover {
+  border-color: var(--card-border-glow);
+  background: var(--surface-hover);
+}
+.lobby-list-body {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
 .lobby-list-host {
   font-size: var(--text-body-lg);
   font-weight: var(--weight-medium);
@@ -2912,8 +3163,16 @@ body:has(.app-nav-vertical) .app-container {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.lobby-list-meta { font-size: var(--text-label); color: var(--text-secondary); }
-.lobby-list-actions { display: flex; align-items: center; gap: var(--space-3); flex-shrink: 0; }
+.lobby-list-meta {
+  font-size: var(--text-label);
+  color: var(--text-secondary);
+}
+.lobby-list-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
 
 .mode-grid {
   display: grid;
@@ -2923,7 +3182,9 @@ body:has(.app-nav-vertical) .app-container {
 }
 /* 560px war eine eigene Stufe; §6 kennt 600 als erste. */
 @media (min-width: 600px) {
-  .mode-grid { grid-template-columns: 1fr 1fr; }
+  .mode-grid {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 /* Die Modus-Auswahl beim Raum-Erstellen. Fläche und Rand kommen von `.choice`
    (§5), diese Regel macht nur noch das Layout — vorher war der ausgewählte
@@ -2936,16 +3197,31 @@ body:has(.app-nav-vertical) .app-container {
   text-align: left;
   min-height: 64px;
 }
-.mode-tile-icon { font-size: 1.4rem; flex-shrink: 0; }
-.mode-tile-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.mode-tile-icon {
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+.mode-tile-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
 .mode-tile-title {
   font-weight: var(--weight-medium);
   font-size: var(--text-body-lg);
   color: var(--text-primary);
 }
-.mode-tile-desc { font-size: var(--text-label); color: var(--text-secondary); }
+.mode-tile-desc {
+  font-size: var(--text-label);
+  color: var(--text-secondary);
+}
 
-.room-code-card { text-align: center; position: relative; z-index: 1; }
+.room-code-card {
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
 .room-code-value {
   display: flex;
   justify-content: center;
@@ -2972,10 +3248,22 @@ body:has(.app-nav-vertical) .app-container {
   margin-bottom: var(--space-4);
   line-height: 1.45;
 }
-.room-code-actions { display: flex; gap: var(--space-3); justify-content: center; flex-wrap: wrap; }
-.room-code-actions button { flex: 1 1 140px; }
+.room-code-actions {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.room-code-actions button {
+  flex: 1 1 140px;
+}
 
-.lobby-player-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.lobby-player-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
 .lobby-player {
   display: flex;
   align-items: center;
@@ -3006,7 +3294,11 @@ body:has(.app-nav-vertical) .app-container {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.lobby-player-empty { color: var(--text-secondary); font-weight: var(--weight-regular); justify-content: center; }
+.lobby-player-empty {
+  color: var(--text-secondary);
+  font-weight: var(--weight-regular);
+  justify-content: center;
+}
 
 .lobby-actions {
   display: flex;
@@ -3031,8 +3323,15 @@ body:has(.app-nav-vertical) .app-container {
   text-align: center;
 }
 @keyframes waitPulse {
-  0%, 100% { opacity: 0.35; transform: scale(0.85); }
-  50% { opacity: 1; transform: scale(1); }
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 .waiting-dot {
   width: 9px;
@@ -3077,9 +3376,18 @@ body:has(.app-nav-vertical) .app-container {
 }
 
 /* ── Online match shell ── */
-.online-game-shell { position: relative; width: 100%; height: 100%; }
-.online-board { height: 100%; transition: opacity 0.2s ease; }
-.online-board.is-waiting { opacity: 0.72; }
+.online-game-shell {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.online-board {
+  height: 100%;
+  transition: opacity 0.2s ease;
+}
+.online-board.is-waiting {
+  opacity: 0.72;
+}
 
 .turn-banner {
   position: absolute;
@@ -3116,8 +3424,14 @@ body:has(.app-nav-vertical) .app-container {
 
 /* ── Global toast (remote match abort, connection notices) ── */
 @keyframes toastIn {
-  from { opacity: 0; transform: translate(-50%, 16px); }
-  to { opacity: 1; transform: translate(-50%, 0); }
+  from {
+    opacity: 0;
+    transform: translate(-50%, 16px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
 }
 /**
  * The stack, not the individual message, is what is positioned.
@@ -3156,12 +3470,30 @@ body:has(.app-nav-vertical) .app-container {
 
 /* The border carries the severity, which the icon repeats for anyone who does
    not see the colour. */
-.global-toast-error { border-color: rgba(239, 68, 68, 0.45); }
-.global-toast-success { border-color: rgba(16, 185, 129, 0.45); }
-.global-toast-info { border-color: rgba(59, 130, 246, 0.45); }
-.global-toast-body { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.global-toast-body strong { font-size: 0.95em; }
-.global-toast-body span { font-size: 0.84em; color: var(--text-dim); line-height: 1.4; }
+.global-toast-error {
+  border-color: rgba(239, 68, 68, 0.45);
+}
+.global-toast-success {
+  border-color: rgba(16, 185, 129, 0.45);
+}
+.global-toast-info {
+  border-color: rgba(59, 130, 246, 0.45);
+}
+.global-toast-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.global-toast-body strong {
+  font-size: 0.95em;
+}
+.global-toast-body span {
+  font-size: 0.84em;
+  color: var(--text-dim);
+  line-height: 1.4;
+}
 
 /* On a tablet the waiting room fits side by side, so the start button stays in
    view instead of sitting below a scroll. */
@@ -3176,12 +3508,17 @@ body:has(.app-nav-vertical) .app-container {
   .lobby-room > .lobby-actions {
     grid-column: 1 / -1;
   }
-  .lobby-room .card { margin-bottom: 0; }
+  .lobby-room .card {
+    margin-bottom: 0;
+  }
   .lobby-room .lobby-actions {
     flex-direction: row;
     justify-content: center;
   }
-  .lobby-room .lobby-actions > * { flex: 1 1 260px; max-width: 380px; }
+  .lobby-room .lobby-actions > * {
+    flex: 1 1 260px;
+    max-width: 380px;
+  }
 }
 
 /* ── Bottom Sheet (results dialog) ───────── */
@@ -3231,18 +3568,32 @@ body:has(.app-nav-vertical) .app-container {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
 
 @keyframes scaleUp {
-  from { transform: scale(0.95); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .drag-handle {
@@ -3270,8 +3621,12 @@ body:has(.app-nav-vertical) .app-container {
 }
 
 @keyframes bounce {
-  from { transform: translateY(0); }
-  to { transform: translateY(-10px); }
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-10px);
+  }
 }
 
 /* ── Training Hub ─────────────────────────── */
@@ -3456,7 +3811,7 @@ body:has(.app-nav-vertical) .app-container {
 }
 .auth-divider::before,
 .auth-divider::after {
-  content: '';
+  content: "";
   flex: 1;
   height: 1px;
   background: var(--card-border);
@@ -3472,7 +3827,9 @@ body:has(.app-nav-vertical) .app-container {
   color: var(--text-secondary);
   font-weight: var(--weight-regular);
 }
-.sync-status.is-on { color: var(--text-success); }
+.sync-status.is-on {
+  color: var(--text-success);
+}
 
 .sync-panel {
   background: var(--surface-card);
@@ -3504,7 +3861,10 @@ body:has(.app-nav-vertical) .app-container {
   gap: var(--space-3);
   font-size: var(--text-body);
 }
-.sync-host strong { color: var(--text-primary); font-weight: var(--weight-medium); }
+.sync-host strong {
+  color: var(--text-primary);
+  font-weight: var(--weight-medium);
+}
 
 /* ── Direktvergleich zweier Profile ──
    Lag als `styles`-Objekt am Dateiende, inklusive eigenem Overlay, eigenem
@@ -3531,7 +3891,9 @@ body:has(.app-nav-vertical) .app-container {
   padding: var(--space-3);
   border-radius: var(--radius-xs);
 }
-.h2h-row.is-striped { background: var(--surface-card); }
+.h2h-row.is-striped {
+  background: var(--surface-card);
+}
 .h2h-value {
   flex: 1;
   text-align: center;
@@ -3564,7 +3926,9 @@ body:has(.app-nav-vertical) .app-container {
   align-items: stretch;
 }
 @media (min-width: 900px) {
-  .stats-columns { grid-template-columns: 1fr 1fr; }
+  .stats-columns {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 .stats-widget {
@@ -3574,7 +3938,9 @@ body:has(.app-nav-vertical) .app-container {
   height: 100%;
   margin-bottom: 0;
 }
-.stats-widget-body { flex: 1; }
+.stats-widget-body {
+  flex: 1;
+}
 
 /* Offline trägt den Akzent der App, Online die kategorische Kennzeichnung, die
    §1 dem Multiplayer zuweist — vorher Grün gegen Blau, beides ohne Rolle. */
@@ -3582,7 +3948,9 @@ body:has(.app-nav-vertical) .app-container {
   margin-bottom: var(--space-4);
   color: var(--accent-primary);
 }
-.stats-widget-title.is-online { color: var(--accent-info); }
+.stats-widget-title.is-online {
+  color: var(--accent-info);
+}
 
 .chart-panel {
   flex: 1 1 200px;
@@ -3617,13 +3985,19 @@ body:has(.app-nav-vertical) .app-container {
   display: inline-block;
   flex-shrink: 0;
 }
-.chart-legend-pct { color: var(--text-secondary); }
+.chart-legend-pct {
+  color: var(--text-secondary);
+}
 
 /* Ab der breitesten Stufe passt das Kennzahlen-Raster dreispaltig, und die
    beiden Diagramme stehen sicher nebeneinander statt umzubrechen. */
 @media (min-width: 1200px) {
-  .stats-widget .dash-stats-grid-6 { grid-template-columns: repeat(3, 1fr); }
-  .stats-widget .chart-row { flex-wrap: nowrap; }
+  .stats-widget .dash-stats-grid-6 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .stats-widget .chart-row {
+    flex-wrap: nowrap;
+  }
 }
 
 /* ── Stats-Karten-Muster (§7) ──
@@ -3642,10 +4016,14 @@ body:has(.app-nav-vertical) .app-container {
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
 }
-.stat-value-sm { font-size: var(--text-body-lg); }
+.stat-value-sm {
+  font-size: var(--text-body-lg);
+}
 /* Nur wo die Zahl wirklich einen Erfolg meldet — §1 hält --text-success für
    Erfolgsmeldungen, Sieg-Screen und positive Deltas frei. */
-.stat-value.is-success { color: var(--text-success); }
+.stat-value.is-success {
+  color: var(--text-success);
+}
 
 /* Der Bild-Export im Ergebnis-Dialog. */
 .story-export {
@@ -3737,19 +4115,32 @@ body:has(.app-nav-vertical) .app-container {
   color: var(--text-secondary);
   line-height: 1;
 }
-.split-target.is-hit { background: var(--surface-hover); }
-.split-target.is-hit .split-target-value { color: var(--text-success); }
-.split-target.is-split { background: color-mix(in srgb, var(--text-danger) 12%, transparent); }
-.split-target.is-split .split-target-value { color: var(--text-danger); font-size: var(--text-label); }
+.split-target.is-hit {
+  background: var(--surface-hover);
+}
+.split-target.is-hit .split-target-value {
+  color: var(--text-success);
+}
+.split-target.is-split {
+  background: color-mix(in srgb, var(--text-danger) 12%, transparent);
+}
+.split-target.is-split .split-target-value {
+  color: var(--text-danger);
+  font-size: var(--text-label);
+}
 .split-target.is-current {
   border-color: var(--accent-primary);
   background: var(--bg-accent-muted);
 }
-.split-target.is-current .split-target-value { color: var(--accent-primary); }
+.split-target.is-current .split-target-value {
+  color: var(--accent-primary);
+}
 
 /* Ein Fehlwurf ist die einzige wirklich negative Taste hier — Triple und Bull
    trugen vorher ebenfalls Rot, ohne dass es etwas bedeutet hätte (§1). */
-.num-btn.is-miss { color: var(--text-danger); }
+.num-btn.is-miss {
+  color: var(--text-danger);
+}
 
 /* ── Checkout Training ── */
 /* Ziel, Runde und Dart-Schnitt als Zeile statt als drei Kacheln untereinander. */
@@ -3791,7 +4182,9 @@ body:has(.app-nav-vertical) .app-container {
 }
 
 @media (max-height: 740px) {
-  .co-route-way { font-size: var(--text-body-lg); }
+  .co-route-way {
+    font-size: var(--text-body-lg);
+  }
 }
 
 /* Alle Ziele der Sitzung. Sechs je Reihe, weil es bis zu zwanzig sein können. */
@@ -3844,15 +4237,25 @@ body:has(.app-nav-vertical) .app-container {
 .co-target:not(.is-hit):not(.is-missed):not(.is-current) .co-target-label {
   color: var(--text-secondary);
 }
-.co-target.is-hit { background: color-mix(in srgb, var(--text-success) 14%, transparent); }
-.co-target.is-hit .co-target-value { color: var(--text-success); }
-.co-target.is-missed { background: color-mix(in srgb, var(--text-danger) 12%, transparent); }
-.co-target.is-missed .co-target-value { color: var(--text-danger); }
+.co-target.is-hit {
+  background: color-mix(in srgb, var(--text-success) 14%, transparent);
+}
+.co-target.is-hit .co-target-value {
+  color: var(--text-success);
+}
+.co-target.is-missed {
+  background: color-mix(in srgb, var(--text-danger) 12%, transparent);
+}
+.co-target.is-missed .co-target-value {
+  color: var(--text-danger);
+}
 .co-target.is-current {
   border-color: var(--accent-primary);
   background: var(--bg-accent-muted);
 }
-.co-target.is-current .co-target-value { color: var(--accent-primary); }
+.co-target.is-current .co-target-value {
+  color: var(--accent-primary);
+}
 
 /* ── Kennzahlen-Leiste ──
    Läuft während des Spiels unter der Karte mit. Scrollt seitlich, statt
@@ -3866,7 +4269,9 @@ body:has(.app-nav-vertical) .app-container {
   flex-shrink: 0;
   scrollbar-width: none;
 }
-.stat-strip::-webkit-scrollbar { display: none; }
+.stat-strip::-webkit-scrollbar {
+  display: none;
+}
 
 .stat-strip-item {
   flex: 1 0 auto;
@@ -3892,22 +4297,42 @@ body:has(.app-nav-vertical) .app-container {
 }
 
 @media (max-height: 740px) {
-  .stat-strip-value { font-size: var(--text-body); }
+  .stat-strip-value {
+    font-size: var(--text-body);
+  }
 }
 
 /* ── Der große Zuruf ──
    „SPLIT", „GAME SHOT", „BUST": kurz, mittig, über allem. Markup:
    components/ui/CallOut.tsx. */
 @keyframes calloutIn {
-  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
-  55%  { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
-  70%  { transform: translate(-50%, -50%) scale(1); }
-  100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.6);
+  }
+  55% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.08);
+  }
+  70% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
 }
 @keyframes calloutShake {
-  0%, 100% { margin-left: 0; }
-  25% { margin-left: -10px; }
-  75% { margin-left: 10px; }
+  0%,
+  100% {
+    margin-left: 0;
+  }
+  25% {
+    margin-left: -10px;
+  }
+  75% {
+    margin-left: 10px;
+  }
 }
 
 .callout-flash {
@@ -3954,7 +4379,9 @@ body:has(.app-nav-vertical) .app-container {
 
 @media (prefers-reduced-motion: reduce) {
   .callout-flash,
-  .callout-flash.tone-bad .callout-flash-text { animation: none; }
+  .callout-flash.tone-bad .callout-flash-text {
+    animation: none;
+  }
 }
 
 /* ═══ Power Scoring ═══
@@ -4063,14 +4490,20 @@ body:has(.app-nav-vertical) .app-container {
   line-height: 1;
 }
 /* Geworfen: die Zahl tritt nach vorn. */
-.ps-round.is-filled { background: var(--surface-hover); }
-.ps-round.is-filled .ps-round-value { color: var(--text-primary); }
+.ps-round.is-filled {
+  background: var(--surface-hover);
+}
+.ps-round.is-filled .ps-round-value {
+  color: var(--text-primary);
+}
 /* Die laufende Runde trägt denselben Rahmen wie jede Auswahl (§5). */
 .ps-round.is-current {
   border-color: var(--accent-primary);
   background: var(--bg-accent-muted);
 }
-.ps-round.is-current .ps-round-value { color: var(--accent-primary); }
+.ps-round.is-current .ps-round-value {
+  color: var(--accent-primary);
+}
 
 /* ── Mitspieler ──
 
@@ -4095,7 +4528,9 @@ body:has(.app-nav-vertical) .app-container {
   scrollbar-width: none;
   padding-bottom: 2px;
 }
-.ps-others::-webkit-scrollbar { display: none; }
+.ps-others::-webkit-scrollbar {
+  display: none;
+}
 
 .ps-other {
   display: flex;
@@ -4138,20 +4573,39 @@ body:has(.app-nav-vertical) .app-container {
 @media (max-height: 740px) {
   .ps-round,
   .split-target,
-  .co-target { min-height: 38px; padding: var(--space-1); }
-  .ps-card { padding: var(--space-3); gap: var(--space-2); }
-  .split-dart { width: 34px; height: 34px; font-size: var(--text-label); }
+  .co-target {
+    min-height: 38px;
+    padding: var(--space-1);
+  }
+  .ps-card {
+    padding: var(--space-3);
+    gap: var(--space-2);
+  }
+  .split-dart {
+    width: 34px;
+    height: 34px;
+    font-size: var(--text-label);
+  }
 }
 
 @media (orientation: landscape) and (max-height: 520px) {
   .ps-round,
   .split-target,
-  .co-target { min-height: 32px; }
+  .co-target {
+    min-height: 32px;
+  }
   .ps-round-no,
   .split-target-label,
-  .co-target-label { font-size: 10px; }
-  .ps-board { gap: var(--space-2); padding: 0; }
-  .split-now { gap: var(--space-2); }
+  .co-target-label {
+    font-size: 10px;
+  }
+  .ps-board {
+    gap: var(--space-2);
+    padding: 0;
+  }
+  .split-now {
+    gap: var(--space-2);
+  }
 }
 
 /* ── Kopfzeile der Match-Screens ──
@@ -4200,10 +4654,18 @@ body:has(.app-nav-vertical) .app-container {
 
 /* Die Rundenwertung im Training. Grün nur für echte Verbesserung, rot nur für
    Verschlechterung — das sind die „positiven Deltas" aus §1. */
-.round-delta { font-weight: var(--weight-medium); }
-.round-delta.is-up { color: var(--text-success); }
-.round-delta.is-down { color: var(--text-danger); }
-.round-delta.is-idle { color: var(--text-secondary); }
+.round-delta {
+  font-weight: var(--weight-medium);
+}
+.round-delta.is-up {
+  color: var(--text-success);
+}
+.round-delta.is-down {
+  color: var(--text-danger);
+}
+.round-delta.is-idle {
+  color: var(--text-secondary);
+}
 
 /* Große Zahl in den Trainingsmodi, gleiche Stufe wie der Live-Score. */
 .training-score-panel {
@@ -4281,7 +4743,9 @@ body:has(.app-nav-vertical) .app-container {
   background: color-mix(in srgb, currentColor 25%, transparent);
   border: 1px solid currentColor;
 }
-.badge-team.is-locked { color: var(--text-danger); }
+.badge-team.is-locked {
+  color: var(--text-danger);
+}
 
 .player-darts-note {
   font-size: var(--text-label);
@@ -4297,13 +4761,26 @@ body:has(.app-nav-vertical) .app-container {
 
 /* ── Scoreboard player cards ──────────────── */
 @keyframes scorePulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.08); text-shadow: 0 0 16px var(--player-color, rgba(255,255,255,0.5)); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+    text-shadow: 0 0 16px var(--player-color, rgba(255, 255, 255, 0.5));
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 @keyframes scoreboardFadeInSlide {
-  from { opacity: 0; transform: translateX(-6px); }
-  to { opacity: 1; transform: translateX(0); }
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 @keyframes lockOpenPop {
   0% {
@@ -4333,16 +4810,34 @@ body:has(.app-nav-vertical) .app-container {
   }
 }
 @keyframes lockIconShake {
-  0% { transform: rotate(0deg) scale(1); }
-  20% { transform: rotate(-20deg) scale(1.3); }
-  40% { transform: rotate(20deg) scale(1.35); }
-  60% { transform: rotate(-10deg) scale(1.2); }
-  80% { transform: rotate(10deg) scale(1.1); }
-  100% { transform: rotate(0deg) scale(1); }
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  20% {
+    transform: rotate(-20deg) scale(1.3);
+  }
+  40% {
+    transform: rotate(20deg) scale(1.35);
+  }
+  60% {
+    transform: rotate(-10deg) scale(1.2);
+  }
+  80% {
+    transform: rotate(10deg) scale(1.1);
+  }
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
 }
 @keyframes popIn {
-  from { transform: scale(0.9); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 .score-anim-pulse {
   animation: scorePulse 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -4380,7 +4875,11 @@ body:has(.app-nav-vertical) .app-container {
   background: rgba(15, 23, 42, 0.98);
 }
 .player-card.checkout-range {
-  background: linear-gradient(145deg, rgba(16, 185, 129, 0.12), rgba(15, 23, 42, 0.95));
+  background: linear-gradient(
+    145deg,
+    rgba(16, 185, 129, 0.12),
+    rgba(15, 23, 42, 0.95)
+  );
 }
 /* Die eine Zahl, die aus drei Metern lesbar sein muss.
    §2 stellt für sie die 32px-Stufe bereit — hier als Untergrenze, nicht als
@@ -4415,7 +4914,7 @@ body:has(.app-nav-vertical) .app-container {
   font-size: 0.92rem;
   display: inline-block;
   margin: 0 auto;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   letter-spacing: 0.4px;
   animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
@@ -4486,7 +4985,9 @@ body:has(.app-nav-vertical) .app-container {
 }
 /* A phone in landscape has no vertical budget for the strip. */
 @media (orientation: landscape) and (max-height: 520px) {
-  .compact-stats { display: none; }
+  .compact-stats {
+    display: none;
+  }
 }
 /* Keep the strip to a single line on a phone: three figures fit, five wrap. */
 @media (max-width: 767px) {
@@ -4495,7 +4996,9 @@ body:has(.app-nav-vertical) .app-container {
     grid-template-columns: repeat(3, 1fr);
     gap: 3px;
   }
-  .compact-stats .stat-secondary { display: none; }
+  .compact-stats .stat-secondary {
+    display: none;
+  }
   .compact-stats span {
     padding: 3px 2px;
     font-size: 0.62rem;
@@ -4537,7 +5040,7 @@ body:has(.app-nav-vertical) .app-container {
 }
 .compact-stats span {
   white-space: nowrap;
-  background: rgba(0,0,0,0.25);
+  background: rgba(0, 0, 0, 0.25);
   padding: 4px 6px;
   border-radius: 6px;
   display: flex;
@@ -4645,10 +5148,16 @@ body:has(.app-nav-vertical) .app-container {
   text-align: left;
   cursor: pointer;
   box-shadow: 0 18px 44px rgba(var(--accent-primary-rgb), 0.22);
-  transition: box-shadow var(--motion-color) ease, transform 0.1s ease-out;
+  transition:
+    box-shadow var(--motion-color) ease,
+    transform 0.1s ease-out;
 }
-.home-resume:hover { box-shadow: 0 22px 56px rgba(var(--accent-primary-rgb), 0.34); }
-.home-resume:active { transform: scale(0.988); }
+.home-resume:hover {
+  box-shadow: 0 22px 56px rgba(var(--accent-primary-rgb), 0.34);
+}
+.home-resume:active {
+  transform: scale(0.988);
+}
 
 .home-resume-head {
   display: flex;
@@ -4734,12 +5243,20 @@ body:has(.app-nav-vertical) .app-container {
   background: var(--surface-card);
   color: var(--text-primary);
   text-align: left;
-  transition: background-color var(--motion-color) ease, transform 0.1s ease-out;
+  transition:
+    background-color var(--motion-color) ease,
+    transform 0.1s ease-out;
 }
 
-button.home-tile { cursor: pointer; }
-button.home-tile:hover { background: var(--surface-hover); }
-button.home-tile:active { transform: scale(0.99); }
+button.home-tile {
+  cursor: pointer;
+}
+button.home-tile:hover {
+  background: var(--surface-hover);
+}
+button.home-tile:active {
+  transform: scale(0.99);
+}
 
 .home-tile-icon {
   display: flex;
@@ -4783,7 +5300,9 @@ button.home-tile:active { transform: scale(0.99); }
   align-items: stretch;
   gap: 0;
 }
-.home-today .home-tile-label { margin-bottom: var(--space-4); }
+.home-today .home-tile-label {
+  margin-bottom: var(--space-4);
+}
 
 .home-today-figures {
   display: flex;
@@ -4791,7 +5310,9 @@ button.home-tile:active { transform: scale(0.99); }
   gap: var(--space-6);
 }
 
-.home-figure { display: block; }
+.home-figure {
+  display: block;
+}
 
 .home-figure-label {
   display: block;
@@ -4807,11 +5328,17 @@ button.home-tile:active { transform: scale(0.99); }
   font-size: 27px;
   color: var(--text-primary);
 }
-.home-figure-value.is-accent { color: var(--accent-primary); }
-.home-figure-value.is-success { color: var(--text-success); }
+.home-figure-value.is-accent {
+  color: var(--accent-primary);
+}
+.home-figure-value.is-success {
+  color: var(--text-success);
+}
 
 /* ── Training und die zwei Verweise ── */
-.home-section { min-width: 0; }
+.home-section {
+  min-width: 0;
+}
 
 .home-training,
 .home-links {
@@ -4899,10 +5426,13 @@ button.home-tile:active { transform: scale(0.99); }
    aus einer Spalte zwei und aus zwei drei, ohne dass ein Breakpoint sagen muss,
    wann. Das alte Menü brauchte dafür einen 900px-Block mit acht Regeln. */
 @media (min-width: 900px) {
-  .home-body { gap: var(--space-8); }
-  .home-resume { padding: var(--space-8); }
+  .home-body {
+    gap: var(--space-8);
+  }
+  .home-resume {
+    padding: var(--space-8);
+  }
 }
-
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Übergänge zwischen den Screens
@@ -4929,8 +5459,12 @@ button.home-tile:active { transform: scale(0.99); }
 }
 
 @keyframes screenFade {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* Wo ein Screen einen eigenen Inhalts-Container hat, darf der zusätzlich
@@ -4943,8 +5477,14 @@ button.home-tile:active { transform: scale(0.99); }
 }
 
 @keyframes contentRise {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Der Wechsel X01 ↔ Training. Der Schlüssel am Container in HomeContainer.tsx
@@ -4973,7 +5513,9 @@ button.home-tile:active { transform: scale(0.99); }
   font-weight: var(--weight-medium);
   color: var(--text-primary);
 }
-.result-player.is-winner { color: var(--text-success); }
+.result-player.is-winner {
+  color: var(--text-success);
+}
 .result-rank {
   font-size: var(--text-body-lg);
   font-weight: var(--weight-medium);
