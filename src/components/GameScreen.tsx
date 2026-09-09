@@ -5,7 +5,7 @@ import type { Player, GameConfig, Dart } from '../types';
 import { isSoundEnabled, setSoundEnabled } from '../utils/audio';
 import { ConfirmModal } from './ConfirmModal';
 import { useModalA11y } from '../hooks/useModalA11y';
-import { Button } from './ui';
+import { Button, Icons } from './ui';
 
 interface GameScreenProps {
   players: Player[];
@@ -40,7 +40,7 @@ export const GameScreen: React.FC<GameScreenProps> = (props) => {
       <div className="match-top-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden', minWidth: 0 }}>
           <span className="match-title">
-            🎯 {props.config.startScore} {props.config.outMode}
+            <Icons.IconTarget size={17} /> {props.config.startScore} {props.config.outMode}
           </span>
           <span className="match-meta">
             Bis {props.config.legsToWin} Legs {props.config.setsToWin > 1 ? `· ${props.config.setsToWin} Sätze` : ''}
@@ -58,7 +58,7 @@ export const GameScreen: React.FC<GameScreenProps> = (props) => {
             title={soundOn ? 'Caller An (klicken zum Stummschalten)' : 'Caller Aus (klicken zum Einschalten)'}
             aria-label={soundOn ? 'Caller stummschalten' : 'Caller aktivieren'}
           >
-            {soundOn ? '🔊' : '🔇'}
+            {soundOn ? <Icons.IconSoundOn size={18} /> : <Icons.IconSoundOff size={18} />}
           </button>
 
           <Button
@@ -67,7 +67,7 @@ export const GameScreen: React.FC<GameScreenProps> = (props) => {
             onClick={() => setShowAbortConfirm(true)}
             style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}
           >
-            ✕ <span className="btn-abort-text">Beenden</span>
+            <Icons.IconClose size={16} /> <span className="btn-abort-text">Beenden</span>
           </Button>
         </div>
       </div>
@@ -125,7 +125,7 @@ export const GameScreen: React.FC<GameScreenProps> = (props) => {
             style={{ textAlign: 'center' }}
           >
             <div className="checkout-icon">
-              {props.checkoutPrompt.isWin ? '🎉' : '🎯'}
+              {props.checkoutPrompt.isWin ? <Icons.IconTrophy size={54} /> : <Icons.IconTarget size={54} />}
             </div>
             <h2 id={checkoutTitleId}>{props.checkoutPrompt.isWin ? 'Check!' : 'Verpasst'}</h2>
             <p style={{ color: '#999', marginBottom: '15px' }}>
@@ -137,7 +137,7 @@ export const GameScreen: React.FC<GameScreenProps> = (props) => {
               onClick={() => props.submitCheckoutPrompt(props.checkoutPrompt!.autoDarts)}
               style={{ marginBottom: '20px' }}
             >
-              ✓ {props.checkoutPrompt.autoDarts} Dart(s) bestätigen
+              <Icons.IconCheck size={18} /> {props.checkoutPrompt.autoDarts} Dart(s) bestätigen
             </Button>
 
             <p className="stat-label" style={{ marginBottom: 'var(--space-2)' }}>Manuell korrigieren</p>

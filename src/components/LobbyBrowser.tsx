@@ -4,15 +4,16 @@ import { useAuthStore } from '../store/useAuthStore';
 import { useOnlineStore } from '../store/useOnlineStore';
 import type { GameConfig } from '../types';
 import { readString, write } from '../utils/storage';
-import { Button, Card, CardHeader, Choice, ChoiceGroup } from './ui';
+import { Button, Card, CardHeader, Choice, ChoiceGroup, Icons } from './ui';
+import type { IconProps } from './ui';
 
 type Mode = 'standard' | 'powerscoring' | 'splitscore' | 'checkout';
 
-const MODES: { id: Mode; icon: string; title: string; desc: string }[] = [
-  { id: 'standard', icon: '🎯', title: 'Standard X01', desc: '501 / 301 · Sets & Legs' },
-  { id: 'powerscoring', icon: '🔥', title: 'Power Scoring', desc: 'Maximale Punkte pro Runde' },
-  { id: 'splitscore', icon: '➗', title: 'Split Score', desc: 'Ziel treffen oder halbieren' },
-  { id: 'checkout', icon: '✅', title: 'Checkout Training', desc: 'Finishes unter Druck' }
+const MODES: { id: Mode; icon: React.FC<IconProps>; title: string; desc: string }[] = [
+  { id: 'standard', icon: Icons.IconTarget, title: 'Standard X01', desc: '501 / 301 · Sets & Legs' },
+  { id: 'powerscoring', icon: Icons.IconBars, title: 'Power Scoring', desc: 'Maximale Punkte pro Runde' },
+  { id: 'splitscore', icon: Icons.IconSplit, title: 'Split Score', desc: 'Ziel treffen oder halbieren' },
+  { id: 'checkout', icon: Icons.IconTarget, title: 'Checkout Training', desc: 'Finishes unter Druck' }
 ];
 
 export const LobbyBrowser: React.FC = () => {
@@ -91,8 +92,8 @@ export const LobbyBrowser: React.FC = () => {
       <div className="ambient-glow" aria-hidden="true" />
 
       <header className="page-header">
-        <Button variant="ghost" className="btn-back" onClick={() => navigate('/')}>← Menü</Button>
-        <h2 className="page-title">🌍 Multiplayer</h2>
+        <Button variant="ghost" className="btn-back" onClick={() => navigate('/')}><Icons.IconArrowLeft size={17} /> Menü</Button>
+        <h2 className="page-title"><Icons.IconGlobe size={22} /> Multiplayer</h2>
         <div className="page-header-spacer" />
       </header>
 
@@ -124,7 +125,7 @@ export const LobbyBrowser: React.FC = () => {
 
       {localError && (
         <div className="alert alert-error" role="alert">
-          <span aria-hidden="true">⚠️</span>
+          <Icons.IconAlert size={18} />
           <span>{localError}</span>
         </div>
       )}
@@ -170,7 +171,7 @@ export const LobbyBrowser: React.FC = () => {
 
             {publicLobbies.length === 0 ? (
               <div className="empty-state">
-                <span className="empty-state-icon" aria-hidden="true">🛰️</span>
+                <Icons.IconGlobe size={38} className="empty-state-icon" />
                 <p className="empty-state-title">Gerade ist kein offener Raum aktiv</p>
                 <p className="empty-state-text">
                   Erstelle selbst einen Raum — der 4-stellige Code lässt sich direkt teilen.
@@ -183,9 +184,9 @@ export const LobbyBrowser: React.FC = () => {
                     <div className="lobby-list-body">
                       <strong className="lobby-list-host">{lobby.hostName}</strong>
                       <span className="lobby-list-meta">
-                        {lobby.settings?.mode === 'powerscoring' ? '🔥 Power Scoring'
-                          : lobby.settings?.mode === 'splitscore' ? '➗ Split Score'
-                            : lobby.settings?.mode === 'checkout' ? '✅ Checkout Training'
+                        {lobby.settings?.mode === 'powerscoring' ? 'Power Scoring'
+                          : lobby.settings?.mode === 'splitscore' ? 'Split Score'
+                            : lobby.settings?.mode === 'checkout' ? 'Checkout Training'
                               : `${lobby.settings?.startScore} · ${lobby.settings?.outMode} · Bis ${lobby.settings?.legsToWin} Legs`}
                       </span>
                     </div>
@@ -206,7 +207,7 @@ export const LobbyBrowser: React.FC = () => {
           <CardHeader
             heading="Raum erstellen"
             action={
-              <Button variant="ghost" className="btn-close" onClick={() => setShowCreateForm(false)} aria-label="Schließen">✕</Button>
+              <Button variant="ghost" className="btn-close" onClick={() => setShowCreateForm(false)} aria-label="Schließen"><Icons.IconClose size={18} /></Button>
             }
           />
 
@@ -215,8 +216,8 @@ export const LobbyBrowser: React.FC = () => {
             name="visibility"
             value={isPublic ? 'public' : 'code'}
             options={[
-              { value: 'public', label: '🌍 Öffentlich' },
-              { value: 'code', label: '🔒 Nur per Code' }
+              { value: 'public', label: 'Öffentlich' },
+              { value: 'code', label: 'Nur per Code' }
             ]}
             onChange={value => setIsPublic(value === 'public')}
             ariaLabel="Sichtbarkeit"
@@ -231,7 +232,7 @@ export const LobbyBrowser: React.FC = () => {
                 selected={mode === m.id}
                 onClick={() => setMode(m.id)}
               >
-                <span className="mode-tile-icon" aria-hidden="true">{m.icon}</span>
+                <span className="mode-tile-icon" aria-hidden="true"><m.icon size={22} /></span>
                 <span className="mode-tile-body">
                   <span className="mode-tile-title">{m.title}</span>
                   <span className="mode-tile-desc">{m.desc}</span>

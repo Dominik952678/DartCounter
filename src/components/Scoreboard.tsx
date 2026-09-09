@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import type { Player, GameConfig } from '../types';
 import { getCheckoutSuggestion, checkoutRange } from '../utils/checkouts';
 import { playerColorBySeat, teamColor } from '../utils/playerColors';
+import { Icons } from './ui';
 
 interface ScoreboardProps {
   players: Player[];
@@ -69,10 +70,10 @@ const TeamSide: React.FC<TeamSideProps> = ({ team, total, justUnlocked, blocked 
     <span className="team-total">{total} Pkt</span>
     {justUnlocked ? (
       <span className="lock-badge-bar unlocking" style={{ padding: '2px 8px', margin: 0 }}>
-        🔓 Entblockt!
+        <Icons.IconUnlock size={14} /> Entblockt!
       </span>
     ) : blocked ? (
-      <span className="lock-chip">🔒 Geblockt</span>
+      <span className="lock-chip"><Icons.IconLock size={13} /> Geblockt</span>
     ) : null}
   </div>
 );
@@ -137,15 +138,15 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
             (t1JustUnlocked || t2JustUnlocked) ? 'is-unlocked' : isAnyBlocked ? 'is-blocked' : ''
           }`}>
             {t1JustUnlocked ? (
-              <span>🔓 Team 1 wurde entblockt!</span>
+              <span><Icons.IconUnlock size={15} /> Team 1 wurde entblockt!</span>
             ) : t2JustUnlocked ? (
-              <span>🔓 Team 2 wurde entblockt!</span>
+              <span><Icons.IconUnlock size={15} /> Team 2 wurde entblockt!</span>
             ) : isOnlySinglePersonBlocking && singleThrowerIndex !== -1 ? (
-              <span>🔒 {singleThrowerIndex % 2 === 0 ? 'Team 1' : 'Team 2'} geblockt (Partner muss mind. {singleThrowerIndex % 2 === 0 ? t1Diff : t2Diff} Pkt werfen)</span>
+              <span><Icons.IconLock size={15} /> {singleThrowerIndex % 2 === 0 ? 'Team 1' : 'Team 2'} geblockt (Partner muss mind. {singleThrowerIndex % 2 === 0 ? t1Diff : t2Diff} Pkt werfen)</span>
             ) : isAnyBlocked ? (
-              <span>🔒 Beide Teams gegenseitig geblockt</span>
+              <span><Icons.IconLock size={15} /> Beide Teams gegenseitig geblockt</span>
             ) : (
-              <span>🎯 2v2 Doppel Modus (Freeze)</span>
+              <span><Icons.IconUsers size={15} /> 2v2 Doppel Modus (Freeze)</span>
             )}
           </div>
 
@@ -224,16 +225,16 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
                     className={`player-name ${isActive ? 'is-active' : ''}`}
                     style={isActive ? { color: playerColor } : undefined}
                   >
-                    {p.isBot ? '🤖 ' : ''}{p.name}
+                    {p.isBot && <Icons.IconBot size={16} className="icon-inline" />}{p.name}
                   </h3>
                 </div>
                 <div className="badge-container">
                   {is2v2 && (
                     <span className={`badge-team ${isCardInvolvedInLock ? 'is-locked' : ''}`}>
                       {isMyTeamJustUnlocked ? (
-                        <span>🔓</span>
+                        <Icons.IconUnlock size={13} />
                       ) : isCardInvolvedInLock ? (
-                        <span>🔒</span>
+                        <Icons.IconLock size={13} />
                       ) : null}
                       <span>T{playerTeamNumber}</span>
                     </span>
@@ -248,21 +249,21 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
               {/* 2v2 Lock Status Bar */}
               {is2v2 && isMyTeamJustUnlocked && (
                 <div className="lock-badge-bar unlocking">
-                  <span className="lock-icon-opening">🔓</span>
+                  <span className="lock-icon-opening"><Icons.IconUnlock size={16} /></span>
                   <span><strong>Schloss geöffnet!</strong> Entblockt</span>
                 </div>
               )}
 
               {is2v2 && !isMyTeamJustUnlocked && isOnlySinglePersonBlocking && i === singleThrowerIndex && (
                 <div className="lock-badge-bar must-throw">
-                  <span>🔒</span>
+                  <Icons.IconLock size={15} />
                   <span>Muss mind. <strong>{pointsINeedToThrow} Pkt</strong> werfen</span>
                 </div>
               )}
 
               {is2v2 && !isMyTeamJustUnlocked && (!isOnlySinglePersonBlocking || i !== singleThrowerIndex) && isCardInvolvedInLock && (
                 <div className="lock-badge-bar locked">
-                  <span>🔒</span>
+                  <Icons.IconLock size={15} />
                   <span><strong>Geblockt</strong></span>
                 </div>
               )}
@@ -287,7 +288,9 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
                     className={isThisPlayerBlockedFromFinishing ? 'checkout-pill-frozen' : 'checkout-pill'}
                     title={isThisPlayerBlockedFromFinishing ? 'Freeze: Dein Team darf noch nicht auschecken' : undefined}
                   >
-                    {isThisPlayerBlockedFromFinishing ? `❄️ ${checkoutSuggestion}` : checkoutSuggestion}
+                    {isThisPlayerBlockedFromFinishing
+                      ? <><Icons.IconFrozen size={14} /> {checkoutSuggestion}</>
+                      : checkoutSuggestion}
                   </div>
                 ) : (
                   <span className="player-darts-note">

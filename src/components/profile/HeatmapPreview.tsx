@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { Profile } from '../../types';
 import { DartboardHeatmap } from '../DartboardHeatmap';
+import { Icons } from '../ui';
 
 interface HeatmapPreviewProps {
   profiles: Record<string, Profile>;
@@ -21,7 +22,7 @@ export const HeatmapPreview: React.FC<HeatmapPreviewProps> = ({ profiles, initia
   return (
     <div style={{ marginTop: '20px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
-        <h3 style={{ margin: 0, fontSize: '1.15em' }}>🎯 Treffer-Board Vorschau</h3>
+        <h3 style={{ margin: 0, fontSize: '1.15em' }}><Icons.IconTarget size={18} /> Treffer-Board Vorschau</h3>
         <select
           value={shown}
           onChange={e => setSelected(e.target.value)}

@@ -1,0 +1,1668 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Caprasimo&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"><style>
+body{margin:0;background:#07090f;font-family:'Figtree',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#F59E0B;text-decoration:none}a:hover{color:#fbbf24}
+*{box-sizing:border-box}
+button{font-family:inherit}
+input,select{font-family:inherit}
+::selection{background:rgba(245,158,11,.28)}
+:focus-visible{outline:2px solid #F59E0B;outline-offset:2px}
+@keyframes popIn{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes floatUp{from{transform:translateY(10px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes shakeX{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
+</style></helmet>
+
+<div style="width:100%;max-width:{{shellW}};height:{{shellH}};max-height:{{shellH}};margin:0 auto;background:#0B1120;color:#F5F5F0;display:flex;flex-direction:{{shellDir}};overflow:hidden;border-radius:20px;box-shadow:0 24px 80px rgba(0,0,0,.6)">
+
+<sc-if value="{{ showRail }}" hint-placeholder-val="{{ true }}">
+<nav style="width:244px;flex:none;background:rgba(255,255,255,.028);display:flex;flex-direction:column;gap:28px;padding:28px 18px 22px">
+  <div style="display:flex;align-items:center;gap:12px;padding:0 6px">
+    <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2.75" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="4.6"></circle><circle cx="12" cy="12" r="1" fill="#F59E0B"></circle></svg>
+    <span style="font-family:'Caprasimo',serif;font-size:22px;line-height:1;color:#F5F5F0;letter-spacing:-.01em">Dartcounter</span>
+  </div>
+
+  <dc-import name="LiquidNav" orientation="vertical" active="{{ navIndex }}" on-select="{{ onNavSelect }}" labels="{{ navLabels }}" hint-size="100%,310px"></dc-import>
+
+  <div style="margin-top:auto;display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;align-items:center;gap:11px;padding:12px 14px;background:rgba(255,255,255,.045);border-radius:999px">
+      <span style="width:32px;height:32px;flex:none;border-radius:999px;background:#5DA9E9;color:#0B1120;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px">D</span>
+      <span style="min-width:0"><span style="display:block;font-size:13px;font-weight:500;color:#F5F5F0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Dominik</span><span style="display:block;font-size:11px;color:#8B93A6">{{ t.logged_in }}</span></span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;padding:0 6px">
+      <button type="button" onClick="{{ toggleLang }}" role="switch" aria-checked="{{ isEn }}" aria-label="Sprache" style="position:relative;width:88px;height:38px;flex:none;border-radius:999px;border:1px solid rgba(148,163,184,.16);background:rgba(255,255,255,.05);cursor:pointer;padding:0" style-hover="border-color:rgba(245,158,11,.5)">
+        <span style="{{ langThumb }}"></span>
+        <span style="{{ langDe }}">DE</span>
+        <span style="{{ langEn }}">EN</span>
+      </button>
+      <span style="margin-left:auto;font:400 11px 'JetBrains Mono',monospace;color:#5b6479">1.6.0</span>
+    </div>
+  </div>
+</nav>
+</sc-if>
+
+<main style="flex:1;min-width:0;position:relative;display:flex;flex-direction:column;overflow:hidden">
+  <div style="position:absolute;top:-190px;right:-140px;width:520px;height:520px;border-radius:999px;background:radial-gradient(circle,rgba(245,158,11,.14) 0%,transparent 68%);pointer-events:none"></div>
+  <div style="position:absolute;bottom:-220px;left:-120px;width:460px;height:460px;border-radius:999px;background:radial-gradient(circle,rgba(93,202,165,.09) 0%,transparent 66%);pointer-events:none"></div>
+
+  <!-- ─────────── HOME ─────────── -->
+  <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+  <div style="position:relative;z-index:1;flex:1;min-height:0;overflow:auto;padding:34px 40px 40px;display:flex;flex-direction:column;gap:26px">
+    <div>
+      <p style="margin:0 0 4px;font-size:13px;font-weight:500;color:#8B93A6">{{ t.greeting }}</p>
+      <h1 style="margin:0;font-family:'Caprasimo',serif;font-size:clamp(26px,3.1vw,37px);line-height:1.08;letter-spacing:-.02em;color:#F5F5F0;text-wrap:balance">{{ t.home_h }}</h1>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:22px;align-items:stretch">
+      <button type="button" onClick="{{ quickStart }}" style="flex:1 1 460px;min-width:300px;text-align:left;border:none;cursor:pointer;background:#F59E0B;color:#4A3A10;border-radius:28px;padding:28px 30px;display:flex;flex-direction:column;gap:22px;box-shadow:0 18px 44px rgba(245,158,11,.22)" style-hover="box-shadow:0 22px 56px rgba(245,158,11,.34)" style-active="transform:scale(.988)">
+        <span style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px">
+          <span>
+            <span style="display:block;font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;opacity:.72">{{ t.resume_kicker }}</span>
+            <span style="display:block;font-family:'Caprasimo',serif;font-size:clamp(22px,2.5vw,30px);line-height:1.14;margin-top:8px;text-wrap:balance">{{ t.resume_title }}</span>
+          </span>
+          <span style="width:56px;height:56px;flex:none;border-radius:999px;background:rgba(74,58,16,.16);display:flex;align-items:center;justify-content:center">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#4A3A10" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4.5 19 12 6 19.5z"></path></svg>
+          </span>
+        </span>
+        <span style="display:flex;flex-wrap:wrap;gap:8px">
+          <span style="padding:7px 15px;border-radius:999px;background:rgba(74,58,16,.14);font-size:13px;font-weight:600;white-space:nowrap">{{ cfgScore }}</span>
+          <span style="padding:7px 15px;border-radius:999px;background:rgba(74,58,16,.14);font-size:13px;font-weight:600;white-space:nowrap">{{ cfgOut }}</span>
+          <span style="padding:7px 15px;border-radius:999px;background:rgba(74,58,16,.14);font-size:13px;font-weight:600;white-space:nowrap">{{ cfgDistance }}</span>
+          <span style="padding:7px 15px;border-radius:999px;background:rgba(74,58,16,.14);font-size:13px;font-weight:600;white-space:nowrap">{{ cfgLineup }}</span>
+        </span>
+        <span style="font-size:14px;font-weight:500;opacity:.8">{{ t.resume_sub }}</span>
+      </button>
+
+      <div style="flex:1 1 300px;min-width:260px;display:flex;flex-direction:column;gap:14px">
+        <button type="button" onClick="{{ goSetup }}" style="text-align:left;cursor:pointer;background:rgba(255,255,255,.045);border:1px solid rgba(148,163,184,.12);border-radius:24px;padding:20px 22px;color:#F5F5F0;display:flex;align-items:center;gap:16px" style-hover="background:rgba(255,255,255,.075)" style-active="transform:scale(.99)">
+          <span style="width:44px;height:44px;flex:none;border-radius:999px;background:rgba(245,158,11,.14);display:flex;align-items:center;justify-content:center"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2.75" stroke-linecap="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg></span>
+          <span><span style="display:block;font-size:16px;font-weight:600">{{ t.other }}</span><span style="display:block;font-size:13px;color:#8B93A6;margin-top:2px">{{ t.other_sub }}</span></span>
+        </button>
+
+        <div style="flex:1;background:rgba(255,255,255,.045);border:1px solid rgba(148,163,184,.12);border-radius:24px;padding:22px;display:flex;flex-direction:column;gap:16px">
+          <span style="font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8B93A6">{{ t.today }}</span>
+          <div style="display:flex;gap:24px;flex-wrap:wrap">
+            <span><span style="display:block;font-size:12px;color:#8B93A6">{{ t.avg }}</span><span style="display:block;font:500 27px 'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;color:#F5F5F0;margin-top:2px">68.9</span></span>
+            <span><span style="display:block;font-size:12px;color:#8B93A6">180</span><span style="display:block;font:500 27px 'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;color:#F59E0B;margin-top:2px">3</span></span>
+            <span><span style="display:block;font-size:12px;color:#8B93A6">{{ t.bestleg }}</span><span style="display:block;font:500 27px 'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;color:#10B981;margin-top:2px">15</span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <span style="display:block;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8B93A6;margin-bottom:12px">{{ t.training_label }}</span>
+      <div style="display:flex;flex-wrap:wrap;gap:14px">
+        <button type="button" onClick="{{ goTrainingCheckout }}" style="flex:1 1 200px;min-height:88px;cursor:pointer;background:rgba(255,255,255,.04);border:1px solid rgba(148,163,184,.12);border-radius:24px;padding:18px 20px;color:#F5F5F0;display:flex;align-items:center;gap:14px;text-align:left" style-hover="background:rgba(255,255,255,.075)">
+          <span style="width:42px;height:42px;flex:none;border-radius:999px;background:rgba(245,158,11,.14);display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2.75" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="4.6"></circle></svg></span>
+          <span><span style="display:block;font-size:15px;font-weight:600">Checkout</span><span style="display:block;font-size:12px;color:#8B93A6;margin-top:2px">{{ t.co_d }}</span></span>
+        </button>
+        <button type="button" onClick="{{ goTrainingPower }}" style="flex:1 1 200px;min-height:88px;cursor:pointer;background:rgba(255,255,255,.04);border:1px solid rgba(148,163,184,.12);border-radius:24px;padding:18px 20px;color:#F5F5F0;display:flex;align-items:center;gap:14px;text-align:left" style-hover="background:rgba(255,255,255,.075)">
+          <span style="width:42px;height:42px;flex:none;border-radius:999px;background:rgba(93,202,165,.14);display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5DCAA5" stroke-width="2.75" stroke-linecap="round"><path d="M6 20v-6"></path><path d="M12 20V9"></path><path d="M18 20V4"></path></svg></span>
+          <span><span style="display:block;font-size:15px;font-weight:600">Power Scoring</span><span style="display:block;font-size:12px;color:#8B93A6;margin-top:2px">{{ t.ps_d }}</span></span>
+        </button>
+        <button type="button" onClick="{{ goTrainingSplit }}" style="flex:1 1 200px;min-height:88px;cursor:pointer;background:rgba(255,255,255,.04);border:1px solid rgba(148,163,184,.12);border-radius:24px;padding:18px 20px;color:#F5F5F0;display:flex;align-items:center;gap:14px;text-align:left" style-hover="background:rgba(255,255,255,.075)">
+          <span style="width:42px;height:42px;flex:none;border-radius:999px;background:rgba(175,169,236,.16);display:flex;align-items:center;justify-content:center"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#AFA9EC" stroke-width="2.75" stroke-linecap="round"><path d="M5 12h14"></path><circle cx="12" cy="6.5" r="1.4" fill="#AFA9EC"></circle><circle cx="12" cy="17.5" r="1.4" fill="#AFA9EC"></circle></svg></span>
+          <span><span style="display:block;font-size:15px;font-weight:600">Split Score</span><span style="display:block;font-size:12px;color:#8B93A6;margin-top:2px">{{ t.ss_d }}</span></span>
+        </button>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ─────────── SETUP ─────────── -->
+  <sc-if value="{{ isSetup }}" hint-placeholder-val="{{ false }}">
+  <div style="position:relative;z-index:1;flex:1;min-height:0;display:flex;flex-direction:column">
+    <div style="flex:1;min-height:0;overflow:auto;padding:34px 40px 20px;display:flex;flex-direction:column;gap:24px">
+      <div style="display:flex;flex-wrap:wrap;gap:18px;align-items:flex-end;justify-content:space-between">
+        <div>
+          <p style="margin:0 0 4px;font-size:13px;font-weight:500;color:#8B93A6">{{ t.setup_kicker }}</p>
+          <h1 style="margin:0;font-family:'Caprasimo',serif;font-size:34px;line-height:1.1;letter-spacing:-.02em">{{ t.setup_h }}</h1>
+        </div>
+        <div style="display:flex;gap:6px;padding:5px;background:rgba(255,255,255,.045);border-radius:999px">
+          <button type="button" onClick="{{ goSetup }}" style="{{ tabMatch }}">X01</button>
+          <button type="button" onClick="{{ goTraining }}" style="{{ tabTraining }}">{{ t.nav_training }}</button>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start">
+        <section style="flex:1 1 400px;min-width:300px;background:rgba(255,255,255,.04);border:1px solid rgba(148,163,184,.12);border-radius:28px;padding:26px;display:flex;flex-direction:column;gap:20px">
+          <h2 style="margin:0;font-family:'Caprasimo',serif;font-size:23px;letter-spacing:-.01em">{{ t.players_h }}</h2>
+
+          <div style="position:relative;display:flex;width:100%;padding:5px;background:rgba(255,255,255,.04);border-radius:999px">
+            <span aria-hidden="true" style="{{ modeThumb }}"></span>
+            <button type="button" onClick="{{ setSingle }}" style="{{ chipSingle }}">{{ t.single }}</button>
+            <button type="button" onClick="{{ setDouble }}" style="{{ chipDouble }}">{{ t.doubles }}</button>
+          </div>
+
+          <sc-if value="{{ is2v2 }}" hint-placeholder-val="{{ false }}">
+            <p style="margin:0;padding:14px 18px;background:rgba(93,202,165,.1);border-radius:20px;font-size:13px;line-height:1.55;color:#cfe6dd"><strong style="color:#5DCAA5;font-weight:600">{{ t.freeze }}</strong> {{ t.freeze_d }}</p>
+          </sc-if>
+          <sc-if value="{{ isSingles }}" hint-placeholder-val="{{ true }}">
+            <div>
+              <span style="display:block;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8B93A6;margin-bottom:10px">{{ t.count_label }}</span>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <sc-for list="{{ counts }}" as="c" hint-placeholder-count="4"><button type="button" onClick="{{ c.pick }}" style="{{ c.style }}">{{ c.label }}</button></sc-for>
+              </div>
+            </div>
+          </sc-if>
+
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <sc-for list="{{ seats }}" as="s" hint-placeholder-count="2">
+              <div style="{{ s.rowStyle }}">
+                <span style="{{ s.avatarStyle }}">{{ s.initial }}</span>
+                <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:1px">
+                  <select value="{{ s.value }}" onChange="{{ s.choose }}" style="width:100%;min-height:30px;background:transparent;border:none;color:#F5F5F0;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;padding:0;outline:none">
+                    <sc-for list="{{ s.options }}" as="o" hint-placeholder-count="5"><option value="{{ o.value }}" style="color:#0B1120;background:#F5F5F0">{{ o.label }}</option></sc-for>
+                  </select>
+                  <span style="font-size:12px;color:#8B93A6">{{ s.meta }}</span>
+                </span>
+                <span style="display:flex;gap:6px">
+                  <button type="button" onClick="{{ s.up }}" style="width:38px;height:38px;border-radius:999px;background:rgba(255,255,255,.05);border:none;color:#8B93A6;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="color:#F5F5F0;background:rgba(255,255,255,.1)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14l6-6 6 6"></path></svg></button>
+                  <button type="button" onClick="{{ s.down }}" style="width:38px;height:38px;border-radius:999px;background:rgba(255,255,255,.05);border:none;color:#8B93A6;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="color:#F5F5F0;background:rgba(255,255,255,.1)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10l6 6 6-6"></path></svg></button>
+                </span>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <button type="button" onClick="{{ toggleBullOff }}" style="{{ optBullOff }}">
+              <span style="{{ optBullOffDot }}"></span>
+              <span style="text-align:left"><span style="display:block;font-size:14px;font-weight:600;color:#F5F5F0">{{ t.bulloff }}</span><span style="display:block;font-size:12px;color:#8B93A6;margin-top:2px">{{ bullOffDesc }}</span></span>
+            </button>
+            <button type="button" onClick="{{ toggleRandom }}" style="{{ optRandom }}">
+              <span style="{{ optRandomDot }}"></span>
+              <span style="text-align:left"><span style="display:block;font-size:14px;font-weight:600;color:#F5F5F0">{{ t.random }}</span><span style="display:block;font-size:12px;color:#8B93A6;margin-top:2px">{{ randomDesc }}</span></span>
+            </button>
+          </div>
+        </section>
+
+        <section style="flex:1 1 400px;min-width:300px;background:rgba(255,255,255,.04);border:1px solid rgba(148,163,184,.12);border-radius:28px;padding:26px;display:flex;flex-direction:column;gap:24px">
+          <h2 style="margin:0;font-family:'Caprasimo',serif;font-size:23px;letter-spacing:-.01em">{{ t.settings_h }}</h2>
+
+          <div>
+            <span style="display:block;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8B93A6;margin-bottom:12px">{{ t.startscore }}</span>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <sc-for list="{{ scores }}" as="s" hint-placeholder-count="4"><button type="button" onClick="{{ s.pick }}" style="{{ s.style }}">{{ s.label }}</button></sc-for>
+            </div>
+          </div>
+
+          <div>
+            <span style="display:block;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8B93A6;margin-bottom:12px">{{ t.outmode }}</span>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <sc-for list="{{ outModes }}" as="o" hint-placeholder-count="3"><button type="button" onClick="{{ o.pick }}" style="{{ o.style }}">{{ o.label }}</button></sc-for>
+            </div>
+          </div>
+
+          <div>
+            <span style="display:block;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8B93A6;margin-bottom:12px">{{ t.distance }}</span>
+            <div style="display:flex;gap:14px;flex-wrap:wrap">
+              <div style="flex:1 1 150px;background:rgba(255,255,255,.04);border-radius:24px;padding:16px 18px;display:flex;flex-direction:column;gap:12px">
+                <span><span style="display:block;font-size:14px;font-weight:600">{{ t.sets }}</span><span style="display:block;font-size:12px;color:#8B93A6">{{ t.sets_d }}</span></span>
+                <span style="display:flex;align-items:center;gap:12px">
+                  <button type="button" onClick="{{ setsDown }}" style="width:44px;height:44px;flex:none;border-radius:999px;background:rgba(255,255,255,.06);border:none;color:#F5F5F0;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:rgba(245,158,11,.2)">−</button>
+                  <span style="flex:1;text-align:center;font:500 26px 'JetBrains Mono',monospace;font-variant-numeric:tabular-nums">{{ sets }}</span>
+                  <button type="button" onClick="{{ setsUp }}" style="width:44px;height:44px;flex:none;border-radius:999px;background:rgba(255,255,255,.06);border:none;color:#F5F5F0;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:rgba(245,158,11,.2)">+</button>
+                </span>
+              </div>
+              <div style="flex:1 1 150px;background:rgba(255,255,255,.04);border-radius:24px;padding:16px 18px;display:flex;flex-direction:column;gap:12px">
+                <span><span style="display:block;font-size:14px;font-weight:600">Legs</span><span style="display:block;font-size:12px;color:#8B93A6">{{ t.legs_d }}</span></span>
+                <span style="display:flex;align-items:center;gap:12px">
+                  <button type="button" onClick="{{ legsDown }}" style="width:44px;height:44px;flex:none;border-radius:999px;background:rgba(255,255,255,.06);border:none;color:#F5F5F0;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:rgba(245,158,11,.2)">−</button>
+                  <span style="flex:1;text-align:center;font:500 26px 'JetBrains Mono',monospace;font-variant-numeric:tabular-nums">{{ legs }}</span>
+                  <button type="button" onClick="{{ legsUp }}" style="width:44px;height:44px;flex:none;border-radius:999px;background:rgba(255,255,255,.06);border:none;color:#F5F5F0;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:rgba(245,158,11,.2)">+</button>
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <div style="flex:none;padding:16px 40px 22px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;background:linear-gradient(to top,#0B1120 40%,rgba(11,17,32,0))">
+      <span style="font-size:13px;color:#8B93A6;min-width:0">{{ t.summary }} <strong style="color:#F5F5F0;font-weight:600">{{ cfgSummary }}</strong></span>
+      <button type="button" onClick="{{ startMatch }}" style="margin-left:auto;min-height:58px;padding:0 34px;border-radius:999px;border:none;background:#F59E0B;color:#4A3A10;font-size:17px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:12px;box-shadow:0 12px 32px rgba(245,158,11,.26)" style-hover="box-shadow:0 16px 40px rgba(245,158,11,.36)" style-active="transform:scale(.985)">
+        <span>{{ t.start_match }}</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4A3A10" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13"></path><path d="M12 5.5 18.5 12 12 18.5"></path></svg>
+      </button>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ─────────── LIVE MATCH ─────────── -->
+  <sc-if value="{{ isMatch }}" hint-placeholder-val="{{ false }}">
+  <div style="position:relative;z-index:1;flex:1;min-height:0;display:flex;flex-direction:column;padding:20px 26px 22px;gap:16px">
+    <div style="flex:none;display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <span style="display:flex;gap:8px;flex-wrap:wrap">
+        <span style="padding:8px 16px;border-radius:999px;background:rgba(255,255,255,.05);font-size:13px;font-weight:600;color:#F5F5F0">{{ cfgScore }}</span>
+        <span style="padding:8px 16px;border-radius:999px;background:rgba(255,255,255,.05);font-size:13px;font-weight:600;color:#F5F5F0">{{ cfgOut }}</span>
+        <span style="padding:8px 16px;border-radius:999px;background:rgba(255,255,255,.05);font-size:13px;font-weight:500;color:#8B93A6">{{ cfgDistance }}</span>
+      </span>
+      <span style="margin-left:auto;display:flex;align-items:center;gap:10px">
+        <button type="button" onClick="{{ toggleSound }}" style="{{ soundStyle }}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3.5L12 6v12L7.5 14.5H4z"></path><path d="{{ soundArc }}"></path></svg></button>
+        <button type="button" onClick="{{ askAbort }}" style="min-height:48px;padding:0 22px;border-radius:999px;background:rgba(239,68,68,.12);border:none;color:#EF4444;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:9px" style-hover="background:rgba(239,68,68,.2)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12"></path><path d="M18 6 6 18"></path></svg><span>{{ t.quit }}</span></button>
+      </span>
+    </div>
+
+    <div style="flex:1;min-height:0;display:flex;gap:18px;flex-wrap:wrap">
+      <div style="flex:1 1 380px;min-width:300px;display:flex;flex-direction:column;gap:14px">
+        <sc-for list="{{ board }}" as="p" hint-placeholder-count="2">
+          <div style="{{ p.cardStyle }}">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+              <div style="display:flex;align-items:center;gap:11px;min-width:0">
+                <span style="{{ p.dotStyle }}"></span>
+                <span style="{{ p.nameStyle }}">{{ p.name }}</span>
+              </div>
+              <div style="display:flex;gap:7px">
+                <span style="padding:5px 13px;border-radius:999px;background:rgba(255,255,255,.06);font-size:12px;font-weight:500;color:#8B93A6">Legs <strong style="color:#F5F5F0;font-weight:600">{{ p.legs }}</strong></span>
+              </div>
+            </div>
+            <div style="display:flex;align-items:baseline;justify-content:center;gap:.14em;margin:auto 0">
+              <span style="{{ p.scoreStyle }}">{{ p.score }}</span>
+              <sc-if value="{{ p.hasPending }}" hint-placeholder-val="{{ false }}"><span style="font:500 22px 'JetBrains Mono',monospace;color:#8B93A6">{{ p.pending }}</span></sc-if>
+            </div>
+            <div style="display:flex;justify-content:center;min-height:34px;align-items:center">
+              <sc-if value="{{ p.hasFinish }}" hint-placeholder-val="{{ false }}">
+                <span style="padding:7px 18px;border-radius:999px;background:#10B981;color:#06301f;font-size:14px;font-weight:600;letter-spacing:.02em;animation:popIn .25s cubic-bezier(.175,.885,.32,1.275)">{{ p.finish }}</span>
+              </sc-if>
+              <sc-if value="{{ p.noFinish }}" hint-placeholder-val="{{ true }}">
+                <span style="font-size:12px;color:#8B93A6">{{ p.dartsNote }}</span>
+              </sc-if>
+            </div>
+            <div style="display:flex;gap:18px;justify-content:center;flex-wrap:wrap;font-size:12px;color:#8B93A6">
+              <span>{{ t.leg }} <strong style="color:#F5F5F0;font-weight:600;font-family:'JetBrains Mono',monospace">{{ p.legAvg }}</strong></span>
+              <span>{{ t.match }} <strong style="color:#F5F5F0;font-weight:600;font-family:'JetBrains Mono',monospace">{{ p.matchAvg }}</strong></span>
+              <span>100+ <strong style="color:#F5F5F0;font-weight:600;font-family:'JetBrains Mono',monospace">{{ p.hundredPlus }}</strong></span>
+              <span>180 <strong style="color:#F59E0B;font-weight:600;font-family:'JetBrains Mono',monospace">{{ p.oneEighty }}</strong></span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="flex:1 1 430px;min-width:320px;display:flex;flex-direction:column;gap:12px">
+        <div style="flex:none;display:flex;align-items:center;justify-content:center;gap:12px">
+          <sc-for list="{{ dartBoxes }}" as="d" hint-placeholder-count="3"><span style="{{ d.style }}">{{ d.label }}</span></sc-for>
+          <span style="{{ totalStyle }}">{{ totalLabel }}</span>
+        </div>
+
+        <div style="flex:none;display:flex;gap:12px">
+          <button type="button" onClick="{{ toggleDouble }}" style="{{ modDouble }}">Double</button>
+          <button type="button" onClick="{{ toggleTriple }}" style="{{ modTriple }}">Triple</button>
+        </div>
+
+        <div style="flex:1;min-height:0;display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(5,1fr);gap:12px">
+          <sc-for list="{{ keys }}" as="k" hint-placeholder-count="20"><button type="button" onClick="{{ k.hit }}" style="{{ k.style }}">{{ k.label }}</button></sc-for>
+          <button type="button" onClick="{{ hitBull }}" style="{{ bullStyle }}">Bull</button>
+          <button type="button" onClick="{{ hitMiss }}" style="grid-column:span 2;background:rgba(255,255,255,.04);border:1px solid rgba(148,163,184,.12);border-radius:20px;color:#8B93A6;font-size:17px;font-weight:600;cursor:pointer;min-height:52px" style-hover="background:rgba(255,255,255,.08)">Miss</button>
+          <button type="button" onClick="{{ undoDart }}" style="background:rgba(148,163,184,.14);border:none;border-radius:20px;color:#F5F5F0;cursor:pointer;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px" style-hover="background:rgba(148,163,184,.22)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5v5h5"></path><path d="M4.6 13.5A8 8 0 1 0 6.8 7.2"></path></svg><span style="font-size:11px;font-weight:600">{{ t.back }}</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ─────────── TRAINING ─────────── -->
+  <sc-if value="{{ isTraining }}" hint-placeholder-val="{{ false }}">
+  <div style="position:relative;z-index:1;flex:1;min-height:0;display:flex;flex-direction:column">
+    <div style="flex:1;min-height:0;overflow:auto;padding:34px 40px 20px;display:flex;flex-direction:column;gap:24px">
+      <div style="display:flex;flex-wrap:wrap;gap:18px;align-items:flex-end;justify-content:space-between">
+        <div>
+          <p style="margin:0 0 4px;font-size:13px;font-weight:500;color:#8B93A6">{{ t.setup_kicker }}</p>
+          <h1 style="margin:0;font-family:'Caprasimo',serif;font-size:34px;line-height:1.1;letter-spacing:-.02em">{{ t.training_h }}</h1>
+        </div>
+        <div style="display:flex;gap:6px;padding:5px;background:rgba(255,255,255,.045);border-radius:999px">
+          <button type="button" onClick="{{ goSetup }}" style="{{ tabMatch2 }}">X01</button>
+          <button type="button" onClick="{{ goTraining }}" style="{{ tabTraining2 }}">{{ t.nav_training }}</button>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start">
+        <section style="flex:1 1 380px;min-width:300px;display:flex;flex-direction:column;gap:12px">
+          <sc-for list="{{ modes }}" as="m" hint-placeholder-count="3">
+            <button type="button" onClick="{{ m.pick }}" style="{{ m.style }}">
+              <span style="{{ m.iconStyle }}"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.75" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="4.6"></circle><circle cx="12" cy="12" r="1" fill="currentColor"></circle></svg></span>
+              <span style="text-align:left;min-width:0"><span style="display:block;font-size:17px;font-weight:600;color:#F5F5F0">{{ m.title }}</span><span style="display:block;font-size:13px;color:#8B93A6;margin-top:3px">{{ m.desc }}</span></span>
+            </button>
+          </sc-for>
+        </section>
+
+        <section style="flex:1 1 380px;min-width:300px;background:rgba(255,255,255,.04);border:1px solid rgba(148,163,184,.12);border-radius:28px;padding:26px;display:flex;flex-direction:column;gap:24px">
+          <h2 style="margin:0;font-family:'Caprasimo',serif;font-size:23px;letter-spacing:-.01em">{{ t.settings_h }}</h2>
+          <div>
+            <span style="display:block;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8B93A6;margin-bottom:10px">{{ t.count_label }}</span>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <sc-for list="{{ trCounts }}" as="c" hint-placeholder-count="4"><button type="button" onClick="{{ c.pick }}" style="{{ c.style }}">{{ c.label }}</button></sc-for>
+            </div>
+          </div>
+
+          <div>
+            <span style="display:block;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8B93A6;margin-bottom:10px">{{ t.players_h }}</span>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <sc-for list="{{ trSeats }}" as="s" hint-placeholder-count="1">
+                <div style="{{ s.rowStyle }}">
+                  <span style="{{ s.avatarStyle }}">{{ s.initial }}</span>
+                  <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:1px">
+                    <select value="{{ s.value }}" onChange="{{ s.choose }}" style="width:100%;min-height:30px;background:transparent;border:none;color:#F5F5F0;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;padding:0;outline:none">
+                      <sc-for list="{{ s.options }}" as="o" hint-placeholder-count="5"><option value="{{ o.value }}" style="color:#0B1120;background:#F5F5F0">{{ o.label }}</option></sc-for>
+                    </select>
+                    <span style="font-size:12px;color:#8B93A6">{{ s.meta }}</span>
+                  </span>
+                  <span style="display:flex;gap:6px">
+                    <button type="button" onClick="{{ s.up }}" style="width:38px;height:38px;border-radius:999px;background:rgba(255,255,255,.05);border:none;color:#8B93A6;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="color:#F5F5F0;background:rgba(255,255,255,.1)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14l6-6 6 6"></path></svg></button>
+                    <button type="button" onClick="{{ s.down }}" style="width:38px;height:38px;border-radius:999px;background:rgba(255,255,255,.05);border:none;color:#8B93A6;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="color:#F5F5F0;background:rgba(255,255,255,.1)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 10l6 6 6-6"></path></svg></button>
+                  </span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div>
+            <span style="display:block;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8B93A6;margin-bottom:12px">{{ trParamLabel }}</span>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <sc-for list="{{ trParams }}" as="p" hint-placeholder-count="4"><button type="button" onClick="{{ p.pick }}" style="{{ p.style }}">{{ p.label }}</button></sc-for>
+            </div>
+          </div>
+          <p style="margin:0;font-size:12px;line-height:1.55;color:#8B93A6">{{ trHint }}</p>
+        </section>
+      </div>
+    </div>
+
+    <div style="flex:none;padding:16px 40px 22px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;background:linear-gradient(to top,#0B1120 40%,rgba(11,17,32,0))">
+      <span style="font-size:13px;color:#8B93A6">{{ t.summary }} <strong style="color:#F5F5F0;font-weight:600">{{ trSummary }}</strong></span>
+      <button type="button" onClick="{{ startMatch }}" style="margin-left:auto;min-height:58px;padding:0 34px;border-radius:999px;border:none;background:#F59E0B;color:#4A3A10;font-size:17px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:12px;box-shadow:0 12px 32px rgba(245,158,11,.26)" style-hover="box-shadow:0 16px 40px rgba(245,158,11,.36)">
+        <span>{{ t.start_training }}</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4A3A10" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13"></path><path d="M12 5.5 18.5 12 12 18.5"></path></svg>
+      </button>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ─────────── ONLINE ─────────── -->
+  <sc-if value="{{ isOnline }}" hint-placeholder-val="{{ false }}">
+  <div style="position:relative;z-index:1;flex:1;min-height:0;overflow:auto;padding:34px 40px 40px;display:flex;flex-direction:column;gap:24px">
+    <div>
+      <p style="margin:0 0 4px;font-size:13px;font-weight:500;color:#8B93A6">{{ t.online_kicker }}</p>
+      <h1 style="margin:0;font-family:'Caprasimo',serif;font-size:34px;line-height:1.1;letter-spacing:-.02em">{{ t.online_h }}</h1>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start">
+      <section style="flex:1 1 380px;min-width:300px;background:rgba(255,255,255,.04);border:1px solid rgba(148,163,184,.12);border-radius:28px;padding:26px;display:flex;flex-direction:column;gap:20px">
+        <h2 style="margin:0;font-family:'Caprasimo',serif;font-size:23px;letter-spacing:-.01em">{{ t.join_h }}</h2>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <sc-for list="{{ codeBoxes }}" as="c" hint-placeholder-count="4"><span style="{{ c.style }}">{{ c.char }}</span></sc-for>
+          <button type="button" onClick="{{ joinRoom }}" style="{{ joinStyle }}">{{ t.join_btn }}</button>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <sc-for list="{{ codeKeys }}" as="k" hint-placeholder-count="12"><button type="button" onClick="{{ k.tap }}" style="min-width:52px;min-height:48px;padding:0 14px;border-radius:999px;background:rgba(255,255,255,.05);border:none;color:#F5F5F0;font:500 16px 'JetBrains Mono',monospace;cursor:pointer" style-hover="background:rgba(245,158,11,.18)">{{ k.label }}</button></sc-for>
+        </div>
+      </section>
+
+      <section style="flex:1 1 380px;min-width:300px;background:rgba(255,255,255,.04);border:1px solid rgba(148,163,184,.12);border-radius:28px;padding:26px;display:flex;flex-direction:column;gap:20px">
+        <h2 style="margin:0;font-family:'Caprasimo',serif;font-size:23px;letter-spacing:-.01em">{{ t.public_h }}</h2>
+
+        <button type="button" onClick="{{ createRoom }}" style="display:flex;align-items:center;gap:16px;width:100%;min-height:84px;padding:18px 22px;border-radius:26px;background:rgba(245,158,11,.12);border:1.5px solid rgba(245,158,11,.5);color:#F5F5F0;cursor:pointer;text-align:left" style-hover="background:rgba(245,158,11,.2);border-color:#F59E0B" style-active="transform:scale(.99)">
+          <span style="width:48px;height:48px;flex:none;border-radius:999px;background:#F59E0B;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4A3A10" stroke-width="3" stroke-linecap="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg></span>
+          <span style="flex:1;min-width:0"><span style="display:block;font-size:17px;font-weight:600;white-space:nowrap">{{ t.create }}</span><span style="display:block;font-size:12.5px;color:#8B93A6;margin-top:2px;text-wrap:pretty">{{ t.create_d }}</span></span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><path d="M5 12h13"></path><path d="M12 5.5 18.5 12 12 18.5"></path></svg>
+        </button>
+        <sc-if value="{{ hasLobbies }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <sc-for list="{{ lobbies }}" as="l" hint-placeholder-count="3">
+              <div style="display:flex;align-items:center;gap:14px;padding:14px 18px;background:rgba(255,255,255,.04);border-radius:22px">
+                <span style="width:40px;height:40px;flex:none;border-radius:999px;background:{{ l.color }};color:#0B1120;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:15px">{{ l.initial }}</span>
+                <span style="flex:1;min-width:0"><span style="display:block;font-size:15px;font-weight:600">{{ l.host }}</span><span style="display:block;font-size:12px;color:#8B93A6;margin-top:1px">{{ l.meta }}</span></span>
+                <span style="padding:6px 14px;border-radius:999px;background:rgba(255,255,255,.06);font:500 13px 'JetBrains Mono',monospace;color:#8B93A6">{{ l.code }}</span>
+                <button type="button" onClick="{{ l.join }}" style="min-height:44px;padding:0 20px;border-radius:999px;background:rgba(255,255,255,.07);border:none;color:#F5F5F0;font-size:14px;font-weight:600;cursor:pointer" style-hover="background:rgba(245,158,11,.2)">{{ t.join_btn }}</button>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ noLobbies }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:34px 20px">
+            <span style="width:64px;height:64px;border-radius:999px;background:rgba(93,202,165,.12);display:flex;align-items:center;justify-content:center"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#5DCAA5" stroke-width="2.75" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18"></path><ellipse cx="12" cy="12" rx="4.2" ry="9"></ellipse></svg></span>
+            <p style="margin:0;font-size:16px;font-weight:600">{{ t.empty_t }}</p>
+            <p style="margin:0;max-width:300px;font-size:13px;line-height:1.55;color:#8B93A6">{{ t.empty_d }}</p>
+          </div>
+        </sc-if>
+      </section>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ─────────── STATS ─────────── -->
+  <sc-if value="{{ isStats }}" hint-placeholder-val="{{ false }}">
+  <div style="position:relative;z-index:1;flex:1;min-height:0;overflow:auto;padding:34px 40px 40px;display:flex;flex-direction:column;gap:24px">
+    <div style="display:flex;flex-wrap:wrap;gap:18px;align-items:flex-end;justify-content:space-between">
+      <div style="min-width:0">
+        <p style="margin:0 0 4px;font-size:13px;font-weight:500;color:#8B93A6">{{ statsSubject }}</p>
+        <h1 style="margin:0;font-family:'Caprasimo',serif;font-size:clamp(26px,3vw,34px);line-height:1.1;letter-spacing:-.02em">{{ t.stats_h }}</h1>
+      </div>
+      <div style="display:flex;gap:6px;padding:5px;background:rgba(255,255,255,.045);border-radius:999px">
+        <button type="button" onClick="{{ statsOffline }}" style="{{ tabOff }}">{{ t.stats_off }}</button>
+        <button type="button" onClick="{{ statsOnline }}" style="{{ tabOn }}">{{ t.stats_on }}</button>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:22px">
+      <div style="flex:1 1 300px;min-width:260px">
+        <span style="display:block;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8B93A6;margin-bottom:10px">{{ t.stats_who }}</span>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <sc-for list="{{ statsProfiles }}" as="p" hint-placeholder-count="4">
+            <button type="button" onClick="{{ p.pick }}" style="{{ p.style }}"><span style="{{ p.avatarStyle }}">{{ p.initial }}</span><span>{{ p.label }}</span></button>
+          </sc-for>
+        </div>
+      </div>
+      <div style="flex:1 1 300px;min-width:260px">
+        <span style="display:block;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8B93A6;margin-bottom:10px">{{ t.stats_mode }}</span>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <sc-for list="{{ statsModes }}" as="m" hint-placeholder-count="6"><button type="button" onClick="{{ m.pick }}" style="{{ m.style }}">{{ m.label }}</button></sc-for>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:14px">
+      <sc-for list="{{ statCards }}" as="s" hint-placeholder-count="6">
+        <div style="background:rgba(255,255,255,.04);border:1px solid rgba(148,163,184,.12);border-radius:24px;padding:20px 22px;display:flex;flex-direction:column;gap:6px">
+          <span style="font-size:12px;color:#8B93A6">{{ s.label }}</span>
+          <span style="{{ s.valueStyle }}">{{ s.value }}</span>
+          <span style="display:flex;align-items:baseline;gap:6px;min-height:18px;flex-wrap:wrap">
+            <span style="font-size:12.5px;font-weight:600;color:{{ s.deltaColor }}">{{ s.delta }}</span>
+            <sc-if value="{{ s.hasDelta }}" hint-placeholder-val="{{ true }}"><span style="font-size:11.5px;color:#8B93A6">{{ s.deltaLabel }}</span></sc-if>
+          </span>
+        </div>
+      </sc-for>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:18px;align-items:stretch">
+      <section style="flex:1 1 340px;min-width:280px;background:rgba(255,255,255,.04);border:1px solid rgba(148,163,184,.12);border-radius:28px;padding:24px;display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px">
+          <h2 style="margin:0;font-family:'Caprasimo',serif;font-size:21px;letter-spacing:-.01em">{{ avgChartTitle }}</h2>
+          <span style="font:500 20px 'JetBrains Mono',monospace;color:#F59E0B">{{ avgLast }}</span>
+        </div>
+        <svg viewBox="0 0 320 110" width="100%" style="display:block;overflow:visible" preserveAspectRatio="none" height="120">
+          <path d="{{ avgArea }}" fill="rgba(245,158,11,.14)"></path>
+          <polyline points="{{ avgPoints }}" fill="none" stroke="#F59E0B" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"></polyline>
+          <sc-for list="{{ avgDots }}" as="d" hint-placeholder-count="12"><circle cx="{{ d.cx }}" cy="{{ d.cy }}" r="2.6" fill="#F59E0B"></circle></sc-for>
+        </svg>
+        <p style="margin:0;font-size:12.5px;line-height:1.5;color:#8B93A6;text-wrap:pretty">{{ avgChartDesc }}</p>
+      </section>
+
+      <sc-if value="{{ showX01Charts }}" hint-placeholder-val="{{ true }}">
+      <section style="flex:1 1 340px;min-width:280px;background:rgba(255,255,255,.04);border:1px solid rgba(148,163,184,.12);border-radius:28px;padding:24px;display:flex;flex-direction:column;gap:14px">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px">
+          <h2 style="margin:0;font-family:'Caprasimo',serif;font-size:21px;letter-spacing:-.01em">{{ t.ch_co }}</h2>
+          <span style="font:500 20px 'JetBrains Mono',monospace;color:#5DCAA5">{{ coLast }}</span>
+        </div>
+        <svg viewBox="0 0 320 110" width="100%" style="display:block;overflow:visible" preserveAspectRatio="none" height="120">
+          <path d="{{ coArea }}" fill="rgba(93,202,165,.13)"></path>
+          <polyline points="{{ coPoints }}" fill="none" stroke="#5DCAA5" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"></polyline>
+          <sc-for list="{{ coDots }}" as="d" hint-placeholder-count="12"><circle cx="{{ d.cx }}" cy="{{ d.cy }}" r="2.6" fill="#5DCAA5"></circle></sc-for>
+        </svg>
+        <p style="margin:0;font-size:12.5px;line-height:1.5;color:#8B93A6;text-wrap:pretty">{{ t.ch_co_d }}</p>
+      </section>
+      </sc-if>
+
+      <sc-if value="{{ showTrainingCharts }}" hint-placeholder-val="{{ false }}">
+      <section style="flex:1 1 340px;min-width:280px;background:rgba(255,255,255,.04);border:1px solid rgba(148,163,184,.12);border-radius:28px;padding:24px;display:flex;flex-direction:column;gap:16px">
+        <h2 style="margin:0;font-family:'Caprasimo',serif;font-size:21px;letter-spacing:-.01em">{{ t.ch_session }}</h2>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <sc-for list="{{ sessionRows }}" as="r" hint-placeholder-count="3">
+            <span style="display:flex;flex-direction:column;gap:6px">
+              <span style="display:flex;align-items:baseline;justify-content:space-between;gap:12px">
+                <span style="font-size:13px;color:#8B93A6">{{ r.label }}</span>
+                <span style="font:500 18px 'JetBrains Mono',monospace;color:#F5F5F0">{{ r.value }}</span>
+              </span>
+              <span style="height:8px;border-radius:999px;background:rgba(148,163,184,.14);overflow:hidden"><span style="{{ r.barStyle }}"></span></span>
+            </span>
+          </sc-for>
+        </div>
+        <p style="margin:0;font-size:12.5px;line-height:1.5;color:#8B93A6;text-wrap:pretty">{{ t.ch_session_d }}</p>
+      </section>
+      </sc-if>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:18px;align-items:stretch">
+      <section style="flex:1 1 300px;min-width:270px;background:rgba(255,255,255,.04);border:1px solid rgba(148,163,184,.12);border-radius:28px;padding:24px;display:flex;flex-direction:column;gap:16px">
+        <h2 style="margin:0;font-family:'Caprasimo',serif;font-size:21px;letter-spacing:-.01em">{{ t.ch_pie }}</h2>
+        <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+          <svg viewBox="0 0 200 200" width="152" height="152" style="flex:none;display:block">
+            <sc-for list="{{ pieSlices }}" as="s" hint-placeholder-count="9"><path d="{{ s.d }}" fill="{{ s.color }}"></path></sc-for>
+          </svg>
+          <div style="flex:1;min-width:120px;display:flex;flex-direction:column;gap:6px">
+            <sc-for list="{{ pieSlices }}" as="s" hint-placeholder-count="9">
+              <span style="display:flex;align-items:center;gap:9px;font-size:12px;color:#8B93A6;white-space:nowrap">
+                <span style="width:9px;height:9px;flex:none;border-radius:999px;background:{{ s.color }}"></span>
+                <span style="flex:1;color:#F5F5F0;font-weight:500">{{ s.name }}</span>
+                <span style="font-family:'JetBrains Mono',monospace">{{ s.pct }}</span>
+              </span>
+            </sc-for>
+          </div>
+        </div>
+        <p style="margin:0;font-size:12.5px;line-height:1.5;color:#8B93A6;text-wrap:pretty">{{ t.ch_pie_d }}</p>
+      </section>
+
+      <section style="flex:1 1 260px;min-width:250px;background:rgba(255,255,255,.04);border:1px solid rgba(148,163,184,.12);border-radius:28px;padding:24px;display:flex;flex-direction:column;gap:16px">
+        <h2 style="margin:0;font-family:'Caprasimo',serif;font-size:21px;letter-spacing:-.01em">{{ t.ch_radar }}</h2>
+        <svg viewBox="0 0 200 200" width="100%" height="184" style="display:block;max-width:220px;margin:0 auto">
+          <sc-for list="{{ radarGrid }}" as="g" hint-placeholder-count="4"><polygon points="{{ g.points }}" fill="none" stroke="rgba(148,163,184,.16)" stroke-width="1"></polygon></sc-for>
+          <sc-for list="{{ radarAxes }}" as="a" hint-placeholder-count="7"><line x1="100" y1="100" x2="{{ a.x2 }}" y2="{{ a.y2 }}" stroke="rgba(148,163,184,.16)" stroke-width="1"></line></sc-for>
+          <polygon points="{{ radarShape }}" fill="rgba(245,158,11,.4)" stroke="#F59E0B" stroke-width="2.2" stroke-linejoin="round"></polygon>
+          <sc-for list="{{ radarLabels }}" as="l" hint-placeholder-count="7"><text x="{{ l.x }}" y="{{ l.y }}" text-anchor="middle" fill="#8B93A6" font-size="11" font-family="Figtree, sans-serif" font-weight="600">{{ l.label }}</text></sc-for>
+        </svg>
+        <p style="margin:0;font-size:12.5px;line-height:1.5;color:#8B93A6;text-wrap:pretty">{{ t.ch_radar_d }}</p>
+      </section>
+
+      <section style="flex:1 1 300px;min-width:270px;background:rgba(255,255,255,.04);border:1px solid rgba(148,163,184,.12);border-radius:28px;padding:24px;display:flex;flex-direction:column;gap:16px">
+        <h2 style="margin:0;font-family:'Caprasimo',serif;font-size:21px;letter-spacing:-.01em">{{ t.ch_heat }}</h2>
+        <svg viewBox="0 0 200 200" width="100%" height="184" style="display:block;max-width:230px;margin:0 auto">
+          <circle cx="100" cy="100" r="90" fill="rgba(11,17,32,.6)"></circle>
+          <sc-for list="{{ heatCells }}" as="c" hint-placeholder-count="80"><path d="{{ c.d }}" fill="{{ c.fill }}" stroke="rgba(11,17,32,.55)" stroke-width="0.6"></path></sc-for>
+          <circle cx="100" cy="100" r="30" fill="rgba(93,202,165,.22)" stroke="rgba(11,17,32,.55)" stroke-width="0.6"></circle>
+          <circle cx="100" cy="100" r="13" fill="rgba(245,158,11,.7)" stroke="rgba(11,17,32,.55)" stroke-width="0.6"></circle>
+          <sc-for list="{{ heatLabels }}" as="l" hint-placeholder-count="20"><text x="{{ l.x }}" y="{{ l.y }}" text-anchor="middle" fill="#64748B" font-size="8.5" font-family="Figtree, sans-serif" font-weight="600">{{ l.label }}</text></sc-for>
+        </svg>
+        <p style="margin:0;font-size:12.5px;line-height:1.5;color:#8B93A6;text-wrap:pretty">{{ t.ch_heat_d }}</p>
+      </section>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- ─────────── PROFILE ─────────── -->
+  <sc-if value="{{ isProfile }}" hint-placeholder-val="{{ false }}">
+  <div style="position:relative;z-index:1;flex:1;min-height:0;overflow:auto;padding:34px 40px 40px;display:flex;flex-direction:column;gap:24px">
+    <div>
+      <p style="margin:0 0 4px;font-size:13px;font-weight:500;color:#8B93A6">{{ t.profile_kicker }}</p>
+      <h1 style="margin:0;font-family:'Caprasimo',serif;font-size:34px;line-height:1.1;letter-spacing:-.02em">{{ t.profile_h }}</h1>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start">
+      <section style="flex:1 1 380px;min-width:300px;background:rgba(255,255,255,.04);border:1px solid rgba(148,163,184,.12);border-radius:28px;padding:26px;display:flex;flex-direction:column;gap:16px">
+        <h2 style="margin:0;font-family:'Caprasimo',serif;font-size:23px;letter-spacing:-.01em">{{ t.players_h }}</h2>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <sc-for list="{{ profileRows }}" as="p" hint-placeholder-count="5">
+            <div style="display:flex;align-items:center;gap:14px;padding:13px 18px;background:rgba(255,255,255,.04);border-radius:22px">
+              <span style="width:40px;height:40px;flex:none;border-radius:999px;background:{{ p.color }};color:#0B1120;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:15px">{{ p.initial }}</span>
+              <span style="flex:1;min-width:0"><span style="display:block;font-size:15px;font-weight:600">{{ p.name }}</span><span style="display:block;font-size:12px;color:#8B93A6;margin-top:1px">{{ p.meta }}</span></span>
+              <sc-if value="{{ p.isHuman }}" hint-placeholder-val="{{ true }}">
+                <span style="font:500 18px 'JetBrains Mono',monospace;color:#F5F5F0">{{ p.avg }}</span>
+              </sc-if>
+              <sc-if value="{{ p.isBot }}" hint-placeholder-val="{{ false }}">
+                <select value="{{ p.avgValue }}" onChange="{{ p.chooseAvg }}" aria-label="{{ p.meta }}" style="flex:0 0 auto;min-width:104px;min-height:44px;padding:0 16px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(148,163,184,.16);color:#F5F5F0;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;outline:none">
+                  <sc-for list="{{ botAvgs }}" as="b" hint-placeholder-count="8"><option value="{{ b.value }}" style="color:#0B1120;background:#F5F5F0">{{ b.label }}</option></sc-for>
+                </select>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+        <div style="height:1px;background:rgba(148,163,184,.12)"></div>
+
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <span style="font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8B93A6">{{ t.new_profile }}</span>
+          <input value="{{ newName }}" onChange="{{ typeName }}" placeholder="{{ t.new_name_ph }}" style="min-height:48px;padding:0 20px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(148,163,184,.16);color:#F5F5F0;font-family:inherit;font-size:15px;outline:none" style-focus="border-color:#F59E0B" />
+          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+            <div style="position:relative;display:flex;flex:1 1 190px;min-width:170px;padding:4px;background:rgba(255,255,255,.04);border-radius:999px">
+              <span aria-hidden="true" style="{{ kindThumb }}"></span>
+              <button type="button" onClick="{{ setKindHuman }}" style="{{ chipHuman }}">{{ t.kind_human }}</button>
+              <button type="button" onClick="{{ setKindBot }}" style="{{ chipBot }}">{{ t.kind_bot }}</button>
+            </div>
+            <sc-if value="{{ newIsBot }}" hint-placeholder-val="{{ false }}">
+              <select value="{{ newAvg }}" onChange="{{ chooseNewAvg }}" aria-label="{{ t.bot_row_meta }}" style="flex:0 0 auto;min-width:104px;min-height:48px;padding:0 16px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(148,163,184,.16);color:#F5F5F0;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;outline:none">
+                <sc-for list="{{ botAvgs }}" as="b" hint-placeholder-count="8"><option value="{{ b.value }}" style="color:#0B1120;background:#F5F5F0">{{ b.label }}</option></sc-for>
+              </select>
+            </sc-if>
+          </div>
+          <sc-if value="{{ showNewHint }}" hint-placeholder-val="{{ false }}">
+            <p style="margin:0;font-size:12.5px;color:#F87171">{{ newHint }}</p>
+          </sc-if>
+          <button type="button" onClick="{{ addProfile }}" style="{{ addStyle }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>{{ t.add_profile }}</button>
+        </div>
+      </section>
+
+      <div style="flex:1 1 380px;min-width:300px;display:flex;flex-direction:column;gap:22px">
+        <section style="background:rgba(255,255,255,.04);border:1px solid rgba(148,163,184,.12);border-radius:28px;padding:26px;display:flex;flex-direction:column;gap:18px">
+          <h2 style="margin:0;font-family:'Caprasimo',serif;font-size:23px;letter-spacing:-.01em">{{ t.theme_h }}</h2>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <sc-for list="{{ themes }}" as="th" hint-placeholder-count="3">
+              <button type="button" onClick="{{ th.pick }}" style="{{ th.style }}">
+                <span style="display:flex;gap:5px;flex:none">
+                  <span style="width:16px;height:32px;border-radius:999px;background:{{ th.c1 }}"></span>
+                  <span style="width:16px;height:32px;border-radius:999px;background:{{ th.c2 }}"></span>
+                  <span style="width:16px;height:32px;border-radius:999px;background:{{ th.c3 }}"></span>
+                </span>
+                <span style="text-align:left;flex:1;min-width:0"><span style="display:block;font-size:15px;font-weight:600;color:#F5F5F0">{{ th.name }}</span><span style="display:block;font-size:12px;color:#8B93A6;margin-top:1px">{{ th.desc }}</span></span>
+                <span style="{{ th.checkStyle }}"></span>
+              </button>
+            </sc-for>
+          </div>
+        </section>
+
+        <section style="background:rgba(93,202,165,.08);border:1px solid rgba(93,202,165,.2);border-radius:28px;padding:26px;display:flex;flex-direction:column;gap:18px">
+          <h2 style="margin:0;font-family:'Caprasimo',serif;font-size:21px;letter-spacing:-.01em;color:#5DCAA5">{{ t.sync_h }}</h2>
+          <p style="margin:0;font-size:13px;line-height:1.6;color:#cfe6dd;text-wrap:pretty">{{ t.sync_d }}</p>
+
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <span style="font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#8B93A6">{{ t.sync_own }}</span>
+            <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+              <span style="padding:12px 22px;border-radius:999px;background:rgba(11,17,32,.5);font:500 21px 'JetBrains Mono',monospace;letter-spacing:.22em;color:#5DCAA5;white-space:nowrap">472916</span>
+              <span style="font-size:12px;color:#8B93A6;white-space:nowrap">{{ t.sync_meta }}</span>
+            </div>
+          </div>
+
+          <div style="height:1px;background:rgba(93,202,165,.18)"></div>
+
+          <div style="display:flex;flex-direction:column;gap:12px">
+            <span style="font-size:15px;font-weight:600;color:#F5F5F0">{{ t.sync_redeem_h }}</span>
+            <p style="margin:0;font-size:12.5px;line-height:1.55;color:#8B93A6;text-wrap:pretty">{{ t.sync_redeem_d }}</p>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <sc-for list="{{ syncDigits }}" as="d" hint-placeholder-count="6"><span style="{{ d.style }}">{{ d.char }}</span></sc-for>
+            </div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start">
+              <div style="flex:1 1 240px;min-width:220px;display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;gap:8px">
+                  <sc-for list="{{ syncRow1 }}" as="k" hint-placeholder-count="5"><button type="button" onClick="{{ k.tap }}" style="flex:1;min-width:0;min-height:52px;border-radius:18px;background:rgba(11,17,32,.45);border:none;color:#F5F5F0;font:500 18px 'JetBrains Mono',monospace;cursor:pointer" style-hover="background:rgba(93,202,165,.22)" style-active="transform:scale(.95)">{{ k.label }}</button></sc-for>
+                </div>
+                <div style="display:flex;gap:8px">
+                  <sc-for list="{{ syncRow2 }}" as="k" hint-placeholder-count="5"><button type="button" onClick="{{ k.tap }}" style="flex:1;min-width:0;min-height:52px;border-radius:18px;background:rgba(11,17,32,.45);border:none;color:#F5F5F0;font:500 18px 'JetBrains Mono',monospace;cursor:pointer" style-hover="background:rgba(93,202,165,.22)" style-active="transform:scale(.95)">{{ k.label }}</button></sc-for>
+                </div>
+              </div>
+              <div style="flex:0 0 auto;display:flex;gap:8px">
+                <button type="button" onClick="{{ syncBack }}" aria-label="{{ t.sync_back }}" title="{{ t.sync_back }}" style="width:58px;min-height:52px;border-radius:18px;background:rgba(11,17,32,.45);border:none;color:#8B93A6;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="color:#F5F5F0;background:rgba(93,202,165,.18)" style-active="transform:scale(.95)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 5.5H9.4L3.2 12l6.2 6.5H20z"></path><path d="M16.4 9.6l-4.8 4.8"></path><path d="M11.6 9.6l4.8 4.8"></path></svg></button>
+                <button type="button" onClick="{{ syncClear }}" style="width:58px;min-height:52px;border-radius:18px;background:rgba(11,17,32,.45);border:none;color:#EF4444;font-size:15px;font-weight:600;cursor:pointer" style-hover="background:rgba(239,68,68,.16)" style-active="transform:scale(.95)">{{ t.sync_clear }}</button>
+              </div>
+            </div>
+            <button type="button" onClick="{{ redeemSync }}" style="{{ redeemStyle }}">{{ t.sync_redeem }}</button>
+            <sc-if value="{{ syncOk }}" hint-placeholder-val="{{ false }}">
+              <p style="margin:0;display:flex;align-items:center;gap:9px;font-size:13px;font-weight:600;color:#10B981"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19.5 7"></path></svg>{{ t.sync_ok }}</p>
+            </sc-if>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ showDock }}" hint-placeholder-val="{{ false }}">
+  <div style="flex:none;padding:6px 10px calc(6px + env(safe-area-inset-bottom,0px));background:rgba(11,17,32,.94);border-top:1px solid rgba(148,163,184,.12);position:relative;z-index:2">
+    <dc-import name="LiquidNav" orientation="horizontal" active="{{ navIndex }}" on-select="{{ onNavSelect }}" labels="{{ navLabels }}" hint-size="100%,68px"></dc-import>
+  </div>
+  </sc-if>
+</main>
+
+<sc-if value="{{ showAbort }}" hint-placeholder-val="{{ false }}">
+<div style="position:fixed;inset:0;background:rgba(7,9,15,.72);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:28px;z-index:200">
+  <div style="width:100%;max-width:440px;background:#111827;border:1px solid rgba(148,163,184,.14);border-radius:28px;padding:32px;display:flex;flex-direction:column;gap:16px;box-shadow:0 28px 70px rgba(0,0,0,.6);animation:popIn .2s ease-out">
+    <span style="width:56px;height:56px;border-radius:999px;background:rgba(239,68,68,.14);display:flex;align-items:center;justify-content:center"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2.75" stroke-linecap="round"><path d="M12 8v5"></path><circle cx="12" cy="16.6" r="1.1" fill="#EF4444"></circle><circle cx="12" cy="12" r="9"></circle></svg></span>
+    <h2 style="margin:0;font-family:'Caprasimo',serif;font-size:26px;letter-spacing:-.01em">{{ t.abort_t }}</h2>
+    <p style="margin:0;font-size:15px;line-height:1.6;color:#8B93A6">{{ t.abort_d }}</p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:6px">
+      <button type="button" onClick="{{ closeModal }}" style="flex:1;min-width:140px;min-height:54px;border-radius:999px;background:rgba(255,255,255,.06);border:none;color:#F5F5F0;font-size:15px;font-weight:600;cursor:pointer" style-hover="background:rgba(255,255,255,.11)">{{ t.abort_no }}</button>
+      <button type="button" onClick="{{ confirmAbort }}" style="flex:1;min-width:140px;min-height:54px;border-radius:999px;background:#EF4444;border:none;color:#4A1010;font-size:15px;font-weight:600;cursor:pointer" style-hover="background:#f05a5a">{{ t.abort_yes }}</button>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ showWin }}" hint-placeholder-val="{{ false }}">
+<div style="position:fixed;inset:0;background:rgba(7,9,15,.72);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:28px;z-index:200">
+  <div style="width:100%;max-width:520px;background:#111827;border:1px solid rgba(16,185,129,.24);border-radius:28px;padding:34px;display:flex;flex-direction:column;gap:18px;box-shadow:0 28px 70px rgba(0,0,0,.6);animation:popIn .22s ease-out">
+    <span style="width:64px;height:64px;border-radius:999px;background:rgba(16,185,129,.14);display:flex;align-items:center;justify-content:center"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5 10 17.5 19.5 7"></path></svg></span>
+    <div>
+      <p style="margin:0 0 6px;font-size:13px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#10B981">{{ t.win_kicker }}</p>
+      <h2 style="margin:0;font-family:'Caprasimo',serif;font-size:32px;line-height:1.1;letter-spacing:-.02em">{{ winTitle }}</h2>
+    </div>
+    <div style="display:flex;gap:26px;flex-wrap:wrap;padding:18px 22px;background:rgba(255,255,255,.04);border-radius:24px">
+      <span><span style="display:block;font-size:12px;color:#8B93A6">{{ t.match }} Ø</span><span style="display:block;font:500 25px 'JetBrains Mono',monospace;margin-top:2px">{{ winAvg }}</span></span>
+      <span><span style="display:block;font-size:12px;color:#8B93A6">{{ t.darts }}</span><span style="display:block;font:500 25px 'JetBrains Mono',monospace;margin-top:2px">{{ winDarts }}</span></span>
+      <span><span style="display:block;font-size:12px;color:#8B93A6">180</span><span style="display:block;font:500 25px 'JetBrains Mono',monospace;color:#F59E0B;margin-top:2px">{{ winOneEighty }}</span></span>
+    </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:4px">
+      <button type="button" onClick="{{ rematch }}" style="flex:1;min-width:150px;min-height:56px;border-radius:999px;background:#F59E0B;border:none;color:#4A3A10;font-size:16px;font-weight:600;cursor:pointer;box-shadow:0 12px 32px rgba(245,158,11,.26)">{{ t.rematch }}</button>
+      <button type="button" onClick="{{ toHomeFromWin }}" style="flex:1;min-width:150px;min-height:56px;border-radius:999px;background:rgba(255,255,255,.06);border:none;color:#F5F5F0;font-size:16px;font-weight:600;cursor:pointer" style-hover="background:rgba(255,255,255,.11)">{{ t.win_close }}</button>
+    </div>
+    <button type="button" onClick="{{ undoFromWin }}" style="align-self:flex-start;background:transparent;border:none;color:#8B93A6;font-size:13px;font-weight:600;cursor:pointer;padding:8px 0" style-hover="color:#F5F5F0">{{ t.undo_dart }}</button>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ showBull }}" hint-placeholder-val="{{ false }}">
+<div style="position:fixed;inset:0;background:rgba(7,9,15,.72);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:28px;z-index:200">
+  <div style="width:100%;max-width:460px;background:#111827;border:1px solid rgba(148,163,184,.14);border-radius:28px;padding:32px;display:flex;flex-direction:column;gap:18px;box-shadow:0 28px 70px rgba(0,0,0,.6);animation:popIn .2s ease-out">
+    <h2 style="margin:0;font-family:'Caprasimo',serif;font-size:26px;letter-spacing:-.01em">{{ t.bull_t }}</h2>
+    <p style="margin:0;font-size:15px;line-height:1.6;color:#8B93A6">{{ t.bull_d }}</p>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <sc-for list="{{ bullSeats }}" as="b" hint-placeholder-count="2">
+        <button type="button" onClick="{{ b.pick }}" style="display:flex;align-items:center;gap:14px;padding:16px 20px;border-radius:22px;background:rgba(255,255,255,.05);border:1px solid rgba(148,163,184,.12);color:#F5F5F0;font-size:16px;font-weight:600;cursor:pointer;text-align:left" style-hover="background:rgba(245,158,11,.14);border-color:#F59E0B">
+          <span style="width:38px;height:38px;flex:none;border-radius:999px;background:{{ b.color }};color:#0B1120;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:15px">{{ b.initial }}</span>
+          <span>{{ b.name }}</span>
+        </button>
+      </sc-for>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1180,&quot;height&quot;:820},&quot;lang&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;de&quot;,&quot;en&quot;],&quot;default&quot;:&quot;de&quot;,&quot;tsType&quot;:&quot;'de' | 'en'&quot;,&quot;section&quot;:&quot;Sprache&quot;},&quot;device&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;ipad&quot;,&quot;iphone&quot;],&quot;default&quot;:&quot;ipad&quot;,&quot;tsType&quot;:&quot;'ipad' | 'iphone'&quot;,&quot;section&quot;:&quot;Gerät&quot;}}">
+const DE = {
+  nav_home:'Start', nav_offline:'Spielen', nav_online:'Online', nav_stats:'Statistik', nav_profile:'Profil', nav_training:'Training',
+  logged_in:'Angemeldet', greeting:'Willkommen zurück',
+  home_h:'Bereit für das nächste Leg?',
+  resume_kicker:'Ein Tap', resume_title:'Weiter wie zuletzt', resume_sub:'Startet direkt mit dieser Konfiguration — keine Zwischenschritte.',
+  other:'Anderes Spiel', other_sub:'Modus, Spieler und Distanz ändern',
+  today:'Diese Woche', avg:'Average', bestleg:'Bestes Leg',
+  training_label:'Training',
+  co_d:'Finishes unter Druck', ps_d:'Maximale Punkte pro Runde', ss_d:'Ziel treffen oder halbieren',
+  setup_kicker:'Ein Screen, eine Aktion', setup_h:'Match einrichten', training_h:'Training einrichten',
+  players_h:'Spieler', settings_h:'Einstellungen',
+  single:'Einzel', doubles:'2v2 Doppel',
+  freeze:'Freeze-Regel:', freeze_d:'Alternierend geworfen. Ein Team checkt bei 0 Rest nur aus, wenn die eigenen Teampunkte ≤ den Gegnerpunkten sind.',
+  startscore:'Startpunktzahl', outmode:'Out-Modus', distance:'Distanz',
+  sets:'Sets', sets_d:'Gewinnsätze', legs_d:'pro Satz',
+  bulloff:'Ausbullen', bulloff_on:'Wer den Bull am nächsten trifft, beginnt Leg 1', bulloff_off:'Erster Spieler in der Reihenfolge beginnt',
+  random:'Zufällige Reihenfolge', random_on:'Reihenfolge wird beim Start ausgelost', random_off:'Ausgewählte Reihenfolge wird übernommen',
+  summary:'Startet:', start_match:'Spiel starten', start_training:'Training starten',
+  quit:'Beenden', leg:'Leg', match:'Match', back:'Zurück', darts:'Darts',
+  darts_note:'Darts im Leg', darts_note_one:'Dart im Leg',
+  online_kicker:'Räume & offene Lobbys', online_h:'Online spielen',
+  join_h:'Raum beitreten', join_btn:'Beitreten', public_h:'Öffentliche Räume', create:'Raum erstellen',
+  create_d:'Öffentlich oder nur per Code · Modus und Distanz frei wählbar',
+  empty_t:'Gerade ist kein offener Raum aktiv', empty_d:'Erstelle selbst einen Raum — der vierstellige Code lässt sich direkt teilen.',
+  stats_h:'Statistiken', stats_off:'Offline', stats_on:'Online',
+  d_last5:'gegenüber letzten 5', d_winrate:'Siegquote', d_thrown:'mal geworfen',
+  count_label:'Anzahl Spieler', bot_row_meta:'Bot · Zielschnitt pro Aufnahme',
+  new_name_ph:'Name eingeben', kind_human:'Spieler', kind_bot:'Bot',
+  add_profile:'Hinzufügen', name_taken:'Diesen Namen gibt es schon.',
+  stats_who:'Spieler', stats_mode:'Modus',
+  stat_best:'Bester Score', stat_avgscore:'Ø Score', stat_hitrate:'Trefferquote',
+  stat_rounds:'Runden', stat_sessions:'Sessions',
+  ch_score:'Score-Verlauf', ch_score_d:'Session-Score der letzten zwölf Sessions.',
+  ch_session:'Session-Werte', ch_session_d:'Bester und durchschnittlicher Session-Score sowie die Trefferquote. Eine Checkout-Quote führt dieser Modus nicht.',
+  sync_back:'Zurück', sync_clear:'AC',
+  ch_avg:'Average-Verlauf', ch_avg_d:'Match-Average der letzten zwölf Matches.',
+  ch_co:'Checkout-Verlauf', ch_co_d:'Checkout-Quote der letzten zwölf Matches.',
+  ch_pie:'Segment-Verteilung', ch_pie_d:'Anteil der getroffenen Segmente. Alles unter 5 % läuft in „Rest“.',
+  ch_radar:'Segment-Radar', ch_radar_d:'Treffer auf 20 · 19 · 18 · 17 · 16 · 15 · Bull.',
+  ch_heat:'Dartboard-Heatmap', ch_heat_d:'Trefferdichte über alle Segmente und Ringe. Rot ist der Hotspot.',
+  sync_redeem_h:'Code einlösen', sync_redeem_d:'Sechsstelligen Code des Gasts eingeben — sein Profil erscheint danach in der Spielerliste.',
+  sync_redeem:'Einlösen', sync_ok:'Gekoppelt. Das Gastprofil steht jetzt in der Spielerliste.',
+  sync_own:'Dein eigener Code',
+  profile_kicker:'Spieler, Skins und Sync', profile_h:'Profil',
+  new_profile:'Profil anlegen', theme_h:'Erscheinungsbild',
+  sync_h:'Gast-Sync', sync_d:'Spiele auf einem fremden Gerät und behalte deine eigene Statistik. Der Code ist sechs Stellen lang und läuft nach 24 Stunden ab.', sync_meta:'Aktiv · läuft in 21 Std ab',
+  abort_t:'Match beenden?', abort_d:'Das laufende Match wird verworfen. Gewonnene Legs und Averages werden nicht gespeichert.', abort_yes:'Beenden', abort_no:'Weiterspielen',
+  win_kicker:'Checkout', win_close:'Zum Start', rematch:'Revanche', undo_dart:'Letzten Dart zurücknehmen',
+  bull_t:'Wer beginnt?', bull_d:'Beide werfen einen Dart auf das Bull. Wähle, wer näher lag.',
+  stat_avg:'Average', stat_first9:'First 9', stat_co:'Checkout-Quote', stat_high:'Höchster Wurf', stat_matches:'Matches', stat_wins:'Siege',
+  th_classic:'Classic', th_classic_d:'Dunkel, Amber-Akzent', th_vapor:'Vaporwave', th_vapor_d:'Magenta, Grid, Scanlines', th_cyber:'Cyberpunk', th_cyber_d:'Neon, Circuit-Grid',
+  tr_targets:'Anzahl Targets', tr_rounds:'Rundenlimit', tr_attempts:'Versuche pro Finish',
+  tr_hint_co:'Eine Runde sind drei Darts, um das Finish zu checken.', tr_hint_ps:'Gezählt wird die Summe aller Aufnahmen im Rundenlimit.', tr_hint_ss:'Vorgegebene Segmente treffen — verfehlt halbiert den Punktestand.'
+};
+const EN = {
+  nav_home:'Home', nav_offline:'Play', nav_online:'Online', nav_stats:'Stats', nav_profile:'Profile', nav_training:'Training',
+  logged_in:'Signed in', greeting:'Welcome back',
+  home_h:'Ready for the next leg?',
+  resume_kicker:'One tap', resume_title:'Pick up where you left off', resume_sub:'Starts straight away with this configuration — no steps in between.',
+  other:'Different game', other_sub:'Change mode, players and distance',
+  today:'This week', avg:'Average', bestleg:'Best leg',
+  training_label:'Training',
+  co_d:'Finishes under pressure', ps_d:'Maximum points per round', ss_d:'Hit the target or halve',
+  setup_kicker:'One screen, one action', setup_h:'Set up the match', training_h:'Set up training',
+  players_h:'Players', settings_h:'Settings',
+  single:'Singles', doubles:'2v2 doubles',
+  freeze:'Freeze rule:', freeze_d:'Throws alternate. A team only checks out at 0 if its own team score is ≤ the opponents\u2019 score.',
+  startscore:'Start score', outmode:'Out mode', distance:'Distance',
+  sets:'Sets', sets_d:'sets to win', legs_d:'per set',
+  bulloff:'Bull-off', bulloff_on:'Closest to the bull starts leg 1', bulloff_off:'First player in the order starts',
+  random:'Random order', random_on:'Order is drawn at start', random_off:'The chosen order is kept',
+  summary:'Starting:', start_match:'Start match', start_training:'Start training',
+  quit:'Quit', leg:'Leg', match:'Match', back:'Undo', darts:'Darts',
+  darts_note:'darts this leg', darts_note_one:'dart this leg',
+  online_kicker:'Rooms & open lobbies', online_h:'Play online',
+  join_h:'Join a room', join_btn:'Join', public_h:'Public rooms', create:'Create room',
+  create_d:'Public or code-only · pick the mode and the distance',
+  empty_t:'No open room right now', empty_d:'Create one yourself — the four-character code can be shared directly.',
+  stats_h:'Statistics', stats_off:'Offline', stats_on:'Online',
+  d_last5:'vs. last 5', d_winrate:'win rate', d_thrown:'times thrown',
+  count_label:'Number of players', bot_row_meta:'Bot · target score per visit',
+  new_name_ph:'Enter a name', kind_human:'Player', kind_bot:'Bot',
+  add_profile:'Add', name_taken:'That name is already taken.',
+  stats_who:'Player', stats_mode:'Mode',
+  stat_best:'Best score', stat_avgscore:'Avg score', stat_hitrate:'Hit rate',
+  stat_rounds:'Rounds', stat_sessions:'Sessions',
+  ch_score:'Score trend', ch_score_d:'Session score over the last twelve sessions.',
+  ch_session:'Session figures', ch_session_d:'Best and average session score plus the hit rate. This mode keeps no checkout rate.',
+  sync_back:'Back', sync_clear:'AC',
+  ch_avg:'Average trend', ch_avg_d:'Match average over the last twelve matches.',
+  ch_co:'Checkout trend', ch_co_d:'Checkout rate over the last twelve matches.',
+  ch_pie:'Segment distribution', ch_pie_d:'Share of segments hit. Anything under 5 % goes into “Rest”.',
+  ch_radar:'Segment radar', ch_radar_d:'Hits on 20 · 19 · 18 · 17 · 16 · 15 · Bull.',
+  ch_heat:'Dartboard heatmap', ch_heat_d:'Hit density across every segment and ring. Red is the hotspot.',
+  sync_redeem_h:'Redeem a code', sync_redeem_d:'Enter the guest\u2019s six-digit code — their profile then appears in the player list.',
+  sync_redeem:'Redeem', sync_ok:'Linked. The guest profile is now in the player list.',
+  sync_own:'Your own code',
+  profile_kicker:'Players, skins and sync', profile_h:'Profile',
+  new_profile:'Add profile', theme_h:'Appearance',
+  sync_h:'Guest sync', sync_d:'Play on somebody else\u2019s device and keep your own statistics. The code is six digits and expires after 24 hours.', sync_meta:'Active · expires in 21 hrs',
+  abort_t:'Quit the match?', abort_d:'The running match is discarded. Legs won and averages will not be saved.', abort_yes:'Quit', abort_no:'Keep playing',
+  win_kicker:'Checkout', win_close:'Back to home', rematch:'Rematch', undo_dart:'Undo the last dart',
+  bull_t:'Who starts?', bull_d:'Both throw one dart at the bull. Pick whoever was closer.',
+  stat_avg:'Average', stat_first9:'First 9', stat_co:'Checkout rate', stat_high:'Highest throw', stat_matches:'Matches', stat_wins:'Wins',
+  th_classic:'Classic', th_classic_d:'Dark, amber accent', th_vapor:'Vaporwave', th_vapor_d:'Magenta, grid, scanlines', th_cyber:'Cyberpunk', th_cyber_d:'Neon, circuit grid',
+  tr_targets:'Number of targets', tr_rounds:'Round limit', tr_attempts:'Attempts per finish',
+  tr_hint_co:'One round is three darts to check the finish.', tr_hint_ps:'The sum of every visit within the round limit is counted.', tr_hint_ss:'Hit the given segments — a miss halves your score.'
+};
+
+const COLORS = ['#5DA9E9', '#E9A05D', '#A9E95D', '#E95DA9'];
+const BOT_AVGS = [30, 40, 50, 60, 70, 80, 90, 100];
+
+/** Standard double-out finishes; anything not listed is derived below. */
+const FINISHES = {
+  170:'T20 T20 Bull', 167:'T20 T19 Bull', 164:'T20 T18 Bull', 161:'T20 T17 Bull', 160:'T20 T20 D20',
+  158:'T20 T20 D19', 157:'T20 T19 D20', 156:'T20 T20 D18', 155:'T20 T19 D19', 154:'T20 T18 D20',
+  153:'T20 T19 D18', 152:'T20 T20 D16', 151:'T20 T17 D20', 150:'T20 T18 D18', 141:'T20 T15 D18',
+  140:'T20 T20 D10', 138:'T20 T18 D12', 136:'T20 T20 D8', 132:'T20 T16 D12', 130:'T20 T20 D5',
+  129:'T19 T16 D12', 128:'T18 T18 D10', 126:'T19 T19 D6', 124:'T20 T16 D8', 121:'T20 T11 D14',
+  120:'T20 20 D20', 118:'T20 18 D20', 116:'T20 16 D20', 114:'T20 14 D20', 110:'T20 10 D20',
+  107:'T19 18 D16', 104:'T18 18 D16', 100:'T20 D20', 98:'T20 D19', 97:'T19 D20', 96:'T20 D18',
+  95:'T19 D19', 94:'T18 D20', 92:'T20 D16', 91:'T17 D20', 90:'T18 D18', 89:'T19 D16', 88:'T16 D20',
+  87:'T17 D18', 86:'T18 D16', 85:'T15 D20', 84:'T20 D12', 83:'T17 D16', 82:'Bull D16', 81:'T19 D12',
+  80:'T20 D10', 78:'T18 D12', 76:'T20 D8', 74:'T14 D16', 72:'T16 D12', 70:'T18 D8', 68:'T20 D4',
+  66:'T10 D18', 64:'T16 D8', 62:'T10 D16', 60:'20 D20', 58:'18 D20', 56:'16 D20', 54:'14 D20',
+  52:'12 D20', 50:'Bull', 48:'16 D16', 46:'6 D20', 44:'12 D16', 42:'10 D16', 41:'9 D16'
+};
+
+class Component extends DCLogic {
+  state = {
+    lang: null,
+    screen: 'home',
+    startScore: 501, outMode: 'DO', sets: 1, legs: 3,
+    mode: 'single', playerCount: 2,
+    bullOff: false, random: false,
+    seatNames: ['Dominik', 'Bot 1', 'Mara', 'Lukas'],
+    trSeatNames: ['Dominik', 'Bot 1', 'Mara', 'Lukas'],
+    // A line-up may hold several bots, so each one carries its own target
+    // average — the app keeps `targetAverage` per profile, not per match.
+    humans: ['Dominik', 'Lukas', 'Mara'],
+    bots: [{ name: 'Bot 1', avg: 60 }, { name: 'Bot 2', avg: 80 }],
+    newName: '', newIsBot: false, newAvg: 60,
+    statsProfile: 0, statsMode: 'all',
+    players: null, active: 0, darts: [], mult: 1, bust: false,
+    sound: true, modal: null, winner: null,
+    trainingMode: 'checkout', trPlayers: 1, trTargets: 10, trRounds: 10, trAttempts: 1,
+    statsView: 'off', theme: 'classic', joinCode: '',
+    syncCode: '', syncState: 'idle'
+  };
+
+  get lang() { return this.state.lang ?? this.props.lang ?? 'de'; }
+  get t() { return this.lang === 'en' ? EN : DE; }
+
+  set(patch) { this.setState(patch); }
+
+  /** Every profile is a stored object: humans by name, bots with their own average. */
+  get profileNames() { return [...this.state.humans, ...this.state.bots.map(b => b.name)]; }
+
+  /** The roster a seat can be filled from — every profile, plus the guest slot. */
+  get roster() { return [...this.profileNames, 'Gast']; }
+
+  botFor(name) { return this.state.bots.find(b => b.name === name); }
+
+  /** A bot carries its own target average, so it reads the same in every line-up. */
+  disp(name) {
+    const b = this.botFor(name);
+    return b ? b.name + ' (Ø ' + b.avg + ')' : name;
+  }
+
+  setBotAvg(i, avg) {
+    this.set({ bots: this.state.bots.map((b, j) => j === i ? { ...b, avg } : b) });
+  }
+
+  addProfile() {
+    const name = this.state.newName.trim();
+    if (!name || this.roster.some(x => x.toLowerCase() === name.toLowerCase())) return;
+    if (this.state.newIsBot) {
+      this.set({ bots: [...this.state.bots, { name, avg: this.state.newAvg }], newName: '' });
+    } else {
+      this.set({ humans: [...this.state.humans, name], newName: '' });
+    }
+  }
+
+  /**
+   * Seat a name. If it already sits in another active seat the two swap, which
+   * is what TrainingHub.handlePlayerChange does — otherwise picking a name that
+   * is already seated would put the same player on the board twice, and
+   * MatchSetup refuses to start on exactly that.
+   */
+  seat(key, i, name, count) {
+    const next = [...this.state[key]];
+    const taken = next.slice(0, count).indexOf(name);
+    if (taken !== -1 && taken !== i) next[taken] = next[i];
+    next[i] = name;
+    this.set({ [key]: next });
+  }
+
+  seatOptions() {
+    return this.roster.map(n => ({ value: n, label: this.disp(n) }));
+  }
+
+  // ── navigation ──────────────────────────────────────────────
+  go(screen) { this.set({ screen, modal: null }); }
+
+  // ── match engine ────────────────────────────────────────────
+  makePlayers() {
+    const n = this.state.screen === 'training'
+      ? this.state.trPlayers
+      : (this.state.mode === 'single' ? this.state.playerCount : 4);
+    const source = this.state.screen === 'training' ? this.state.trSeatNames : this.state.seatNames;
+    return source.slice(0, n).map((name, i) => ({
+      name: this.disp(name), score: this.state.startScore, legs: 0,
+      legPts: 0, legDarts: 0, matchPts: 0, matchDarts: 0,
+      hundredPlus: 0, oneEighty: 0
+    }));
+  }
+
+  begin() {
+    const players = this.makePlayers();
+    if (this.state.bullOff) {
+      this.set({ players, active: 0, darts: [], mult: 1, bust: false, screen: 'match', modal: 'bull' });
+    } else {
+      this.set({ players, active: 0, darts: [], mult: 1, bust: false, screen: 'match', modal: null, winner: null });
+    }
+  }
+
+  remaining(p, darts) {
+    return p.score - darts.reduce((s, d) => s + d.value, 0);
+  }
+
+  addDart(base) {
+    const st = this.state;
+    if (st.bust || st.darts.length >= 3 || !st.players) return;
+    const mult = base === 25 ? Math.min(st.mult, 2) : st.mult;
+    const value = base === 0 ? 0 : base * mult;
+    const label = base === 0 ? 'Miss' : base === 25 ? (mult === 2 ? 'Bull' : '25') : (mult === 3 ? 'T' : mult === 2 ? 'D' : '') + base;
+    const darts = [...st.darts, { value, mult, label }];
+    const p = st.players[st.active];
+    const rest = this.remaining(p, darts);
+    const needsDouble = st.outMode === 'DO' || st.outMode === 'MO';
+
+    if (rest < 0 || (needsDouble && rest === 1)) {
+      this.set({ darts, mult: 1, bust: true });
+      setTimeout(() => this.commit(true), 700);
+      return;
+    }
+    if (rest === 0) {
+      const ok = !needsDouble || mult === 2 || (st.outMode === 'MO' && mult === 3);
+      if (!ok) {
+        this.set({ darts, mult: 1, bust: true });
+        setTimeout(() => this.commit(true), 700);
+        return;
+      }
+      this.set({ darts, mult: 1 });
+      setTimeout(() => this.finishLeg(darts), 320);
+      return;
+    }
+    this.set({ darts, mult: 1 });
+    if (darts.length === 3) setTimeout(() => this.commit(false), 420);
+  }
+
+  commit(bust) {
+    const st = this.state;
+    if (!st.players) return;
+    const players = st.players.map(p => ({ ...p }));
+    const p = players[st.active];
+    const pts = st.darts.reduce((s, d) => s + d.value, 0);
+    const n = st.darts.length;
+    p.legDarts += n; p.matchDarts += n;
+    if (!bust) {
+      p.score -= pts;
+      p.legPts += pts; p.matchPts += pts;
+      if (pts >= 100) p.hundredPlus += 1;
+      if (pts === 180) p.oneEighty += 1;
+    }
+    this.set({
+      players, darts: [], mult: 1, bust: false,
+      active: (st.active + 1) % players.length
+    });
+  }
+
+  finishLeg(darts) {
+    const st = this.state;
+    const players = st.players.map(p => ({ ...p }));
+    const p = players[st.active];
+    const pts = darts.reduce((s, d) => s + d.value, 0);
+    p.legDarts += darts.length; p.matchDarts += darts.length;
+    p.legPts += pts; p.matchPts += pts;
+    if (pts >= 100) p.hundredPlus += 1;
+    if (pts === 180) p.oneEighty += 1;
+    p.score = 0;
+    p.legs += 1;
+    this.set({ players, darts: [], mult: 1, bust: false, modal: 'win', winner: st.active });
+  }
+
+  undo() {
+    const st = this.state;
+    if (st.darts.length > 0) { this.set({ darts: st.darts.slice(0, -1), bust: false, mult: 1 }); return; }
+    if (!st.players) return;
+    const players = st.players.map(p => ({ ...p }));
+    const prev = (st.active - 1 + players.length) % players.length;
+    this.set({ active: prev, bust: false, mult: 1 });
+  }
+
+  rematchNow() {
+    const players = this.makePlayers();
+    this.set({ players, active: 0, darts: [], mult: 1, bust: false, modal: null, winner: null, screen: 'match' });
+  }
+
+  /** A double-out finish for `score` in the darts that are left, or ''. */
+  finishFor(score, dartsLeft) {
+    if (score > 170 || score < 2) return '';
+    const listed = FINISHES[score];
+    if (listed) {
+      const parts = listed.split(' ');
+      if (parts.length <= dartsLeft) return parts.join(' · ');
+    }
+    if (score <= 40 && score % 2 === 0) return 'D' + (score / 2);
+    if (dartsLeft < 2) return '';
+    for (const first of [20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]) {
+      const rest = score - first;
+      if (rest > 0 && rest <= 40 && rest % 2 === 0) return first + ' · D' + (rest / 2);
+    }
+    return '';
+  }
+
+  // ── style helpers ───────────────────────────────────────────
+  navStyle(active) {
+    return 'display:flex;align-items:center;gap:14px;width:100%;min-height:52px;padding:0 18px;border-radius:999px;cursor:pointer;font-size:15px;font-weight:600;text-align:left;border:1px solid ' +
+      (active ? '#F59E0B;background:rgba(245,158,11,.14);color:#F59E0B' : 'transparent;background:transparent;color:#8B93A6');
+  }
+  dockStyle(active) {
+    return 'flex:1;min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-radius:20px;cursor:pointer;border:1px solid ' +
+      (active ? '#F59E0B;background:rgba(245,158,11,.14);color:#F59E0B' : 'transparent;background:transparent;color:#8B93A6');
+  }
+  pill(active, extra) {
+    return 'min-height:46px;padding:0 22px;border-radius:999px;cursor:pointer;font-size:14px;font-weight:600;white-space:nowrap;display:inline-flex;align-items:center;border:1px solid ' +
+      (active ? '#F59E0B;background:rgba(245,158,11,.14);color:#F5F5F0' : 'rgba(148,163,184,.12);background:rgba(255,255,255,.04);color:#8B93A6') +
+      (extra || '');
+  }
+  tab(active) {
+    return 'min-height:44px;padding:0 26px;border-radius:999px;cursor:pointer;font-size:14px;font-weight:600;white-space:nowrap;border:none;' +
+      (active ? 'background:#F59E0B;color:#4A3A10' : 'background:transparent;color:#8B93A6');
+  }
+  toggleRow(on) {
+    return 'display:flex;align-items:center;gap:14px;padding:15px 18px;border-radius:22px;cursor:pointer;text-align:left;border:1px solid ' +
+      (on ? '#F59E0B;background:rgba(245,158,11,.1)' : 'rgba(148,163,184,.12);background:rgba(255,255,255,.03)');
+  }
+  toggleDot(on) {
+    return 'width:22px;height:22px;flex:none;border-radius:999px;border:2px solid ' +
+      (on ? '#F59E0B;background:#F59E0B;box-shadow:inset 0 0 0 4px #0B1120' : 'rgba(148,163,184,.4);background:transparent');
+  }
+
+  /**
+   * The five charts the stats screen already has in the app, rebuilt as plain
+   * SVG geometry: average trend, checkout trend, segment distribution (pie),
+   * segment radar over 20·19·18·17·16·15·Bull, and the dartboard heatmap.
+   * Same series and same segment set as ProfileDashboard/StatsWidget feed to
+   * recharts — only the renderer differs.
+   */
+  charts(off, factor, training) {
+    const P = (cx, cy, r, a) => [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+    const sector = (cx, cy, r1, r2, a1, a2) => {
+      const [ox1, oy1] = P(cx, cy, r2, a1), [ox2, oy2] = P(cx, cy, r2, a2);
+      const [ix2, iy2] = P(cx, cy, r1, a2), [ix1, iy1] = P(cx, cy, r1, a1);
+      return 'M' + ox1.toFixed(2) + ' ' + oy1.toFixed(2) +
+        'A' + r2 + ' ' + r2 + ' 0 0 1 ' + ox2.toFixed(2) + ' ' + oy2.toFixed(2) +
+        'L' + ix2.toFixed(2) + ' ' + iy2.toFixed(2) +
+        'A' + r1 + ' ' + r1 + ' 0 0 0 ' + ix1.toFixed(2) + ' ' + iy1.toFixed(2) + 'Z';
+    };
+
+    // ── Average trend (LineChart dataKey "val") ──
+    const f = factor || 1;
+    const raw = off
+      ? [58.2, 61.4, 60.1, 65.8, 63.2, 67.4, 66.1, 70.2, 68.4, 72.6, 69.8, 71.4]
+      : [54.1, 57.8, 56.2, 60.4, 58.9, 62.1, 61.4, 64.8, 63.2, 66.4, 64.9, 66.2];
+    // A training session is scored, not averaged, so the same shape carries a
+    // session score instead of a three-dart average.
+    const avgSeries = raw.map(v => training ? Math.round(v * f * 6) : Math.round(v * f * 10) / 10);
+    const coSeries = (off
+      ? [22, 28, 24, 31, 29, 34, 33, 38, 36, 41, 38, 40]
+      : [18, 21, 24, 22, 27, 25, 29, 28, 33, 30, 32, 31]).map(v => Math.round(v * f));
+
+    const line = (series) => {
+      const lo = Math.min(...series), hi = Math.max(...series);
+      const min = lo - (hi - lo) * 0.25 - 1, max = hi + (hi - lo) * 0.25 + 1;
+      const W = 320, H = 110, pad = 6;
+      const pts = series.map((v, i) => {
+        const x = pad + (i / (series.length - 1)) * (W - pad * 2);
+        const y = H - pad - ((v - min) / (max - min)) * (H - pad * 2);
+        return [x, y];
+      });
+      return {
+        points: pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' '),
+        area: 'M' + pts.map(p => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('L') +
+          'L' + pts[pts.length - 1][0].toFixed(1) + ' ' + H + 'L' + pts[0][0].toFixed(1) + ' ' + H + 'Z',
+        dots: pts.map(p => ({ cx: p[0].toFixed(1), cy: p[1].toFixed(1) })),
+        last: series[series.length - 1]
+      };
+    };
+    const avg = line(avgSeries);
+    const co = line(coSeries);
+
+    // ── Segment distribution (PieChart, chart-1…8 plus the <5 % collector) ──
+    const pieRaw = off
+      ? [['T20', 24], ['20', 18], ['T19', 11], ['19', 9], ['T18', 7], ['Bull', 6], ['D16', 5], ['D20', 4], ['Rest', 16]]
+      : [['T20', 21], ['20', 20], ['T19', 9], ['19', 10], ['T18', 6], ['Bull', 5], ['D16', 4], ['D20', 4], ['Rest', 21]];
+    const pieColors = ['#F59E0B', '#5DCAA5', '#AFA9EC', '#E9A05D', '#5DA9E9', '#E95DA9', '#A9E95D', '#E9E15D', '#64748B'];
+    const pieTotal = pieRaw.reduce((s, r) => s + r[1], 0);
+    let a = -Math.PI / 2;
+    const pieSlices = pieRaw.map((r, i) => {
+      const span = (r[1] / pieTotal) * Math.PI * 2;
+      const d = sector(100, 100, 46, 84, a, a + span - 0.012);
+      a += span;
+      return { d, color: pieColors[i], name: r[0], pct: Math.round((r[1] / pieTotal) * 100) + '%' };
+    });
+
+    // ── Segment radar (PolarAngleAxis over the same seven subjects) ──
+    const radarRaw = (off
+      ? [['20', 412], ['19', 268], ['18', 196], ['17', 121], ['16', 148], ['15', 96], ['Bull', 74]]
+      : [['20', 188], ['19', 122], ['18', 94], ['17', 61], ['16', 70], ['15', 48], ['Bull', 33]]
+    ).map(r => [r[0], Math.round(r[1] * f)]);
+    const rMax = Math.max(5, ...radarRaw.map(r => r[1]));
+    const ang = i => -Math.PI / 2 + (i / radarRaw.length) * Math.PI * 2;
+    const ringPts = k => radarRaw.map((_, i) => {
+      const [x, y] = P(100, 100, 78 * k, ang(i));
+      return x.toFixed(1) + ',' + y.toFixed(1);
+    }).join(' ');
+    const radarGrid = [0.25, 0.5, 0.75, 1].map(k => ({ points: ringPts(k) }));
+    const radarAxes = radarRaw.map((_, i) => {
+      const [x, y] = P(100, 100, 78, ang(i));
+      return { x2: x.toFixed(1), y2: y.toFixed(1) };
+    });
+    const radarShape = radarRaw.map((r, i) => {
+      const [x, y] = P(100, 100, 78 * (r[1] / rMax), ang(i));
+      return x.toFixed(1) + ',' + y.toFixed(1);
+    }).join(' ');
+    const radarLabels = radarRaw.map((r, i) => {
+      const [x, y] = P(100, 100, 93, ang(i));
+      return { x: x.toFixed(1), y: (y + 3.5).toFixed(1), label: r[0] };
+    });
+
+    // ── Dartboard heatmap — the app's own visualisation, kept per DESIGN.md §7 ──
+    const ORDER = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5];
+    const hitWeight = { 20: 1, 19: 0.78, 18: 0.6, 17: 0.4, 16: 0.46, 15: 0.32, 1: 0.2, 4: 0.22, 13: 0.18, 6: 0.2, 10: 0.16, 2: 0.14, 3: 0.15, 7: 0.13, 8: 0.12, 11: 0.11, 14: 0.1, 9: 0.12, 12: 0.13, 5: 0.14 };
+    const heat = w => {
+      if (w <= 0.02) return 'rgba(148,163,184,.07)';
+      if (w > 0.8) return 'rgba(239,68,68,.85)';
+      if (w > 0.55) return 'rgba(245,158,11,.8)';
+      if (w > 0.35) return 'rgba(245,158,11,.5)';
+      if (w > 0.18) return 'rgba(93,202,165,.42)';
+      return 'rgba(93,202,165,.2)';
+    };
+    const step = (Math.PI * 2) / 20;
+    const heatCells = [];
+    ORDER.forEach((num, i) => {
+      const a1 = -Math.PI / 2 - step / 2 + i * step;
+      const a2 = a1 + step - 0.008;
+      const base = (hitWeight[num] || 0.1) * (off ? 1 : 0.82);
+      heatCells.push({ d: sector(100, 100, 30, 56, a1, a2), fill: heat(base * 0.55) });
+      heatCells.push({ d: sector(100, 100, 56, 64, a1, a2), fill: heat(base) });
+      heatCells.push({ d: sector(100, 100, 64, 82, a1, a2), fill: heat(base * 0.34) });
+      heatCells.push({ d: sector(100, 100, 82, 90, a1, a2), fill: heat(base * 0.28) });
+    });
+    const heatLabels = ORDER.map((num, i) => {
+      const [x, y] = P(100, 100, 96, -Math.PI / 2 + i * step);
+      return { x: x.toFixed(1), y: (y + 3).toFixed(1), label: num };
+    });
+
+    return {
+      avgPoints: avg.points, avgArea: avg.area, avgDots: avg.dots,
+      avgLast: training ? String(avg.last) : avg.last.toFixed(1),
+      coPoints: co.points, coArea: co.area, coDots: co.dots, coLast: co.last + '%',
+      pieSlices, radarGrid, radarAxes, radarShape, radarLabels, heatCells, heatLabels
+    };
+  }
+
+  renderVals() {
+    const st = this.state, t = this.t;
+    const isPhone = (this.props.device ?? 'ipad') === 'iphone';
+    const outLabel = { SO: this.lang === 'en' ? 'Single Out' : 'Single Out', DO: 'Double Out', MO: 'Master Out' }[st.outMode];
+    const n = st.mode === 'single' ? st.playerCount : 4;
+    const lineup = st.seatNames.slice(0, n).map(x => this.disp(x)).join(' · ');
+    const cfgDistance = (st.sets > 1 ? st.sets + ' ' + t.sets + ' · ' : '') + (this.lang === 'en' ? 'first to ' + st.legs + ' legs' : 'bis ' + st.legs + ' Legs');
+    const players = st.players || [];
+    const activeP = players[st.active];
+    const pending = st.darts.reduce((s, d) => s + d.value, 0);
+
+    const board = players.map((p, i) => {
+      const isActive = i === st.active && st.modal !== 'win';
+      const color = COLORS[i % 4];
+      const live = isActive ? Math.max(0, p.score - pending) : p.score;
+      const legAvg = p.legDarts > 0 ? ((p.legPts / p.legDarts) * 3).toFixed(1) : '–';
+      const matchAvg = p.matchDarts > 0 ? ((p.matchPts / p.matchDarts) * 3).toFixed(1) : '–';
+      const finish = isActive ? this.finishFor(live, 3 - st.darts.length) : '';
+      return {
+        name: p.name, legs: p.legs, score: live,
+        hasPending: isActive && pending > 0, pending: '−' + pending,
+        hasFinish: !!finish, noFinish: !finish, finish,
+        dartsNote: (() => {
+          const d = p.legDarts + (isActive ? st.darts.length : 0);
+          return d + ' ' + (d === 1 ? t.darts_note_one : t.darts_note);
+        })(),
+        legAvg, matchAvg, hundredPlus: p.hundredPlus, oneEighty: p.oneEighty,
+        cardStyle: 'flex:1;min-height:0;display:flex;flex-direction:column;gap:6px;padding:18px 20px;border-radius:28px;box-sizing:border-box;' +
+          (isActive
+            ? 'background:rgba(255,255,255,.055);border:1px solid rgba(245,158,11,.3);box-shadow:0 0 0 1px rgba(245,158,11,.12),0 18px 44px rgba(0,0,0,.4)'
+            : 'background:rgba(255,255,255,.028);border:1px solid rgba(148,163,184,.1);opacity:.62'),
+        dotStyle: 'width:11px;height:11px;flex:none;border-radius:999px;background:' + (isActive ? color : 'transparent') + ';border:2px solid ' + color,
+        nameStyle: 'font-size:18px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:' + (isActive ? color : '#F5F5F0'),
+        scoreStyle: 'font:500 clamp(52px,8vw,88px)/0.92 "JetBrains Mono",monospace;font-variant-numeric:tabular-nums;letter-spacing:-.03em;color:' +
+          (isActive ? color : '#F5F5F0') + (st.bust && isActive ? ';animation:shakeX .4s ease-in-out' : '')
+      };
+    });
+
+    const dartBoxes = [0, 1, 2].map(i => {
+      const d = st.darts[i];
+      return {
+        label: d ? d.label : '',
+        style: 'width:56px;height:56px;display:flex;align-items:center;justify-content:center;border-radius:20px;font:500 16px "JetBrains Mono",monospace;' +
+          (d ? 'background:rgba(245,158,11,.12);border:1px solid #F59E0B;color:#F59E0B;animation:popIn .25s cubic-bezier(.175,.885,.32,1.275)'
+             : 'background:transparent;border:1px dashed rgba(148,163,184,.22);color:#8B93A6')
+      };
+    });
+    const totalColor = st.bust ? '#EF4444' : pending >= 100 ? '#10B981' : pending >= 60 ? '#F59E0B' : '#F5F5F0';
+
+    const keys = Array.from({ length: 20 }, (_, i) => i + 1).map(v => ({
+      label: v, hit: () => this.addDart(v),
+      style: 'border-radius:20px;min-height:52px;cursor:pointer;font:500 20px "JetBrains Mono",monospace;color:#F5F5F0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.05);border:1px solid ' +
+        (st.mult > 1 ? 'rgba(245,158,11,.45)' : 'rgba(148,163,184,.12)')
+    }));
+
+    // Number only: "4 Spieler" / "4 Players" in a pill wrapped at tablet width,
+    // and the group already carries its own label.
+    const counts = [1, 2, 3, 4].map(c => ({
+      label: c, pick: () => this.set({ playerCount: c }), style: this.pill(st.playerCount === c) + ';min-width:58px;justify-content:center'
+    }));
+    const scores = [301, 501, 701, 1001].map(s => ({
+      label: s, pick: () => this.set({ startScore: s }), style: this.pill(st.startScore === s)
+    }));
+    const outModes = [['SO', 'Single'], ['DO', 'Double'], ['MO', 'Master']].map(([v, l]) => ({
+      label: l, pick: () => this.set({ outMode: v }), style: this.pill(st.outMode === v)
+    }));
+
+    const modeDefs = [
+      ['checkout', 'Checkout Training', t.co_d, '#F59E0B', 'rgba(245,158,11,.14)'],
+      ['powerscoring', 'Power Scoring', t.ps_d, '#5DCAA5', 'rgba(93,202,165,.14)'],
+      ['splitscore', 'Split Score', t.ss_d, '#AFA9EC', 'rgba(175,169,236,.16)']
+    ];
+    const modes = modeDefs.map(([m, title, desc, c, bg]) => {
+      const on = st.trainingMode === m;
+      return {
+        title, desc, pick: () => this.set({ trainingMode: m }),
+        style: 'display:flex;align-items:center;gap:16px;padding:22px 24px;border-radius:28px;cursor:pointer;text-align:left;border:1px solid ' +
+          (on ? '#F59E0B;background:rgba(245,158,11,.1)' : 'rgba(148,163,184,.12);background:rgba(255,255,255,.04)'),
+        iconStyle: 'width:48px;height:48px;flex:none;border-radius:999px;display:flex;align-items:center;justify-content:center;color:' + c + ';background:' + bg
+      };
+    });
+    const trParamSets = {
+      checkout: { label: t.tr_targets, values: [5, 10, 15, 20], key: 'trTargets', hint: t.tr_hint_co },
+      powerscoring: { label: t.tr_rounds, values: [5, 10, 15, 20], key: 'trRounds', hint: t.tr_hint_ps },
+      splitscore: { label: t.tr_rounds, values: [5, 10, 15, 20], key: 'trRounds', hint: t.tr_hint_ss }
+    }[st.trainingMode];
+
+    const statsOff = st.statsView === 'off';
+
+    // Whose numbers, and from which mode. Both change the series, so the
+    // charts below are fed a factor rather than a fixed data set.
+    const PROFILE_F = [1, 0.87, 0.79, 0.92];
+    const MODE_DEFS = [
+      ['all', this.lang === 'en' ? 'All X01' : 'Alle X01', 1, false],
+      ['501do', '501 Double Out', 1.02, false],
+      ['301so', '301 Single Out', 0.94, false],
+      ['checkout', 'Checkout', 0.9, true],
+      ['powerscoring', 'Power Scoring', 1.05, true],
+      ['splitscore', 'Split Score', 0.85, true]
+    ];
+    const modeDef = MODE_DEFS.find(m => m[0] === st.statsMode) || MODE_DEFS[0];
+    const isTrainingStats = modeDef[3];
+    const names = this.profileNames;
+    const factor = PROFILE_F[st.statsProfile % PROFILE_F.length] * modeDef[2] * (statsOff ? 1 : 0.93);
+    const statsProfiles = names.map((name, i) => ({
+      label: this.disp(name), initial: name.charAt(0), color: COLORS[i % 4],
+      pick: () => this.set({ statsProfile: i }),
+      style: 'display:inline-flex;align-items:center;gap:9px;min-height:46px;padding:0 18px 0 6px;border-radius:999px;cursor:pointer;font-size:14px;font-weight:600;white-space:nowrap;border:1px solid ' +
+        (st.statsProfile === i ? '#F59E0B;background:rgba(245,158,11,.14);color:#F5F5F0' : 'rgba(148,163,184,.12);background:rgba(255,255,255,.04);color:#8B93A6'),
+      avatarStyle: 'width:34px;height:34px;flex:none;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#0B1120;background:' + COLORS[i % 4]
+    }));
+    const statsModes = MODE_DEFS.map(m => ({
+      label: m[1], pick: () => this.set({ statsMode: m[0] }), style: this.pill(st.statsMode === m[0])
+    }));
+    const F = f => Math.round(f * 10) / 10;
+    // The small figure is a trend, stated once above the grid instead of
+    // repeated as a caption under every card.
+    const m = Math.round(128 * factor);
+    const cardDefs = isTrainingStats
+      ? [
+        [t.stat_best, String(Math.round(540 * factor)), '+34', '#10B981', t.d_last5],
+        [t.stat_avgscore, String(Math.round(412 * factor)), '+18', '#10B981', t.d_last5],
+        [t.stat_hitrate, Math.round(46 * factor) + '%', '−2%', '#EF4444', t.d_last5],
+        [t.stat_rounds, String(Math.round(96 * factor)), '', '#8B93A6', ''],
+        [t.stat_sessions, String(Math.round(34 * factor)), '', '#8B93A6', ''],
+        [t.stat_wins, String(Math.round(19 * factor)), '56%', '#8B93A6', t.d_winrate]
+      ]
+      : [
+        [t.stat_avg, F(68.9 * factor).toFixed(1), '+2.4', '#10B981', t.d_last5],
+        [t.stat_first9, F(79.4 * factor).toFixed(1), '+1.1', '#10B981', t.d_last5],
+        [t.stat_co, Math.round(38 * factor) + '%', '−3%', '#EF4444', t.d_last5],
+        [t.stat_high, String(Math.min(180, Math.round(180 * factor))), Math.round(4 * factor) + '×', '#8B93A6', t.d_thrown],
+        [t.stat_matches, String(m), '', '#8B93A6', ''],
+        [t.stat_wins, String(Math.round(m * 0.63)), '63%', '#8B93A6', t.d_winrate]
+      ];
+    // Each small figure says what it is measured against, on its own card —
+    // one sentence above the grid left the reader guessing which card it meant.
+    const statCards = cardDefs.map(([label, value, delta, deltaColor, deltaLabel]) => ({
+      label, value, delta, deltaColor, deltaLabel,
+      hasDelta: !!delta,
+      valueStyle: 'font:500 30px "JetBrains Mono",monospace;font-variant-numeric:tabular-nums;letter-spacing:-.02em;color:#F5F5F0'
+    }));
+
+    const lobbyDefs = [
+      ['Sven', '501 · Double Out · bis 3 Legs', 'K4T9', '#E9A05D'],
+      ['Miriam', '🔥 Power Scoring · 10 Runden', 'B7XQ', '#A9E95D'],
+      ['Tobi', '301 · Single Out · bis 1 Leg', 'M2WD', '#E95DA9']
+    ];
+    const lobbies = lobbyDefs.map(([host, meta, code, color]) => ({
+      host, meta, code, color, initial: host.charAt(0), join: () => this.set({ joinCode: code })
+    }));
+
+    const codeBoxes = [0, 1, 2, 3].map(i => {
+      const ch = st.joinCode[i] || '';
+      return {
+        char: ch,
+        style: 'width:58px;height:64px;display:flex;align-items:center;justify-content:center;border-radius:20px;font:500 24px "JetBrains Mono",monospace;letter-spacing:.04em;' +
+          (ch ? 'background:rgba(245,158,11,.12);border:1px solid #F59E0B;color:#F59E0B' : 'background:rgba(255,255,255,.04);border:1px dashed rgba(148,163,184,.24);color:#8B93A6')
+      };
+    });
+    const codeAlpha = ['A', 'B', 'D', 'K', 'M', 'Q', 'T', 'W', 'X', '2', '4', '7', '9'];
+    const codeKeys = codeAlpha.map(c => ({
+      label: c,
+      tap: () => this.set({ joinCode: (st.joinCode + c).slice(0, 4) })
+    })).concat([{ label: '⌫', tap: () => this.set({ joinCode: st.joinCode.slice(0, -1) }) }]);
+
+    const themeDefs = [
+      ['classic', t.th_classic, t.th_classic_d, '#0B1120', '#F59E0B', '#5DCAA5'],
+      ['vaporwave', t.th_vapor, t.th_vapor_d, '#2b1055', '#ff71ce', '#01cdfe'],
+      ['cyberpunk', t.th_cyber, t.th_cyber_d, '#0d0221', '#f9f002', '#ff003c']
+    ];
+    const themes = themeDefs.map(([id, name, desc, c1, c2, c3]) => {
+      const on = st.theme === id;
+      return {
+        name, desc, c1, c2, c3, pick: () => this.set({ theme: id }),
+        style: 'display:flex;align-items:center;gap:16px;padding:14px 18px;border-radius:22px;cursor:pointer;border:1px solid ' +
+          (on ? '#F59E0B;background:rgba(245,158,11,.1)' : 'rgba(148,163,184,.12);background:rgba(255,255,255,.03)'),
+        checkStyle: 'width:20px;height:20px;flex:none;border-radius:999px;border:2px solid ' +
+          (on ? '#F59E0B;background:#F59E0B;box-shadow:inset 0 0 0 4px #0B1120' : 'rgba(148,163,184,.4)')
+      };
+    });
+
+    const humanRows = st.humans.map((name, i) => ({
+      name, initial: name.charAt(0), color: COLORS[i % 4],
+      isBot: false, isHuman: true,
+      meta: this.lang === 'en'
+        ? (40 + i * 7) + ' matches · ' + (18 + i * 3) + ' wins'
+        : (40 + i * 7) + ' Matches · ' + (18 + i * 3) + ' Siege',
+      avg: (68.9 - i * 3.4).toFixed(1), avgValue: 0, chooseAvg: () => {}
+    }));
+    // Each bot is its own profile object, so its target average sits on its own
+    // row — a line-up can hold several bots at different strengths.
+    const botRows = st.bots.map((b, i) => ({
+      name: b.name, initial: b.name.charAt(0), color: COLORS[(st.humans.length + i) % 4],
+      isBot: true, isHuman: false,
+      meta: t.bot_row_meta, avg: b.avg.toFixed(1), avgValue: b.avg,
+      chooseAvg: e => this.setBotAvg(i, parseInt(e.target.value, 10))
+    }));
+    const profileRows = [...humanRows, ...botRows];
+
+    const bullSeats = st.seatNames.slice(0, n).map((name, i) => ({
+      name: this.disp(name), initial: name.charAt(0), color: COLORS[i % 4],
+      pick: () => this.set({ active: i, modal: null })
+    }));
+
+    // Training gets its own line-up: same seat control, its own player count.
+    const moveTrSeat = (i, dir) => {
+      const next = [...st.trSeatNames];
+      const j = dir === 'up' ? i - 1 : i + 1;
+      if (j < 0 || j >= st.trPlayers) return;
+      [next[i], next[j]] = [next[j], next[i]];
+      this.set({ trSeatNames: next });
+    };
+    const trSeats = st.trSeatNames.slice(0, st.trPlayers).map((name, i) => ({
+      name: this.disp(name), initial: name.charAt(0),
+      value: name, options: this.seatOptions(),
+      choose: e => this.seat('trSeatNames', i, e.target.value, st.trPlayers),
+      meta: this.lang === 'en' ? 'Seat ' + (i + 1) : 'Platz ' + (i + 1),
+      rowStyle: 'display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:22px;background:rgba(255,255,255,.04);border:1px solid rgba(148,163,184,.12)',
+      avatarStyle: 'width:40px;height:40px;flex:none;border-radius:999px;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:15px;color:#0B1120;background:' + COLORS[i % 4],
+      up: () => moveTrSeat(i, 'up'), down: () => moveTrSeat(i, 'down')
+    }));
+
+    const botAvgs = BOT_AVGS.map(v => ({ value: v, label: 'Ø ' + v }));
+    const newTaken = this.roster.some(x => x.toLowerCase() === st.newName.trim().toLowerCase());
+    const canAdd = st.newName.trim().length > 0 && !newTaken;
+
+    const w = players[st.winner || 0];
+    const moveSeat = (i, dir) => {
+      const next = [...st.seatNames];
+      const j = dir === 'up' ? i - 1 : i + 1;
+      if (j < 0 || j >= n) return;
+      [next[i], next[j]] = [next[j], next[i]];
+      this.set({ seatNames: next });
+    };
+    const seats = st.seatNames.slice(0, n).map((name, i) => {
+      const team = i % 2 === 0 ? 1 : 2;
+      const color = st.mode === 'single' ? COLORS[i % 4] : (team === 1 ? COLORS[0] : COLORS[1]);
+      return {
+        name: this.disp(name), initial: name.charAt(0),
+        value: name, options: this.seatOptions(),
+        choose: e => this.seat('seatNames', i, e.target.value, n),
+        meta: st.mode === 'single'
+          ? (this.lang === 'en' ? 'Seat ' + (i + 1) : 'Platz ' + (i + 1))
+          : 'Team ' + team,
+        rowStyle: 'display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:22px;background:rgba(255,255,255,.04);border:1px solid ' +
+          (st.mode === 'single' ? 'rgba(148,163,184,.12)' : color + '55'),
+        avatarStyle: 'width:40px;height:40px;flex:none;border-radius:999px;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:15px;color:#0B1120;background:' + color,
+        up: () => moveSeat(i, 'up'), down: () => moveSeat(i, 'down')
+      };
+    });
+
+    return {
+      t,
+      shellW: isPhone ? '402px' : '1180px',
+      shellH: isPhone ? '874px' : '820px',
+      shellDir: isPhone ? 'column' : 'row',
+      showRail: !isPhone && st.screen !== 'match',
+      showDock: isPhone && st.screen !== 'match',
+
+      isHome: st.screen === 'home', isSetup: st.screen === 'setup', isMatch: st.screen === 'match',
+      isTraining: st.screen === 'training', isOnline: st.screen === 'online',
+      isStats: st.screen === 'stats', isProfile: st.screen === 'profile',
+
+      goHome: () => this.go('home'), goSetup: () => this.go('setup'), goOnline: () => this.go('online'),
+      goStats: () => this.go('stats'), goProfile: () => this.go('profile'), goTraining: () => this.go('training'),
+      goTrainingCheckout: () => this.set({ screen: 'training', trainingMode: 'checkout' }),
+      goTrainingPower: () => this.set({ screen: 'training', trainingMode: 'powerscoring' }),
+      goTrainingSplit: () => this.set({ screen: 'training', trainingMode: 'splitscore' }),
+
+      navLabels: [t.nav_home, t.nav_offline, t.nav_online, t.nav_stats, t.nav_profile],
+      navIndex: ['home', 'setup', 'online', 'stats', 'profile'].indexOf(st.screen === 'training' ? 'setup' : st.screen),
+      onNavSelect: i => this.go(['home', 'setup', 'online', 'stats', 'profile'][i]),
+
+      // A two-position slider rather than two buttons: the thumb travels, so
+      // which side is live is readable at a glance.
+      toggleLang: () => this.set({ lang: this.lang === 'de' ? 'en' : 'de' }),
+      isEn: this.lang === 'en',
+      langThumb: 'position:absolute;top:3px;left:3px;width:41px;height:30px;border-radius:999px;background:#F59E0B;box-shadow:0 4px 14px rgba(245,158,11,.35);' +
+        'transform:translateX(' + (this.lang === 'en' ? '41px' : '0px') + ');transition:transform .26s cubic-bezier(.34,1.4,.5,1)',
+      langDe: 'position:absolute;top:0;left:3px;width:41px;height:100%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;pointer-events:none;transition:color .2s ease;color:' +
+        (this.lang === 'de' ? '#4A3A10' : '#8B93A6'),
+      langEn: 'position:absolute;top:0;right:3px;width:41px;height:100%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;pointer-events:none;transition:color .2s ease;color:' +
+        (this.lang === 'en' ? '#4A3A10' : '#8B93A6'),
+
+      cfgScore: st.startScore, cfgOut: outLabel, cfgDistance, cfgLineup: lineup,
+      cfgSummary: st.startScore + ' · ' + outLabel + ' · ' + cfgDistance + ' · ' + lineup,
+      quickStart: () => this.begin(), startMatch: () => this.begin(),
+
+      tabMatch: this.tab(st.screen === 'setup'), tabTraining: this.tab(false),
+      tabMatch2: this.tab(false), tabTraining2: this.tab(true),
+
+      is2v2: st.mode === '2v2', isSingles: st.mode === 'single',
+      setSingle: () => this.set({ mode: 'single' }), setDouble: () => this.set({ mode: '2v2' }),
+      // Full-width slider: "Einzel" hugs the left edge, "2v2 Doppel" the right,
+      // and the thumb slides between the two halves.
+      modeThumb: 'position:absolute;top:5px;left:5px;width:calc(50% - 5px);height:calc(100% - 10px);border-radius:999px;background:#F59E0B;box-shadow:0 6px 20px rgba(245,158,11,.3);' +
+        'transform:translateX(' + (st.mode === '2v2' ? '100%' : '0%') + ');transition:transform .28s cubic-bezier(.34,1.35,.5,1)',
+      chipSingle: 'position:relative;z-index:1;flex:1 1 0;min-width:0;min-height:44px;padding:0 20px;border-radius:999px;border:none;background:transparent;cursor:pointer;font-size:14px;font-weight:600;white-space:nowrap;text-align:left;transition:color .2s ease;color:' +
+        (st.mode === 'single' ? '#4A3A10' : '#8B93A6'),
+      chipDouble: 'position:relative;z-index:1;flex:1 1 0;min-width:0;min-height:44px;padding:0 20px;border-radius:999px;border:none;background:transparent;cursor:pointer;font-size:14px;font-weight:600;white-space:nowrap;text-align:right;transition:color .2s ease;color:' +
+        (st.mode === '2v2' ? '#4A3A10' : '#8B93A6'),
+      counts, scores, outModes, seats,
+      sets: st.sets, legs: st.legs,
+      setsUp: () => this.set({ sets: Math.min(10, st.sets + 1) }), setsDown: () => this.set({ sets: Math.max(1, st.sets - 1) }),
+      legsUp: () => this.set({ legs: Math.min(15, st.legs + 1) }), legsDown: () => this.set({ legs: Math.max(1, st.legs - 1) }),
+      toggleBullOff: () => this.set({ bullOff: !st.bullOff, random: st.bullOff ? st.random : false }),
+      toggleRandom: () => this.set({ random: !st.random, bullOff: st.random ? st.bullOff : false }),
+      optBullOff: this.toggleRow(st.bullOff), optBullOffDot: this.toggleDot(st.bullOff),
+      optRandom: this.toggleRow(st.random), optRandomDot: this.toggleDot(st.random),
+      bullOffDesc: st.bullOff ? t.bulloff_on : t.bulloff_off,
+      randomDesc: st.random ? t.random_on : t.random_off,
+
+      board, dartBoxes, keys,
+      totalLabel: st.bust ? 'BUST' : pending,
+      totalStyle: 'min-width:72px;text-align:center;font:500 30px "JetBrains Mono",monospace;font-variant-numeric:tabular-nums;letter-spacing:-.02em;color:' + totalColor +
+        (st.bust ? ';animation:shakeX .4s ease-in-out' : ''),
+      modDouble: 'flex:1;min-height:52px;border-radius:20px;cursor:pointer;font-size:15px;font-weight:600;border:1px solid ' +
+        (st.mult === 2 ? '#F59E0B;background:rgba(245,158,11,.14);color:#F5F5F0' : 'rgba(148,163,184,.12);background:rgba(255,255,255,.04);color:#8B93A6'),
+      modTriple: 'flex:1;min-height:52px;border-radius:20px;cursor:pointer;font-size:15px;font-weight:600;border:1px solid ' +
+        (st.mult === 3 ? '#F59E0B;background:rgba(245,158,11,.14);color:#F5F5F0' : 'rgba(148,163,184,.12);background:rgba(255,255,255,.04);color:#8B93A6'),
+      toggleDouble: () => this.set({ mult: st.mult === 2 ? 1 : 2 }),
+      toggleTriple: () => this.set({ mult: st.mult === 3 ? 1 : 3 }),
+      hitBull: () => this.addDart(25), hitMiss: () => this.addDart(0), undoDart: () => this.undo(),
+      bullStyle: 'grid-column:span 2;border-radius:20px;min-height:52px;cursor:pointer;font-size:17px;font-weight:600;background:rgba(148,163,184,.14);border:none;color:#F5F5F0;opacity:' +
+        (st.mult === 3 ? '.35' : '1'),
+      toggleSound: () => this.set({ sound: !st.sound }),
+      soundStyle: 'width:48px;height:48px;border-radius:999px;border:1px solid rgba(148,163,184,.12);cursor:pointer;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.05);color:' +
+        (st.sound ? '#F59E0B' : '#8B93A6'),
+      soundArc: st.sound ? 'M15.5 9a4.5 4.5 0 0 1 0 6' : 'M15.5 9.5l4 5M19.5 9.5l-4 5',
+
+      modes, trCounts: [1, 2, 3, 4].map(c => ({
+        label: c, pick: () => this.set({ trPlayers: c }), style: this.pill(st.trPlayers === c) + ';min-width:56px;justify-content:center'
+      })),
+      trParamLabel: trParamSets.label, trHint: trParamSets.hint,
+      trParams: trParamSets.values.map(v => ({
+        label: v, pick: () => this.set({ [trParamSets.key]: v }), style: this.pill(st[trParamSets.key] === v) + ';min-width:64px'
+      })),
+      trSummary: modeDefs.find(m => m[0] === st.trainingMode)[1] + ' · ' + st[trParamSets.key] + ' · ' + st.trPlayers + ' ' + t.players_h,
+      startTraining: () => this.begin(),
+
+      statsOffline: () => this.set({ statsView: 'off' }), statsOnline: () => this.set({ statsView: 'on' }),
+      tabOff: this.tab(statsOff), tabOn: this.tab(!statsOff), statCards,
+      statsProfiles, statsModes,
+      trendNote: t.trend_note,
+      statsSubject: this.disp(names[st.statsProfile] ?? names[0]) + ' · ' + modeDef[1],
+      avgChartTitle: isTrainingStats ? t.ch_score : t.ch_avg,
+      avgChartDesc: isTrainingStats ? t.ch_score_d : t.ch_avg_d,
+      showX01Charts: !isTrainingStats, showTrainingCharts: isTrainingStats,
+      // A mini-game keeps a session score, not a checkout rate — the same
+      // branch StatsWidget takes for `isMinigame`.
+      sessionRows: (() => {
+        const best = Math.round(540 * factor);
+        const avg = Math.round(412 * factor);
+        const hit = Math.round(46 * factor);
+        const bar = (pct, colour) => 'display:block;height:100%;border-radius:999px;width:' + Math.max(3, Math.min(100, pct)) + '%;background:' + colour;
+        return [
+          { label: t.stat_best, value: best, barStyle: bar(100, '#F59E0B') },
+          { label: t.stat_avgscore, value: avg, barStyle: bar((avg / best) * 100, '#5DCAA5') },
+          { label: t.stat_hitrate, value: hit + '%', barStyle: bar(hit, '#AFA9EC') }
+        ];
+      })(),
+      ...this.charts(statsOff, factor, isTrainingStats),
+
+      trSeats, botAvgs,
+
+      newName: st.newName, newIsBot: st.newIsBot, newAvg: st.newAvg,
+      typeName: e => this.set({ newName: e.target.value }),
+      setKindHuman: () => this.set({ newIsBot: false }),
+      setKindBot: () => this.set({ newIsBot: true }),
+      chooseNewAvg: e => this.set({ newAvg: parseInt(e.target.value, 10) }),
+      addProfile: () => this.addProfile(),
+      kindThumb: 'position:absolute;top:4px;left:4px;width:calc(50% - 4px);height:calc(100% - 8px);border-radius:999px;background:#F59E0B;box-shadow:0 5px 16px rgba(245,158,11,.28);' +
+        'transform:translateX(' + (st.newIsBot ? '100%' : '0%') + ');transition:transform .28s cubic-bezier(.34,1.35,.5,1)',
+      chipHuman: 'position:relative;z-index:1;flex:1 1 0;min-width:0;min-height:40px;padding:0 16px;border-radius:999px;border:none;background:transparent;cursor:pointer;font-family:inherit;font-size:13.5px;font-weight:600;transition:color .2s;color:' +
+        (st.newIsBot ? '#8B93A6' : '#4A3A10'),
+      chipBot: 'position:relative;z-index:1;flex:1 1 0;min-width:0;min-height:40px;padding:0 16px;border-radius:999px;border:none;background:transparent;cursor:pointer;font-family:inherit;font-size:13.5px;font-weight:600;transition:color .2s;color:' +
+        (st.newIsBot ? '#4A3A10' : '#8B93A6'),
+      addStyle: 'min-height:52px;border-radius:999px;border:none;font-family:inherit;font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:10px;transition:background .2s,opacity .2s;' +
+        (canAdd
+          ? 'background:rgba(245,158,11,.16);color:#F59E0B;cursor:pointer'
+          : 'background:rgba(255,255,255,.04);color:#64748B;cursor:not-allowed;opacity:.75'),
+      newHint: newTaken ? t.name_taken : '', showNewHint: newTaken,
+
+      lobbies, hasLobbies: true, noLobbies: false, codeBoxes, codeKeys,
+      joinRoom: () => this.set({ joinCode: '' }),
+      joinStyle: 'min-height:64px;padding:0 28px;border-radius:999px;border:none;cursor:pointer;font-size:16px;font-weight:600;' +
+        (st.joinCode.length === 4 ? 'background:#F59E0B;color:#4A3A10;box-shadow:0 12px 32px rgba(245,158,11,.26)' : 'background:rgba(255,255,255,.05);color:#5b6479;cursor:not-allowed'),
+      createRoom: () => this.set({ joinCode: '' }),
+
+      themes, profileRows, bullSeats,
+
+      syncDigits: [0, 1, 2, 3, 4, 5].map(i => {
+        const ch = st.syncCode[i] || '';
+        return {
+          char: ch,
+          style: 'width:46px;height:56px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:18px;font:500 21px "JetBrains Mono",monospace;' +
+            (ch ? 'background:rgba(93,202,165,.16);border:1px solid #5DCAA5;color:#5DCAA5'
+                : 'background:rgba(11,17,32,.45);border:1px dashed rgba(93,202,165,.35);color:#8B93A6')
+        };
+      }),
+      // Two rows of five, with back / clear / redeem stacked at the side.
+      syncRow1: ['1', '2', '3', '4', '5'].map(d => ({
+        label: d,
+        tap: () => this.set({ syncCode: (st.syncCode + d).slice(0, 6), syncState: 'idle' })
+      })),
+      syncRow2: ['6', '7', '8', '9', '0'].map(d => ({
+        label: d,
+        tap: () => this.set({ syncCode: (st.syncCode + d).slice(0, 6), syncState: 'idle' })
+      })),
+      syncBack: () => this.set({ syncCode: st.syncCode.slice(0, -1), syncState: 'idle' }),
+      syncClear: () => this.set({ syncCode: '', syncState: 'idle' }),
+      redeemSync: () => this.set({ syncState: st.syncCode.length === 6 ? 'ok' : 'idle' }),
+      redeemStyle: 'width:100%;min-height:56px;border-radius:999px;border:none;cursor:pointer;font-size:16px;font-weight:600;white-space:nowrap;' +
+        (st.syncCode.length === 6
+          ? 'background:#5DCAA5;color:#06301f;box-shadow:0 10px 28px rgba(93,202,165,.24)'
+          : 'background:rgba(255,255,255,.05);color:#5b6479;cursor:not-allowed'),
+      syncOk: st.syncState === 'ok',
+      syncOwnCode: st.syncState !== 'ok',
+
+
+      showAbort: st.modal === 'abort', showWin: st.modal === 'win', showBull: st.modal === 'bull',
+      askAbort: () => this.set({ modal: 'abort' }),
+      closeModal: () => this.set({ modal: null }),
+      confirmAbort: () => this.set({ modal: null, screen: 'home', players: null }),
+      winTitle: w ? (this.lang === 'en' ? w.name + ' takes the leg' : w.name + ' gewinnt das Leg') : '',
+      winAvg: w && w.matchDarts > 0 ? ((w.matchPts / w.matchDarts) * 3).toFixed(1) : '–',
+      winDarts: w ? w.legDarts : 0,
+      winOneEighty: w ? w.oneEighty : 0,
+      rematch: () => this.rematchNow(),
+      toHomeFromWin: () => this.set({ modal: null, screen: 'home', players: null }),
+      undoFromWin: () => { this.set({ modal: null }); this.undo(); }
+    };
+  }
+}
+</script>
+</body>
+</html>

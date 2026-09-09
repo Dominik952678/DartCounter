@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
-import { Button, Card } from './ui';
+import { Button, Card, Icons } from './ui';
 
 /**
  * Where the reset mail lands.
@@ -41,7 +41,7 @@ export const PasswordResetScreen: React.FC = () => {
   return (
     <div className="screen active-screen" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100dvh', padding: '20px' }}>
       <Card style={{ maxWidth: '420px', width: '100%', padding: '36px 24px', textAlign: 'center' }}>
-        <div style={{ fontSize: '2rem', marginBottom: '10px' }} aria-hidden="true">🔒</div>
+        <Icons.IconLock size={34} style={{ margin: '0 auto 10px' }} />
         <h2 className="auth-title">Neues Passwort</h2>
 
         {done ? (
@@ -63,7 +63,7 @@ export const PasswordResetScreen: React.FC = () => {
 
             {displayError && (
               <div className="alert alert-error" role="alert">
-                ⚠️ {displayError}
+                <Icons.IconAlert size={18} /> <span>{displayError}</span>
               </div>
             )}
 

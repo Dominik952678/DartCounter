@@ -5,7 +5,7 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianG
 import { HeadToHead } from './HeadToHead';
 import { DartboardHeatmap } from './DartboardHeatmap';
 import { ConfirmModal } from './ConfirmModal';
-import { Button } from './ui';
+import { Button, Icons } from './ui';
 import { chartColor } from '../utils/chartColors';
 import { DEFAULT_PLAYER_COLOR_HEX, isHexColor } from '../utils/playerColors';
 
@@ -237,7 +237,9 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
         {/* Header */}
         <div className="dash-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <div>
-            <h2>{profile?.isBot ? '🤖 ' : '👤 '}{profileName}</h2>
+            <h2>{profile?.isBot
+              ? <Icons.IconBot size={22} className="icon-inline" />
+              : <Icons.IconUser size={22} className="icon-inline" />}{profileName}</h2>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '5px' }}>
               <select
                 value={selectedMode}
@@ -251,7 +253,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
               </select>
             </div>
           </div>
-          <Button variant="ghost" className="btn-close" onClick={onClose} title="Schließen" aria-label="Schließen">✕</Button>
+          <Button variant="ghost" className="btn-close" onClick={onClose} title="Schließen" aria-label="Schließen"><Icons.IconClose size={18} /></Button>
         </div>
 
         {/* Linked Cloud Guest Banner */}
@@ -270,7 +272,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
           }}>
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontSize: '1.1em' }}>🔗</span>
+                <Icons.IconLink size={17} />
                 <strong>Cloud-Gastkonto: @{profile.linkedUsername || profileName}</strong>
               </div>
               <div style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginTop: '2px' }}>
@@ -282,7 +284,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
                 variant="dangerText"
                 onClick={() => onDeleteProfile(profileName)}
               >
-                ⛔ Verknüpfung trennen
+                <Icons.IconClose size={16} /> Verknüpfung trennen
               </Button>
             )}
           </div>
@@ -587,7 +589,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
           </div>
         ) : (
           <div className="empty-state" style={{ border: '1px dashed var(--card-border)', borderRadius: 'var(--radius-card)', margin: 'var(--space-4) 0' }}>
-            <div style={{ fontSize: '1.8rem', marginBottom: '6px' }}>🎯</div>
+            <Icons.IconTarget size={30} style={{ margin: '0 auto 6px' }} />
             <p className="empty-state-title">Noch keine Matches in diesem Modus</p>
             <div style={{ fontSize: '0.82rem', marginTop: '4px' }}>Starte dein erstes Spiel, um deine Formkurve und Treffer aufzuzeichnen!</div>
           </div>
@@ -631,7 +633,7 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
             message={`„${profileName}“ und alle daraus berechneten Statistiken werden entfernt.`}
             confirmLabel="Endgültig löschen"
             destructive
-            icon="🗑️"
+            icon={<Icons.IconTrash size={40} />}
             onConfirm={() => {
               setShowDeleteConfirm(false);
               onDeleteProfile(profileName);

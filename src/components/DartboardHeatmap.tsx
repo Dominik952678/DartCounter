@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChoiceGroup } from './ui';
+import { ChoiceGroup, Icons } from './ui';
 import type { Profile } from '../types';
 import { totalSegmentHits } from '../utils/segmentStats';
 
@@ -121,7 +121,7 @@ export const DartboardHeatmap: React.FC<DartboardHeatmapProps> = ({ profile, cus
     <div className="dash-section" style={{ position: 'relative' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
         <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-          🎯 {title}
+          <Icons.IconTarget size={18} /> {title}
         </h3>
 
         {/* Filter (§5: ein Selected-State fuer alles). Vorher drei Kopien
@@ -142,7 +142,7 @@ export const DartboardHeatmap: React.FC<DartboardHeatmapProps> = ({ profile, cus
 
       {totalRecordedHits === 0 ? (
         <div style={{ textAlign: 'center', padding: '32px 16px', color: 'var(--text-dim)' }}>
-          <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>🎯</div>
+          <Icons.IconTarget size={40} style={{ margin: '0 auto 8px' }} />
           <p style={{ margin: 0, fontSize: '0.9em' }}>Noch keine Trefferdaten erfasst.</p>
           <p style={{ margin: '4px 0 0', fontSize: '0.78em', opacity: 0.7 }}>Spiele Matches, um deine persönliche Treffer-Heatmap zu füllen.</p>
         </div>

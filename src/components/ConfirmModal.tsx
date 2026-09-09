@@ -1,6 +1,6 @@
 import React, { useId, useState } from 'react';
 import { useModalA11y } from '../hooks/useModalA11y';
-import { Button } from './ui';
+import { Button, Icons } from './ui';
 
 interface ConfirmModalProps {
   title: string;
@@ -10,7 +10,9 @@ interface ConfirmModalProps {
   cancelLabel?: string;
   /** Red confirm button, for anything that throws work or data away. */
   destructive?: boolean;
-  icon?: string;
+  /** Ein Icon aus dem Set. Der Vorgabewert warnt, weil das die häufigste
+      Tonlage dieses Dialogs ist. */
+  icon?: React.ReactNode;
   /** May be async; the buttons stay disabled until it settles. */
   onConfirm: () => void | Promise<void>;
   onCancel: () => void;
@@ -30,7 +32,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   confirmLabel = 'Bestätigen',
   cancelLabel = 'Abbrechen',
   destructive = false,
-  icon = '⚠️',
+  icon = <Icons.IconAlert size={40} />,
   onConfirm,
   onCancel
 }) => {
@@ -62,7 +64,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
         onClick={e => e.stopPropagation()}
         style={{ maxWidth: '380px', textAlign: 'center', padding: '28px 20px' }}
       >
-        <div style={{ fontSize: '2.5rem', marginBottom: '10px' }} aria-hidden="true">{icon}</div>
+        <div className="modal-icon" aria-hidden="true">{icon}</div>
         <h3 id={titleId} style={{ marginBottom: '8px', fontSize: '1.3em' }}>{title}</h3>
         <p
           id={messageId}

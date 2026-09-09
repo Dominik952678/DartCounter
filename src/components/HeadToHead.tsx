@@ -132,7 +132,7 @@ export const HeadToHead: React.FC<HeadToHeadProps> = ({ profileA, profileB, onCl
         style={{ maxWidth: '450px' }}
       >
         <div className="h2h-header">
-          <h2 id={titleId}>{profileA.name} ⚔️ {profileB.name}</h2>
+          <h2 id={titleId}>{profileA.name} <span className="h2h-vs">vs.</span> {profileB.name}</h2>
           <Button variant="ghost" className="btn-close" onClick={onClose} aria-label="Schließen">×</Button>
         </div>
         

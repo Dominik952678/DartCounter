@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
-import { Button, Card } from './ui';
+import { Button, Card, Icons } from './ui';
 
 type AuthMode = 'login' | 'signup' | 'reset';
 
@@ -70,7 +70,7 @@ export const AuthScreen: React.FC = () => {
 
       <Card className="auth-card">
         <div className="auth-icon" aria-hidden="true">
-          {isReset ? '📧' : isLogin ? '🔑' : '✨'}
+          {isReset ? <Icons.IconMail size={34} /> : isLogin ? <Icons.IconKey size={34} /> : <Icons.IconUser size={34} />}
         </div>
 
         <h2 className="auth-title">
@@ -86,14 +86,14 @@ export const AuthScreen: React.FC = () => {
         
         {displayError && (
           <div className="alert alert-error" role="alert">
-            <span aria-hidden="true">⚠️</span>
+            <Icons.IconAlert size={18} />
             <span>{displayError}</span>
           </div>
         )}
 
         {successMsg && (
           <div className="alert alert-success" role="status">
-            <span aria-hidden="true">✅</span>
+            <Icons.IconCheck size={18} />
             <span>{successMsg}</span>
           </div>
         )}
@@ -175,7 +175,7 @@ export const AuthScreen: React.FC = () => {
             fullWidth
             onClick={() => navigate('/offline')}
           >
-            <span aria-hidden="true">🎯</span> Als Gast fortfahren
+            <Icons.IconTarget size={20} /> Als Gast fortfahren
           </Button>
 
           <Button type="button" variant="ghost" onClick={() => navigate('/')} style={{ marginTop: '4px' }}>

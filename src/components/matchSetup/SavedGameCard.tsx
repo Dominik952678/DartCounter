@@ -1,7 +1,7 @@
 import React, { useId } from 'react';
 import type { GameConfig } from '../../types';
 import { useModalA11y } from '../../hooks/useModalA11y';
-import { Button, Card } from '../ui';
+import { Button, Card, Icons } from '../ui';
 import { playerColorBySeat } from '../../utils/playerColors';
 
 export interface SavedMatchSummary {
@@ -26,7 +26,7 @@ export const SavedGameCard: React.FC<SavedGameCardProps> = ({ match, onResume, o
   <Card className="saved-game-card">
     <div className="saved-game-header">
       <div className="saved-game-heading">
-        <span className="saved-game-icon" aria-hidden="true">🎯</span>
+        <span className="saved-game-icon" aria-hidden="true"><Icons.IconTarget size={24} /></span>
         <div>
           <h3>Laufendes Match gefunden</h3>
           <span className="saved-game-meta">
@@ -35,7 +35,7 @@ export const SavedGameCard: React.FC<SavedGameCardProps> = ({ match, onResume, o
         </div>
       </div>
       <Button variant="ghost" className="btn-close" onClick={onDismiss} aria-label="Hinweis schließen" title="Schließen">
-        ✕
+        <Icons.IconClose size={18} />
       </Button>
     </div>
 
@@ -48,7 +48,7 @@ export const SavedGameCard: React.FC<SavedGameCardProps> = ({ match, onResume, o
     >
       {match.players.map((p, idx) => (
         <div key={idx} className="saved-game-score">
-          <span className="saved-game-player">{p.isBot ? '🤖 ' : ''}{p.name}</span>
+          <span className="saved-game-player">{p.isBot && <Icons.IconBot size={13} className="icon-inline" />}{p.name}</span>
           <span className="saved-game-value" style={{ color: playerColorBySeat(idx) }}>{p.score}</span>
           <span className="saved-game-legs">{p.legs} {p.legs === 1 ? 'Leg' : 'Legs'}</span>
         </div>
@@ -60,12 +60,12 @@ export const SavedGameCard: React.FC<SavedGameCardProps> = ({ match, onResume, o
         Start-Button unten schaltet dafür auf sekundär. */}
     <div className="saved-game-actions">
       <Button variant="primary" onClick={onResume} style={{ flex: '1 1 160px' }}>
-        ▶️ Spiel fortsetzen
+        <Icons.IconPlayFilled size={18} /> Spiel fortsetzen
       </Button>
       <Button variant="secondary" onClick={onDiscard} style={{ flex: '1 1 160px' }}>
-        🗑️ Altes Spiel verwerfen
+        <Icons.IconTrash size={17} /> Altes Spiel verwerfen
       </Button>
-      {/* Tut dasselbe wie das ✕ oben. Bleibt trotzdem: die beschriftete
+      {/* Tut dasselbe wie das Schließen-Kreuz oben. Bleibt trotzdem: die beschriftete
           Variante ist die auffindbarere von beiden. */}
       <Button variant="ghost" onClick={onDismiss} style={{ flex: '0 0 auto' }}>
         Schließen
@@ -103,7 +103,7 @@ export const OverwriteSavedGameModal: React.FC<OverwriteSavedGameModalProps> = (
       style={{ maxWidth: '460px' }}
     >
       <h3 id={titleId} className="modal-title">
-        <span aria-hidden="true">🎯</span> Laufendes Match gefunden
+        <Icons.IconTarget size={20} /> Laufendes Match gefunden
       </h3>
       <p id={messageId} className="modal-text">
         Du hast noch ein unvollendetes Spiel gespeichert. Wie möchtest du fortfahren?
@@ -114,13 +114,13 @@ export const OverwriteSavedGameModal: React.FC<OverwriteSavedGameModalProps> = (
           variant="primary"
           onClick={onResume}
         >
-          ▶️ Aktuelles Spiel fortsetzen
+          <Icons.IconPlayFilled size={18} /> Aktuelles Spiel fortsetzen
         </Button>
         <Button
           variant="danger"
           onClick={onOverwrite}
         >
-          🆕 Altes verwerfen & Neues Spiel starten
+          <Icons.IconTrash size={17} /> Altes verwerfen &amp; Neues Spiel starten
         </Button>
         <Button
           variant="secondary"

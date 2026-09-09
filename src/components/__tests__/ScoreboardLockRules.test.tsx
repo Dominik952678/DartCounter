@@ -68,7 +68,7 @@ describe('2v2 Freeze Lock & Block Display Rules', () => {
     // Team 2: P1 (50), P3 (50). Total = 100.
     // P2 (200) > T2 (100) -> Team 1 is geblockt! P2 needs to throw 100 pts!
     const players = createPlayers([40, 50, 200, 50]);
-    render(
+    const { container } = render(
       <Scoreboard 
         players={players}
         activePlayer={0}
@@ -79,7 +79,11 @@ describe('2v2 Freeze Lock & Block Display Rules', () => {
     );
 
     // Blocked player (P0) shows Geblockt (exactly 1 on the whole card, no duplicate bottom pill!)
-    expect(screen.getAllByText('Geblockt').length).toBe(1);
+    // Am Text allein lässt sich das nicht mehr abzählen: der Chip in der
+    // Teamleiste sagt seit dem Icon-Set ebenfalls nur noch „Geblockt", vorher
+    // stand ein Schloss-Emoji davor. Gemeint war immer die Leiste auf der
+    // Spielerkarte.
+    expect(container.querySelectorAll('.lock-badge-bar.locked').length).toBe(1);
 
     // Thrower player (P2) shows the required points
     expect(screen.getAllByText(/Muss mind./i).length).toBe(2); // 1 on top banner + 1 on thrower card

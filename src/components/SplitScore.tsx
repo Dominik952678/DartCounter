@@ -3,7 +3,7 @@ import type { RealtimeChannel } from '@supabase/supabase-js';
 import type { Profile, Dart } from '../types';
 import { playDartHitSound, playSciFiHitSound, speak, play180Sound, isSoundEnabled, setSoundEnabled } from '../utils/audio';
 import { ConfirmModal } from './ConfirmModal';
-import { Button, CallOut, StatStrip } from './ui';
+import { Button, CallOut, StatStrip, Icons } from './ui';
 import { withDartRecorded } from '../utils/segmentStats';
 import { liveStats } from '../utils/storyExport';
 import { playerColorBySeat } from '../utils/playerColors';
@@ -376,7 +376,7 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
         <div className="match-top-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden', minWidth: 0 }}>
             <span className="match-title">
-              ➗ Split Score
+              <Icons.IconSplit size={17} /> Split Score
             </span>
             <span className="match-meta">
               Ziel: {currentTarget?.label} ({currentRoundIndex + 1}/{TARGETS.length})
@@ -394,7 +394,7 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
               title={soundOn ? 'Caller An (klicken zum Stummschalten)' : 'Caller Aus (klicken zum Einschalten)'}
               aria-label={soundOn ? 'Caller stummschalten' : 'Caller aktivieren'}
             >
-              {soundOn ? '🔊' : '🔇'}
+              {soundOn ? <Icons.IconSoundOn size={18} /> : <Icons.IconSoundOff size={18} />}
             </button>
 
             <Button
@@ -403,7 +403,7 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
               onClick={() => setShowAbortConfirm(true)}
               style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}
             >
-              ✕ <span className="btn-abort-text">Beenden</span>
+              <Icons.IconClose size={16} /> <span className="btn-abort-text">Beenden</span>
             </Button>
           </div>
         </div>
@@ -419,7 +419,7 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
                 style={{ '--player-color': activeP?.color || playerColorBySeat(activePlayer) } as React.CSSProperties}
               >
                 <div className="ps-card-head">
-                  <span className="ps-card-name">{activeP?.isBot ? '🤖 ' : ''}{activeP?.name}</span>
+                  <span className="ps-card-name">{activeP?.isBot && <Icons.IconBot size={15} className="icon-inline" />}{activeP?.name}</span>
                   <span className="ps-card-total">{getLiveScore()}</span>
                 </div>
 
@@ -484,7 +484,7 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
                         style={{ backgroundColor: p.color || playerColorBySeat(i) }}
                         aria-hidden="true"
                       />
-                      <span className="ps-other-name">{p.isBot ? '🤖 ' : ''}{p.name}</span>
+                      <span className="ps-other-name">{p.isBot && <Icons.IconBot size={14} className="icon-inline" />}{p.name}</span>
                       <span className="ps-other-score">{p.score}</span>
                     </li>
                   ))}
@@ -533,7 +533,7 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
 
               <div style={{ marginTop: '15px' }}>
                 <Button variant="secondary" onClick={undoSingleDart} disabled={(history.length === 0 && currentRoundDarts.length === 0) || isProcessing}>
-                  ↩ Wurf zurücknehmen
+                  <Icons.IconUndo size={17} /> Wurf zurücknehmen
                 </Button>
               </div>
             </div>

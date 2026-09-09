@@ -6,7 +6,7 @@ import { StatsWidget } from './StatsWidget';
 import type { MatchHistory } from '../types';
 import { getMatches } from '../db';
 import { reportPersistenceError } from '../store/useNotificationStore';
-import { Button, Card } from './ui';
+import { Button, Card, Icons } from './ui';
 
 export const StatsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -60,13 +60,13 @@ export const StatsPage: React.FC = () => {
       {!user && (
         <div className="callout callout-action">
           <span>
-            <span aria-hidden="true">💡</span> <strong>Gast-Modus:</strong> Deine Matches werden lokal im Browser gespeichert.
+            <Icons.IconInfo size={17} /> <strong>Gast-Modus:</strong> Deine Matches werden lokal im Browser gespeichert.
           </span>
           {/* Die eine Akzentfläche dieses Screens (§1). Die beiden Spiel-Buttons
               in den Spalten sind gleichrangige Alternativen und deshalb
               sekundär — sonst stünden hier drei gefüllte Flächen. */}
           <Button variant="primary" onClick={() => navigate('/auth')}>
-            🔑 Cloud-Login
+            <Icons.IconKey size={18} /> Cloud-Login
           </Button>
         </div>
       )}
@@ -75,7 +75,7 @@ export const StatsPage: React.FC = () => {
         <Button variant="ghost" className="btn-back" onClick={() => navigate('/')}>
           &larr; Menü
         </Button>
-        <h2 className="page-title">📊 Statistiken</h2>
+        <h2 className="page-title"><Icons.IconBars size={22} /> Statistiken</h2>
         <div className="page-header-spacer" />
       </header>
 
@@ -110,25 +110,25 @@ export const StatsPage: React.FC = () => {
 
       <div className="stats-columns">
          <StatsWidget 
-           title="🏠 Offline Stats"
+           title="Offline Stats"
            mode={selectedMode}
            isOnline={false}
            matches={matches}
            profileName={effectiveProfile}
            baseProfile={profiles[effectiveProfile]}
            onPlay={() => navigate('/offline')}
-           playLabel="🎯 Offline spielen"
+           playLabel="Offline spielen"
          />
 
          <StatsWidget 
-           title="🌍 Online Stats"
+           title="Online Stats"
            mode={selectedMode}
            isOnline={true}
            matches={matches}
            profileName={effectiveProfile}
            baseProfile={undefined}
            onPlay={() => navigate('/online')}
-           playLabel="🌍 Online Multiplayer"
+           playLabel="Online Multiplayer"
          />
       </div>
 

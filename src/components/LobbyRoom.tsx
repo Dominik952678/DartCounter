@@ -2,14 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { LoadingScreen } from './LoadingScreen';
 import { useOnlineStore } from '../store/useOnlineStore';
-import { Button, Card, CardHeader } from './ui';
+import { Button, Card, CardHeader, Icons } from './ui';
 import { playerColorBySeat } from '../utils/playerColors';
 
 const modeLabel = (mode?: string) => {
-  if (mode === 'powerscoring') return '🔥 Power Scoring';
-  if (mode === 'splitscore') return '➗ Split Score';
-  if (mode === 'checkout') return '🎯 Checkout Training';
-  return '🎯 Standard X01';
+  if (mode === 'powerscoring') return 'Power Scoring';
+  if (mode === 'splitscore') return 'Split Score';
+  if (mode === 'checkout') return 'Checkout Training';
+  return 'Standard X01';
 };
 
 export const LobbyRoom: React.FC = () => {
@@ -98,7 +98,7 @@ export const LobbyRoom: React.FC = () => {
 
       <header className="page-header">
         <Button variant="ghost" className="btn-back" onClick={() => { leaveRoom(); navigate('/online'); }}>
-          ← Verlassen
+          <Icons.IconArrowLeft size={17} /> Verlassen
         </Button>
         <h2 className="page-title">Warteraum</h2>
         <div className="page-header-spacer" />
@@ -116,10 +116,10 @@ export const LobbyRoom: React.FC = () => {
         </p>
         <div className="room-code-actions">
           <Button variant="secondary" onClick={handleCopyCode}>
-            {copied ? '✓ Kopiert' : '⧉ Code kopieren'}
+            {copied ? <><Icons.IconCheck size={17} /> Kopiert</> : <><Icons.IconCopy size={17} /> Code kopieren</>}
           </Button>
           <Button variant="secondary" onClick={handleShare}>
-            ↗ Teilen
+            <Icons.IconExternal size={17} /> Teilen
           </Button>
         </div>
       </Card>
@@ -265,7 +265,7 @@ export const LobbyRoom: React.FC = () => {
       <div className="lobby-actions">
         {isHost ? (
           <Button variant="primary" size="large" fullWidth onClick={handleStartGame}>
-            🎯 Spiel starten
+            <Icons.IconPlayFilled size={20} /> Spiel starten
           </Button>
         ) : (
           <div className="waiting-banner">

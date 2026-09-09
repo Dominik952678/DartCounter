@@ -58,8 +58,9 @@ describe('BullOffModal', () => {
   it('re-throws only between the tied players', async () => {
     renderModal({ contenders: [0, 1] });
 
-    fireEvent.click(screen.getByRole('button', { name: /🔴 Bull/i }));
-    fireEvent.click(screen.getByRole('button', { name: /🔴 Bull/i }));
+    // Exakter Name, sonst trifft der Ausdruck auch „Bullseye".
+    fireEvent.click(screen.getByRole('button', { name: 'Bull' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Bull' }));
 
     await waitFor(() =>
       expect(screen.getByText(/Stechen zwischen Anna und Ben/i)).toBeInTheDocument()

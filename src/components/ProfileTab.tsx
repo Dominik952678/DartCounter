@@ -14,7 +14,7 @@ import { SampleDataCard } from './profile/SampleDataCard';
 import { ThemeSettingsCard } from './profile/ThemeSettingsCard';
 import { useGuestSync } from './profile/useGuestSync';
 import { useAuthStore } from '../store/useAuthStore';
-import { Button } from './ui';
+import { Button, Icons } from './ui';
 
 interface ProfileTabProps {
   profiles: Record<string, Profile>;
@@ -99,19 +99,19 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
       {!user && (
         <div className="callout callout-action">
           <span>
-            <span aria-hidden="true">💡</span> <strong>Gast-Modus:</strong> Profile &amp; Statistiken werden lokal auf diesem Gerät gespeichert.
+            <Icons.IconInfo size={17} /> <strong>Gast-Modus:</strong> Profile &amp; Statistiken werden lokal auf diesem Gerät gespeichert.
           </span>
           <Button
             variant="primary"
             onClick={() => navigate('/auth')}
           >
-            🔑 Cloud-Login
+            <Icons.IconKey size={18} /> Cloud-Login
           </Button>
         </div>
       )}
 
       <div className="app-header">
-        <h1>👤 Profile & Historie</h1>
+        <h1>Profile &amp; Historie</h1>
         <p className="subtitle">Verwalte deine Spieler und Statistiken</p>
       </div>
 
@@ -131,8 +131,8 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
 
       {showImportModal && (
         <GuestSyncRedeemModal
-          title="☁️ Gast via Sync-Code importieren"
-          confirmLabel="➕ Profil zur Spielerliste hinzufügen"
+          title="Gast via Sync-Code importieren"
+          confirmLabel="Profil zur Spielerliste hinzufügen"
           onImported={(username, profile) => onUpdateProfile(username, profile)}
           onClose={() => setShowImportModal(false)}
         />

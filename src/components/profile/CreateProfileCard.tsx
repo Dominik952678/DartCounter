@@ -1,6 +1,6 @@
 import React, { useId, useState } from 'react';
 import type { Profile } from '../../types';
-import { Button, Card, CardHeader } from '../ui';
+import { Button, Card, CardHeader, Icons } from '../ui';
 
 interface CreateProfileCardProps {
   profiles: Record<string, Profile>;
@@ -55,7 +55,7 @@ export const CreateProfileCard: React.FC<CreateProfileCardProps> = ({ profiles, 
 
       {error && (
         <div className="alert alert-error" role="alert">
-          <span aria-hidden="true">⚠️</span>
+          <Icons.IconAlert size={18} />
           <span>{error}</span>
         </div>
       )}

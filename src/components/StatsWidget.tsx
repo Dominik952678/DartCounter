@@ -3,7 +3,7 @@ import type { MatchHistory, Profile } from '../types';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
 import { DartboardHeatmap } from './DartboardHeatmap';
 import { countedSegmentHits, totalSegmentHits } from '../utils/segmentStats';
-import { Button, Card } from './ui';
+import { Button, Card, Icons } from './ui';
 import { chartColor } from '../utils/chartColors';
 
 interface StatsWidgetProps {
@@ -212,7 +212,7 @@ export const StatsWidget: React.FC<StatsWidgetProps> = ({ title, mode, isOnline,
        <div className="stats-widget-body">
          {matchesPlayed === 0 ? (
            <div className="empty-state">
-             <span className="empty-state-icon" aria-hidden="true">🎯</span>
+             <Icons.IconTarget size={38} className="empty-state-icon" />
              Noch keine {isOnline ? 'Online' : 'Offline'}-Spiele in diesem Modus absolviert.
            </div>
          ) : (
@@ -269,7 +269,7 @@ export const StatsWidget: React.FC<StatsWidgetProps> = ({ title, mode, isOnline,
                     <div style={{ marginTop: '20px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                         <span className="stat-label">
-                          📈 {isMinigame ? 'Score-Entwicklung' : 'Average-Verlauf (3 Darts)'}
+                          <Icons.IconChart size={18} /> {isMinigame ? 'Score-Entwicklung' : 'Average-Verlauf (3 Darts)'}
                         </span>
                         <span className="stat-label">Letzte Spiele</span>
                       </div>

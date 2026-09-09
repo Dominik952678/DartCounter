@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import type { Profile } from '../../types';
 import type { Lineup } from './useLineup';
-import { Button, Card, CardHeader, ChoiceGroup } from '../ui';
+import { Button, Card, CardHeader, ChoiceGroup, Icons } from '../ui';
 import { playerColorByName, teamColor } from '../../utils/playerColors';
 
 interface PlayerSelectionProps {
@@ -47,8 +47,8 @@ export const PlayerSelection: React.FC<PlayerSelectionProps> = ({
           name="matchMode2v2"
           value={is2v2 ? 'team' : 'single'}
           options={[
-            { value: 'single', label: '👤 Einzel' },
-            { value: 'team', label: '👥 2v2 Doppel' }
+            { value: 'single', label: 'Einzel' },
+            { value: 'team', label: '2v2 Doppel' }
           ]}
           onChange={value => onModeChange(value === 'team')}
           ariaLabel="Spielmodus"
@@ -56,7 +56,7 @@ export const PlayerSelection: React.FC<PlayerSelectionProps> = ({
 
         {is2v2 ? (
           <p className="callout">
-            <span aria-hidden="true">❄️</span> <strong>Freeze-Regel:</strong> Geworfen wird alternierend (T1 ➔ T2 ➔ T1 ➔ T2). Ein Team gewinnt bei 0 Rest nur, wenn die eigenen Teampunkte ≤ den Gegnerpunkten sind!
+            <Icons.IconFrozen size={17} /> <strong>Freeze-Regel:</strong> Geworfen wird alternierend (T1 → T2 → T1 → T2). Ein Team gewinnt bei 0 Rest nur, wenn die eigenen Teampunkte ≤ den Gegnerpunkten sind!
           </p>
         ) : (
           <ChoiceGroup
@@ -120,7 +120,7 @@ export const PlayerSelection: React.FC<PlayerSelectionProps> = ({
                       aria-label="Spieler nach oben"
                       title="Nach oben"
                     >
-                      ▲
+                      <Icons.IconChevronUp size={15} />
                     </button>
                     <button
                       type="button"
@@ -130,7 +130,7 @@ export const PlayerSelection: React.FC<PlayerSelectionProps> = ({
                       aria-label="Spieler nach unten"
                       title="Nach unten"
                     >
-                      ▼
+                      <Icons.IconChevronDown size={15} />
                     </button>
                   </div>
                 </div>
@@ -142,7 +142,7 @@ export const PlayerSelection: React.FC<PlayerSelectionProps> = ({
                 )}
 
                 <div className="avatar-circle" style={{ backgroundColor: is2v2 ? slotColor : playerColorByName(playerName || `Gast ${i + 1}`) }}>
-                  {isBot ? '🤖' : (playerName.charAt(0).toUpperCase() || '?')}
+                  {isBot ? <Icons.IconBot size={17} /> : (playerName.charAt(0).toUpperCase() || '?')}
                 </div>
 
                 {isGuest ? (
@@ -175,7 +175,7 @@ export const PlayerSelection: React.FC<PlayerSelectionProps> = ({
                       const isProfileBot = profiles[name]?.isBot;
                       return (
                         <option key={name} value={name} style={{ color: '#000', background: '#fff' }}>
-                          {isCloudGuest ? '🔗 ' : (isProfileBot ? '🤖 ' : '👤 ')}{name}{isCloudGuest ? ' (Cloud-Gast)' : (isProfileBot ? ' (Bot)' : '')}
+                          {name}{isCloudGuest ? ' (Cloud-Gast)' : (isProfileBot ? ' (Bot)' : '')}
                         </option>
                       );
                     })}
@@ -195,7 +195,7 @@ export const PlayerSelection: React.FC<PlayerSelectionProps> = ({
             onClick={onAddCloudGuest}
             style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
           >
-            ☁️ Cloud-Gast via Sync-Code hinzufügen
+            <Icons.IconCloud size={17} /> Cloud-Gast via Sync-Code hinzufügen
           </Button>
         </div>
       )}
@@ -217,7 +217,7 @@ export const PlayerSelection: React.FC<PlayerSelectionProps> = ({
             fontWeight: 'var(--weight-medium)'
           }}
         >
-          <span aria-hidden="true">⚠️</span>
+          <Icons.IconAlert size={18} />
           <span>{errorMsg}</span>
         </div>
       )}
@@ -236,7 +236,7 @@ export const PlayerSelection: React.FC<PlayerSelectionProps> = ({
           />
           <span className="option-toggle-body">
             <span className="option-toggle-title">
-              🎯 Ausbullen
+              <Icons.IconBull size={16} /> Ausbullen
             </span>
             <span className="option-toggle-desc">
               {lineup.bullOffEnabled
@@ -257,7 +257,7 @@ export const PlayerSelection: React.FC<PlayerSelectionProps> = ({
           />
           <span className="option-toggle-body">
             <span className="option-toggle-title">
-              🎲 Zufällige Reihenfolge beim Start
+              <Icons.IconShuffle size={16} /> Zufällige Reihenfolge beim Start
             </span>
             <span className="option-toggle-desc">
               {lineup.randomOrderOnStart
@@ -278,7 +278,7 @@ export const PlayerSelection: React.FC<PlayerSelectionProps> = ({
               transition: 'transform 0.1s'
               }}
             >
-              🔀 Jetzt einmalig mischen
+              <Icons.IconShuffle size={16} /> Jetzt einmalig mischen
             </Button>
           </div>
         )}

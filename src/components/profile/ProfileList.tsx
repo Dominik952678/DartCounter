@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { Profile } from '../../types';
 import { ConfirmModal } from '../ConfirmModal';
-import { Button, Card, CardHeader } from '../ui';
+import { Button, Card, CardHeader, Icons } from '../ui';
 
 interface ProfileListProps {
   profiles: Record<string, Profile>;
@@ -32,7 +32,7 @@ export const ProfileList: React.FC<ProfileListProps> = ({
             onClick={onImportGuest}
             title="Gastspieler via Sync-Code importieren"
           >
-            ☁️ Gast importieren
+            <Icons.IconCloud size={17} /> Gast importieren
           </Button>
           <span className="card-badge">{profileNames.length}</span>
         </div>
@@ -67,7 +67,11 @@ export const ProfileList: React.FC<ProfileListProps> = ({
                     minHeight: 'auto'
                   }}
                 >
-                  {isCloudGuest ? '🔗 ' : (profiles[name]?.isBot ? '🤖 ' : '👤 ')} {name}
+                  {isCloudGuest
+                    ? <Icons.IconLink size={16} className="icon-inline" />
+                    : profiles[name]?.isBot
+                      ? <Icons.IconBot size={16} className="icon-inline" />
+                      : <Icons.IconUser size={16} className="icon-inline" />}{name}
                 </button>
                 {isCloudGuest && (
                   <span style={{
@@ -105,7 +109,7 @@ export const ProfileList: React.FC<ProfileListProps> = ({
                     onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-danger)')}
                     onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-dim)')}
                   >
-                    ✕
+                    <Icons.IconClose size={16} />
                   </button>
                 )}
               </div>
@@ -119,7 +123,7 @@ export const ProfileList: React.FC<ProfileListProps> = ({
       )}
 
       <Button variant="secondary" onClick={onShowHistory} style={{ marginTop: '16px' }}>
-        📜 Match Historie ansehen
+        <Icons.IconHistory size={18} /> Match Historie ansehen
       </Button>
 
       {pendingDeletion && (
@@ -128,7 +132,7 @@ export const ProfileList: React.FC<ProfileListProps> = ({
           message={`„${pendingDeletion}“ wird mit allen Statistiken entfernt.\nDie gespielten Matches bleiben in der Historie.`}
           confirmLabel="Löschen"
           destructive
-          icon="🗑️"
+          icon={<Icons.IconTrash size={40} />}
           onConfirm={() => {
             onDeleteProfile(pendingDeletion);
             setPendingDeletion(null);

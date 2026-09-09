@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Routes, Route, useNavigate, Navigate, useLocation } from 'react-router-dom';
 import { HomeContainer } from './components/HomeContainer';
 import { MainMenu } from './components/MainMenu';
@@ -31,7 +31,7 @@ import { useProfiles } from './hooks/useProfiles';
 import { useThemeStore } from './store/useThemeStore';
 import { useGameEngine } from './hooks/useGameEngine';
 import { useAuthStore } from './store/useAuthStore';
-import { Button } from './components/ui';
+import { Button, Icons } from './components/ui';
 
 type MiniGameResult = {
   name: string;
@@ -58,10 +58,13 @@ const toModalPlayer = (r: MiniGameResult): Player => ({
   triplesHit: r.triplesHit
 });
 
-const TOAST_ICON: Record<NotificationType, string> = {
-  error: '⚠️',
-  success: '✅',
-  info: 'ℹ️'
+/* Die drei Tonlagen einer Meldung, je ein Icon aus dem Set. Der Ton kommt aus
+   `--text-danger` / `--text-success` an `.global-toast-<type>`; das Icon selbst
+   zeichnet in `currentColor` und muss keine eigene Farbe kennen. */
+const TOAST_ICON: Record<NotificationType, ReactNode> = {
+  error: <Icons.IconAlert size={20} />,
+  success: <Icons.IconCheck size={20} />,
+  info: <Icons.IconInfo size={20} />
 };
 
 const Toast = ({ type, title, message, onDismiss }: {
@@ -71,12 +74,12 @@ const Toast = ({ type, title, message, onDismiss }: {
   onDismiss: () => void;
 }) => (
   <div className={`global-toast global-toast-${type}`} role="alert">
-    <span aria-hidden="true">{TOAST_ICON[type]}</span>
+    <span className="global-toast-icon" aria-hidden="true">{TOAST_ICON[type]}</span>
     <div className="global-toast-body">
       <strong>{title}</strong>
       <span>{message}</span>
     </div>
-    <Button variant="ghost" className="btn-close" onClick={onDismiss} aria-label="Hinweis schließen">✕</Button>
+    <Button variant="ghost" className="btn-close" onClick={onDismiss} aria-label="Hinweis schließen"><Icons.IconClose size={18} /></Button>
   </div>
 );
 

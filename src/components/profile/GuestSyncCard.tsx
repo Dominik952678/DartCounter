@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import type { GuestSync } from './useGuestSync';
 import { ConfirmModal } from '../ConfirmModal';
 import { useNotificationStore } from '../../store/useNotificationStore';
-import { Button, Card, CardHeader } from '../ui';
+import { Button, Card, CardHeader, Icons } from '../ui';
 
 interface GuestSyncCardProps {
   sync: GuestSync;
@@ -34,12 +34,12 @@ export const GuestSyncCard: React.FC<GuestSyncCardProps> = ({ sync }) => {
   return (
     <Card style={{ marginTop: '20px' }}>
       <CardHeader
-        icon="📱"
+        icon={<Icons.IconDevice size={20} />}
         heading="Gast-Sync & Geräte-Freigaben"
         action={
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
             <span className={`sync-status ${isEnabled ? 'is-on' : ''}`}>
-              {isEnabled ? '🟢 Sync aktiv' : '⚪ Sync aus'}
+              {isEnabled ? 'Sync aktiv' : 'Sync aus'}
             </span>
             <Button
               type="button"
@@ -58,7 +58,7 @@ export const GuestSyncCard: React.FC<GuestSyncCardProps> = ({ sync }) => {
         <div className="alert alert-error callout-action" role="alert">
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-              <span aria-hidden="true">🎯</span>
+              <Icons.IconTarget size={17} />
               <strong>Live-Match aktiv auf {info.liveMatch.hostName}!</strong>
             </div>
             <div className="stat-label" style={{ marginTop: '4px' }}>
@@ -71,7 +71,7 @@ export const GuestSyncCard: React.FC<GuestSyncCardProps> = ({ sync }) => {
             onClick={() => setConfirmAbort(true)}
             disabled={loading}
           >
-            🛑 Match remote abbrechen & Trennen
+            <Icons.IconAlert size={17} /> Match remote abbrechen &amp; Trennen
           </Button>
         </div>
       )}
@@ -83,7 +83,7 @@ export const GuestSyncCard: React.FC<GuestSyncCardProps> = ({ sync }) => {
           confirmLabel="Abbrechen & trennen"
           cancelLabel="Weiterlaufen lassen"
           destructive
-          icon="🛑"
+          icon={<Icons.IconAlert size={40} />}
           onConfirm={async () => {
             setConfirmAbort(false);
             await sync.abortRemoteMatch();
@@ -98,7 +98,7 @@ export const GuestSyncCard: React.FC<GuestSyncCardProps> = ({ sync }) => {
 
       {sync.error && (
         <div className="alert alert-error" role="alert" style={{ marginBottom: '14px' }}>
-          <span aria-hidden="true">⚠️</span>
+          <Icons.IconAlert size={18} />
           <span>{sync.error}</span>
         </div>
       )}
@@ -121,7 +121,7 @@ export const GuestSyncCard: React.FC<GuestSyncCardProps> = ({ sync }) => {
               onClick={() => sync.setEnabled(true)}
               disabled={loading}
             >
-              ⚡ Gast-Sync aktivieren
+              <Icons.IconCloud size={18} /> Gast-Sync aktivieren
             </Button>
           </div>
         ) : info && hasLiveCode ? (
@@ -143,7 +143,7 @@ export const GuestSyncCard: React.FC<GuestSyncCardProps> = ({ sync }) => {
                   variant="primary"
                   onClick={handleCopyCode}
                 >
-                  {copiedCode ? '✅ Kopiert!' : '📋 Code kopieren'}
+                  {copiedCode ? <><Icons.IconCheck size={17} /> Kopiert!</> : <><Icons.IconCopy size={17} /> Code kopieren</>}
                 </Button>
                 <Button
                   type="button"
@@ -152,7 +152,7 @@ export const GuestSyncCard: React.FC<GuestSyncCardProps> = ({ sync }) => {
                   disabled={loading}
                   title="Generiert einen neuen Code und macht alte Codes ungültig, damit niemand mehr über sie auf dein Profil zugreifen kann"
                 >
-                  🔄 Code erneuern
+                  <Icons.IconRefresh size={17} /> Code erneuern
                 </Button>
               </div>
             </div>
@@ -169,7 +169,7 @@ export const GuestSyncCard: React.FC<GuestSyncCardProps> = ({ sync }) => {
                     onClick={() => sync.revokeHost()}
                     disabled={loading}
                   >
-                    ⛔ Entkoppeln
+                    <Icons.IconClose size={16} /> Entkoppeln
                   </Button>
                 )}
               </div>
@@ -177,7 +177,7 @@ export const GuestSyncCard: React.FC<GuestSyncCardProps> = ({ sync }) => {
               {host ? (
                 <div className="sync-host">
                   <div>
-                    <strong><span aria-hidden="true">📱</span> {host.hostName}</strong>
+                    <strong><Icons.IconDevice size={16} className="icon-inline" />{host.hostName}</strong>
                     <span style={{ color: 'var(--text-dim)', marginLeft: '8px', fontSize: '0.75rem' }}>
                       (Gekoppelt {new Date(host.linkedAt).toLocaleDateString('de-DE')})
                     </span>
@@ -209,7 +209,7 @@ export const GuestSyncCard: React.FC<GuestSyncCardProps> = ({ sync }) => {
               onClick={sync.generateCode}
               disabled={loading}
             >
-              {loading ? 'Erzeuge Code…' : '⚡ 6-stelligen Sync-Code generieren'}
+              {loading ? 'Erzeuge Code…' : <><Icons.IconCloud size={18} /> 6-stelligen Sync-Code generieren</>}
             </Button>
           </div>
         )}

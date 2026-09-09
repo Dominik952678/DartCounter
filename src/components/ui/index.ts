@@ -22,3 +22,9 @@ export type { StatStripItem } from './StatStrip';
 
 export { NavItem } from './NavItem';
 export type { NavItemProps } from './NavItem';
+
+/* Das Icon-Set. Bewusst als Namensraum re-exportiert und nicht einzeln: es sind
+   über vierzig Komponenten, und `import { Icons } from '../ui'` sagt an der
+   Fundstelle, dass ein Bild aus dem Set kommt und nicht irgendwoher. */
+export * as Icons from './Icons';
+export type { IconProps } from './Icons';

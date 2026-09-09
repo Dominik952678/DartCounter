@@ -1,5 +1,6 @@
 import React from 'react';
 import { ConfirmModal } from './ConfirmModal';
+import { Icons } from './ui';
 import { APP_VERSION, BUILD_TIME } from '../version';
 
 interface AppReloadPromptProps {
@@ -17,7 +18,7 @@ export const AppReloadPrompt: React.FC<AppReloadPromptProps> = ({ onCancel }) =>
     message={`Build-Zeit: ${BUILD_TIME}\n\nMöchtest du die App neu laden und den Zwischenspeicher aktualisieren?`}
     confirmLabel="Neu laden"
     cancelLabel="Schließen"
-    icon="🔄"
+    icon={<Icons.IconRefresh size={40} />}
     onConfirm={() => window.location.reload()}
     onCancel={onCancel}
   />

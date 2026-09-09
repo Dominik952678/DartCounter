@@ -4,7 +4,7 @@ import { redeemSyncCode } from '../db';
 import { useAuthStore } from '../store/useAuthStore';
 import { resolveHostDeviceId } from '../utils/storage';
 import { useModalA11y } from '../hooks/useModalA11y';
-import { Button } from './ui';
+import { Button, Icons } from './ui';
 
 interface GuestSyncRedeemModalProps {
   /** What the caller does with the redeemed guest: seat them, list them, both. */
@@ -25,8 +25,8 @@ interface GuestSyncRedeemModalProps {
 export const GuestSyncRedeemModal: React.FC<GuestSyncRedeemModalProps> = ({
   onImported,
   onClose,
-  title = '☁️ Gast via Sync-Code hinzufügen',
-  confirmLabel = '➕ Als Mitspieler hinzufügen'
+  title = 'Gast via Sync-Code hinzufügen',
+  confirmLabel = 'Als Mitspieler hinzufügen'
 }) => {
   const { user } = useAuthStore();
   const [code, setCode] = useState('');
@@ -99,7 +99,7 @@ export const GuestSyncRedeemModal: React.FC<GuestSyncRedeemModalProps> = ({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <h3 id={titleId} style={{ margin: 0, fontSize: '1.25rem' }}>{title}</h3>
           <Button variant="ghost" onClick={onClose} aria-label="Schließen">
-            ✕
+            <Icons.IconClose size={18} />
           </Button>
         </div>
 
@@ -137,13 +137,13 @@ export const GuestSyncRedeemModal: React.FC<GuestSyncRedeemModalProps> = ({
 
         {error && (
           <div className="alert alert-error" role="alert">
-            ⚠️ {error}
+            <Icons.IconAlert size={18} /> <span>{error}</span>
           </div>
         )}
 
         {success && (
           <div className="alert alert-success" role="status">
-            ✅ {success}
+            <Icons.IconCheck size={18} /> <span>{success}</span>
           </div>
         )}
 

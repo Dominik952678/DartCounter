@@ -84,6 +84,13 @@
   --text-danger: #EF4444;                    /* nur destruktiv, Hotspot-Segmente */
   --text-danger-rgb: 239, 68, 68;
 
+  /* Zweite, hellere Rolle für Rot — und ausdrücklich KEIN Ersatz für
+     --text-danger. Sie gilt nur für kleinen Hinweistext direkt auf --bg-base,
+     wo #EF4444 bei 12–13px zu dunkel gegen den Grund steht („Diesen Namen gibt
+     es schon."). Flächen, Ränder und Buttons bleiben --text-danger, damit
+     „destruktiv" weiter genau einen Ton hat. */
+  --text-danger-soft: #F87171;
+
   /* Text */
   --text-primary: #F5F5F0;
   --text-secondary: #8B93A6;
@@ -104,6 +111,14 @@
 
      Skala nach Verwendung benannt, nicht nach Größe — damit ein späterer
      Wechsel von 20px auf 21px für Card-Titel nicht `--text-20` zur Lüge macht.
+
+     Drei Schriften mit je einer Aufgabe:
+     · --font-heading (Caprasimo) trägt ausschließlich Überschriften und die
+       Wortmarke. Nie eine Zahl: die Ziffern der Schrift sind proportional und
+       eigenwillig, ein mitlaufender Punktestand würde bei jedem Wurf zappeln.
+     · --font (Figtree) trägt jeden Fließ- und Bedientext.
+     · --font-mono (JetBrains Mono) trägt jede Zahl, immer mit tabular-nums
+       (Utility-Klasse `.num` in index.css).
      ───────────────────────────────────────────────────────────────────────── */
   --text-label: 12px;         /* Label/Meta, u. a. Label über Kennzahlen */
   --text-body: 14px;
@@ -112,11 +127,29 @@
   --text-screen-title: 24px;
   --text-display: 32px;       /* Live-Score, große Zahlen */
 
-  /* Nur diese zwei. Kein 700 — wirkt in der dunklen UI zu schwer (§2). */
+  /* Display-Stufen — nur für --font-heading. Die Größen stehen so im Prototyp:
+     Diagramm-Titel, Abschnittstitel in der Karte, Dialogtitel, Screen-Titel.
+     Der Screen-Titel skaliert mit, weil er auf dem iPhone sonst dreizeilig
+     umbricht und auf dem iPad verloren wirkt. */
+  --text-heading-sm: 21px;
+  --text-heading: 23px;
+  --text-heading-lg: 26px;
+  --text-heading-xl: clamp(26px, 3.1vw, 37px);
+
+  /* Caprasimo ist eine fette Display-Schrift; ohne negatives Tracking und
+     enge Zeilen stehen die Buchstaben in der Überschrift zu weit auseinander. */
+  --tracking-heading: -0.01em;
+  --tracking-heading-lg: -0.02em;
+  --leading-heading: 1.1;
+
+  /* 400 für Fließtext, 500 für Zahlen, 600 für alles Bedienbare — Labels,
+     Buttons, Namen. Kein 700+: das trägt --font-heading. */
   --weight-regular: 400;
   --weight-medium: 500;
+  --weight-semibold: 600;
 
-  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+  --font: 'Figtree', -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+  --font-heading: 'Caprasimo', Georgia, 'Times New Roman', serif;
   --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
 
   /* ─────────────────────────────────────────────────────────────────────────
@@ -133,7 +166,25 @@
   --space-6: 24px;
   --space-8: 32px;
 
-  --radius-card: 12px;        /* durchgehend, §3 */
+  /* ─────────────────────────────────────────────────────────────────────────
+     Radien — eine Leiter, nach Bauteil benannt
+
+     §3 kannte nur „12px durchgehend". Der Prototyp arbeitet mit einer Leiter,
+     und zwar mit deutlichem Abstand nach oben: die Karte trägt 28px, alles was
+     IN ihr liegt weniger, und alles Runde geht auf 999px. Ein Radius, der hier
+     nicht vorkommt, ist kein gültiger Wert.
+
+     Die Reihenfolge ist keine Skala nach Größe, sondern nach Verschachtelung —
+     eine Zeile in einer Kachel in einer Karte wird nach innen hin flacher,
+     sonst schneiden die Ecken sichtbar aneinander vorbei.
+     ───────────────────────────────────────────────────────────────────────── */
+  --radius-pill: 999px;       /* Pills, Thumbs, Avatare, runde Buttons, CTA */
+  --radius-card: 28px;        /* Karte, Section, Modal */
+  --radius-tile: 24px;        /* Kachel innerhalb einer Karte */
+  --radius-row: 22px;         /* Listenzeile, Options-Zeile */
+  --radius-key: 20px;         /* Keypad-Taste, Dart-Kasten, Dock-Eintrag */
+  --radius-key-sm: 18px;      /* kleine Taste, kleine Kennzahl-Kachel */
+
   --card-padding: var(--space-4);
 
   /* Breite der Sidebar ab 900px (§6). Steht hier und nicht am Element, weil
@@ -207,12 +258,43 @@
      grün sind entfallen: nach dem Redesign las sie niemand mehr, und ein Token,
      das nichts einfärbt, muss auch kein Theme überschreiben. */
 
-  /* Radius-Stufen jenseits der Karte: DESIGN.md kennt nur den Card-Radius.
-     Bis geklärt ist, was Pills und Modals bekommen, bleiben sie wie gehabt. */
+  /* Diese vier standen hier, bevor es die Radius-Leiter gab. Zwei fallen genau
+     auf eine Sprosse und zeigen jetzt dorthin. Die zwei kleinen bleiben als
+     Zahl stehen: sie hängen an 24 Stellen in index.css, die dieser Baustein
+     nicht umbaut, und ein Sprung von 6px auf 18px würde dort Balken und
+     Hairlines rundlutschen, die niemand angefasst hat. Sie werden umgehängt,
+     wenn der Screen, dem sie gehören, neu gebaut wird. */
   --radius-xs: 6px;
   --radius-sm: 10px;
-  --radius-lg: 20px;
-  --radius-xl: 28px;
+  --radius-lg: var(--radius-key);
+  --radius-xl: var(--radius-card);
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     Motion
+
+     Drei Dauern, drei Kurven — jede mit einer Aufgabe, damit nicht jedes
+     Bauteil seine eigene Zeit erfindet:
+     · --motion-color für Farbwechsel; linear genug, dass keine Kurve nötig ist.
+     · --motion-slide + --ease-glide für den gleitenden Thumb (Nav-Indikator,
+       Slider). Die Kurve schießt bewusst über 1 hinaus: das Überschwingen ist
+       das, was die Bewegung als „geglitten" statt „gesprungen" lesbar macht.
+     · --motion-switch + --ease-switch für den kleinen Zwei-Positionen-Schalter,
+       etwas kürzer und etwas härter — auf 40px Weg wirkt die lange Kurve träge.
+     · --motion-pop + --ease-pop für Erscheinen (Dart-Kasten, Finish-Pille).
+
+     Der reduced-motion-Block setzt alle Dauern auf 0s und alle Kurven auf
+     linear. Damit endet jede Transition sofort im Zielzustand, ohne dass eine
+     Komponente `prefers-reduced-motion` selbst abfragen muss — sie liest die
+     Tokens, und die Entscheidung steht an einer Stelle.
+     ───────────────────────────────────────────────────────────────────────── */
+  --motion-color: 0.2s;
+  --motion-switch: 0.26s;
+  --motion-slide: 0.28s;
+  --motion-pop: 0.25s;
+
+  --ease-glide: cubic-bezier(0.34, 1.35, 0.5, 1);
+  --ease-switch: cubic-bezier(0.34, 1.4, 0.5, 1);
+  --ease-pop: cubic-bezier(0.175, 0.885, 0.32, 1.275);
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
@@ -240,5 +322,27 @@
 @media (min-width: 900px) {
   :root {
     --card-padding: var(--space-5);
+  }
+}
+
+/* Wer „Bewegung reduzieren" gesetzt hat, bekommt den Zielzustand sofort.
+
+   Nicht `animation: none` und nicht `transition: none`: beides würde auch die
+   Zustände abschalten, die eine Animation überhaupt erst herstellt (eine
+   Einblend-Keyframe, die von opacity 0 kommt, ließe das Element unsichtbar).
+   Dauer 0 lässt die Regel intakt und überspringt nur den Weg dorthin.
+
+   Steht bewusst NACH dem 900px-Block: es ist eine Präferenz, keine
+   Bildschirmgröße, und darf von keinem Breakpoint überschrieben werden. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-color: 0s;
+    --motion-switch: 0s;
+    --motion-slide: 0s;
+    --motion-pop: 0s;
+
+    --ease-glide: linear;
+    --ease-switch: linear;
+    --ease-pop: linear;
   }
 }

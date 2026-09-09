@@ -1,12 +1,12 @@
 import React from 'react';
 import type { AppTheme } from '../../store/useThemeStore';
 import { useThemeStore } from '../../store/useThemeStore';
-import { Card, CardHeader, ChoiceGroup } from '../ui';
+import { Card, CardHeader, ChoiceGroup, Icons } from '../ui';
 
 const THEME_CHOICES: readonly (readonly [AppTheme, string])[] = [
-  ['classic', '🎯 Classic Dark'],
-  ['vaporwave', '🌆 Vaporwave'],
-  ['cyberpunk', '⚡ Cyberpunk']
+  ['classic', 'Classic Dark'],
+  ['vaporwave', 'Vaporwave'],
+  ['cyberpunk', 'Cyberpunk']
 ];
 
 /**
@@ -17,12 +17,12 @@ const THEME_CHOICES: readonly (readonly [AppTheme, string])[] = [
  */
 const EFFECT_LABELS: Record<Exclude<AppTheme, 'classic'>, { scanlines: string; grid: string }> = {
   vaporwave: {
-    scanlines: '📺 CRT-Scanlines',
-    grid: '🏎️ Outrun-Gitter'
+    scanlines: 'CRT-Scanlines',
+    grid: 'Outrun-Gitter'
   },
   cyberpunk: {
-    scanlines: '📺 Terminal-Scanlines',
-    grid: '⚡ Circuit-Raster'
+    scanlines: 'Terminal-Scanlines',
+    grid: 'Circuit-Raster'
   }
 };
 
@@ -51,7 +51,7 @@ export const ThemeSettingsCard: React.FC = () => {
 
   return (
     <Card style={{ marginTop: 'var(--space-5)' }}>
-      <CardHeader icon="🎨" heading="Design & Theme" />
+      <CardHeader icon={<Icons.IconPalette size={20} />} heading="Design & Theme" />
 
       <label className="section-label">App-Design wählen:</label>
       <ChoiceGroup

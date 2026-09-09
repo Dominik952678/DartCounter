@@ -12,7 +12,7 @@ import {
   parseBackup,
   type BackupFile
 } from './dataBackup';
-import { Button, Card, CardHeader } from '../ui';
+import { Button, Card, CardHeader, Icons } from '../ui';
 
 interface DataExportCardProps {
   profiles: Record<string, Profile>;
@@ -125,7 +125,7 @@ export const DataExportCard: React.FC<DataExportCardProps> = ({
 
   return (
     <Card style={{ marginTop: '20px' }}>
-      <CardHeader icon="💾" heading="Daten sichern & wiederherstellen" />
+      <CardHeader icon={<Icons.IconDownload size={20} />} heading="Daten sichern & wiederherstellen" />
 
       <p style={{ fontSize: '0.86rem', color: 'var(--text-dim)', margin: '0 0 14px 0', lineHeight: 1.5 }}>
         Lade alle Profile, Matches und Einstellungen als JSON-Datei herunter — als Backup oder um sie auf ein anderes Gerät zu bringen. Beim Einspielen werden bereits vorhandene Matches übersprungen.
@@ -133,14 +133,14 @@ export const DataExportCard: React.FC<DataExportCardProps> = ({
 
       {status && (
         <div className="alert alert-success" role="status">
-          <span aria-hidden="true">✅</span>
+          <Icons.IconCheck size={18} />
           <span>{status}</span>
         </div>
       )}
 
       {error && (
         <div className="alert alert-error" role="alert">
-          <span aria-hidden="true">⚠️</span>
+          <Icons.IconAlert size={18} />
           <span>{error}</span>
         </div>
       )}
@@ -171,7 +171,7 @@ export const DataExportCard: React.FC<DataExportCardProps> = ({
               onClick={() => setPending({ backup: preview, mode: 'merge' })}
               style={{ flex: '1 1 150px' }}
             >
-              ➕ Zusammenführen
+              <Icons.IconPlus size={17} /> Zusammenführen
             </Button>
             <Button
               variant="dangerText"
@@ -179,7 +179,7 @@ export const DataExportCard: React.FC<DataExportCardProps> = ({
               onClick={() => setPending({ backup: preview, mode: 'replace' })}
               style={{ flex: '1 1 150px' }}
             >
-              ♻️ Profile ersetzen
+              <Icons.IconRefresh size={17} /> Profile ersetzen
             </Button>
             <Button variant="ghost" disabled={busy} onClick={() => setPreview(null)}>
               Abbrechen
@@ -195,14 +195,14 @@ export const DataExportCard: React.FC<DataExportCardProps> = ({
           onClick={handleExport}
           disabled={busy}
         >
-          ⬇️ Daten exportieren
+          <Icons.IconDownload size={18} /> Daten exportieren
         </Button>
         <Button
           type="button"
           variant="secondary"
           onClick={() => fileInputRef.current?.click()}
         >
-          ⬆️ Sicherung einspielen
+          <Icons.IconUpload size={18} /> Sicherung einspielen
         </Button>
         <input
           ref={fileInputRef}
@@ -227,7 +227,7 @@ export const DataExportCard: React.FC<DataExportCardProps> = ({
             : `${Object.keys(pending.backup.profiles).length} Profile werden übernommen; gleichnamige Profile auf diesem Gerät werden dabei überschrieben.\n${previewMatches} neue Matches kommen hinzu.`}
           confirmLabel={pending.mode === 'replace' ? 'Ersetzen' : 'Zusammenführen'}
           destructive={pending.mode === 'replace'}
-          icon="💾"
+          icon={<Icons.IconUpload size={40} />}
           onConfirm={async () => {
             const job = pending;
             setPending(null);

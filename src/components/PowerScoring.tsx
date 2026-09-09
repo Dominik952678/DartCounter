@@ -5,7 +5,7 @@ import { Keypad } from './Keypad';
 import { getBotDart } from '../utils/bot';
 import { playDartHitSound, playSciFiHitSound, speak, play180Sound, isSoundEnabled, setSoundEnabled } from '../utils/audio';
 import { ConfirmModal } from './ConfirmModal';
-import { Button, StatStrip } from './ui';
+import { Button, StatStrip, Icons } from './ui';
 import { withDartRecorded } from '../utils/segmentStats';
 import { liveStats } from '../utils/storyExport';
 import { playerColorBySeat } from '../utils/playerColors';
@@ -81,7 +81,7 @@ const PowerScoringPlayerCard: React.FC<PlayerCardProps> = ({
   return (
     <div className="ps-card" style={{ '--player-color': accent } as React.CSSProperties}>
       <div className="ps-card-head">
-        <span className="ps-card-name">{player.isBot ? '🤖 ' : ''}{player.name}</span>
+        <span className="ps-card-name">{player.isBot && <Icons.IconBot size={15} className="icon-inline" />}{player.name}</span>
         <span className="ps-card-total">{player.score + liveRoundScore}</span>
       </div>
 
@@ -355,7 +355,7 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
         <div className="match-top-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden', minWidth: 0 }}>
             <span className="match-title">
-              🔥 Power Scoring
+              <Icons.IconBars size={17} /> Power Scoring
             </span>
             <span className="match-meta">
               Runde {currentRound} / {rounds}
@@ -373,7 +373,7 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
               title={soundOn ? 'Caller An (klicken zum Stummschalten)' : 'Caller Aus (klicken zum Einschalten)'}
               aria-label={soundOn ? 'Caller stummschalten' : 'Caller aktivieren'}
             >
-              {soundOn ? '🔊' : '🔇'}
+              {soundOn ? <Icons.IconSoundOn size={18} /> : <Icons.IconSoundOff size={18} />}
             </button>
 
             <Button
@@ -382,7 +382,7 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
               onClick={() => setShowAbortConfirm(true)}
               style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}
             >
-              ✕ <span className="btn-abort-text">Beenden</span>
+              <Icons.IconClose size={16} /> <span className="btn-abort-text">Beenden</span>
             </Button>
           </div>
         </div>
@@ -406,7 +406,7 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
                         style={{ backgroundColor: p.color || playerColorBySeat(i) }}
                         aria-hidden="true"
                       />
-                      <span className="ps-other-name">{p.isBot ? '🤖 ' : ''}{p.name}</span>
+                      <span className="ps-other-name">{p.isBot && <Icons.IconBot size={14} className="icon-inline" />}{p.name}</span>
                       <span className="ps-other-score">{p.score}</span>
                     </li>
                   ))}

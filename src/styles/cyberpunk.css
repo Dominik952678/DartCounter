@@ -39,6 +39,7 @@
   --text-success: #00ff88;
   --text-danger: #ff3366;                 /* Laser Red */
   --text-danger-rgb: 255, 51, 102;
+  --text-danger-soft: #ff7a99;            /* kleiner Hinweistext auf dem Grund */
 
   /* ── Text ── */
   --text-primary: #e0e0e0;
@@ -63,13 +64,21 @@
   --chart-8: #b14cff;
   --chart-rest: #4b5563;
 
-  /* ── Kanten: durchgehend scharf ── */
+  /* ── Kanten: durchgehend scharf ──
+     Die vollständige Radius-Leiter, jede Sprosse genullt. Was hier fehlt, erbt
+     den classic-Wert und rundet dann als einziges Bauteil im Screen; das gilt
+     auch für --radius-pill, dessen scharfe Variante hier gewollt ist. */
   --radius-xs: 0px;
   --radius-sm: 0px;
   --radius-card: 0px;
   --radius: 0px;
   --radius-lg: 0px;
   --radius-xl: 0px;
+  --radius-pill: 0px;
+  --radius-tile: 0px;
+  --radius-row: 0px;
+  --radius-key: 0px;
+  --radius-key-sm: 0px;
 
   /* ── Glühen statt Schatten ── */
   --shadow-sm: 0 0 5px rgba(0, 255, 136, 0.2);

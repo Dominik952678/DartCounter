@@ -6,7 +6,7 @@ import { getCheckoutSuggestion } from '../utils/checkouts';
 import { getBotDart } from '../utils/bot';
 import { playDartHitSound, playSciFiHitSound, speak, isSoundEnabled, setSoundEnabled } from '../utils/audio';
 import { ConfirmModal } from './ConfirmModal';
-import { Button, CallOut, StatStrip } from './ui';
+import { Button, CallOut, StatStrip, Icons } from './ui';
 import { withDartRecorded } from '../utils/segmentStats';
 import { liveStats } from '../utils/storyExport';
 import { playerColorBySeat } from '../utils/playerColors';
@@ -476,7 +476,7 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
         <div className="match-top-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden', minWidth: 0 }}>
             <span className="match-title">
-              🎯 Checkout Training
+              <Icons.IconTarget size={17} /> Checkout Training
             </span>
             <span className="match-meta">
               Target {Math.min(activeP.attempts + 1, checkoutTargets)} / {checkoutTargets}
@@ -494,7 +494,7 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
               title={soundOn ? 'Caller An (klicken zum Stummschalten)' : 'Caller Aus (klicken zum Einschalten)'}
               aria-label={soundOn ? 'Caller stummschalten' : 'Caller aktivieren'}
             >
-              {soundOn ? '🔊' : '🔇'}
+              {soundOn ? <Icons.IconSoundOn size={18} /> : <Icons.IconSoundOff size={18} />}
             </button>
 
             <Button
@@ -503,7 +503,7 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
               onClick={() => setShowAbortConfirm(true)}
               style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}
             >
-              ✕ <span className="btn-abort-text">Beenden</span>
+              <Icons.IconClose size={16} /> <span className="btn-abort-text">Beenden</span>
             </Button>
           </div>
         </div>
@@ -520,7 +520,7 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
                 style={{ '--player-color': activeP?.color || playerColorBySeat(activePlayer) } as React.CSSProperties}
               >
                 <div className="ps-card-head">
-                  <span className="ps-card-name">{activeP?.isBot ? '🤖 ' : ''}{activeP?.name}</span>
+                  <span className="ps-card-name">{activeP?.isBot && <Icons.IconBot size={15} className="icon-inline" />}{activeP?.name}</span>
                   <span className="ps-card-total">{activeP?.currentScore}</span>
                 </div>
 
@@ -577,7 +577,7 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
                           {done ? done.target : isCurrent ? activeP?.targetScore : idx + 1}
                         </span>
                         <span className="co-target-value">
-                          {done ? (done.darts === null ? '✗' : `${done.darts}D`) : isCurrent ? '…' : '–'}
+                          {done ? (done.darts === null ? '\u00d7' : `${done.darts}D`) : isCurrent ? '…' : '–'}
                         </span>
                       </li>
                     );
@@ -594,7 +594,7 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
                         style={{ backgroundColor: p.color || playerColorBySeat(i) }}
                         aria-hidden="true"
                       />
-                      <span className="ps-other-name">{p.isBot ? '🤖 ' : ''}{p.name}</span>
+                      <span className="ps-other-name">{p.isBot && <Icons.IconBot size={14} className="icon-inline" />}{p.name}</span>
                       <span className="ps-other-score">{p.roundsCompleted}/{p.attempts}</span>
                     </li>
                   ))}

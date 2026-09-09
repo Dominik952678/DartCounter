@@ -12,7 +12,7 @@ import { OverwriteSavedGameModal, SavedGameCard } from './matchSetup/SavedGameCa
 import type { SavedMatchSummary } from './matchSetup/SavedGameCard';
 import { useLineup } from './matchSetup/useLineup';
 import { toGameConfig, useMatchSetupConfig } from './matchSetup/useMatchSetupConfig';
-import { Button } from './ui';
+import { Button, Icons } from './ui';
 
 interface MatchSetupProps {
   profiles: Record<string, Profile>;
@@ -121,7 +121,7 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
       const syncOn = syncInfo?.syncEnabled === true
         || (syncInfo?.syncEnabled === undefined && !!syncInfo?.code && new Date(syncInfo.expiresAt) > new Date());
       if (syncInfo && syncOn && coupledHost) {
-        setErrorMsg(`⚠️ Dein Profil ist aktuell auf '${coupledHost.hostName}' gekoppelt. Trenne die Verbindung im Profil-Tab, um hier wieder lokal zu spielen.`);
+        setErrorMsg(`Dein Profil ist aktuell auf '${coupledHost.hostName}' gekoppelt. Trenne die Verbindung im Profil-Tab, um hier wieder lokal zu spielen.`);
         return;
       }
     }
@@ -139,7 +139,7 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
           saveProfiles(cleaned, user?.id).catch(err => reportPersistenceError(err, 'Profile konnten nicht gespeichert werden'));
           lineup.clearSlots(removed);
         }
-        setErrorMsg(`⚠️ Die Verbindung zu @${check.revokedGuests.join(', @')} wurde getrennt. Das Gastprofil wurde entfernt — bitte einen neuen Sync-Code anfordern.`);
+        setErrorMsg(`Die Verbindung zu @${check.revokedGuests.join(', @')} wurde getrennt. Das Gastprofil wurde entfernt — bitte einen neuen Sync-Code anfordern.`);
         return;
       }
     }
@@ -194,7 +194,7 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
       <div className="hero-glow-bg-setup" />
 
       <div className="app-header">
-        <h1>🎯 Neues Spiel</h1>
+        <h1>Neues Spiel</h1>
         <p className="subtitle">Konfiguriere dein Match</p>
       </div>
 
@@ -235,7 +235,7 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
           fullWidth
           onClick={handleStartGame}
         >
-          🎯 Spiel starten
+          <Icons.IconPlayFilled size={20} /> Spiel starten
         </Button>
       </div>
 

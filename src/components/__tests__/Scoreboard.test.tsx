@@ -69,7 +69,8 @@ describe('Scoreboard Component', () => {
     );
 
     expect(screen.getByText('Dominik')).toBeInTheDocument();
-    expect(screen.getByText('🤖 Bot Level 3')).toBeInTheDocument();
+    // Der Bot-Kopf ist ein Icon neben dem Namen, kein Zeichen im Namen.
+    expect(screen.getByText('Bot Level 3')).toBeInTheDocument();
     expect(screen.getByText('501')).toBeInTheDocument();
     expect(screen.getByText('380')).toBeInTheDocument();
   });

@@ -44,7 +44,7 @@ describe('ProfileTab', () => {
 
   it('offers the cloud login while signed out', () => {
     renderTab();
-    expect(screen.getByText('🔑 Cloud-Login')).toBeInTheDocument();
+    expect(screen.getByText('Cloud-Login')).toBeInTheDocument();
     // The sync panel belongs to an account.
     expect(screen.queryByText('Gast-Sync & Geräte-Freigaben')).not.toBeInTheDocument();
   });
@@ -53,8 +53,9 @@ describe('ProfileTab', () => {
     renderTab();
 
     fireEvent.click(screen.getByText(/Match Historie ansehen/));
-    expect(screen.getByText('📜 Match Historie')).toBeInTheDocument();
-    expect(screen.getByText('🏆 Dominik')).toBeInTheDocument();
+    expect(screen.getByText('Match Historie')).toBeInTheDocument();
+    // Der Pokal ist ein Icon neben dem Namen; der Sieger steht in seiner Zeile.
+    expect(document.querySelector('.history-winner')?.textContent).toContain('Dominik');
 
     fireEvent.click(screen.getByText(/Zurück/));
     expect(screen.getByText('Vorhandene Profile')).toBeInTheDocument();
@@ -63,7 +64,7 @@ describe('ProfileTab', () => {
   it('opens a player dashboard from the list', () => {
     renderTab();
 
-    fireEvent.click(screen.getByText(/👤 Dominik/));
+    fireEvent.click(screen.getByRole('button', { name: 'Dominik' }));
 
     // The dashboard replaces the list; its own header carries the name.
     expect(screen.queryByText('Neues Profil erstellen')).not.toBeInTheDocument();
@@ -90,6 +91,6 @@ describe('ProfileTab', () => {
 
     renderTab({ matches: [match('Dominik', ['60.1', '58.4'])] });
     fireEvent.click(screen.getByText(/Match Historie ansehen/));
-    expect(screen.getByText('📈 Leg-Verlauf')).toBeInTheDocument();
+    expect(screen.getByText('Leg-Verlauf')).toBeInTheDocument();
   });
 });

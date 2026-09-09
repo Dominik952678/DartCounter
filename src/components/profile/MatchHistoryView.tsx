@@ -4,7 +4,7 @@ import { MatchImageExport } from '../MatchImageExport';
 import { LegProgressChart } from './LegProgressChart';
 import { hasLegProgress } from './legProgress';
 import { useNotificationStore } from '../../store/useNotificationStore';
-import { Button } from '../ui';
+import { Button, Icons } from '../ui';
 import { playerColorByName } from '../../utils/playerColors';
 
 interface MatchHistoryViewProps {
@@ -63,23 +63,23 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
 
       <div className="app-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', position: 'relative', zIndex: 1 }}>
         <Button variant="ghost" onClick={onBack}>
-          &larr; Zurück
+          <Icons.IconArrowLeft size={17} /> Zurück
         </Button>
-        <h2 style={{ margin: 0, fontSize: '1.5em' }}>📜 Match Historie</h2>
+        <h2 style={{ margin: 0, fontSize: '1.5em' }}>Match Historie</h2>
         <div style={{ width: '60px' }} />
       </div>
 
       <div style={{ position: 'relative', zIndex: 1 }}>
         {matches.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--text-dim)' }}>
-            <div style={{ fontSize: '2em', marginBottom: '10px' }}>🎯</div>
+            <Icons.IconTarget size={32} style={{ margin: '0 auto 10px' }} />
             <p>Noch keine Matches gespeichert.</p>
           </div>
         ) : (
           matches.map((m, i) => (
             <div key={i} id={`history-item-${i}`} className="history-item card" style={{ marginBottom: '10px' }}>
               <div className="history-header" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span className="history-winner" style={{ color: profiles[m.winner]?.color || playerColorByName(m.winner) }}>🏆 {m.winner}</span>
+                <span className="history-winner" style={{ color: profiles[m.winner]?.color || playerColorByName(m.winner) }}><Icons.IconTrophy size={16} className="icon-inline" />{m.winner}</span>
                 <span className="history-date" style={{ color: 'var(--text-dim)', fontSize: '0.85em' }}>{m.date}</span>
               </div>
               <div className="history-players">
@@ -112,7 +112,7 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
                     aria-expanded={expandedMatch === i}
                     onClick={() => setExpandedMatch(expandedMatch === i ? null : i)}
                   >
-                    {expandedMatch === i ? '📈 Verlauf ausblenden' : '📈 Leg-Verlauf'}
+                    <><Icons.IconChart size={17} /> {expandedMatch === i ? 'Verlauf ausblenden' : 'Leg-Verlauf'}</>
                   </Button>
                 )}
                 <Button
@@ -120,7 +120,7 @@ export const MatchHistoryView: React.FC<MatchHistoryViewProps> = ({
                   disabled={exportingMatch !== null}
                   onClick={() => setExportingMatch(i)}
                 >
-                  {exportingMatch === i ? '⏳ Wird erstellt…' : '📸 Als Bild teilen'}
+                  {exportingMatch === i ? 'Wird erstellt…' : <><Icons.IconCamera size={17} /> Als Bild teilen</>}
                 </Button>
                 {exportingMatch === i && (
                   <div style={{ position: 'absolute', left: '-15000px', top: 0 }}>

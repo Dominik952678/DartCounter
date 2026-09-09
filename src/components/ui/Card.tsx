@@ -48,7 +48,7 @@ export interface CardHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
    * nicht `title`, weil `title` auf einem div schon das Tooltip-Attribut ist.
    */
   heading?: React.ReactNode;
-  /** Emoji vor der Überschrift. Dekorativ, wird für Screenreader versteckt. */
+  /** Icon vor der Überschrift. Dekorativ, wird für Screenreader versteckt. */
   icon?: React.ReactNode;
   /** Steht rechts in der Kopfzeile, z. B. ein Badge oder ein Ghost-Button. */
   action?: React.ReactNode;

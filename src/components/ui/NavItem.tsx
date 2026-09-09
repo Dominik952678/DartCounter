@@ -1,7 +1,7 @@
 import React from 'react';
 
 export interface NavItemProps {
-  /** Emoji oder Icon — dekorativ, der Screenreader liest `label`. */
+  /** Ein Icon aus dem Set — dekorativ, der Screenreader liest `label`. */
   icon: React.ReactNode;
   label: string;
   /** Vollständiger Name für Screenreader, wenn `label` abgekürzt ist ("Stats"). */

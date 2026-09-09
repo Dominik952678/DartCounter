@@ -4,7 +4,7 @@ import { saveMatch } from '../../db';
 import { useAuthStore } from '../../store/useAuthStore';
 import { reportPersistenceError } from '../../store/useNotificationStore';
 import { SAMPLE_MATCHES, SAMPLE_PROFILES, SAMPLE_PROFILE_KEYS } from '../../utils/sampleData';
-import { Button, Card, CardHeader } from '../ui';
+import { Button, Card, CardHeader, Icons } from '../ui';
 
 interface SampleDataCardProps {
   profiles: Record<string, Profile>;
@@ -34,7 +34,7 @@ export const SampleDataCard: React.FC<SampleDataCardProps> = ({ profiles, onUpda
       reportPersistenceError(err, 'Testdaten konnten nicht gespeichert werden');
       return;
     }
-    flash('✅ 4 Testprofile & 4 Demospiele erfolgreich geladen! (Deine eigenen Profile bleiben unverändert)');
+    flash('4 Testprofile & 4 Demospiele erfolgreich geladen! (Deine eigenen Profile bleiben unverändert)');
   };
 
   const handleRemove = () => {
@@ -42,13 +42,13 @@ export const SampleDataCard: React.FC<SampleDataCardProps> = ({ profiles, onUpda
     SAMPLE_PROFILE_KEYS.forEach(key => {
       if (profiles[key]) onDeleteProfile(key);
     });
-    flash('🗑️ Testdaten sauber entfernt. Deine eigenen Stats bleiben unberührt.');
+    flash('Testdaten sauber entfernt. Deine eigenen Stats bleiben unberührt.');
   };
 
   return (
     <Card style={{ marginTop: '20px' }}>
       <CardHeader
-        icon="🧪"
+        icon={<Icons.IconFlask size={20} />}
         heading="Testdaten & Demospiele"
         action={<span className="stat-label">Sicheres Ausprobieren</span>}
       />
@@ -77,7 +77,7 @@ export const SampleDataCard: React.FC<SampleDataCardProps> = ({ profiles, onUpda
           variant="primary"
           onClick={handleLoad}
         >
-          🧪 Testprofile & Demospiele laden
+          <Icons.IconFlask size={18} /> Testprofile &amp; Demospiele laden
         </Button>
 
         {hasSampleProfiles && (
@@ -86,7 +86,7 @@ export const SampleDataCard: React.FC<SampleDataCardProps> = ({ profiles, onUpda
             variant="dangerText"
             onClick={handleRemove}
           >
-            🗑️ Testdaten wieder entfernen
+            <Icons.IconTrash size={17} /> Testdaten wieder entfernen
           </Button>
         )}
       </div>

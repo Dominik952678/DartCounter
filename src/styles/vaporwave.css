@@ -43,6 +43,7 @@
   --text-success: #00FF9D;
   --text-danger: #FF0055;
   --text-danger-rgb: 255, 0, 85;
+  --text-danger-soft: #FF6C99;            /* kleiner Hinweistext auf dem Grund */
 
   /* ── Text ── */
   --text-primary: #E0E0E0;
@@ -65,13 +66,23 @@
   --chart-8: #00A3FF;
   --chart-rest: #4B3A6E;
 
-  /* ── Kanten ── */
+  /* ── Kanten ──
+     Die ganze Radius-Leiter auf 0. Die harte Kante IST das Motiv dieses Themes;
+     eine Sprosse, die hier nicht genullt wird, erbt still den classic-Wert und
+     rundet dann als einzige mitten im Screen. Das gilt auch für --radius-pill:
+     ein Segment-Slider bekommt hier eine scharfe Kante samt scharfem Thumb.
+     Kreise, wo es einen braucht, macht dieses Theme unten per `50%`. */
   --radius-xs: 0px;
   --radius-sm: 0px;
   --radius-card: 0px;
   --radius: 0px;
   --radius-lg: 0px;
   --radius-xl: 0px;
+  --radius-pill: 0px;
+  --radius-tile: 0px;
+  --radius-row: 0px;
+  --radius-key: 0px;
+  --radius-key-sm: 0px;
 
   /* ── Glühen ── */
   --primary-glow: rgba(0, 255, 255, 0.4);
@@ -95,6 +106,10 @@
 [data-theme="vaporwave"] .page-title,
 [data-theme="vaporwave"] .player-name {
   font-family: var(--font-heading);
+  /* Steht hier, weil h1/h2 in index.css seit Caprasimo auf --weight-regular
+     liegen — Caprasimo hat nur diesen einen Schnitt. Orbitron hat mehrere, und
+     die Überschrift dieses Themes lag immer auf 500. */
+  font-weight: var(--weight-medium);
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }

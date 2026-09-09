@@ -1,4 +1,5 @@
 import React from 'react';
+import { Icons } from './ui';
 
 interface LoadingScreenProps {
   /** Headline; omitted for the bare "connecting" case. */
@@ -15,7 +16,7 @@ interface LoadingScreenProps {
  */
 export const LoadingScreen: React.FC<LoadingScreenProps> = ({ title, message, children }) => (
   <div className="screen active-screen center-stage">
-    <div className="loading-orb" aria-hidden="true">🎯</div>
+    <div className="loading-orb" aria-hidden="true"><Icons.IconTarget size={42} /></div>
     {title && <h3 className="center-stage-title">{title}</h3>}
     {message && <p className="center-stage-text">{message}</p>}
     {children}

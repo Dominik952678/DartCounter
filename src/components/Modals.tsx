@@ -3,7 +3,7 @@ import { useModalA11y } from '../hooks/useModalA11y';
 import type { Player, MatchHistory } from '../types';
 import { DartboardHeatmap } from './DartboardHeatmap';
 import { checkoutQuote } from '../utils/stats';
-import { Button, ChoiceGroup } from './ui';
+import { Button, ChoiceGroup, Icons } from './ui';
 import { MiniGameStoryExport } from './MiniGameStoryExport';
 import { buildStoryData, hasStoryData, type MiniGameType } from '../utils/storyExport';
 
@@ -70,7 +70,7 @@ export const StatsModal: React.FC<{
           <div className="drag-handle" />
           
           <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-            <div className="confetti">🏆</div>
+            <div className="confetti" aria-hidden="true"><Icons.IconTrophy size={44} /></div>
             <h2 id="stats-modal-title" className="result-winner">{winnerName} gewinnt!</h2>
             <p className="result-subtitle">Match-Statistik &amp; Analyse</p>
           </div>
@@ -93,9 +93,9 @@ export const StatsModal: React.FC<{
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '1.2em' }}>{playerObj?.isBot ? '🤖' : '👤'}</span>
+                      {playerObj?.isBot ? <Icons.IconBot size={19} /> : <Icons.IconUser size={19} />}
                       <strong className={`result-player ${isWinner ? 'is-winner' : ''}`}>
-                        {pData.name} {isWinner ? '👑' : ''}
+                        {pData.name} {isWinner && <Icons.IconTrophy size={17} />}
                       </strong>
                     </div>
                     <span className="result-stat-card result-rank">
@@ -209,7 +209,7 @@ export const StatsModal: React.FC<{
                 disabled={isExporting}
                 onClick={handleStoryExport}
               >
-                {isExporting ? 'Bild wird erstellt…' : '📸 Story-Bild erstellen'}
+                {isExporting ? 'Bild wird erstellt…' : <><Icons.IconCamera size={18} /> Story-Bild erstellen</>}
               </Button>
             </div>
           )}
@@ -221,7 +221,7 @@ export const StatsModal: React.FC<{
                 variant="primary" className="result-btn-rematch"
                 onClick={onRematch}
               >
-                <span>🔄</span> <span>Nochmal spielen</span>
+                <Icons.IconRefresh size={18} /> <span>Nochmal spielen</span>
               </Button>
             )}
 
@@ -232,7 +232,7 @@ export const StatsModal: React.FC<{
                   onClick={onUndoLastDart}
                   title="Letzten Wurf rückgängig machen (falls verklickt)"
                 >
-                  <span>↩</span> <span>Wurf zurücknehmen</span>
+                  <Icons.IconUndo size={18} /> <span>Wurf zurücknehmen</span>
                 </button>
               )}
 
@@ -240,7 +240,7 @@ export const StatsModal: React.FC<{
                 variant="ghost" className="result-btn-home"
                 onClick={onClose}
               >
-                <span>🏠</span> <span>Zurück zum Menü</span>
+                <Icons.IconHome size={18} /> <span>Zurück zum Menü</span>
               </Button>
             </div>
           </div>

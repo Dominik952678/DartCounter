@@ -3,7 +3,8 @@ import type { Profile } from '../types';
 import { useAuthStore } from '../store/useAuthStore';
 import { getActiveUserSyncInfo } from '../db';
 import { readInt, readOneOf, write } from '../utils/storage';
-import { Button, Card, CardHeader, Choice, ChoiceGroup } from './ui';
+import { Button, Card, CardHeader, Choice, ChoiceGroup, Icons } from './ui';
+import type { IconProps } from './ui';
 import { playerColorByName } from '../utils/playerColors';
 
 export type MiniGameMode = 'checkout' | 'powerscoring' | 'splitscore';
@@ -11,22 +12,22 @@ export type MiniGameMode = 'checkout' | 'powerscoring' | 'splitscore';
 const MINI_GAME_MODES: readonly MiniGameMode[] = ['checkout', 'powerscoring', 'splitscore'];
 
 /** Die drei Modus-Karten. §5 gibt ihnen denselben Selected-State wie den Chips. */
-const MODE_CHOICES: readonly { mode: MiniGameMode; icon: string; title: string; desc: string }[] = [
+const MODE_CHOICES: readonly { mode: MiniGameMode; icon: React.FC<IconProps>; title: string; desc: string }[] = [
   {
     mode: 'checkout',
-    icon: '🎯',
+    icon: Icons.IconTarget,
     title: 'Checkout Training',
     desc: 'Zufällige Checkouts unter Druck treffen'
   },
   {
     mode: 'powerscoring',
-    icon: '🔥',
+    icon: Icons.IconBars,
     title: 'Power Scoring',
     desc: 'Maximale Punkte in festen Runden sammeln'
   },
   {
     mode: 'splitscore',
-    icon: '➗',
+    icon: Icons.IconSplit,
     title: 'Split Score (Halve-It)',
     desc: 'Vorgegebene Segmente treffen oder Punkte halbieren'
   }
@@ -162,7 +163,7 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
       const syncOn = syncInfo?.syncEnabled === true
         || (syncInfo?.syncEnabled === undefined && !!syncInfo?.code && new Date(syncInfo.expiresAt) > new Date());
       if (syncInfo && syncOn && coupledHost) {
-        setErrorMsg(`⚠️ Dein Profil ist aktuell auf '${coupledHost.hostName}' gekoppelt. Trenne die Verbindung im Profil-Tab, um hier wieder lokal zu spielen.`);
+        setErrorMsg(`Dein Profil ist aktuell auf '${coupledHost.hostName}' gekoppelt. Trenne die Verbindung im Profil-Tab, um hier wieder lokal zu spielen.`);
         return;
       }
     }
@@ -219,7 +220,7 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
       <div className="hero-glow-bg-training" />
 
       <div className="app-header" style={{ marginBottom: '20px' }}>
-        <h2>🎯 Training & Mini-Games</h2>
+        <h2>Training &amp; Mini-Games</h2>
         <p className="subtitle">Verbessere deine Fähigkeiten und trainiere gezielt</p>
       </div>
 
@@ -228,14 +229,14 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
         <Card>
           <CardHeader heading={"Modus wählen"} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-            {MODE_CHOICES.map(({ mode, icon, title, desc }) => (
+            {MODE_CHOICES.map(({ mode, icon: Icon, title, desc }) => (
               <Choice
                 key={mode}
                 className="training-mode-btn"
                 selected={selectedMode === mode}
                 onClick={() => setSelectedMode(mode)}
               >
-                <span className="training-mode-icon" aria-hidden="true">{icon}</span>
+                <span className="training-mode-icon" aria-hidden="true"><Icon size={22} /></span>
                 <span>
                   <span className="training-mode-title">{title}</span>
                   <span className="training-mode-desc">{desc}</span>
@@ -289,7 +290,7 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
                         aria-label="Spieler nach oben"
                         title="Nach oben"
                       >
-                        ▲
+                        <Icons.IconChevronUp size={15} />
                       </button>
                       <button
                         type="button"
@@ -299,7 +300,7 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
                         aria-label="Spieler nach unten"
                         title="Nach unten"
                       >
-                        ▼
+                        <Icons.IconChevronDown size={15} />
                       </button>
                     </div>
 
@@ -315,7 +316,7 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
                       fontSize: '14px',
                       backgroundColor: playerColorByName(playerName || `Spieler ${i+1}`) 
                     }}>
-                      {isBot ? '🤖' : (playerName.charAt(0).toUpperCase() || '?')}
+                      {isBot ? <Icons.IconBot size={17} /> : (playerName.charAt(0).toUpperCase() || '?')}
                     </div>
 
                     {isGuest ? (
@@ -375,7 +376,7 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
                   fontWeight: 'var(--weight-medium)'
                 }}
               >
-                <span aria-hidden="true">⚠️</span>
+                <Icons.IconAlert size={18} />
                 <span>{errorMsg}</span>
               </div>
             )}
@@ -389,7 +390,7 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
                     onChange={(e) => setRandomOrderOnStart(e.target.checked)}
                   />
                   <span className="option-toggle-title">
-                    🎲 Zufällige Reihenfolge beim Start auslosen
+                    <Icons.IconShuffle size={16} /> Zufällige Reihenfolge beim Start auslosen
                   </span>
                 </label>
               </div>
@@ -450,7 +451,7 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
           )}
 
           <Button variant="primary" size="large" fullWidth onClick={handleStart}>
-            🚀 Training starten
+            <Icons.IconPlayFilled size={20} /> Training starten
           </Button>
         </div>
       </div>

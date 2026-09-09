@@ -51,8 +51,8 @@ export const HomeContainer: React.FC<HomeContainerProps> = ({
           name="offlineSubTab"
           value={effectiveSubTab}
           options={[
-            { value: 'match', label: '🎯 X01 Match' },
-            { value: 'training', label: '🏋️ Training' }
+            { value: 'match', label: 'X01 Match' },
+            { value: 'training', label: 'Training' }
           ]}
           onChange={setActiveSubTab}
           ariaLabel="Bereich"

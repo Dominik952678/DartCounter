@@ -2,7 +2,7 @@ import React, { useEffect, useId, useState } from 'react';
 import type { Profile } from '../../types';
 import { useModalA11y } from '../../hooks/useModalA11y';
 import { throwAtTarget } from '../../utils/bot';
-import { Button } from '../ui';
+import { Button, Icons } from '../ui';
 
 type BullResult = 0 | 25 | 50;
 
@@ -24,9 +24,9 @@ interface BullOffModalProps {
 }
 
 const RESULT_LABEL: Record<BullResult, string> = {
-  50: '🎯 Bullseye',
-  25: '🔴 Bull',
-  0: '⚪ Daneben'
+  50: 'Bullseye',
+  25: 'Bull',
+  0: 'Daneben'
 };
 
 const categorize = (base: number, mult: number): BullResult => {
@@ -115,7 +115,7 @@ export const BullOffModal: React.FC<BullOffModalProps> = ({
         tabIndex={-1}
         style={{ maxWidth: '420px', padding: '24px 20px' }}
       >
-        <h3 id={titleId} style={{ textAlign: 'center', marginBottom: '6px' }}>🎯 Ausbullen</h3>
+        <h3 id={titleId} style={{ textAlign: 'center', marginBottom: '6px' }}>Ausbullen</h3>
         <p style={{ textAlign: 'center', color: 'var(--text-dim)', fontSize: '0.9em', marginBottom: '18px' }}>
           {tieMessage ?? (isTeamBullOff
             ? 'Ein Wurf pro Team — das Team des Siegers beginnt Leg 1'
@@ -135,7 +135,7 @@ export const BullOffModal: React.FC<BullOffModalProps> = ({
                 style={{ opacity: isPending ? 1 : 0.5 }}
               >
                 <span className="bulloff-name">
-                  {profiles[name]?.isBot ? '🤖 ' : ''}{name}
+                  {profiles[name]?.isBot && <Icons.IconBot size={15} className="icon-inline" />}{name}
                 </span>
                 <span className="bulloff-state">
                   {result !== null ? RESULT_LABEL[result] : (isActive && isCurrentBot ? 'wirft…' : isActive ? 'ist dran' : '—')}
@@ -151,13 +151,13 @@ export const BullOffModal: React.FC<BullOffModalProps> = ({
                 ohnehin nur eine gefüllte Akzentfläche pro Screen zu, und der
                 Dialog hat keine. */}
             <Button variant="secondary" style={{ flex: 1 }} onClick={() => submitResult(currentIndex, 50)}>
-              🎯 Bullseye
+              <Icons.IconBull size={17} /> Bullseye
             </Button>
             <Button variant="secondary" style={{ flex: 1 }} onClick={() => submitResult(currentIndex, 25)}>
-              🔴 Bull
+              <Icons.IconTarget size={17} /> Bull
             </Button>
             <Button variant="secondary" style={{ flex: 1 }} onClick={() => submitResult(currentIndex, 0)}>
-              ⚪ Daneben
+              <Icons.IconClose size={17} /> Daneben
             </Button>
           </div>
         )}
