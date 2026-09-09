@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { HomeContainer } from '../HomeContainer';
 import { MatchSetup } from '../MatchSetup';
@@ -152,6 +152,37 @@ describe('Direktstart, während die Profile noch laden', () => {
     show(twoPlayers);
     await new Promise(resolve => setTimeout(resolve, 40));
 
+    expect(onStartGame).toHaveBeenCalledTimes(1);
+  });
+});
+
+/**
+ * Der Direktstart gilt für das erste Öffnen und nur dafür.
+ *
+ * `MatchSetup` wird beim Bereichswechsel ausgehängt. Bliebe das Flag gesetzt,
+ * startete beim Zurückwechseln ein Match, das niemand mehr angetippt hat.
+ */
+describe('Direktstart nach einem Bereichswechsel', () => {
+  it('is spent once the area is switched', async () => {
+    const onStartGame = vi.fn();
+    render(
+      <MemoryRouter initialEntries={['/offline?start=1']}>
+        <HomeContainer
+          profiles={profiles}
+          setProfiles={vi.fn()}
+          onStartGame={onStartGame}
+          onStartMiniGame={vi.fn()}
+        />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => expect(onStartGame).toHaveBeenCalledTimes(1));
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Training' }));
+    await waitFor(() => expect(screen.getByText('Modus wählen')).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('radio', { name: 'X01 Match' }));
+
+    await new Promise(resolve => setTimeout(resolve, 60));
     expect(onStartGame).toHaveBeenCalledTimes(1);
   });
 });

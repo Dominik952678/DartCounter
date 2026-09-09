@@ -36,7 +36,7 @@ export const HomeContainer: React.FC<HomeContainerProps> = ({
      gelesen und festgehalten: der Parameter darf den Start genau einmal
      auslösen, nicht wieder, wenn der Nutzer nach dem Match hierher zurückkommt
      und die URL noch dieselbe ist. */
-  const [autoStartMatch] = useState(() => searchParams.get('start') === '1');
+  const [autoStartMatch, setAutoStartMatch] = useState(() => searchParams.get('start') === '1');
 
   // `?tab=` only seeds the initial tab. Keeping it authoritative would freeze
   // the switcher whenever the screen was opened from a quickstart link.
@@ -52,6 +52,20 @@ export const HomeContainer: React.FC<HomeContainerProps> = ({
     write('offlineSubtab', effectiveSubTab);
   }, [effectiveSubTab]);
 
+  /**
+   * Der Direktstart gilt für das erste Öffnen und nur dafür.
+   *
+   * Wer den Bereich wechselt, hat die Absicht aufgegeben. Ohne dieses Zurücksetzen
+   * käme sie zurück: `MatchSetup` wird beim Umschalten ausgehängt, und beim
+   * Zurückwechseln mit noch gesetztem Flag startete ein Match, das niemand mehr
+   * angetippt hat. Sichtbar wurde das erst, als der Wechsel eine eigene
+   * Einblendung bekam — vorher fiel es nur nicht auf.
+   */
+  const changeSubTab = (next: 'match' | 'training') => {
+    setAutoStartMatch(false);
+    setActiveSubTab(next);
+  };
+
   return (
     <div className="home-container" style={{ paddingBottom: '20px' }}>
       {/* Zwei Bereiche, also der Fall für den Slider: die Fläche fährt zwischen
@@ -64,12 +78,16 @@ export const HomeContainer: React.FC<HomeContainerProps> = ({
             { value: 'match', label: 'X01 Match' },
             { value: 'training', label: 'Training' }
           ]}
-          onChange={setActiveSubTab}
+          onChange={changeSubTab}
           ariaLabel="Bereich"
         />
       </div>
 
-      <div className="home-content">
+      {/* Der Schlüssel wechselt mit dem Bereich, React tauscht den Knoten also
+          aus — und nur dadurch läuft die Einblend-Keyframe beim Umschalten
+          erneut. Ohne ihn wäre der Wechsel ein harter Schnitt, während der
+          Slider darüber gleitet. */}
+      <div className="home-content" key={effectiveSubTab}>
         {effectiveSubTab === 'match' ? (
           <MatchSetup 
             profiles={profiles}

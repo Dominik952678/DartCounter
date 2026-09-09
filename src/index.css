@@ -1435,6 +1435,12 @@ button:disabled, .btn:disabled {
   justify-content: space-between;
   user-select: none;
   touch-action: manipulation;
+
+  /* Was die Eingabespalte mindestens braucht, damit jede Taste die 44pt aus §4
+     hält: fünf Reihen, vier Abstände, dazu Wurfanzeige und Modifikatoren.
+     Steht als Token hier, weil zwei Regeln darauf zeigen und die Zahl sonst
+     zweimal gepflegt werden müsste. */
+  --keypad-min: calc(5 * 44px + 4 * var(--space-3) + 46px + 44px + 18px);
 }
 
 .game-screen-body {
@@ -1447,15 +1453,26 @@ button:disabled, .btn:disabled {
   overflow: hidden;
 }
 
+/* ── Wer bei Platznot nachgibt ──
+
+   Hier stand `min-height: 130px`, und das war der Boden, an dem die Eingabe
+   scheiterte: das Board bestand auf seinen 130px, die Tasten bestanden auf ihren
+   44pt, und was nicht mehr passte, schnitt `.game-screen-body { overflow:
+   hidden }` unten ab — man sah eine halbe Tastenreihe und konnte sie nicht
+   treffen.
+
+   Die Reihenfolge ist jetzt festgelegt: die Eingabespalte bekommt ihren Platz
+   zuerst, das Board gibt nach. Das Board darf das, weil es scrollt — eine
+   Punktzahl, die man wegwischen kann, ist erreichbar; eine halbe Taste nicht. */
 .game-screen-left {
   flex: 1 1 42%;
-  min-height: 130px;
+  /* Nachgeben ist erlaubt, bis auf null. */
+  min-height: 0;
+  /* Und wachsen nur bis knapp unter die Hälfte — sonst nimmt ein Board mit vier
+     Spielern der Eingabe den Platz, den sie zuerst braucht. */
+  max-height: 46%;
   display: flex;
   flex-direction: column;
-  /* Sicherheitsnetz: `.game-screen-body` schneidet ab, damit das Keypad nie
-     unter den Bildschirmrand rutscht. Was hier trotzdem zu hoch wird — ein
-     Runden-Raster über zwanzig Runden, vier Spieler — bleibt so erreichbar,
-     statt einfach zu fehlen. */
   overflow-y: auto;
   overscroll-behavior: contain;
 }
@@ -1465,7 +1482,12 @@ button:disabled, .btn:disabled {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  min-height: 0;
+  /* Der Boden hängt an der SPALTE und nicht an der Taste. Als Boden der Taste
+     wuchs das Raster über seinen Container hinaus, und Flexbox hat keinen
+     Grund, deswegen die Nachbarspalte zu stauchen — es lief einfach unten
+     heraus. Als Boden der Spalte ist es eine Größe, gegen die das Board
+     schrumpft. */
+  min-height: min(var(--keypad-min), 100%);
 }
 
 /* ── Keypad (Full-Fill & Thumb Optimized) ──────────── */
@@ -1495,7 +1517,7 @@ button:disabled, .btn:disabled {
   justify-content: center; 
   background: transparent; 
   border: 2px dashed rgba(148, 163, 184, 0.15);
-  border-radius: var(--radius-sm); 
+  border-radius: var(--radius-key); 
   font-size: 1.1em; 
   font-weight: var(--weight-medium);
   transition: all 0.15s ease;
@@ -1562,7 +1584,7 @@ button:disabled, .btn:disabled {
 .mod-btn {
   background: var(--surface-card);
   color: var(--text-secondary);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-key);
   padding: var(--space-2) var(--space-1);
   font-weight: var(--weight-regular);
   font-size: var(--text-body);
@@ -1602,8 +1624,9 @@ button:disabled, .btn:disabled {
 .num-btn {
   background: var(--surface-card);
   border: 2px solid transparent;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-key);
   height: 100%;
+  min-height: 0;
   font-size: clamp(1.2rem, 5.5vw, 1.55rem);
   font-weight: var(--weight-medium);
   color: var(--text-primary);
@@ -1617,9 +1640,12 @@ button:disabled, .btn:disabled {
   border-color: var(--accent-primary);
   transform: scale(0.94);
 }
-/* Die 44pt-Untergrenze aus §4, für jede Taste im Keypad. */
+/* Die 44pt aus §4 kommen jetzt von `--keypad-min` an der Spalte, nicht von einem
+   Boden hier: ein Boden an der Taste ließ das Raster über den Container wachsen,
+   statt der Nachbarspalte Platz abzuringen. Reicht die Höhe trotz allem nicht,
+   werden die Tasten kleiner — sichtbar und treffbar bleibt besser als
+   abgeschnitten. */
 .keypad button {
-  min-height: 44px;
   transition: transform 0.05s ease-out, background-color 0.15s, border-color 0.2s;
 }
 .keypad button:active {
@@ -1887,7 +1913,7 @@ button:disabled, .btn:disabled {
   }
   .game-screen-left .player-card {
     padding: 4px 8px;
-    border-radius: 10px;
+    border-radius: var(--radius-key-sm);
   }
   .game-screen-left .player-name {
     font-size: 0.88rem !important;
@@ -1957,9 +1983,10 @@ button:disabled, .btn:disabled {
     gap: 20px !important;
     grid-template-columns: 1fr clamp(380px, 38vw, 500px) !important;
   }
+  /* Auf dem Tablet ist die Kachel groß genug für die Karten-Sprosse. */
   .game-screen-left .player-card {
     padding: 14px 18px;
-    border-radius: var(--radius);
+    border-radius: var(--radius-tile);
   }
   .game-screen-left .score-display {
     font-size: clamp(3.2rem, 7vw, 5.2rem);
@@ -1967,7 +1994,7 @@ button:disabled, .btn:disabled {
   .game-screen-right .keypad {
     padding: 16px;
     background: var(--card);
-    border-radius: var(--radius);
+    border-radius: var(--radius-card);
     border: 1px solid var(--card-border);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
@@ -1975,7 +2002,7 @@ button:disabled, .btn:disabled {
   .game-screen-right .num-btn {
     min-height: 48px;
     font-size: 1.35em;
-    border-radius: 12px;
+    border-radius: var(--radius-key);
   }
   .game-screen-right .mod-btn {
     min-height: 44px;
@@ -2577,12 +2604,14 @@ body:has(.app-nav-vertical) .app-container {
    container rather than the number of players alone.
    ═══════════════════════════════════════════════════════════════════════════ */
 
+/* Kein `margin-bottom` mehr: der Abstand nach unten kommt aus dem `gap` von
+   `.game-screen-body`. Als eigener Rand waren es 16px, die innerhalb der
+   scrollenden Spalte lagen und der Eingabe fehlten. */
 .scoreboard {
   display: grid;
   grid-template-columns: 1fr;
   gap: 8px;
   align-content: stretch;
-  margin-bottom: 16px;
 }
 .scoreboard[data-players="2"] { grid-template-columns: 1fr 1fr; }
 .scoreboard[data-players="3"] { grid-template-columns: repeat(3, 1fr); }
@@ -3690,10 +3719,10 @@ body:has(.app-nav-vertical) .app-container {
   align-items: center;
   gap: 2px;
   padding: var(--space-2) var(--space-1);
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-key);
   background: var(--surface-card);
   border: 2px solid transparent;
-  min-height: 48px;
+  min-height: clamp(44px, 7.5vh, 68px);
   justify-content: center;
 }
 .split-target-label {
@@ -3766,10 +3795,13 @@ body:has(.app-nav-vertical) .app-container {
 }
 
 /* Alle Ziele der Sitzung. Sechs je Reihe, weil es bis zu zwanzig sein können. */
+/* Fünf je Reihe statt sechs. Seit jeder Kasten sein Ziel trägt, steht dort eine
+   dreistellige Zahl („117"), und in einem Sechstel der Kartenbreite lief die auf
+   einem Telefon aus dem Kasten heraus. */
 .co-targets {
   list-style: none;
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: var(--space-2);
   flex: 1;
   min-height: 0;
@@ -3784,22 +3816,33 @@ body:has(.app-nav-vertical) .app-container {
   justify-content: center;
   gap: 2px;
   padding: var(--space-1);
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-key);
   background: var(--surface-card);
   border: 2px solid transparent;
-  min-height: 44px;
+  /* Wie im Runden-Raster: mit der Gerätehöhe wachsen, statt bei 44px stehen zu
+     bleiben und die Karte darunter leer zu lassen. */
+  min-height: clamp(44px, 7.5vh, 68px);
 }
+/* Das Ziel selbst ist jetzt die Hauptzahl des Kastens und nicht mehr eine
+   laufende Nummer — also Mono, damit „40" und „117" gleich ansetzen. */
 .co-target-label {
-  font-size: var(--text-label);
-  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
   line-height: 1;
 }
 .co-target-value {
   font-family: var(--font-mono);
-  font-size: var(--text-body);
-  font-weight: var(--weight-medium);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-label);
   color: var(--text-secondary);
   line-height: 1;
+}
+/* Noch nicht gespielt: das Ziel steht da, ist aber nicht die Nachricht. */
+.co-target:not(.is-hit):not(.is-missed):not(.is-current) .co-target-label {
+  color: var(--text-secondary);
 }
 .co-target.is-hit { background: color-mix(in srgb, var(--text-success) 14%, transparent); }
 .co-target.is-hit .co-target-value { color: var(--text-success); }
@@ -3922,13 +3965,15 @@ body:has(.app-nav-vertical) .app-container {
 /* Die Kette von der Spalte bis zum Raster: jedes Glied muss `min-height: 0`
    tragen, sonst kommt die Höhenbegrenzung unten nicht an und das Raster wird
    abgeschnitten, statt zu scrollen. */
+/* Das senkrechte Polster war toter Platz: die Spalte darüber bringt schon einen
+   Abstand mit, und in einem Bereich, in dem das Runden-Raster um jede Reihe
+   kämpft, sind 16px eine halbe Reihe. */
 .ps-board {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
   flex: 1;
   min-height: 0;
-  padding: var(--space-2) 0;
 }
 
 .ps-card {
@@ -3987,6 +4032,11 @@ body:has(.app-nav-vertical) .app-container {
   align-content: start;
 }
 
+/* Die Kästen wachsen mit der Höhe des Geräts, statt bei 48px stehen zu bleiben
+   und den Rest der Karte leer zu lassen: auf einem iPad im Hochformat werden
+   daraus knapp 70px, auf einem Telefon im Querformat bleiben es 44 — die
+   Untergrenze aus §4. Nach oben begrenzt, weil fünf riesige Kästen bei fünf
+   eingestellten Runden albern aussehen. */
 .ps-round {
   display: flex;
   flex-direction: column;
@@ -3994,10 +4044,10 @@ body:has(.app-nav-vertical) .app-container {
   justify-content: center;
   gap: 2px;
   padding: var(--space-2) var(--space-1);
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-key);
   background: var(--surface-card);
   border: 2px solid transparent;
-  min-height: 48px;
+  min-height: clamp(44px, 7.5vh, 68px);
 }
 .ps-round-no {
   font-size: var(--text-label);
@@ -4022,34 +4072,54 @@ body:has(.app-nav-vertical) .app-container {
 }
 .ps-round.is-current .ps-round-value { color: var(--accent-primary); }
 
-/* ── Mitspieler ── */
+/* ── Mitspieler ──
+
+   Wer nicht wirft, ist eine Pille in einer Zeile. Vorher war jeder eine eigene
+   Karte mit Rahmen, 44px Mindesthöhe und `flex: 1 1 140px` — bei vier Spielern
+   also bis zu drei umgebrochene Reihen à 44px plus Abstände, die dem
+   Runden-Raster fehlten, für eine Information von drei Zeichen.
+
+   Groß ist, wer wirft: seine Karte trägt die große Zahl und füllt die Höhe. Die
+   Staffelung selbst ist die Auskunft darüber, wer dran ist — deutlicher als
+   jede Markierung an vier gleich großen Kacheln.
+
+   Die Zeile scrollt zur Seite statt umzubrechen: eine Reihe, deren Höhe man
+   kennt, ist einer Reihe vorzuziehen, die je nach Namenslänge eine oder drei
+   Zeilen hoch ist. Der Balken darf sich nicht selbst verstecken. */
 .ps-others {
   list-style: none;
   display: flex;
-  flex-wrap: wrap;
   gap: var(--space-2);
   flex-shrink: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
 }
+.ps-others::-webkit-scrollbar { display: none; }
+
 .ps-other {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  flex: 1 1 140px;
-  padding: var(--space-2) var(--space-3);
+  flex: 0 0 auto;
+  max-width: 11rem;
+  padding: 0 var(--space-3);
   background: var(--surface-card);
   border: 1px solid var(--card-border);
-  border-radius: var(--radius-card);
-  font-size: var(--text-body);
-  min-height: 44px;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-label);
+  /* Klein, aber nicht kleiner: die Pille wird nicht angetippt, sie ist Anzeige —
+     die 44pt aus §4 gelten hier nicht. */
+  min-height: 30px;
 }
 .ps-other-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-pill);
   flex-shrink: 0;
 }
 .ps-other-name {
-  flex: 1;
+  min-width: 0;
   color: var(--text-secondary);
   white-space: nowrap;
   overflow: hidden;
@@ -4279,10 +4349,13 @@ body:has(.app-nav-vertical) .app-container {
   display: inline-block;
   will-change: transform;
 }
+/* 20px statt der 28px der Karten-Sprosse: diese Kachel ist auf einem Telefon im
+   2×2-Raster keine 100px hoch, und ein 28px-Radius frisst dort zusammen mit
+   `overflow: hidden` die Ecken des Inhalts. */
 .player-card {
   position: relative;
   background: var(--surface-card);
-  border-radius: var(--radius-card);
+  border-radius: var(--radius-key);
   padding: 8px 10px;
   transition: all 0.2s ease;
   overflow: hidden;
@@ -4830,6 +4903,57 @@ button.home-tile:active { transform: scale(0.99); }
   .home-resume { padding: var(--space-8); }
 }
 
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Übergänge zwischen den Screens
+
+   `.screen` und `.active-screen` trugen bis jetzt gar kein CSS — die Klassen
+   stammen aus der Zeit vor dem Router und standen nur im Markup. Sie sind der
+   Ort für den einen gemeinsamen Übergang.
+
+   Bewegt wird ausschließlich die Deckkraft, und das ist keine Bequemlichkeit:
+   ein `transform` oder ein `translate` auf einem Screen macht ihn zum
+   Bezugsrahmen für alles `position: fixed` darin. Die Modals dieser App liegen
+   in den Screens; ein Verschiebe-Effekt hier hätte jeden Dialog aus der Mitte
+   des Fensters in die Mitte seines Screens gerückt und das Overlay auf dessen
+   Ausschnitt beschnitten.
+
+   Kein `both`/`forwards` aus demselben Grund für den Fall, dass hier je eine
+   Bewegung dazukommt: eine Füllung behält den Endwert, und ein `translateY(0)`
+   ist auch ein Transform.
+
+   `prefers-reduced-motion` greift über den Grobschnitt am Anfang der Datei.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.active-screen {
+  animation: screenFade var(--motion-slide) ease-out;
+}
+
+@keyframes screenFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Wo ein Screen einen eigenen Inhalts-Container hat, darf der zusätzlich
+   aufsteigen: dort liegt kein `position: fixed`-Nachfahre, das Modal ist ein
+   Geschwister davon. */
+.home-body,
+.match-setup-grid,
+.training-hub-grid {
+  animation: contentRise var(--motion-slide) var(--ease-glide);
+}
+
+@keyframes contentRise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Der Wechsel X01 ↔ Training. Der Schlüssel am Container in HomeContainer.tsx
+   wechselt mit dem Bereich, React tauscht also den Knoten aus — und genau
+   deshalb läuft die Keyframe erneut. Ohne den Schlüssel bliebe der Wechsel
+   ein harter Schnitt, während der Slider daneben gleitet. */
+.home-content {
+  animation: contentRise var(--motion-slide) var(--ease-glide);
+}
 
 /* ── Ergebnis-Dialog ── */
 /* §1 nennt den Sieg-Screen ausdrücklich als Ort für --text-success — das ist
