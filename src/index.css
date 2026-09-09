@@ -216,10 +216,10 @@ h4 { font-size: var(--text-body); }
    size themselves against the space actually left over between the safe areas
    and the floating bottom dock, instead of guessing with a hard-coded number. */
 .app-container {
-  /* Kept in sync with `.app-nav { --dock-height }` plus its offset from the
-     bottom edge, so no screen can end up hidden behind the floating dock.
-     Ab 900px steht die Navigation links und diese Reservierung entfällt —
-     siehe den Sidebar-Block bei der Navigation. */
+  /* Kept in sync with `.app-nav-horizontal { --dock-height }` plus its offset
+     from the bottom edge, so no screen can end up hidden behind the floating
+     dock. Steht die Navigation als Schiene links, entfällt die Reservierung —
+     das regelt `body:has(.app-nav-vertical)` beim Navigations-Block. */
   --dock-height: 58px;
   --dock-offset: 0px;
   --dock-space: calc(var(--dock-height) + var(--dock-offset) + var(--safe-bottom) + 20px);
@@ -1695,22 +1695,18 @@ button:disabled, .btn:disabled {
 /* Telefon im Querformat: schmalerer Dock, damit von ~400pt Höhe etwas übrig
    bleibt. Das ist KEINE Layout-Ausnahme im Sinne der Breiten-Kette — es geht
    um vertikalen Platz für die Navigation, nicht um die Anordnung eines
-   Screens, und gilt deshalb weiterhin app-weit. */
+   Screens, und gilt deshalb weiterhin app-weit.
+
+   Nur die Reservierung steht hier. Die Dock-Box selbst wird weiter unten
+   umgestellt, direkt bei den anderen Dock-Regeln: eine Media-Query verleiht
+   keine Spezifität, und von hier oben aus verlor `--dock-height: 46px` gegen
+   die 58px der Basisregel, die später in der Datei steht. Die Reservierung
+   schrumpfte, der Dock blieb hoch. */
 @media (orientation: landscape) and (max-height: 520px) {
   .app-container {
     --dock-height: 46px;
     --dock-offset: 6px;
   }
-  .app-nav {
-    --dock-height: 46px;
-    bottom: 6px;
-    padding: 4px 10px;
-  }
-  .nav-item {
-    padding: 2px 8px;
-    gap: 1px;
-  }
-  .nav-item .nav-icon { font-size: 1.05em; }
 }
 
 /* Stufe 2 — Telefon im Querformat: rund 400pt Höhe müssen Kopfzeile, Board
@@ -1840,68 +1836,83 @@ button:disabled, .btn:disabled {
   }
 }
 
-/* ── Hauptnavigation (DESIGN.md §6) ──
-   Ein Markup, zwei Erscheinungsformen: unter 900px der schwebende Dock am
-   unteren Rand, ab 900px die linke Sidebar. Markup: components/AppNav.tsx,
-   der Eintrag selbst: components/ui/NavItem.tsx.
+/* ═══════════════════════════════════════════════════════════════════════════
+   Hauptnavigation (DESIGN.md §6)
+
+   Ein Markup, zwei Ausrichtungen: waagerecht der schwebende Dock am unteren
+   Rand, senkrecht die Schiene links. Markup: components/AppNav.tsx, der
+   Eintrag selbst: components/ui/NavItem.tsx.
+
+   Die Ausrichtung steht als Klasse am Element (`.app-nav-horizontal` /
+   `.app-nav-vertical`) und nicht mehr als Media-Query-Umschaltung. Das war
+   nötig, weil die gleitende Markierung eine Achse braucht — und es räumt
+   zugleich eine Falle weg: die zwei Formen waren vorher dieselbe Klasse in
+   verschieden breiten Queries, weshalb eine spätere Dock-Regel die Schiene
+   überschreiben konnte, wenn sie ihre obere Grenze vergaß. Die beiden Klassen
+   schließen sich aus, da kann nichts mehr durchschlagen.
 
    Der Dock ist ein fixes Overlay, jeder scrollende Screen muss Platz dafür
    reservieren. `--dock-height` hält Reservierung und Dock-Box in Sync:
-   ändert man eins, folgt das Shell-Padding. */
+   ändert man eins, folgt das Shell-Padding.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Der geteilte Teil: fixes Overlay mit Polster, in dem die Einträge liegen.
+   `--nav-pad` ist das Polster der Schiene UND die Bezugsgröße, aus der die
+   Markierung ihre Geometrie rechnet — deshalb ein Token und keine zwei Zahlen. */
 .app-nav {
-  --dock-height: 58px;
+  --nav-pad: 6px;
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  width: 100%;
-  max-width: 600px;
-  height: calc(var(--dock-height) + var(--safe-bottom));
-  margin: 0 auto;
+  display: flex;
   background: rgba(11, 17, 32, 0.94);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-  gap: var(--space-1);
-  padding: 6px var(--space-3) calc(6px + var(--safe-bottom)) var(--space-3);
-  border-top: 1px solid var(--card-border);
   z-index: var(--z-dock);
 }
 
-@media (min-width: 600px) {
-  .app-nav {
-    bottom: 12px;
-    height: var(--dock-height);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--card-border);
-    box-shadow: var(--shadow-md);
-    padding: 6px var(--space-3);
-  }
+/* ── Die gleitende Markierung ──
+
+   Ein Element, das zum aktiven Eintrag fährt, statt fünf Einträgen, von denen
+   einer seinen Hintergrund an- und ausschaltet. Bewegt wird ausschließlich per
+   `transform`: das läuft im Compositor, während `left`/`top` bei jedem Bild
+   ein neues Layout auslösen würden.
+
+   `prefers-reduced-motion` steht hier nicht: `--motion-slide` ist unter dieser
+   Präferenz 0s (siehe tokens.css), die Markierung ist dann sofort am Ziel. */
+.nav-indicator {
+  position: absolute;
+  background: var(--bg-accent-muted);
+  border: 1px solid var(--accent-primary);
+  border-radius: var(--radius-pill);
+  /* Liegt hinter den Einträgen und darf keinen Tap abfangen. */
+  pointer-events: none;
+  z-index: 0;
+  transition:
+    transform var(--motion-slide) var(--ease-glide),
+    opacity var(--motion-color) ease;
 }
 
+/* Kein Eintrag trifft den aktuellen Pfad — etwa auf einem Screen, den die
+   Navigation nicht kennt. Ausgeblendet statt entfernt, damit sie beim nächsten
+   Wechsel von Position 0 heranfährt und nicht aus dem Nichts erscheint. */
+.nav-indicator.is-hidden { opacity: 0; }
+
 .nav-item {
+  position: relative;
+  /* Über der Markierung, sonst liegt deren Fläche auf Icon und Label. */
+  z-index: 1;
   background: transparent;
-  border: 2px solid transparent;
+  border: none;
   color: var(--text-secondary);
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
   font-size: var(--text-label);
-  font-weight: var(--weight-regular);
-  padding: var(--space-1) var(--space-2);
-  flex: 1;
-  max-width: 92px;
-  height: 100%;
-  border-radius: var(--radius-sm);
-  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
+  /* Bewusst KEIN Gewichtswechsel im aktiven Zustand: ein schwereres Label ist
+     breiter, und der Eintrag würde bei jedem Wechsel kurz zappeln. Farbe und
+     Markierung sagen es deutlich genug. */
+  font-weight: var(--weight-semibold);
   cursor: pointer;
-  /* Der Dock gibt die Höhe vor; die 44pt aus §4 kommen aus --dock-height. */
-  min-height: auto;
-  position: relative;
+  transition: color var(--motion-color) ease;
 }
 
 /* Hier stand `filter: grayscale(100%) opacity(.6)` — der einzige Weg, ein
@@ -1915,81 +1926,156 @@ button:disabled, .btn:disabled {
 }
 
 .nav-item:hover { color: var(--text-primary); }
+.nav-item.active { color: var(--text-primary); }
 
-/* Derselbe Selected-State wie überall sonst (§5). */
-.nav-item.active {
-  color: var(--text-primary);
-  background: var(--bg-accent-muted);
-  border-color: var(--accent-primary);
-  font-weight: var(--weight-medium);
+/* ── Waagerecht: der Dock am unteren Rand ── */
+.app-nav-horizontal {
+  --dock-height: 58px;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  /* Die Obergrenze sitzt an der Schiene und nicht am Eintrag. Das ist die
+     Bedingung, unter der die Markierung ohne Messung rechnen kann: gleich
+     breite Einträge. Eine `max-width` am Eintrag hätte ihn ab einer bestimmten
+     Dockbreite abgeschnitten und zentriert — und die Division wäre falsch. */
+  max-width: 600px;
+  height: calc(var(--dock-height) + var(--safe-bottom));
+  margin: 0 auto;
+  align-items: center;
+  padding: var(--nav-pad) var(--nav-pad) calc(var(--nav-pad) + var(--safe-bottom));
+  border-top: 1px solid var(--card-border);
 }
 
-.nav-item.active .nav-icon {
-  transform: scale(1.08);
+.app-nav-horizontal .nav-item {
+  /* Kein `gap` an der Schiene und keine Obergrenze hier: jeder Eintrag ist
+     damit genau Inhaltsbreite / --nav-count breit. Die Luft zwischen den
+     Einträgen macht ihr eigenes Padding. */
+  flex: 1 1 0;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+  height: 100%;
+  padding: var(--space-1) var(--space-2);
 }
 
-/* ── Sidebar ab 900px (§6) ──
-   iPad Air in beiden Ausrichtungen und iPad 13" Hochformat. Der Dock wird zur
-   festen linken Spalte, Icon und Label rücken nebeneinander — das Icon+Label-
-   Konzept aus §7 bleibt, es wandert nur.
+.app-nav-horizontal .nav-item.active .nav-icon { transform: scale(1.08); }
 
-   Den Platz schafft `body { padding-left }`, nicht ein Margin auf dem
-   Container: so bleibt `.app-container` mit seinem `margin: 0 auto` innerhalb
-   der Restbreite zentriert, wie §6 es für die ≥1200px-Stufe verlangt. */
-@media (min-width: 900px) {
-  /* Nur reservieren, wenn die Sidebar auch da ist: im laufenden Match und im
-     Lobby-Raum rendert App.tsx keine Navigation, und ohne das `:has()` stünde
-     der Inhalt dort grundlos um eine leere Spalte eingerückt. */
-  body:has(.app-nav) {
-    padding-left: calc(var(--nav-rail) + var(--safe-left));
+.app-nav-horizontal .nav-indicator {
+  top: var(--nav-pad);
+  bottom: calc(var(--nav-pad) + var(--safe-bottom));
+  left: var(--nav-pad);
+  /* Prozentwerte eines absolut positionierten Kindes beziehen sich auf die
+     Padding-Box der Schiene, also ist das hier exakt die Breite eines
+     Eintrags. Sie MUSS exakt sein: der Schritt unten ist `100%`, und ein
+     Prozentwert in `translateX` rechnet gegen die eigene Breite der Markierung.
+     Wäre sie schmaler als ein Eintrag, liefe sie mit jedem Schritt weiter aus
+     der Spur — deshalb gibt es waagerecht keine Einrückung. */
+  width: calc((100% - 2 * var(--nav-pad)) / var(--nav-count));
+  transform: translateX(calc(var(--nav-active) * 100%));
+}
+
+@media (min-width: 600px) {
+  .app-nav-horizontal {
+    bottom: 12px;
+    height: var(--dock-height);
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--card-border);
+    box-shadow: var(--shadow-md);
   }
+}
 
-  .app-nav {
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: auto;
-    width: calc(var(--nav-rail) + var(--safe-left));
-    max-width: none;
-    height: 100%;
-    margin: 0;
-    flex-direction: column;
-    justify-content: flex-start;
-    gap: var(--space-2);
-    padding:
-      calc(var(--safe-top) + var(--space-6))
-      var(--space-3)
-      calc(var(--safe-bottom) + var(--space-4))
-      calc(var(--safe-left) + var(--space-3));
-    border-top: none;
-    border-right: 1px solid var(--card-border);
-    border-radius: 0;
-    box-shadow: none;
+/* Telefon im Querformat: flacherer Dock, damit von ~400pt Höhe etwas für den
+   Screen übrig bleibt. Das Gegenstück zur Reservierung weiter oben in der Datei.
+
+   Doppelte Klasse mit Absicht. Eine Media-Query verleiht keine Spezifität, und
+   diese Regel muss zwei andere schlagen, die beide später in der Datei stehen:
+   die Basisregel des Docks und die Ausbaustufe ab 768px. Ein iPhone im
+   Querformat ist 874px breit, erfüllt also beide Queries — vorher gewann die
+   768er-Regel, und der Dock stand mit 58px Höhe 20px über dem unteren Rand.
+   Von 402pt Höhe gingen so 78pt an die Navigation, während diese Regel, die
+   genau das verhindern sollte, wirkungslos blieb. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .app-nav.app-nav-horizontal {
+    --dock-height: 46px;
+    --nav-pad: 4px;
+    bottom: 6px;
   }
-
-  .nav-item {
-    flex: 0 0 auto;
-    flex-direction: row;
-    justify-content: flex-start;
-    gap: var(--space-3);
-    width: 100%;
-    max-width: none;
-    height: auto;
-    /* Hier gibt nichts anderes die Höhe vor, also greift die 44pt-Regel aus
-       §4 direkt am Eintrag. */
-    min-height: 48px;
-    padding: var(--space-2) var(--space-3);
-    font-size: var(--text-body);
-    border-radius: var(--radius-card);
+  .app-nav.app-nav-horizontal .nav-item {
+    padding: 2px 8px;
+    gap: 1px;
   }
+}
 
-  .nav-item .nav-icon { font-size: 1.15em; }
-  .nav-item.active .nav-icon { transform: none; }
+/* ── Senkrecht: die Schiene links (§6) ──
+   iPad Air in beiden Ausrichtungen und iPad 13" Hochformat. Icon und Label
+   rücken nebeneinander — das Icon+Label-Konzept aus §7 bleibt, es wandert nur.
 
-  /* Ohne Dock am unteren Rand braucht auch niemand mehr Platz dafür. */
-  .app-container {
-    --shell-pad-bottom: calc(var(--safe-bottom) + var(--space-6));
-  }
+   Den Platz schafft `body { padding-left }`, nicht ein Margin am Container: so
+   bleibt `.app-container` mit seinem `margin: 0 auto` innerhalb der Restbreite
+   zentriert, wie §6 es für die ≥1200px-Stufe verlangt. */
+.app-nav-vertical {
+  --nav-pad: var(--space-3);
+  /* Zeilenraster: der Abstand von Eintrag zu Eintrag. Eintragshöhe und
+     Schrittweite der Markierung kommen aus derselben Zahl, sonst laufen sie
+     nach dem dritten Eintrag sichtbar auseinander. 54px liegt über den 44pt
+     aus §4. */
+  --nav-step: 54px;
+  /* Luft ober- und unterhalb der Markierung. Senkrecht rechnet der Schritt in
+     px, nicht in Prozent der eigenen Höhe — hier darf sie also eingerückt sein. */
+  --nav-inset: 3px;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: auto;
+  width: calc(var(--nav-rail) + var(--safe-left));
+  height: 100%;
+  margin: 0;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding:
+    calc(var(--safe-top) + var(--space-6))
+    var(--nav-pad)
+    calc(var(--safe-bottom) + var(--space-4))
+    calc(var(--safe-left) + var(--nav-pad));
+  border-right: 1px solid var(--card-border);
+}
+
+.app-nav-vertical .nav-item {
+  flex: 0 0 var(--nav-step);
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: var(--space-3);
+  width: 100%;
+  height: var(--nav-step);
+  padding: 0 var(--space-3);
+  font-size: var(--text-body);
+}
+
+.app-nav-vertical .nav-indicator {
+  /* Derselbe Ausgangspunkt wie der erste Eintrag: das obere Polster der
+     Schiene, plus die Einrückung. */
+  top: calc(var(--safe-top) + var(--space-6) + var(--nav-inset));
+  left: calc(var(--safe-left) + var(--nav-pad));
+  right: var(--nav-pad);
+  height: calc(var(--nav-step) - 2 * var(--nav-inset));
+  transform: translateY(calc(var(--nav-active) * var(--nav-step)));
+}
+
+/* Reservieren nur, wenn die Schiene wirklich steht: im laufenden Match und im
+   Lobby-Raum rendert App.tsx keine Navigation, und ohne das `:has()` stünde der
+   Inhalt dort grundlos um eine leere Spalte eingerückt.
+
+   Fragt die Ausrichtungs-Klasse ab statt eine 900px-Query zu öffnen — sonst
+   bekäme der Body eine Einrückung für eine Schiene, die bei erzwungenem
+   `orientation="horizontal"` gar nicht links steht. */
+body:has(.app-nav-vertical) {
+  padding-left: calc(var(--nav-rail) + var(--safe-left));
+}
+
+/* Kein Dock am unteren Rand, also braucht auch niemand Platz dafür. */
+body:has(.app-nav-vertical) .app-container {
+  --shell-pad-bottom: calc(var(--safe-bottom) + var(--space-6));
 }
 
 /* ── Profile Dashboard & Stats Styles ──── */
@@ -2242,17 +2328,21 @@ button:disabled, .btn:disabled {
    sich jetzt wie jede andere Kennzahl. */
 .accent-green { color: var(--text-success) !important; }
 
-/* Der Dock in seiner letzten Ausbaustufe, bevor er zur Sidebar wird. Die obere
-   Grenze ist zwingend: ohne sie überschreibt diese Regel die Sidebar aus §6,
-   weil sie später in der Datei steht und dieselbe Spezifität hat. */
-@media (min-width: 768px) and (max-width: 899px) {
-  .app-nav {
+/* Der Dock in seiner letzten Ausbaustufe, bevor die Schiene übernimmt.
+
+   Hier stand `and (max-width: 899px)`, und die obere Grenze war zwingend: ohne
+   sie überschrieb diese Regel die Sidebar aus §6, weil sie später in der Datei
+   steht und dieselbe Klasse traf. Seit die Ausrichtung eine eigene Klasse hat,
+   kann das nicht mehr passieren — `.app-nav-horizontal` und
+   `.app-nav-vertical` schließen sich aus. Die Grenze ist damit weg, und die
+   Regel sagt nur noch, was sie meint: ein breiter Dock ab 768px. */
+@media (min-width: 768px) {
+  .app-nav-horizontal {
     max-width: 520px;
     bottom: 20px;
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-pill);
     border: 1px solid var(--card-border);
     box-shadow: var(--shadow-md);
-    padding: 6px 14px;
   }
 }
 

@@ -270,12 +270,18 @@
 }
 
 /* ── Navigation ──
-   Heißt seit dem Redesign `.app-nav` und ist ab 900px eine linke Sidebar; die
-   Regel fasst beide Formen, deshalb Rand statt `border-top`. */
+   Heißt seit dem Redesign `.app-nav` und trägt ihre Ausrichtung als Klasse:
+   `.app-nav-horizontal` ist der Dock unten, `.app-nav-vertical` die Schiene
+   links. Die Regel fasst beide Formen, deshalb Rand statt `border-top`. */
 [data-theme="cyberpunk"] .app-nav {
   background: rgba(10, 10, 15, 0.95);
   border-color: var(--accent-primary);
   box-shadow: 0 0 20px rgba(0, 255, 136, 0.2);
+}
+
+/* Die gleitende Markierung glüht, statt nur eine Kante zu ziehen. */
+[data-theme="cyberpunk"] .nav-indicator {
+  box-shadow: 0 0 14px rgba(0, 255, 136, 0.4), inset 0 0 10px rgba(0, 255, 136, 0.1);
 }
 [data-theme="cyberpunk"] .nav-item.active .nav-icon {
   filter: drop-shadow(0 0 6px var(--accent-primary));

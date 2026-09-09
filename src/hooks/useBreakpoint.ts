@@ -18,6 +18,11 @@ import {
  * Diagramm, das §6 dem Statistik-Screen ab 1200px zugesteht. Es per CSS zu
  * verstecken hieße, den Chart-Chunk auf jedem Telefon zu laden.
  *
+ * Der zweite Fall ist die Hauptnavigation: ihre gleitende Markierung muss
+ * wissen, auf welcher Achse sie fährt — `translateX` im Dock, `translateY` in
+ * der Schiene. Das ist keine Anordnung, die CSS allein umstellen könnte, ohne
+ * die 900px-Grenze ein weiteres Mal zu wiederholen; siehe AppNav.tsx.
+ *
  * Umgesetzt mit `useSyncExternalStore` statt mit `useEffect` + `setState`:
  * matchMedia ist ein externer Store, und React soll ihn beim Rendern lesen,
  * nicht hinterher korrigieren.
