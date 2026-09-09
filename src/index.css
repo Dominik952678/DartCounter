@@ -3369,9 +3369,28 @@ button:disabled, .btn:disabled {
   font-size: var(--text-body);
   color: var(--text-primary);
 }
-.co-suggestion {
-  align-self: flex-start;
+/* Der Weg zum Finish — das Erste, was auf dem Board steht. */
+.co-route {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-card);
+  background: var(--bg-accent-muted);
+  border: 2px solid var(--accent-primary);
   flex-shrink: 0;
+}
+.co-route-way {
+  font-family: var(--font-mono);
+  font-size: var(--text-card-title);
+  font-weight: var(--weight-medium);
+  color: var(--accent-primary);
+  letter-spacing: 0.04em;
+  line-height: 1.15;
+}
+
+@media (max-height: 740px) {
+  .co-route-way { font-size: var(--text-body-lg); }
 }
 
 /* Alle Ziele der Sitzung. Sechs je Reihe, weil es bis zu zwanzig sein können. */

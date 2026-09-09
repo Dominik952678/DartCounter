@@ -261,7 +261,14 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
     let updatedPlayer: PlayerState;
 
     if (nextRoundOnTarget >= checkoutRounds) {
-      // All allowed rounds on this target used -> target failed
+      // Ziel verbraucht, ohne dass gefinisht wurde.
+      //
+      // Dieser Zweig ist der stille: wer überwirft, landet in `processBust`,
+      // wer schlicht nicht ankommt, hier. Er hat weder den Zuruf ausgelöst
+      // noch das Ziel protokolliert — das Raster und das Story-Bild verloren
+      // damit genau die Ziele, die man nicht geschafft hat, und `attempts`
+      // lief dem Log davon.
+      setCallOut(c => ({ n: c.n + 1, text: 'VERPASST', detail: `${p.targetScore} nicht gefinisht`, tone: 'bad' }));
       const newAttempts = p.attempts + 1;
       const totalDartsForThisTarget = p.dartsOnCurrentTarget + darts.length;
       let nextTarget = p.targetScore;
@@ -272,6 +279,7 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
       updatedPlayer = {
         ...p,
         attempts: newAttempts,
+        checkoutLog: [...p.checkoutLog, { target: p.targetScore, darts: null }],
         dartsUsed: p.dartsUsed + totalDartsForThisTarget,
         targetScore: nextTarget,
         currentScore: nextTarget,
@@ -515,6 +523,18 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
                   <span className="ps-card-total">{activeP?.currentScore}</span>
                 </div>
 
+                {/* Der Weg zum Finish steht ab dem ersten Moment da, groß und
+                    an erster Stelle — vorher war er eine kleine Pille unter
+                    den Kennzahlen, die man übersah. Double Out ist hier per
+                    Definition der Modus: ein Ziel zählt nur auf ein Doppel. */}
+                <div className="co-route">
+                  <span className="stat-label">Zu checken</span>
+                  <span className="co-route-way">
+                    {getCheckoutSuggestion(activeP?.currentScore ?? 0, 'DO', currentRoundDarts.length)
+                      ?? 'Kein Finish möglich'}
+                  </span>
+                </div>
+
                 <div className="co-now">
                   <span className="co-chip">
                     <span className="stat-label">Ziel</span> {activeP?.targetScore}
@@ -530,13 +550,6 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
                       : '–'}
                   </span>
                 </div>
-
-                {activeP && (() => {
-                  // Double Out ist hier per Definition der Modus — ein Ziel
-                  // zählt nur, wenn es auf ein Doppel gefinisht wird.
-                  const suggestion = getCheckoutSuggestion(activeP.currentScore, 'DO', currentRoundDarts.length);
-                  return suggestion ? <div className="checkout-pill co-suggestion">{suggestion}</div> : null;
-                })()}
 
                 {/* Alle Ziele der Sitzung: erledigte mit den benötigten Darts,
                     das laufende, die kommenden. */}
