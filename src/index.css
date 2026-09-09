@@ -1006,6 +1006,120 @@ select:focus, input:focus {
 }
 .segment-control span { pointer-events: none; }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   Slider — segmentierte Auswahl mit gleitendem Thumb
+   Markup: components/ui/Slider.tsx, dort steht auch, wo er NICHT hingehört.
+
+   Dieselbe Rechnung wie beim Navigations-Indikator: `--slider-count` und
+   `--slider-active` kommen von der Komponente, alles andere ergibt sich. Die
+   Bedingung sind gleich breite Optionen, deshalb `flex: 1 1 0`, kein `gap` und
+   keine Obergrenze an der Option.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.slider {
+  /* Polster der Schiene UND Bezugsgröße des Thumbs — eine Zahl, kein Paar. */
+  --slider-pad: 5px;
+  position: relative;
+  display: flex;
+  width: 100%;
+  padding: var(--slider-pad);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-pill);
+  margin-bottom: var(--space-3);
+}
+
+/* Die eine gefüllte Fläche. Bewegt wird per `transform` — das läuft im
+   Compositor, `left` würde bei jedem Bild ein Layout auslösen.
+
+   `prefers-reduced-motion` steht hier nicht: `--motion-slide` ist unter dieser
+   Präferenz 0s (tokens.css), der Thumb ist dann sofort am Ziel. */
+.slider-thumb {
+  position: absolute;
+  top: var(--slider-pad);
+  bottom: var(--slider-pad);
+  left: var(--slider-pad);
+  /* Prozente eines absolut positionierten Kindes beziehen sich auf die
+     Padding-Box der Schiene, das ist hier exakt eine Option. Exakt MUSS es
+     sein: der Schritt unten ist `100%`, und ein Prozentwert in `translateX`
+     rechnet gegen die eigene Breite des Thumbs — wäre er schmaler, liefe er mit
+     jedem Schritt weiter aus der Spur. */
+  width: calc((100% - 2 * var(--slider-pad)) / var(--slider-count));
+  border-radius: var(--radius-pill);
+  background: var(--accent-primary);
+  box-shadow: 0 6px 20px rgba(var(--accent-primary-rgb), 0.3);
+  pointer-events: none;
+  z-index: 0;
+  transform: translateX(calc(var(--slider-active) * 100%));
+  transition:
+    transform var(--motion-slide) var(--ease-glide),
+    opacity var(--motion-color) ease;
+}
+
+/* Kein Wert trifft eine Option. Ausgeblendet statt entfernt, damit der Thumb
+   beim nächsten Wechsel von Position 0 heranfährt. */
+.slider-thumb.is-hidden { opacity: 0; }
+
+.slider label {
+  position: relative;
+  /* Über dem Thumb, sonst liegt dessen Fläche auf der Beschriftung. */
+  z-index: 1;
+  flex: 1 1 0;
+  min-width: 0;
+  /* §4: kein tappbares Element unter 44pt. */
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  font-size: var(--text-body);
+  font-weight: var(--weight-semibold);
+  color: var(--text-secondary);
+  /* Nur die Farbe wechselt. Ein Gewichtswechsel wäre auch eine Breitenänderung,
+     und die Option würde bei jedem Wechsel zappeln. */
+  transition: color var(--motion-color) ease;
+  user-select: none;
+  margin: 0;
+}
+
+/* Auf der gefüllten Akzentfläche gilt der Kontrast-Ton aus §5, nie Schwarz. */
+.slider label.active { color: var(--on-accent-primary); }
+
+/* Bleibt im DOM und in der Tab-Reihenfolge — `display: none` nähme das Control
+   auch aus dem Accessibility-Tree. */
+.slider input[type='radio'] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.slider label:has(input:focus-visible) {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+.slider label:has(input:disabled) {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Die Beschriftung soll nicht umbrechen — vier zweizeilige Optionen sind
+   unlesbarer als vier gekürzte. Kürzen statt überlaufen: `min-width: 0` an der
+   Option lässt sie schrumpfen, hier endet sie mit Auslassungspunkten. */
+.slider span {
+  pointer-events: none;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 /* Einzelner Umschalter im selben Selected-State (§5) — für Chips, die keine
    Radio-Gruppe bilden. Markup: components/ui/Choice.tsx. */
 .choice {

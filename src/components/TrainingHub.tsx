@@ -3,7 +3,7 @@ import type { Profile } from '../types';
 import { useAuthStore } from '../store/useAuthStore';
 import { getActiveUserSyncInfo } from '../db';
 import { readInt, readOneOf, write } from '../utils/storage';
-import { Button, Card, CardHeader, Choice, ChoiceGroup, Icons } from './ui';
+import { Button, Card, CardHeader, Choice, Slider, Icons } from './ui';
 import type { IconProps } from './ui';
 import { playerColorByName } from '../utils/playerColors';
 
@@ -250,7 +250,7 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <Card>
             <CardHeader heading={"Spieler"} />
-            <ChoiceGroup
+            <Slider
               name="playerCount"
               value={playerCount}
               options={[1, 2, 3, 4].map(count => ({
@@ -400,7 +400,7 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
           {selectedMode === 'powerscoring' && (
             <Card>
               <CardHeader heading={"Rundenlimit"} />
-              <ChoiceGroup
+              <Slider
                 name="powerScoringRounds"
                 value={powerScoringRounds}
                 options={[5, 10, 15, 20].map(r => ({
@@ -418,7 +418,7 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
             <>
             <Card>
               <CardHeader heading={"Anzahl Targets"} />
-              <ChoiceGroup
+              <Slider
                 name="checkoutTargets"
                 value={checkoutTargets}
                 options={[5, 10, 15, 20].map(r => ({
@@ -433,12 +433,13 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
 
             <Card>
               <CardHeader heading={"Runden (Versuche pro Finish)"} />
-              <ChoiceGroup
+              <Slider
                 name="checkoutRounds"
                 value={checkoutRounds}
                 options={[1, 2, 3, 5].map(r => ({
                   value: r,
-                  label: `${r} ${r === 1 ? 'Runde' : 'Runden'}`
+                  label: r,
+                  ariaLabel: `${r} ${r === 1 ? 'Runde' : 'Runden'}`
                 }))}
                 onChange={setCheckoutRounds}
                 ariaLabel="Runden pro Finish"

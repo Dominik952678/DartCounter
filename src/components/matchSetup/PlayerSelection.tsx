@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import type { Profile } from '../../types';
 import type { Lineup } from './useLineup';
-import { Button, Card, CardHeader, ChoiceGroup, Icons } from '../ui';
+import { Button, Card, CardHeader, ChoiceGroup, Slider, Icons } from '../ui';
 import { playerColorByName, teamColor } from '../../utils/playerColors';
 
 interface PlayerSelectionProps {
@@ -59,10 +59,17 @@ export const PlayerSelection: React.FC<PlayerSelectionProps> = ({
             <Icons.IconFrozen size={17} /> <strong>Freeze-Regel:</strong> Geworfen wird alternierend (T1 → T2 → T1 → T2). Ein Team gewinnt bei 0 Rest nur, wenn die eigenen Teampunkte ≤ den Gegnerpunkten sind!
           </p>
         ) : (
-          <ChoiceGroup
+          <Slider
             name="playerCount"
             value={playerCount}
-            options={[1, 2, 3, 4].map(count => ({ value: count, label: `${count} Spieler` }))}
+            /* Nur die Zahl: vier Optionen à „3 Spieler" brauchen auf einem
+               Telefon mehr Platz als die Karte hat, und die Einheit steht
+               ohnehin im Gruppen-Label und im ariaLabel. */
+            options={[1, 2, 3, 4].map(count => ({
+              value: count,
+              label: count,
+              ariaLabel: `${count} Spieler`
+            }))}
             onChange={onPlayerCountChange}
             ariaLabel="Anzahl Spieler"
           />

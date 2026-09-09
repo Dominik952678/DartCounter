@@ -1,17 +1,19 @@
 import React, { useId } from 'react';
 import type { MatchSetupAction, MatchSetupConfig, OutMode } from './useMatchSetupConfig';
 import { MAX_LEGS, MAX_SETS, START_SCORES } from './useMatchSetupConfig';
-import { Card, CardHeader, ChoiceGroup } from '../ui';
+import { Card, CardHeader, Slider } from '../ui';
 
 interface GameConfigPanelProps {
   config: MatchSetupConfig;
   dispatch: React.Dispatch<MatchSetupAction>;
 }
 
-const OUT_MODE_LABELS: readonly (readonly [OutMode, string])[] = [
-  ['SO', 'Single'],
-  ['DO', 'Double'],
-  ['MO', 'Master']
+/* Kurz auf dem Slider, ausgeschrieben für Screenreader — „Master" allein sagt
+   nicht, dass es um den Ausgang des Legs geht. */
+const OUT_MODE_LABELS: readonly (readonly [OutMode, string, string])[] = [
+  ['SO', 'Single', 'Single Out'],
+  ['DO', 'Double', 'Double Out'],
+  ['MO', 'Master', 'Master Out']
 ];
 
 interface StepperProps {
@@ -105,10 +107,14 @@ export const GameConfigPanel: React.FC<GameConfigPanelProps> = ({ config, dispat
 
     <div style={{ marginBottom: 'var(--space-6)' }}>
       <h3 className="field-label">Startpunktzahl</h3>
-      <ChoiceGroup
+      <Slider
         name="startScore"
         value={config.startScore}
-        options={START_SCORES.map(score => ({ value: score, label: score }))}
+        options={START_SCORES.map(score => ({
+          value: score,
+          label: score,
+          ariaLabel: `${score} Punkte`
+        }))}
         onChange={value => dispatch({ type: 'startScore', value })}
         ariaLabel="Startpunktzahl"
       />
@@ -116,10 +122,10 @@ export const GameConfigPanel: React.FC<GameConfigPanelProps> = ({ config, dispat
 
     <div>
       <h3 className="field-label">Out-Modus</h3>
-      <ChoiceGroup
+      <Slider
         name="outMode"
         value={config.outMode}
-        options={OUT_MODE_LABELS.map(([value, label]) => ({ value, label }))}
+        options={OUT_MODE_LABELS.map(([value, label, ariaLabel]) => ({ value, label, ariaLabel }))}
         onChange={value => dispatch({ type: 'outMode', value })}
         ariaLabel="Out-Modus"
       />
