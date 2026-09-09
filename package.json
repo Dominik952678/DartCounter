@@ -1,7 +1,7 @@
 {
   "name": "dart-app",
   "private": true,
-  "version": "1.14.1",
+  "version": "1.15.0",
   "type": "module",
   "scripts": {
     "dev": "vite --host",
@@ -20,6 +20,8 @@
     "@fontsource/jetbrains-mono": "^5.3.0",
     "@fontsource/orbitron": "^5.3.0",
     "@fontsource/share-tech-mono": "^5.3.0",
+    "@hugeicons/core-free-icons": "^4.3.2",
+    "@hugeicons/react": "^1.1.10",
     "@supabase/supabase-js": "^2.112.3",
     "html2canvas": "^1.4.1",
     "react": "^19.2.8",

@@ -7,12 +7,21 @@ import * as Icons from '../Icons';
  * Icons wie eine Familie aussehen: 24er Koordinatensystem, keine Füllung,
  * `currentColor`, eine Strichstärke. Ein Icon, das davon abweicht, fällt im
  * Screen sofort auf — aber niemandem, der nur den Diff liest.
+ *
+ * Seit die Icons aus Hugeicons kommen, prüft diese Datei einen Vertrag über eine
+ * fremde Bibliothek. Das ist ihr eigentlicher Wert: ein Katalog-Update, das eine
+ * Glyphe auf ein anderes Raster oder auf eine gefüllte Fassung umstellt, fällt
+ * hier auf und nicht erst im Screen.
  */
 
 const ALL = Object.entries(Icons).filter(
   (entry): entry is [string, React.FC<Icons.IconProps>] =>
     typeof entry[1] === 'function' && entry[0].startsWith('Icon')
 );
+
+/** Was in einem Icon tatsächlich zeichnet — Wurzel-SVG ausgenommen. */
+const shapesOf = (container: HTMLElement): Element[] =>
+  Array.from(container.querySelectorAll('path, circle, rect, ellipse, line, polyline, polygon'));
 
 describe('Icon-Set: der gemeinsame Vertrag', () => {
   it('exports every icon under an Icon* name', () => {
@@ -28,10 +37,26 @@ describe('Icon-Set: der gemeinsame Vertrag', () => {
     expect(svg.getAttribute('viewBox')).toBe('0 0 24 24');
     expect(svg.getAttribute('fill')).toBe('none');
     expect(svg.getAttribute('stroke')).toBe('currentColor');
-    expect(svg.getAttribute('stroke-linecap')).toBe('round');
     // Dekoration neben einem Label — der Name gehört auf das Element darum.
     expect(svg.getAttribute('aria-hidden')).toBe('true');
     expect(svg.getAttribute('focusable')).toBe('false');
+  });
+
+  /**
+   * Runde Enden gehören zum Stil des Sets, aber Hugeicons setzt sie am Pfad und
+   * nicht am Wurzel-SVG — geprüft wird deshalb dort, wo sie wirken. Ein
+   * gefüllter Punkt (der Bull im Dartboard) hat keine Enden und ist ausgenommen.
+   */
+  it.each(ALL)('%s draws with round ends', (_name, Icon) => {
+    const { container } = render(<Icon />);
+    const stroked = shapesOf(container).filter(el => el.getAttribute('stroke') !== 'none');
+
+    expect(stroked.length).toBeGreaterThan(0);
+    stroked.forEach(el => {
+      // Am Pfad selbst oder vom Wurzel-SVG geerbt — beides gilt.
+      const own = el.getAttribute('stroke-linecap');
+      expect(own === null || own === 'round').toBe(true);
+    });
   });
 
   /**
@@ -41,11 +66,26 @@ describe('Icon-Set: der gemeinsame Vertrag', () => {
    */
   it.each(ALL)('%s never fills with a fixed colour', (_name, Icon) => {
     const { container } = render(<Icon />);
-    container.querySelectorAll('[fill]').forEach(el => {
+    shapesOf(container).forEach(el => {
       const fill = el.getAttribute('fill');
-      if (el.tagName.toLowerCase() === 'svg') return;
+      if (fill === null || fill === 'none') return;
       expect(fill).toBe('currentColor');
     });
+  });
+
+  /**
+   * Die Strichstärke muss unten ankommen. Hugeicons backt `1.5` in jeden Pfad —
+   * käme die Prop nicht durch, stünde am Wurzel-SVG 2.75 und gezeichnet würde
+   * trotzdem 1.5.
+   */
+  it.each(ALL)('%s carries the app stroke width down to the shapes', (_name, Icon) => {
+    const { container } = render(<Icon size={22} />);
+    shapesOf(container)
+      .filter(el => el.getAttribute('stroke') !== 'none')
+      .forEach(el => {
+        const own = el.getAttribute('stroke-width');
+        expect(own === null || Number(own) >= 2.75).toBe(true);
+      });
   });
 
   it('thickens the stroke below 18px so small icons stay legible', () => {

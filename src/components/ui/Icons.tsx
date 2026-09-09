@@ -1,28 +1,109 @@
+/* eslint-disable react-refresh/only-export-components --
+   Die Regel prüft, ob eine Datei ausschließlich Komponenten exportiert, und das
+   trifft hier zu: fünfzig Icon-Komponenten und ein Typ (den die Regel ohnehin
+   erlaubt). Sie kann es nur nicht sehen, weil die Komponenten aus dem
+   `wrap`-Helfer kommen — `export const X = wrap(...)` ist für sie ein
+   Funktionsaufruf und keine Komponente. Eine Typannotation ändert daran nichts,
+   geprüft.
+
+   Die Alternativen wären achtundvierzig einzelne Unterdrückungen oder jedes Icon
+   von Hand als eigene Pfeilfunktion — letzteres würde genau den Helfer
+   aufgeben, der dafür sorgt, dass Größe, Strichstärke, Farbe und die zwei
+   Accessibility-Attribute an einer Stelle stehen. Die Regel betrifft allein den
+   Komfort von Hot Reload. */
 import React from 'react';
+import { HugeiconsIcon, type IconSvgElement } from '@hugeicons/react';
+import {
+  // Navigation & Marke
+  Home01Icon,
+  PlayIcon,
+  GlobeIcon,
+  BarChartIcon,
+  UserIcon,
+  UserMultipleIcon,
+  Dumbbell01Icon,
+  // Richtung
+  ArrowUp01Icon,
+  ArrowDown01Icon,
+  ArrowLeft01Icon,
+  ArrowRight01Icon,
+  ArrowUp02Icon,
+  ArrowDown02Icon,
+  ArrowLeft02Icon,
+  ArrowRight02Icon,
+  ExternalLinkIcon,
+  // Aktionen
+  PlusSignIcon,
+  MinusSignIcon,
+  Cancel01Icon,
+  Tick02Icon,
+  ArrowTurnBackwardIcon,
+  Refresh01Icon,
+  ShuffleIcon,
+  Delete01Icon,
+  Eraser01Icon,
+  Copy01Icon,
+  Camera01Icon,
+  Download01Icon,
+  Upload01Icon,
+  // Zustand
+  AlertCircleIcon,
+  InformationCircleIcon,
+  SquareLock01Icon,
+  SquareUnlock01Icon,
+  SnowIcon,
+  ChampionIcon,
+  Key01Icon,
+  Mail01Icon,
+  CloudIcon,
+  SmartPhone01Icon,
+  Link01Icon,
+  HistoryIcon,
+  ChartLineData01Icon,
+  PaintBoardIcon,
+  // Ton
+  VolumeHighIcon,
+  VolumeOffIcon,
+  // Spieler
+  BotIcon,
+  UserCircleIcon,
+  DartIcon,
+  FlaskConicalIcon
+} from '@hugeicons/core-free-icons';
 
 /**
  * Das Icon-Set der App — eine Datei, eine Bildsprache.
  *
- * Vorher trug jedes Icon in dieser App ein Emoji. Emoji sind bequem, aber sie
- * gehören dem Betriebssystem: dasselbe 🎯 ist auf iOS ein anderes Bild als auf
- * Android, es bringt seine eigenen Farben mit (die sich um kein Theme kümmern),
- * es lässt sich nicht auf Strichstärke oder optische Größe abstimmen, und in
- * einer Reihe mit fünf Stück sitzt jedes auf einer anderen Grundlinie.
+ * Die Icons kommen aus Hugeicons Free (Stroke-Rounded, MIT-Lizenz, unbegrenzt
+ * kommerziell nutzbar). Vorher waren sie hier von Hand gezeichnet, und das war
+ * schon der zweite Anlauf: davor trug jedes Icon ein Emoji, das dem
+ * Betriebssystem gehörte — dasselbe Bild sah auf iOS anders aus als auf Android,
+ * brachte eigene Farben mit und saß auf einer eigenen Grundlinie.
  *
- * Die Regeln, die alle Icons hier teilen — Abweichungen gibt es nicht:
+ * Handgezeichnet löste das, kostete aber Genauigkeit: fünfzig Glyphen von Hand
+ * auf eine gemeinsame optische Größe, Strichführung und Ecken abzustimmen ist
+ * Arbeit, die eine gepflegte Bibliothek schon gemacht hat. Was bleibt, ist die
+ * Regel, warum es diese Datei überhaupt gibt: ein `<svg>` inline in einer
+ * Komponente ist der Anfang von Wildwuchs.
+ *
+ * Die öffentliche API ist unverändert — eine Komponente je Icon-Name, dieselben
+ * Props, dieselbe `.icon`-Klasse. Keine andere Datei im Projekt musste angepasst
+ * werden; die Namen der Bibliothek stehen ausschließlich hier.
+ *
+ * Die Regeln, die alle Icons teilen:
  * · 24×24-Koordinatensystem, egal wie groß gerendert wird.
- * · `fill="none"`, gezeichnet wird ausschließlich mit der Linie.
- * · `stroke="currentColor"` — die Farbe kommt vom Text, nie aus dem Icon.
- *   Damit folgt jedes Icon automatisch dem Theme und dem Zustand des Elements,
- *   in dem es steht (aktiv, deaktiviert, auf gefüllter Akzentfläche).
- * · Strichstärke 2.75, runde Enden und Ecken. Das ist der Wert, der die Icons
- *   als eine Familie zusammenhält.
+ * · Gezeichnet wird mit der Linie, nicht mit der Fläche.
+ * · Die Farbe kommt vom Text (`currentColor`), nie aus dem Icon. Damit folgt
+ *   jedes Icon automatisch dem Theme und dem Zustand seines Elements.
+ * · Strichstärke 2.75, unter 18px 3 — siehe `strokeFor`. Hugeicons liefert 1.5
+ *   als Vorgabe; das ist für diese dunkle Oberfläche zu fein.
  * · `aria-hidden` und `focusable="false"`: ein Icon ist Dekoration neben einem
- *   Label. Steht es allein in einem Button, gehört der Name auf den Button
- *   (`aria-label`), nicht ins Bild.
+ *   Label. Steht es allein in einem Button, gehört der Name auf den Button.
  *
- * Ein neues Icon gehört hierher und nirgendwo sonst. Ein `<svg>` inline in
- * einer Komponente ist der Anfang von genau dem Wildwuchs, den das Set beendet.
+ * Zwei Icons bleiben Eigenbau, weil die Bibliothek für sie keine Entsprechung
+ * hat: `IconTarget` (das Dartboard, das die Wortmarke trägt) und `IconSplit`
+ * (der Trainingsmodus Split Score). Beide bedeuten etwas, das nur in dieser App
+ * existiert.
  */
 
 export interface IconProps {
@@ -48,7 +129,48 @@ export interface IconProps {
  */
 const strokeFor = (size: number): number => (size < 18 ? 3 : 2.75);
 
-const Icon: React.FC<IconProps & { children: React.ReactNode }> = ({
+/**
+ * Ein Icon aus dem Katalog in die API dieser Datei einwickeln.
+ *
+ * Der Helfer ist der Grund, warum die Umstellung keine andere Datei berührt: er
+ * setzt Größe, Strichstärke, Farbe und die zwei Accessibility-Attribute an genau
+ * einer Stelle, und jeder Export darunter ist eine Zeile ohne eigene Meinung.
+ *
+ * `color` und nicht `stroke`: `HugeiconsIcon` verteilt die Farbe von dort aus an
+ * seine Pfade. Es ist derselbe `currentColor` wie vorher, nur eine Ebene höher.
+ *
+ * Der Name ist Absicht — ohne `displayName` stünden in den React-Devtools und in
+ * jedem Stacktrace fünfzig gleichnamige Komponenten.
+ */
+const wrap = (icon: IconSvgElement, displayName: string): React.FC<IconProps> => {
+  const Wrapped: React.FC<IconProps> = ({ size = 22, className, style, strokeWidth }) => (
+    <HugeiconsIcon
+      icon={icon}
+      size={size}
+      strokeWidth={strokeWidth ?? strokeFor(size)}
+      color="currentColor"
+      /* `.icon` trägt nur Ausrichtung: `inline-block`, damit das Icon in einer
+         Textzeile mitläuft (eine Zeile mit `text-overflow: ellipsis` darf kein
+         Flex-Container werden), `vertical-align: middle` gegen die Grundlinie,
+         und `flex: none`, damit es in einer engen Flex-Zeile nicht als erstes
+         zusammengedrückt wird. */
+      className={['icon', className].filter(Boolean).join(' ')}
+      style={style}
+      aria-hidden="true"
+      focusable="false"
+    />
+  );
+  Wrapped.displayName = displayName;
+  return Wrapped;
+};
+
+/**
+ * Die Grundform der zwei Eigenbau-Icons.
+ *
+ * Bewusst dieselben Attribute, die `wrap` an `HugeiconsIcon` gibt — nur eben von
+ * Hand. Weicht das eine vom anderen ab, sieht man es sofort im Screen.
+ */
+const HandDrawn: React.FC<IconProps & { children: React.ReactNode }> = ({
   size = 22,
   className,
   style,
@@ -56,11 +178,6 @@ const Icon: React.FC<IconProps & { children: React.ReactNode }> = ({
   children
 }) => (
   <svg
-    /* `.icon` trägt nur Ausrichtung: `inline-block`, damit das Icon in einer
-       Textzeile mitläuft (eine Zeile mit `text-overflow: ellipsis` darf kein
-       Flex-Container werden), `vertical-align: middle` gegen die Grundlinie,
-       und `flex: none`, damit es in einer engen Flex-Zeile nicht als erstes
-       zusammengedrückt wird. */
     className={['icon', className].filter(Boolean).join(' ')}
     style={style}
     width={size}
@@ -79,265 +196,155 @@ const Icon: React.FC<IconProps & { children: React.ReactNode }> = ({
 );
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   Marke & Navigation
+   Eigenbau — kein Bibliotheks-Äquivalent
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /**
  * Das Dartboard: drei konzentrische Kreise, der innerste gefüllt.
  *
  * Trägt die Wortmarke und steht für die App selbst — und, weil Checkout das
- * Treffen eines bestimmten Feldes ist, auch für den Checkout-Modus. Der Punkt
- * in der Mitte nutzt `fill="currentColor"`, weil ein Bull mit 2.75er Linie bei
- * dieser Größe zu einem grauen Fleck zuläuft.
+ * Treffen eines bestimmten Feldes ist, auch für den Checkout-Modus. Bleibt
+ * Eigenbau: Hugeicons hat `Target01/02/03`, aber das sind Zielscheiben mit Pfeil
+ * und Anschnitt, keine Dartscheibe. Für das Zeichen, das über dem Namen der App
+ * steht, ist „ungefähr passend" nicht genug.
+ *
+ * Der Punkt in der Mitte nutzt `fill="currentColor"`, weil ein Bull mit 2.75er
+ * Linie bei dieser Größe zu einem grauen Fleck zuläuft.
  */
 export const IconTarget: React.FC<IconProps> = props => (
-  <Icon {...props}>
+  <HandDrawn {...props}>
     <circle cx="12" cy="12" r="9" />
     <circle cx="12" cy="12" r="4.6" />
     <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
-  </Icon>
+  </HandDrawn>
 );
 
-/** Start. Ein Haus, aufs Nötigste reduziert: Dach und Grundriss. */
-export const IconHome: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <path d="M4 10.2 12 4l8 6.2V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z" />
-    <path d="M9.5 20v-5.5h5V20" />
-  </Icon>
-);
-
-/** Spielen. Dasselbe Dreieck wie in der Resume-Karte, aber ohne Füllung. */
-export const IconPlay: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <path d="M7 4.8 19 12 7 19.2z" />
-  </Icon>
-);
-
-/** Gefülltes Dreieck — für die primäre Aktion, wo die Linie zu leise wäre. */
-export const IconPlayFilled: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <path d="M6 4.5 19 12 6 19.5z" fill="currentColor" />
-  </Icon>
-);
-
-/** Online. Ein Globus: Kreis, Äquator, ein Längenkreis. */
-export const IconGlobe: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <circle cx="12" cy="12" r="9" />
-    <path d="M3 12h18" />
-    <ellipse cx="12" cy="12" rx="4.2" ry="9" />
-  </Icon>
-);
-
-/** Statistik. Drei steigende Balken — dasselbe Bild wie für Power Scoring. */
-export const IconBars: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <path d="M6 20v-6" />
-    <path d="M12 20V9" />
-    <path d="M18 20V4" />
-  </Icon>
-);
-
-/** Profil. Kopf und Schultern. */
-export const IconUser: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <circle cx="12" cy="8.2" r="3.8" />
-    <path d="M4.8 20c.6-3.7 3.6-5.6 7.2-5.6s6.6 1.9 7.2 5.6" />
-  </Icon>
-);
-
-/** Mehrere Spieler — zwei Köpfe, der hintere angeschnitten. */
-export const IconUsers: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <circle cx="9.6" cy="8.4" r="3.5" />
-    <path d="M3.2 19.6c.5-3.4 3.1-5.2 6.4-5.2s5.9 1.8 6.4 5.2" />
-    <path d="M16.4 5.4a3.5 3.5 0 0 1 0 6" />
-    <path d="M18 14.8c1.7.7 2.6 2.2 2.9 4.3" />
-  </Icon>
-);
-
-/** Trainingsmodus Split Score: eine Linie, die zwei Hälften trennt. */
+/**
+ * Trainingsmodus Split Score: eine Linie, die zwei Hälften trennt.
+ *
+ * Bleibt Eigenbau, weil „die Punkte werden halbiert, wenn du das Ziel nicht
+ * triffst" keine Bibliotheks-Bedeutung ist. Ein Divisions- oder Schere-Symbol
+ * hätte den Modus benannt, ohne ihn zu erklären.
+ */
 export const IconSplit: React.FC<IconProps> = props => (
-  <Icon {...props}>
+  <HandDrawn {...props}>
     <path d="M5 12h14" />
     <circle cx="12" cy="6.5" r="1.4" fill="currentColor" stroke="none" />
     <circle cx="12" cy="17.5" r="1.4" fill="currentColor" stroke="none" />
-  </Icon>
-);
-
-/** Training allgemein — eine Hantel. */
-export const IconTraining: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <path d="M4 9v6" />
-    <path d="M7 6.5v11" />
-    <path d="M17 6.5v11" />
-    <path d="M20 9v6" />
-    <path d="M7 12h10" />
-  </Icon>
+  </HandDrawn>
 );
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   Richtung
+   Navigation
    ═══════════════════════════════════════════════════════════════════════════ */
 
-export const IconChevronUp: React.FC<IconProps> = props => (
-  <Icon {...props}><path d="M6 14l6-6 6 6" /></Icon>
-);
+export const IconHome = wrap(Home01Icon, 'IconHome');
+export const IconPlay = wrap(PlayIcon, 'IconPlay');
 
-export const IconChevronDown: React.FC<IconProps> = props => (
-  <Icon {...props}><path d="M6 10l6 6 6-6" /></Icon>
-);
+/**
+ * Die betonte Variante für die primäre Aktion.
+ *
+ * Hugeicons Free ist ein reiner Stroke-Satz; die gefüllte Fassung gehört zu Pro.
+ * Deshalb dieselbe Glyphe, und das Gewicht macht die Strichstärke. Das ist eine
+ * echte kleine Einbuße gegenüber dem gefüllten Dreieck von vorher — auf der
+ * Weiter-Karte trägt die Wucht jetzt der amberne Kreis darum, nicht das Zeichen.
+ */
+export const IconPlayFilled: React.FC<IconProps> = ({ size = 22, strokeWidth, ...rest }) => {
+  const Play = IconPlay;
+  return <Play size={size} strokeWidth={strokeWidth ?? strokeFor(size) + 0.5} {...rest} />;
+};
 
-export const IconChevronLeft: React.FC<IconProps> = props => (
-  <Icon {...props}><path d="M14 6l-6 6 6 6" /></Icon>
-);
+export const IconGlobe = wrap(GlobeIcon, 'IconGlobe');
 
-export const IconChevronRight: React.FC<IconProps> = props => (
-  <Icon {...props}><path d="M10 6l6 6-6 6" /></Icon>
-);
+/** Drei steigende Balken — dasselbe Bild für Statistik und für Power Scoring. */
+export const IconBars = wrap(BarChartIcon, 'IconBars');
 
-/** Weiter. Der Pfeil auf dem Start-Button. */
-export const IconArrowRight: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <path d="M5 12h13" />
-    <path d="M12 5.5 18.5 12 12 18.5" />
-  </Icon>
-);
+export const IconUser = wrap(UserIcon, 'IconUser');
 
-/** Zurück — derselbe Pfeil, gespiegelt. */
-export const IconArrowLeft: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <path d="M19 12H6" />
-    <path d="M12 5.5 5.5 12 12 18.5" />
-  </Icon>
-);
+/**
+ * Mehrere Spieler. `UserMultipleIcon` zeigt zwei Personen, die vordere ganz und
+ * die hintere angeschnitten — genau das Bild von vorher. `UserGroupIcon` wäre
+ * eine Gruppe zu drei und bei 15px ein Knäuel.
+ */
+export const IconUsers = wrap(UserMultipleIcon, 'IconUsers');
 
-export const IconArrowUp: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <path d="M12 19V6" />
-    <path d="M5.5 12 12 5.5 18.5 12" />
-  </Icon>
-);
+/** Training allgemein — eine Hantel. */
+export const IconTraining = wrap(Dumbbell01Icon, 'IconTraining');
 
-export const IconArrowDown: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <path d="M12 5v13" />
-    <path d="M5.5 12 12 18.5 18.5 12" />
-  </Icon>
-);
+/* ═══════════════════════════════════════════════════════════════════════════
+   Richtung
 
-/** Verlassen der App — Pfeil aus einem Rahmen heraus. */
-export const IconExternal: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <path d="M9 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-3" />
-    <path d="M14 4h6v6" />
-    <path d="M20 4l-8 8" />
-  </Icon>
-);
+   Die `01`-Reihe sind Chevrons (ein Winkel, kein Schaft), die `02`-Reihe echte
+   Pfeile (Schaft plus Spitze). Genau diese Unterscheidung trugen die
+   handgezeichneten Icons auch, und sie ist der Grund für zwei Vierergruppen
+   statt einer.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+export const IconChevronUp = wrap(ArrowUp01Icon, 'IconChevronUp');
+export const IconChevronDown = wrap(ArrowDown01Icon, 'IconChevronDown');
+export const IconChevronLeft = wrap(ArrowLeft01Icon, 'IconChevronLeft');
+export const IconChevronRight = wrap(ArrowRight01Icon, 'IconChevronRight');
+
+export const IconArrowUp = wrap(ArrowUp02Icon, 'IconArrowUp');
+export const IconArrowDown = wrap(ArrowDown02Icon, 'IconArrowDown');
+export const IconArrowLeft = wrap(ArrowLeft02Icon, 'IconArrowLeft');
+export const IconArrowRight = wrap(ArrowRight02Icon, 'IconArrowRight');
+
+/** Verlässt die App — Pfeil aus einem Rahmen heraus. */
+export const IconExternal = wrap(ExternalLinkIcon, 'IconExternal');
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Aktionen
    ═══════════════════════════════════════════════════════════════════════════ */
 
-export const IconPlus: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <path d="M12 5v14" />
-    <path d="M5 12h14" />
-  </Icon>
-);
+export const IconPlus = wrap(PlusSignIcon, 'IconPlus');
+export const IconMinus = wrap(MinusSignIcon, 'IconMinus');
+export const IconClose = wrap(Cancel01Icon, 'IconClose');
 
-export const IconMinus: React.FC<IconProps> = props => (
-  <Icon {...props}><path d="M5 12h14" /></Icon>
-);
+/**
+ * Der Haken. `Tick02Icon` sind zwei klare Segmente wie im handgezeichneten
+ * Original; `Tick01Icon` hat einen dekorativen Anstrich am unteren Ende, der bei
+ * 17px wie ein Zeichenfehler wirkt.
+ */
+export const IconCheck = wrap(Tick02Icon, 'IconCheck');
 
-export const IconClose: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <path d="M6 6l12 12" />
-    <path d="M18 6 6 18" />
-  </Icon>
-);
+/**
+ * Rückgängig — „Wurf zurücknehmen".
+ *
+ * `ArrowTurnBackwardIcon` ist ein Pfeil, der eine Kehre nach links macht.
+ * `Undo02Icon` wäre ein Kreis mit Pfeilspitze und liest sich als „neu laden",
+ * was neben dem Neuladen-Icon der Versionszeile eine Verwechslung wäre.
+ */
+export const IconUndo = wrap(ArrowTurnBackwardIcon, 'IconUndo');
 
-export const IconCheck: React.FC<IconProps> = props => (
-  <Icon {...props}><path d="M5 12.5 10 17.5 19.5 7" /></Icon>
-);
-
-/** Rückgängig. Ein Pfeil, der eine Kehre macht. */
-export const IconUndo: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <path d="M4 8.5v5h5" />
-    <path d="M4.6 13.5A8 8 0 1 0 6.8 7.2" />
-  </Icon>
-);
-
-/** Neu laden, neu würfeln — der Kreis mit zwei Pfeilspitzen. */
-export const IconRefresh: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <path d="M20 5.5v5h-5" />
-    <path d="M4 18.5v-5h5" />
-    <path d="M19.4 10.5a8 8 0 0 0-14-3.3L4 8.5" />
-    <path d="M4.6 13.5a8 8 0 0 0 14 3.3l1.4-1.3" />
-  </Icon>
-);
+export const IconRefresh = wrap(Refresh01Icon, 'IconRefresh');
 
 /** Reihenfolge auslosen — zwei Wege, die sich kreuzen. */
-export const IconShuffle: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <path d="M16 4h4v4" />
-    <path d="M20 4 4 20" />
-    <path d="M16 20h4v-4" />
-    <path d="M4 4l5.5 5.5" />
-    <path d="M20 20l-5.5-5.5" />
-  </Icon>
-);
+export const IconShuffle = wrap(ShuffleIcon, 'IconShuffle');
 
-export const IconTrash: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <path d="M4.5 7h15" />
-    <path d="M9.5 7V4.8h5V7" />
-    <path d="M6.5 7l1 12.2h9L17.5 7" />
-  </Icon>
-);
+/**
+ * Löschen. `Delete01Icon` ist Korpus, Deckel und Griff — das
+ * handgezeichnete Bild. `Delete02Icon` legt Streifen in den Korpus, und die
+ * laufen bei 16px zu einem Grau zusammen.
+ */
+export const IconTrash = wrap(Delete01Icon, 'IconTrash');
 
-/** Rücktaste im Zahlenfeld. */
-export const IconBackspace: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <path d="M20 5.5H9.4L3.2 12l6.2 6.5H20z" />
-    <path d="M16.4 9.6l-4.8 4.8" />
-    <path d="M11.6 9.6l4.8 4.8" />
-  </Icon>
-);
+/**
+ * Rücktaste im Zahlenfeld.
+ *
+ * Der freie Satz hat kein `Backspace`. `Eraser01Icon` ist die Taste mit dem
+ * Kreuz darin und damit dieselbe Aussage; nur ist ihr Umriss ein Rechteck mit
+ * runden Ecken statt des Fünfecks mit der Spitze nach links.
+ */
+export const IconBackspace = wrap(Eraser01Icon, 'IconBackspace');
 
-/** In die Zwischenablage. */
-export const IconCopy: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <rect x="9" y="9" width="11" height="11" rx="2.5" />
-    <path d="M15 6.5A2.5 2.5 0 0 0 12.5 4H6.5A2.5 2.5 0 0 0 4 6.5v6A2.5 2.5 0 0 0 6.5 15" />
-  </Icon>
-);
+export const IconCopy = wrap(Copy01Icon, 'IconCopy');
 
-/** Bild teilen / exportieren — eine Kamera. */
-export const IconCamera: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <path d="M3.5 8.8A2 2 0 0 1 5.5 7h1.7l1.3-2h6l1.3 2h2.7a2 2 0 0 1 2 2v8.2a2 2 0 0 1-2 2H5.5a2 2 0 0 1-2-2z" />
-    <circle cx="12" cy="13" r="3.4" />
-  </Icon>
-);
+/** Bild teilen / exportieren. */
+export const IconCamera = wrap(Camera01Icon, 'IconCamera');
 
-export const IconDownload: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <path d="M12 4v10" />
-    <path d="M7.5 10 12 14.5 16.5 10" />
-    <path d="M4.5 18.5h15" />
-  </Icon>
-);
-
-export const IconUpload: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <path d="M12 14.5V4.5" />
-    <path d="M7.5 9 12 4.5 16.5 9" />
-    <path d="M4.5 18.5h15" />
-  </Icon>
-);
+export const IconDownload = wrap(Download01Icon, 'IconDownload');
+export const IconUpload = wrap(Upload01Icon, 'IconUpload');
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Zustand
@@ -346,190 +353,102 @@ export const IconUpload: React.FC<IconProps> = props => (
 /**
  * Warnung, Fehler, „das geht nicht".
  *
- * Der Punkt ist gefüllt, weil ein Kreis mit r=1.1 und 2.75er Linie zuläuft.
+ * `AlertCircleIcon`: Kreis, Ausrufezeichen, Punkt — das handgezeichnete Bild.
+ * `Alert02Icon` wäre das Warndreieck; das ist in dieser App reserviert für
+ * nichts und würde neben dem Info-Kreis wie eine zweite Stufe wirken, die es
+ * nicht gibt.
  */
-export const IconAlert: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <circle cx="12" cy="12" r="9" />
-    <path d="M12 7.5v5" />
-    <circle cx="12" cy="16.4" r="1.1" fill="currentColor" stroke="none" />
-  </Icon>
-);
+export const IconAlert = wrap(AlertCircleIcon, 'IconAlert');
 
-/** Hinweis, Tipp. Dasselbe Zeichen, gedreht — Punkt oben. */
-export const IconInfo: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <circle cx="12" cy="12" r="9" />
-    <path d="M12 11.4v5.2" />
-    <circle cx="12" cy="7.9" r="1.1" fill="currentColor" stroke="none" />
-  </Icon>
-);
-
-export const IconLock: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <rect x="4.5" y="10.5" width="15" height="9.5" rx="2.5" />
-    <path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" />
-  </Icon>
-);
-
-export const IconUnlock: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <rect x="4.5" y="10.5" width="15" height="9.5" rx="2.5" />
-    <path d="M8 10.5V8a4 4 0 0 1 7.6-1.7" />
-  </Icon>
-);
+/** Hinweis, Tipp — derselbe Kreis, Punkt oben. */
+export const IconInfo = wrap(InformationCircleIcon, 'IconInfo');
 
 /**
- * Geblockt (2v2-Freeze). Ein Schlüsselloch mit Balken davor — nicht dasselbe
- * Bild wie IconLock, weil „geblockt" ein Spielzustand ist und keine Sicherheit.
+ * Auf und zu — und zwar als Paar.
+ *
+ * `SquareLock01Icon` und `SquareUnlock01Icon` teilen denselben Korpus und
+ * unterscheiden sich nur im Bügel. Das ist der Grund für diese Wahl: der
+ * 2v2-Freeze schaltet zwischen beiden hin und her, und ein Wechsel, bei dem
+ * gleichzeitig die Form des Schlosses springt, liest sich als zwei verschiedene
+ * Dinge. `LockIcon` wäre ein Schlüsselloch im Kreis und hat kein offenes
+ * Gegenstück im freien Satz.
  */
-export const IconFrozen: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <path d="M12 3.5v17" />
-    <path d="M4.6 7.8l14.8 8.4" />
-    <path d="M4.6 16.2l14.8-8.4" />
-  </Icon>
-);
+export const IconLock = wrap(SquareLock01Icon, 'IconLock');
+export const IconUnlock = wrap(SquareUnlock01Icon, 'IconUnlock');
 
-export const IconTrophy: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <path d="M8 4.5h8v4.2a4 4 0 0 1-8 0z" />
-    <path d="M8 5.8H5.2v1.4A3.2 3.2 0 0 0 8.4 10.4" />
-    <path d="M16 5.8h2.8v1.4a3.2 3.2 0 0 1-3.2 3.2" />
-    <path d="M12 12.9v3.6" />
-    <path d="M8.4 19.5h7.2" />
-    <path d="M9.8 19.5c0-1.7 1-3 2.2-3s2.2 1.3 2.2 3" />
-  </Icon>
-);
+/**
+ * Geblockt (2v2-Freeze) — eine Schneeflocke.
+ *
+ * Bewusst NICHT dasselbe Bild wie `IconLock`: „geblockt" ist ein Spielzustand
+ * und keine Sicherheit. Die Flocke war schon vorher das Zeichen dafür (davor das
+ * Emoji ❄️), und `SnowIcon` ist ihre Entsprechung im Katalog.
+ */
+export const IconFrozen = wrap(SnowIcon, 'IconFrozen');
 
-export const IconKey: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <circle cx="8" cy="8" r="3.8" />
-    <path d="M10.8 10.8 20 20" />
-    <path d="M17 17l-2.2 2.2" />
-  </Icon>
-);
+/**
+ * Sieg. `ChampionIcon` ist der Pokal mit Henkeln und Fuß, also das
+ * handgezeichnete Bild. `Award01Icon` wäre eine Medaille an Bändern — das
+ * ist eine Auszeichnung, kein gewonnenes Match.
+ */
+export const IconTrophy = wrap(ChampionIcon, 'IconTrophy');
 
-export const IconMail: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <rect x="3.5" y="5.5" width="17" height="13" rx="2.5" />
-    <path d="M4.5 8l7.5 5 7.5-5" />
-  </Icon>
-);
+export const IconKey = wrap(Key01Icon, 'IconKey');
+export const IconMail = wrap(Mail01Icon, 'IconMail');
+export const IconCloud = wrap(CloudIcon, 'IconCloud');
 
-export const IconCloud: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <path d="M7.2 18.5a4 4 0 0 1-.3-8 5.4 5.4 0 0 1 10.3 1.3 3.4 3.4 0 0 1-.7 6.7z" />
-  </Icon>
-);
+/** Das gekoppelte Host-Gerät im Gast-Sync. */
+export const IconDevice = wrap(SmartPhone01Icon, 'IconDevice');
 
-export const IconDevice: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <rect x="6.5" y="3" width="11" height="18" rx="2.6" />
-    <path d="M10.6 18h2.8" />
-  </Icon>
-);
-
-export const IconLink: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <path d="M10 14a3.5 3.5 0 0 1 0-5l2.5-2.5a3.5 3.5 0 0 1 5 5L16 13" />
-    <path d="M14 10a3.5 3.5 0 0 1 0 5L11.5 17.5a3.5 3.5 0 0 1-5-5L8 11" />
-  </Icon>
-);
+export const IconLink = wrap(Link01Icon, 'IconLink');
 
 /** Verlauf, gespeicherte Matches. */
-export const IconHistory: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <path d="M3.6 8.5v5h5" />
-    <path d="M4.2 13.5A8 8 0 1 0 6.4 7.2" />
-    <path d="M12 8.4V12l2.8 1.8" />
-  </Icon>
-);
+export const IconHistory = wrap(HistoryIcon, 'IconHistory');
 
-export const IconChart: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <path d="M4 19h16" />
-    <path d="M5.5 15.2 10 9.8l3.6 3 5-6" />
-  </Icon>
-);
+/** Kurvendiagramm — Achse plus steigende Linie, wie im Original. */
+export const IconChart = wrap(ChartLineData01Icon, 'IconChart');
 
 /** Erscheinungsbild / Theme. */
-export const IconPalette: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <path d="M12 20.5a8.5 8.5 0 1 1 8.5-8.5c0 2.4-2 3.4-3.8 3.4h-1.4a2 2 0 0 0-1.4 3.4 1.9 1.9 0 0 1-1.9 1.7z" />
-    <circle cx="8.6" cy="10.4" r="1.2" fill="currentColor" stroke="none" />
-    <circle cx="12" cy="7.6" r="1.2" fill="currentColor" stroke="none" />
-    <circle cx="15.6" cy="10" r="1.2" fill="currentColor" stroke="none" />
-  </Icon>
-);
+export const IconPalette = wrap(PaintBoardIcon, 'IconPalette');
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Ton
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/**
- * Ton an — Lautsprecher mit zwei Bögen.
- *
- * Die Bögen liegen in einer eigenen Gruppe, damit `IconSoundOff` denselben
- * Lautsprecherkörper benutzt und die beiden Zustände nicht auseinanderdriften.
- */
-export const IconSoundOn: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <path d="M4 9.5h3.5L12 6v12L7.5 14.5H4z" />
-    <path d="M15.4 9.4a3.6 3.6 0 0 1 0 5.2" />
-    <path d="M18 7a7 7 0 0 1 0 10" />
-  </Icon>
-);
-
-/** Ton aus — derselbe Körper, durchgestrichen. */
-export const IconSoundOff: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <path d="M4 9.5h3.5L12 6v12L7.5 14.5H4z" />
-    <path d="M16 10l4 4" />
-    <path d="M20 10l-4 4" />
-  </Icon>
-);
+export const IconSoundOn = wrap(VolumeHighIcon, 'IconSoundOn');
+export const IconSoundOff = wrap(VolumeOffIcon, 'IconSoundOff');
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Spieler
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /**
- * Bot. Ein Kopf mit Antenne und zwei Augen.
- *
- * Steht neben jedem Bot-Profil, dort wo vorher 🤖 stand — dasselbe Bild, aber
- * in der Farbe des Textes und in derselben Strichstärke wie alles daneben.
+ * Bot. `BotIcon` ist der Korpus mit Antenne, zwei Augen und Mund — das
+ * handgezeichnete Bild, nur vollständiger. `Robot01Icon` wäre ein Kopf auf
+ * Schultern und damit näher an einem Menschen, was hier genau der Unterschied
+ * ist, den das Icon machen soll.
  */
-export const IconBot: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <rect x="4.5" y="8" width="15" height="11.5" rx="3.2" />
-    <path d="M12 4.5V8" />
-    <circle cx="9.2" cy="13.4" r="1.3" fill="currentColor" stroke="none" />
-    <circle cx="14.8" cy="13.4" r="1.3" fill="currentColor" stroke="none" />
-  </Icon>
-);
+export const IconBot = wrap(BotIcon, 'IconBot');
 
-/** Gast — ein Profil mit gestricheltem Rand gibt es nicht; hier: Kopf im Kreis. */
-export const IconGuest: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <circle cx="12" cy="12" r="9" />
-    <circle cx="12" cy="9.6" r="2.6" />
-    <path d="M7 18c.6-2.3 2.6-3.6 5-3.6s4.4 1.3 5 3.6" />
-  </Icon>
-);
+/**
+ * Gast — Kopf und Schultern im Kreis. `UserCircleIcon` ist genau das
+ * handgezeichnete Bild. `UserQuestion01Icon` mit dem Fragezeichen hätte
+ * „unbekannt" gesagt; ein Gast ist bekannt, nur nicht angemeldet.
+ */
+export const IconGuest = wrap(UserCircleIcon, 'IconGuest');
 
-/** Der Bull beim Ausbullen. */
-export const IconBull: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <circle cx="12" cy="12" r="9" />
-    <circle cx="12" cy="12" r="3" fill="currentColor" stroke="none" />
-  </Icon>
-);
+/**
+ * Der Bull beim Ausbullen — ein Dart im Flug.
+ *
+ * `DartIcon` und nicht `Target02Icon`: die Zielscheibe stünde direkt neben
+ * `IconTarget`, dem handgezeichneten Dartboard, und zwei ähnliche Ringbilder
+ * nebeneinander sagen weniger als eins. „Ausbullen" ist außerdem der Wurf, nicht
+ * das Feld.
+ */
+export const IconBull = wrap(DartIcon, 'IconBull');
 
-/** Testdaten, Spielwiese. */
-export const IconFlask: React.FC<IconProps> = props => (
-  <Icon {...props}>
-    <path d="M9.5 4h5v4.6l4 8.4a2 2 0 0 1-1.8 3H8.3a2 2 0 0 1-1.8-3l4-8.4z" />
-    <path d="M8.2 14.5h7.6" />
-  </Icon>
-);
+/**
+ * Testdaten. `FlaskConicalIcon` ist der Erlenmeyerkolben mit Füllstandslinie —
+ * das handgezeichnete Bild. `TestTube01Icon` wäre ein Reagenzglas und bei 17px
+ * kaum von einem Ausrufezeichen zu unterscheiden.
+ */
+export const IconFlask = wrap(FlaskConicalIcon, 'IconFlask');
