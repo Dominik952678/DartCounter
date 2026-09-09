@@ -5,6 +5,7 @@ import { playDartHitSound, playSciFiHitSound, speak, play180Sound, isSoundEnable
 import { ConfirmModal } from './ConfirmModal';
 import { Button, CallOut } from './ui';
 import { withDartRecorded } from '../utils/segmentStats';
+import { playerColorBySeat } from '../utils/playerColors';
 
 interface SplitScoreProps {
   players: string[];
@@ -400,32 +401,23 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
 
         <div className="game-screen-body">
           <div className="game-screen-left">
-            <div className="scoreboard" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px', padding: '10px 0' }}>
-              {gameState.map((p, i) => (
-                <div 
-                  key={i} 
-                  className={`player ${i === activePlayer ? 'active' : ''}`}
-                  style={{ flex: 1, minWidth: '140px', borderLeftColor: i === activePlayer ? p.color : undefined }}
-                >
-                  <h3 className="player-name">{p.isBot ? '🤖 ' : ''}{p.name}</h3>
-                  <div className="score" style={{ fontSize: '3em', margin: '10px 0' }}>
-                    {i === activePlayer ? getLiveScore() : p.score}
-                  </div>
-                  {i === activePlayer && (
-                     <div className={`round-delta ${currentRoundDarts.length === 0 ? 'is-idle' : getLiveScore() > p.score ? 'is-up' : 'is-down'}`}>
-                       {currentRoundDarts.length === 3 && getLiveScore() === p.score ? 'Halbiert!' : 'Wurf…'}
-                     </div>
-                  )}
+            {/* Wie im Power Scoring: der Werfende groß, die Mitspieler als
+                Zeile. Vorher stand hier eine Karte je Spieler mit einer
+                3em-Zahl — auf einem Telefon füllte das die halbe Spalte. */}
+            <div className="ps-board">
+              <div
+                className="ps-card"
+                style={{ '--player-color': activeP?.color || playerColorBySeat(activePlayer) } as React.CSSProperties}
+              >
+                <div className="ps-card-head">
+                  <span className="ps-card-name">{activeP?.isBot ? '🤖 ' : ''}{activeP?.name}</span>
+                  <span className="ps-card-total">{getLiveScore()}</span>
                 </div>
-              ))}
-            </div>
-            
-            <div className="training-score-panel">
-               <div className="stat-label">Aktuelles Ziel</div>
-               <div className="training-score-value">
-                 {currentTarget?.label}
-               </div>
-               <div className="split-darts">
+
+                <div className="split-now">
+                  <span className="stat-label">Ziel</span>
+                  <span className="split-now-target">{currentTarget?.label}</span>
+                  <div className="split-darts">
                  {[0, 1, 2].map(idx => {
                    const dart = currentRoundDarts[idx];
                    return (
@@ -437,11 +429,12 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
                      </div>
                    );
                  })}
-               </div>
+                  </div>
+                </div>
 
-               {/* Alle neun Ziele auf einen Blick, wie das Runden-Raster im
-                   Power Scoring: erledigte, das laufende und die kommenden. */}
-               <ol className="split-targets">
+                {/* Alle neun Ziele auf einen Blick: erledigte, das laufende
+                    und die kommenden. Scrollt innerhalb der Karte. */}
+                <ol className="split-targets">
                  {activeSplitLog.map((entry, idx) => (
                    <li
                      key={entry.target}
@@ -453,9 +446,26 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
                      <span className="split-target-value">
                        {idx >= currentRoundIndex ? '–' : entry.gained === null ? 'SPLIT' : `+${entry.gained}`}
                      </span>
-                   </li>
-                 ))}
-               </ol>
+                  </li>
+                ))}
+              </ol>
+              </div>
+
+              {gameState.length > 1 && (
+                <ul className="ps-others">
+                  {gameState.map((p, i) => i === activePlayer ? null : (
+                    <li key={i} className="ps-other">
+                      <span
+                        className="ps-other-dot"
+                        style={{ backgroundColor: p.color || playerColorBySeat(i) }}
+                        aria-hidden="true"
+                      />
+                      <span className="ps-other-name">{p.isBot ? '🤖 ' : ''}{p.name}</span>
+                      <span className="ps-other-score">{p.score}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           </div>
 

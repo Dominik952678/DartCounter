@@ -21,10 +21,11 @@ const press = (name: string) => {
   fireEvent.click(screen.getByRole('button', { name }));
 };
 
-const shownScore = (container: HTMLElement) =>
-  container.querySelector('.score')?.textContent?.trim();
-
-/** Power Scoring zeigt die Gesamtpunktzahl in der Karte des aktiven Spielers. */
+/**
+ * Power Scoring und Split Score zeigen die Punktzahl beide in der Karte des
+ * aktiven Spielers — vorher hatte Split Score eine eigene `.score`-Zahl in
+ * 3em, die auf einem Telefon die halbe Spalte füllte.
+ */
 const shownTotal = (container: HTMLElement) =>
   container.querySelector('.ps-card-total')?.textContent?.trim();
 
@@ -160,7 +161,7 @@ describe('SplitScore scoring', () => {
     press('Miss (0)');
     await advance(1100);
 
-    expect(shownScore(container)).toBe('20');
+    expect(shownTotal(container)).toBe('20');
   });
 
   it('adds a hit once', async () => {
@@ -181,7 +182,7 @@ describe('SplitScore scoring', () => {
     press('Single (15)');
     await advance(1100);
 
-    expect(shownScore(container)).toBe('85');
+    expect(shownTotal(container)).toBe('85');
   });
 });
 

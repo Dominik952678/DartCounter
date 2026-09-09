@@ -8,6 +8,7 @@ import { playDartHitSound, playSciFiHitSound, speak, isSoundEnabled, setSoundEna
 import { ConfirmModal } from './ConfirmModal';
 import { Button, CallOut } from './ui';
 import { withDartRecorded } from '../utils/segmentStats';
+import { playerColorBySeat } from '../utils/playerColors';
 
 interface CheckoutTrainingProps {
   players: string[];
@@ -500,56 +501,83 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
 
         <div className="game-screen-body">
           <div className="game-screen-left">
-            <div className="scoreboard" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px', padding: '10px 0' }}>
-              {gameState.map((p, i) => (
-                <div 
-                  key={i} 
-                  className={`player ${i === activePlayer ? 'active' : ''}`}
-                  style={{ flex: 1, minWidth: '140px', borderLeftColor: i === activePlayer ? p.color : undefined }}
-                >
-                  <h3 className="player-name">{p.isBot ? '🤖 ' : ''}{p.name}</h3>
-                  
-                  <div className="score" style={{ fontSize: '3em', margin: '10px 0' }}>
-                    {p.currentScore}
-                  </div>
-
-                  {i === activePlayer && (() => {
-                    // Double Out is the mode by definition here — a target only
-                    // counts when it is finished on a double. The suggestion
-                    // wore a `.checkout-hint` class that has no CSS anywhere, so
-                    // it showed up unstyled; `.checkout-pill` is the scoreboard's
-                    // own, themes included.
-                    const suggestion = getCheckoutSuggestion(p.currentScore, 'DO', currentRoundDarts.length);
-                    return suggestion ? (
-                      <div className="checkout-pill" style={{ marginBottom: '10px' }}>
-                        {suggestion}
-                      </div>
-                    ) : null;
-                  })()}
-
-                  <div style={{ fontSize: '0.9em', color: '#999', display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'center' }}>
-                     <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                       <span>Quote: {p.attempts > 0 ? Math.round((p.roundsCompleted / p.attempts) * 100) : 0}%</span>
-                       <span>Darts/CO: {p.roundsCompleted > 0 ? (p.dartsUsed / p.roundsCompleted).toFixed(1) : '-'}</span>
-                     </div>
-                     
-                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '5px', marginTop: '10px', width: '100%' }}>
-                       <div className="mini-stat">
-                         <div style={{ fontSize: '0.8em', color: '#888' }}>Target</div>
-                         <div>{p.targetScore}</div>
-                       </div>
-                       <div className="mini-stat">
-                         <div style={{ fontSize: '0.8em', color: '#888' }}>Erfolge</div>
-                         <div>{p.roundsCompleted}/{p.attempts}</div>
-                       </div>
-                       <div className="mini-stat">
-                         <div style={{ fontSize: '0.8em', color: '#888' }}>Runde</div>
-                         <div>{Math.min(p.roundsOnCurrentTarget + 1, checkoutRounds)}/{checkoutRounds}</div>
-                       </div>
-                     </div>
-                  </div>
+            {/* Wie in den anderen beiden Modi: der Werfende groß, die
+                Mitspieler als Zeile. Vorher stand hier je Spieler eine Karte
+                mit 3em-Zahl und `minWidth: 140px` — auf einem Telefon passte
+                schon eine zweite nicht mehr daneben. */}
+            <div className="ps-board">
+              <div
+                className="ps-card"
+                style={{ '--player-color': activeP?.color || playerColorBySeat(activePlayer) } as React.CSSProperties}
+              >
+                <div className="ps-card-head">
+                  <span className="ps-card-name">{activeP?.isBot ? '🤖 ' : ''}{activeP?.name}</span>
+                  <span className="ps-card-total">{activeP?.currentScore}</span>
                 </div>
-              ))}
+
+                <div className="co-now">
+                  <span className="co-chip">
+                    <span className="stat-label">Ziel</span> {activeP?.targetScore}
+                  </span>
+                  <span className="co-chip">
+                    <span className="stat-label">Runde</span>{' '}
+                    {Math.min((activeP?.roundsOnCurrentTarget ?? 0) + 1, checkoutRounds)}/{checkoutRounds}
+                  </span>
+                  <span className="co-chip">
+                    <span className="stat-label">Ø Darts</span>{' '}
+                    {(activeP?.roundsCompleted ?? 0) > 0
+                      ? ((activeP?.dartsUsed ?? 0) / (activeP?.roundsCompleted ?? 1)).toFixed(1)
+                      : '–'}
+                  </span>
+                </div>
+
+                {activeP && (() => {
+                  // Double Out ist hier per Definition der Modus — ein Ziel
+                  // zählt nur, wenn es auf ein Doppel gefinisht wird.
+                  const suggestion = getCheckoutSuggestion(activeP.currentScore, 'DO', currentRoundDarts.length);
+                  return suggestion ? <div className="checkout-pill co-suggestion">{suggestion}</div> : null;
+                })()}
+
+                {/* Alle Ziele der Sitzung: erledigte mit den benötigten Darts,
+                    das laufende, die kommenden. */}
+                <ol className="co-targets">
+                  {Array.from({ length: checkoutTargets }).map((_, idx) => {
+                    const done = activeP?.checkoutLog[idx];
+                    const isCurrent = idx === (activeP?.attempts ?? 0);
+                    return (
+                      <li
+                        key={idx}
+                        className={`co-target ${isCurrent ? 'is-current' : ''} ${
+                          done ? (done.darts === null ? 'is-missed' : 'is-hit') : ''
+                        }`}
+                      >
+                        <span className="co-target-label">
+                          {done ? done.target : isCurrent ? activeP?.targetScore : idx + 1}
+                        </span>
+                        <span className="co-target-value">
+                          {done ? (done.darts === null ? '✗' : `${done.darts}D`) : isCurrent ? '…' : '–'}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ol>
+              </div>
+
+              {gameState.length > 1 && (
+                <ul className="ps-others">
+                  {gameState.map((p, i) => i === activePlayer ? null : (
+                    <li key={i} className="ps-other">
+                      <span
+                        className="ps-other-dot"
+                        style={{ backgroundColor: p.color || playerColorBySeat(i) }}
+                        aria-hidden="true"
+                      />
+                      <span className="ps-other-name">{p.isBot ? '🤖 ' : ''}{p.name}</span>
+                      <span className="ps-other-score">{p.roundsCompleted}/{p.attempts}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           </div>
 

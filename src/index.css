@@ -1210,6 +1210,12 @@ button:disabled, .btn:disabled {
   min-height: 130px;
   display: flex;
   flex-direction: column;
+  /* Sicherheitsnetz: `.game-screen-body` schneidet ab, damit das Keypad nie
+     unter den Bildschirmrand rutscht. Was hier trotzdem zu hoch wird — ein
+     Runden-Raster über zwanzig Runden, vier Spieler — bleibt so erreichbar,
+     statt einfach zu fehlen. */
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .game-screen-right {
@@ -3251,15 +3257,30 @@ button:disabled, .btn:disabled {
 }
 
 /* ── Split Score ── */
+/* Das aktuelle Ziel und die drei Würfe, kompakt in einer Zeile statt als
+   eigener Kasten unter der Spielerkarte. */
+.split-now {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+.split-now-target {
+  font-family: var(--font-mono);
+  font-size: var(--text-card-title);
+  font-weight: var(--weight-medium);
+  color: var(--accent-primary);
+}
+
 .split-darts {
   display: flex;
-  justify-content: center;
-  gap: var(--space-3);
-  margin-top: var(--space-3);
+  gap: var(--space-2);
+  margin-left: auto;
 }
 .split-dart {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   border: 2px solid var(--card-border);
   display: flex;
@@ -3285,7 +3306,11 @@ button:disabled, .btn:disabled {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: var(--space-2);
-  margin-top: var(--space-4);
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  align-content: start;
 }
 .split-target {
   display: flex;
@@ -3324,6 +3349,76 @@ button:disabled, .btn:disabled {
 /* Ein Fehlwurf ist die einzige wirklich negative Taste hier — Triple und Bull
    trugen vorher ebenfalls Rot, ohne dass es etwas bedeutet hätte (§1). */
 .num-btn.is-miss { color: var(--text-danger); }
+
+/* ── Checkout Training ── */
+/* Ziel, Runde und Dart-Schnitt als Zeile statt als drei Kacheln untereinander. */
+.co-now {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+.co-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-xs);
+  background: var(--surface-card);
+  font-family: var(--font-mono);
+  font-size: var(--text-body);
+  color: var(--text-primary);
+}
+.co-suggestion {
+  align-self: flex-start;
+  flex-shrink: 0;
+}
+
+/* Alle Ziele der Sitzung. Sechs je Reihe, weil es bis zu zwanzig sein können. */
+.co-targets {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: var(--space-2);
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  align-content: start;
+}
+.co-target {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: var(--space-1);
+  border-radius: var(--radius-xs);
+  background: var(--surface-card);
+  border: 2px solid transparent;
+  min-height: 44px;
+}
+.co-target-label {
+  font-size: var(--text-label);
+  color: var(--text-secondary);
+  line-height: 1;
+}
+.co-target-value {
+  font-family: var(--font-mono);
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  color: var(--text-secondary);
+  line-height: 1;
+}
+.co-target.is-hit { background: color-mix(in srgb, var(--text-success) 14%, transparent); }
+.co-target.is-hit .co-target-value { color: var(--text-success); }
+.co-target.is-missed { background: color-mix(in srgb, var(--text-danger) 12%, transparent); }
+.co-target.is-missed .co-target-value { color: var(--text-danger); }
+.co-target.is-current {
+  border-color: var(--accent-primary);
+  background: var(--bg-accent-muted);
+}
+.co-target.is-current .co-target-value { color: var(--accent-primary); }
 
 /* ── Der große Zuruf ──
    „SPLIT", „GAME SHOT", „BUST": kurz, mittig, über allem. Markup:
@@ -3392,10 +3487,14 @@ button:disabled, .btn:disabled {
    Mitspieler nur eine Zeile. Bei bis zu vier Spielern und zwanzig Runden ist
    das der einzige Zuschnitt, bei dem das Keypad groß bleibt. */
 
+/* Die Kette von der Spalte bis zum Raster: jedes Glied muss `min-height: 0`
+   tragen, sonst kommt die Höhenbegrenzung unten nicht an und das Raster wird
+   abgeschnitten, statt zu scrollen. */
 .ps-board {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+  flex: 1;
   min-height: 0;
   padding: var(--space-2) 0;
 }
@@ -3409,14 +3508,17 @@ button:disabled, .btn:disabled {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+  flex: 1;
   min-height: 0;
 }
 
+/* Name und Punktzahl bleiben stehen, während das Raster darunter scrollt. */
 .ps-card-head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: var(--space-3);
+  flex-shrink: 0;
 }
 .ps-card-name {
   font-size: var(--text-body-lg);
@@ -3444,8 +3546,13 @@ button:disabled, .btn:disabled {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: var(--space-2);
+  flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  /* Sonst zieht das Raster die Reihen über die volle Höhe auseinander, wenn
+     wenige Runden eingestellt sind. */
+  align-content: start;
 }
 
 .ps-round {
@@ -3489,6 +3596,7 @@ button:disabled, .btn:disabled {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
+  flex-shrink: 0;
 }
 .ps-other {
   display: flex;
@@ -3522,11 +3630,26 @@ button:disabled, .btn:disabled {
   color: var(--text-primary);
 }
 
-/* Auf dem Telefon im Querformat ist die Höhe knapp: die Kästen werden flacher
-   und das Raster scrollt, statt das Keypad zu verdrängen. */
+/* Wenig Höhe — Telefon im Querformat, kleine Geräte: die Kästen werden
+   flacher und die Rundennummer entfällt. Das Raster scrollt ohnehin, aber
+   sichtbar bleiben soll trotzdem so viel wie möglich. */
+@media (max-height: 740px) {
+  .ps-round,
+  .split-target,
+  .co-target { min-height: 38px; padding: var(--space-1); }
+  .ps-card { padding: var(--space-3); gap: var(--space-2); }
+  .split-dart { width: 34px; height: 34px; font-size: var(--text-label); }
+}
+
 @media (orientation: landscape) and (max-height: 520px) {
-  .ps-round { min-height: 36px; padding: var(--space-1); }
-  .ps-round-no { display: none; }
+  .ps-round,
+  .split-target,
+  .co-target { min-height: 32px; }
+  .ps-round-no,
+  .split-target-label,
+  .co-target-label { font-size: 10px; }
+  .ps-board { gap: var(--space-2); padding: 0; }
+  .split-now { gap: var(--space-2); }
 }
 
 /* ── Kopfzeile der Match-Screens ──
