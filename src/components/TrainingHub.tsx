@@ -6,6 +6,7 @@ import { readInt, readOneOf, write } from '../utils/storage';
 import { Button, Card, CardHeader, Choice, Slider, Icons } from './ui';
 import type { IconProps } from './ui';
 import { playerColorByName } from '../utils/playerColors';
+import { DEFAULT_BOT_AVERAGE, botRosterLabel } from '../utils/botProfiles';
 
 export type MiniGameMode = 'checkout' | 'powerscoring' | 'splitscore';
 
@@ -181,7 +182,7 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
           ? { ...existing, isBot: guestBots[p] || false }
           : {
               wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0,
-              targetAverage: 40,
+              targetAverage: DEFAULT_BOT_AVERAGE,
               isBot: guestBots[p] || false
             };
       });
@@ -350,7 +351,7 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
                             value={name}
                             style={{ color: '#000', background: '#fff' }}
                           >
-                            {name} {profiles[name]?.isBot ? '(Bot)' : ''}
+                            {botRosterLabel(name, profiles[name])}
                           </option>
                         ))}
                       </select>

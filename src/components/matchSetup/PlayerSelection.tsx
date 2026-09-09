@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import type { Profile } from '../../types';
 import type { Lineup } from './useLineup';
 import { Button, Card, CardHeader, ChoiceGroup, Slider, Icons } from '../ui';
+import { botRosterLabel } from '../../utils/botProfiles';
 import { playerColorByName, teamColor } from '../../utils/playerColors';
 
 interface PlayerSelectionProps {
@@ -182,7 +183,12 @@ export const PlayerSelection: React.FC<PlayerSelectionProps> = ({
                       const isProfileBot = profiles[name]?.isBot;
                       return (
                         <option key={name} value={name} style={{ color: '#000', background: '#fff' }}>
-                          {name}{isCloudGuest ? ' (Cloud-Gast)' : (isProfileBot ? ' (Bot)' : '')}
+                          {/* Beim Bot steht der Zielschnitt dabei: mit „Bot leicht" und
+                              „Bot stark" in derselben Liste ist die Stärke das, wonach
+                              man auswählt, und sie erst im Profil zu zeigen hieße, hier
+                              blind zu greifen. */}
+                          {isProfileBot ? botRosterLabel(name, profiles[name]) : name}
+                          {isCloudGuest ? ' (Cloud-Gast)' : ''}
                         </option>
                       );
                     })}

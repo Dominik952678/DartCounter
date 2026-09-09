@@ -17,6 +17,7 @@ const renderList = (overrides: Partial<React.ComponentProps<typeof ProfileList>>
   const props = {
     profiles,
     onOpenProfile: vi.fn(),
+    onUpdateProfile: vi.fn(),
     onDeleteProfile: vi.fn(),
     onImportGuest: vi.fn(),
     onShowHistory: vi.fn(),

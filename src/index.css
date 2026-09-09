@@ -2413,6 +2413,29 @@ body:has(.app-nav-vertical) .app-container {
   transform: translateX(4px);
 }
 
+/* Die Spielstärke eines Bots, direkt auf seiner Zeile. Sie steht rechts und
+   schiebt sich per `margin-left: auto` vor die Lösch-Schaltfläche — bei mehreren
+   Bots in der Liste ist sie das Einzige, was sie unterscheidet.
+
+   Die Zahl in Mono mit tabular-nums: Ø 40 und Ø 100 sollen gleich breit
+   ansetzen, sonst wandert das Feld von Zeile zu Zeile. */
+.profile-chip-avg {
+  margin-left: auto;
+  flex: 0 0 auto;
+  width: auto;
+  min-height: 40px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--surface-card);
+  border: 1px solid var(--card-border);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+}
+
 .history-item {
   margin-bottom: 12px;
 }

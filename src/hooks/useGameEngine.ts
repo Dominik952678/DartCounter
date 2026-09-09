@@ -7,6 +7,7 @@ import { triggerHaptic } from '../utils/haptics';
 import { threeDartAverage } from '../utils/stats';
 import { reportPersistenceError } from '../store/useNotificationStore';
 import { has as hasStored, readJson, remove as removeStored, writeJson } from '../utils/storage';
+import { botAverage } from '../utils/botProfiles';
 
 export const get2v2FreezeStatus = (players: Player[], activePlayerIndex: number): {
   is2v2: boolean;
@@ -231,7 +232,7 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
         checkoutAttempts: 0,
         checkoutSuccesses: 0,
         isBot: p?.isBot || false,
-        targetAverage: p?.targetAverage || 40,
+        targetAverage: botAverage(p),
         linkedUserId: p?.linkedUserId,
         linkedUsername: p?.linkedUsername,
         isLinkedCloudGuest: p?.isLinkedCloudGuest,
@@ -877,7 +878,7 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
           opponent2Score: gameState.players[opponentIndices[1]]?.score ?? 0
         };
       }
-      const dart = getBotDart(p.targetAverage || 40, p.score - currentTurnScore, gameState.config.outMode, teamContext);
+      const dart = getBotDart(botAverage(p), p.score - currentTurnScore, gameState.config.outMode, teamContext);
       addDartRef.current(dart.base, dart.mult);
     }, 1200);
 

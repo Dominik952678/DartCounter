@@ -2,10 +2,13 @@ import React, { useState } from 'react';
 import type { Profile } from '../../types';
 import { ConfirmModal } from '../ConfirmModal';
 import { Button, Card, CardHeader, Icons } from '../ui';
+import { botAverage, botAverageOptions } from '../../utils/botProfiles';
 
 interface ProfileListProps {
   profiles: Record<string, Profile>;
   onOpenProfile: (name: string) => void;
+  /** Nur für die Spielstärke der Bots — sie steht direkt auf ihrer Zeile. */
+  onUpdateProfile: (name: string, updates: Partial<Profile>) => void;
   onDeleteProfile: (name: string) => void;
   onImportGuest: () => void;
   onShowHistory: () => void;
@@ -15,6 +18,7 @@ interface ProfileListProps {
 export const ProfileList: React.FC<ProfileListProps> = ({
   profiles,
   onOpenProfile,
+  onUpdateProfile,
   onDeleteProfile,
   onImportGuest,
   onShowHistory
@@ -42,6 +46,7 @@ export const ProfileList: React.FC<ProfileListProps> = ({
         <div className="profile-chips">
           {profileNames.map(name => {
             const isCloudGuest = profiles[name]?.isLinkedCloudGuest;
+            const isBot = profiles[name]?.isBot;
             return (
               <div
                 key={name}
@@ -73,6 +78,22 @@ export const ProfileList: React.FC<ProfileListProps> = ({
                       ? <Icons.IconBot size={16} className="icon-inline" />
                       : <Icons.IconUser size={16} className="icon-inline" />}{name}
                 </button>
+                {/* Die Stärke gehört auf die Zeile des Bots, nicht zwei Klicks
+                    tiefer im Dashboard: bei mehreren Bots in der Liste ist sie
+                    das Einzige, was sie unterscheidet. */}
+                {isBot && (
+                  <select
+                    className="profile-chip-avg"
+                    value={botAverage(profiles[name])}
+                    onChange={e => onUpdateProfile(name, { targetAverage: parseInt(e.target.value, 10) })}
+                    aria-label={`Spielstärke von ${name}`}
+                    onClick={e => e.stopPropagation()}
+                  >
+                    {botAverageOptions(botAverage(profiles[name])).map(avg => (
+                      <option key={avg} value={avg}>Ø {avg}</option>
+                    ))}
+                  </select>
+                )}
                 {isCloudGuest && (
                   <span style={{
                     fontSize: '0.7em',

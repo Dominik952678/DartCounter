@@ -9,6 +9,7 @@ import { Button, StatStrip, Icons } from './ui';
 import { withDartRecorded } from '../utils/segmentStats';
 import { liveStats } from '../utils/storyExport';
 import { playerColorBySeat } from '../utils/playerColors';
+import { botAverage } from '../utils/botProfiles';
 
 interface PowerScoringProps {
   players: string[];
@@ -127,7 +128,7 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
       name: p,
       score: 0,
       isBot: profiles[p]?.isBot || false,
-      targetAverage: profiles[p]?.targetAverage || 40,
+      targetAverage: botAverage(profiles[p]),
       color: profiles[p]?.color,
       roundScores: Array<number | null>(rounds).fill(null),
       segmentHits: {},

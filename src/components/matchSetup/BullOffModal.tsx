@@ -3,6 +3,7 @@ import type { Profile } from '../../types';
 import { useModalA11y } from '../../hooks/useModalA11y';
 import { throwAtTarget } from '../../utils/bot';
 import { Button, Icons } from '../ui';
+import { botAverage } from '../../utils/botProfiles';
 
 type BullResult = 0 | 25 | 50;
 
@@ -74,7 +75,7 @@ export const BullOffModal: React.FC<BullOffModalProps> = ({
   // Bots throw automatically, after a short delay so the sequence stays readable.
   useEffect(() => {
     if (currentIndex === undefined || !currentPlayer || !isCurrentBot) return;
-    const targetAverage = profiles[currentPlayer]?.targetAverage ?? 40;
+    const targetAverage = botAverage(profiles[currentPlayer]);
     const timer = setTimeout(() => {
       const { base, mult } = throwAtTarget(25, 1, targetAverage);
       submitResult(currentIndex, categorize(base, mult));

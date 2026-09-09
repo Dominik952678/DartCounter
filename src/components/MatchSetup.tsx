@@ -13,6 +13,7 @@ import type { SavedMatchSummary } from './matchSetup/SavedGameCard';
 import { useLineup } from './matchSetup/useLineup';
 import { toGameConfig, useMatchSetupConfig } from './matchSetup/useMatchSetupConfig';
 import { Button, Icons } from './ui';
+import { DEFAULT_BOT_AVERAGE } from '../utils/botProfiles';
 
 interface MatchSetupProps {
   profiles: Record<string, Profile>;
@@ -155,7 +156,7 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
           ? { ...existing, isBot: lineup.guestBots[p] || false }
           : {
               wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0,
-              targetAverage: 40,
+              targetAverage: DEFAULT_BOT_AVERAGE,
               isBot: lineup.guestBots[p] || false
             };
       });

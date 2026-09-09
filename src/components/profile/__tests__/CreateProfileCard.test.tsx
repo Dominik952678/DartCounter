@@ -43,17 +43,30 @@ describe('CreateProfileCard', () => {
     expect(screen.getByText(/Bitte gib einen Namen ein/)).toBeInTheDocument();
   });
 
-  it('turns a bot level into the average it should play', () => {
+  /**
+   * Hier stand ein „Bot Level 1–10", das über `level * 10 + 20` in einen
+   * Average umgerechnet wurde. Gespeichert war ohnehin nur der Average, und die
+   * Stufe war eine Erfindung, die an drei Stellen verschieden gerundet wurde.
+   */
+  it('creates a bot with the target average that was picked', () => {
     const onCreateProfile = vi.fn();
     render(<CreateProfileCard profiles={{}} onCreateProfile={onCreateProfile} />);
 
     fireEvent.click(screen.getByLabelText(/Als Bot/));
-    fireEvent.change(screen.getByRole('slider'), { target: { value: '7' } });
-    expect(screen.getByText(/Avg: ~90/)).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('Spielstärke des Bots'), { target: { value: '90' } });
 
     type('Bot 7');
     fireEvent.click(screen.getByText('+'));
 
     expect(onCreateProfile).toHaveBeenCalledWith('Bot 7', true, 90);
+  });
+
+  /** Ein Mensch hat keinen Zielschnitt — das Feld bleibt bei ihm leer. */
+  it('offers the strength only for a bot', () => {
+    render(<CreateProfileCard profiles={{}} onCreateProfile={vi.fn()} />);
+
+    expect(screen.queryByLabelText('Spielstärke des Bots')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText(/Als Bot/));
+    expect(screen.getByLabelText('Spielstärke des Bots')).toBeInTheDocument();
   });
 });

@@ -3,6 +3,7 @@ import { supabase, PersistenceError } from './supabase';
 import { profilesCacheKey } from './localCache';
 import { getCachedMatches, isMatchWinner, saveMatch } from './matches';
 import { PLAYER_COLOR_HEX } from '../utils/playerColors';
+import { withBotAveragesFilled } from '../utils/botProfiles';
 
 /**
  * Neue Gastprofile bekommen Hex-Werte aus der Spielerpalette, keine
@@ -17,7 +18,12 @@ export function getGuestDefaultProfiles(): Record<string, Profile> {
   return {
     "Gast 1": { wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0, color: PLAYER_COLOR_HEX[0] },
     "Gast 2": { wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0, color: PLAYER_COLOR_HEX[1] },
-    "Bot": { wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0, isBot: true, targetAverage: 45, color: PLAYER_COLOR_HEX[2] }
+    /* Zwei Bots, verschieden stark. Einer allein legte nahe, die Stärke sei eine
+       Eigenschaft von „dem Bot"; zwei zeigen, dass sie am Profil hängt und eine
+       Aufstellung beide gleichzeitig enthalten darf. Die Werte liegen auf
+       Stufen aus BOT_AVERAGES, damit die Auswahl sie ohne Zwischenwert trifft. */
+    "Bot leicht": { wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0, isBot: true, targetAverage: 40, color: PLAYER_COLOR_HEX[2] },
+    "Bot stark": { wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0, isBot: true, targetAverage: 80, color: PLAYER_COLOR_HEX[3] }
   };
 }
 
@@ -260,7 +266,25 @@ export function reconstructAllProfilesFromMatches(
   return result;
 }
 
+/**
+ * Lädt die Profile und stellt sicher, dass jeder Bot einen ausdrücklichen
+ * Zielschnitt trägt.
+ *
+ * Die Normalisierung sitzt hier und nicht in einer versionierten Migration,
+ * weil `loadProfiles` unten sechs Rückgabewege hat — lokaler Cache, Cloud, drei
+ * Fehlerpfade, frisch angelegt — und weil von einem zweiten Gerät jederzeit ein
+ * unnormalisierter Satz aus der Cloud kommen kann. Sie ist idempotent, wird also
+ * nicht gespeichert: derselbe Satz ergibt bei jedem Laden dasselbe Ergebnis.
+ */
 export async function getProfiles(
+  userId?: string | null,
+  username?: string,
+  options?: { skipLocalCache?: boolean }
+): Promise<Record<string, Profile>> {
+  return withBotAveragesFilled(await loadProfiles(userId, username, options));
+}
+
+async function loadProfiles(
   userId?: string | null,
   username?: string,
   options?: { skipLocalCache?: boolean }

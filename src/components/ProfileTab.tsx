@@ -121,6 +121,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
         <ProfileList
           profiles={profiles}
           onOpenProfile={setViewProfile}
+          onUpdateProfile={onUpdateProfile}
           onDeleteProfile={onDeleteProfile}
           onImportGuest={() => setShowImportModal(true)}
           onShowHistory={() => setShowHistory(true)}

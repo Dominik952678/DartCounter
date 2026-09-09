@@ -6,6 +6,7 @@ import { HeadToHead } from './HeadToHead';
 import { DartboardHeatmap } from './DartboardHeatmap';
 import { ConfirmModal } from './ConfirmModal';
 import { Button, Icons } from './ui';
+import { botAverage, botAverageOptions } from '../utils/botProfiles';
 import { chartColor } from '../utils/chartColors';
 import { DEFAULT_PLAYER_COLOR_HEX, isHexColor } from '../utils/playerColors';
 
@@ -293,17 +294,21 @@ export const ProfileDashboard: React.FC<ProfileDashboardProps> = ({
         {/* Profile Settings */}
         {onUpdateProfile && profile && (
           <div className="dash-settings" style={{ marginBottom: '20px' }}>
+            {/* Derselbe Zielschnitt wie in der Profilliste und beim Anlegen —
+                vorher rechnete diese Stelle als einzige in „Level" um und
+                rundete den gespeicherten Wert dabei still auf die nächste
+                Zehnerstufe, sobald man das Menü nur öffnete. */}
             {profile.isBot && (
               <div className="dash-bot-level" style={{ marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '10px', background: 'var(--surface)', padding: '10px', borderRadius: '10px' }}>
-                <span style={{ fontSize: '0.9em', color: 'var(--text-dim)' }}>Bot Level:</span>
+                <span style={{ fontSize: '0.9em', color: 'var(--text-dim)' }}>Spielstärke:</span>
                 <select
-                  value={profile.targetAverage ? Math.max(1, Math.min(10, Math.round((profile.targetAverage - 20) / 10))) : 4}
-                  onChange={(e) => onUpdateProfile(profileName, { targetAverage: parseInt(e.target.value) * 10 + 20 })}
-                  aria-label="Bot Level"
+                  value={botAverage(profile)}
+                  onChange={(e) => onUpdateProfile(profileName, { targetAverage: parseInt(e.target.value, 10) })}
+                  aria-label="Spielstärke des Bots"
                   style={{ flex: 1 }}
                 >
-                  {[1,2,3,4,5,6,7,8,9,10].map(l => (
-                    <option key={l} value={l}>Level {l} · Avg ~{l*10 + 20}</option>
+                  {botAverageOptions(botAverage(profile)).map(avg => (
+                    <option key={avg} value={avg}>Ø {avg} pro Aufnahme</option>
                   ))}
                 </select>
               </div>

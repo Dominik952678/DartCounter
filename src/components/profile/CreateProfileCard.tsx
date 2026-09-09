@@ -1,20 +1,19 @@
 import React, { useId, useState } from 'react';
 import type { Profile } from '../../types';
 import { Button, Card, CardHeader, Icons } from '../ui';
+import { BOT_AVERAGES, NEW_BOT_AVERAGE } from '../../utils/botProfiles';
 
 interface CreateProfileCardProps {
   profiles: Record<string, Profile>;
   onCreateProfile: (name: string, isBot?: boolean, targetAverage?: number) => void;
 }
 
-/** A bot's level maps onto the average it plays: level 3 aims at 50. */
-const targetAverageForLevel = (level: number): number => level * 10 + 20;
-
 export const CreateProfileCard: React.FC<CreateProfileCardProps> = ({ profiles, onCreateProfile }) => {
   const nameInputId = useId();
+  const botAvgId = useId();
   const [name, setName] = useState('');
   const [isBot, setIsBot] = useState(false);
-  const [botLevel, setBotLevel] = useState(3);
+  const [botAvg, setBotAvg] = useState<number>(NEW_BOT_AVERAGE);
   const [error, setError] = useState<string | null>(null);
 
   const handleCreate = () => {
@@ -28,10 +27,10 @@ export const CreateProfileCard: React.FC<CreateProfileCardProps> = ({ profiles, 
       return;
     }
     setError(null);
-    onCreateProfile(trimmed, isBot, isBot ? targetAverageForLevel(botLevel) : undefined);
+    onCreateProfile(trimmed, isBot, isBot ? botAvg : undefined);
     setName('');
     setIsBot(false);
-    setBotLevel(3);
+    setBotAvg(NEW_BOT_AVERAGE);
   };
 
   return (
@@ -70,16 +69,22 @@ export const CreateProfileCard: React.FC<CreateProfileCardProps> = ({ profiles, 
         Als Bot (Computergegner) erstellen
       </label>
 
+      {/* Hier stand ein „Bot Level 1–10" mit `level * 10 + 20` dahinter. Die
+          Stufe war eine Erfindung: gespeichert wurde ohnehin der Average, und
+          der ist auch die Zahl, die nach dem Spiel im Profil steht. */}
       {isBot && (
         <div style={{ marginTop: '10px' }}>
-          <label className="section-label">Bot Level: {botLevel} (Avg: ~{targetAverageForLevel(botLevel)})</label>
-          <input
-            type="range"
-            min="1" max="10"
-            value={botLevel}
-            onChange={e => setBotLevel(parseInt(e.target.value))}
+          <label className="section-label" htmlFor={botAvgId}>Spielstärke des Bots</label>
+          <select
+            id={botAvgId}
+            value={botAvg}
+            onChange={e => setBotAvg(parseInt(e.target.value, 10))}
             style={{ width: '100%', marginTop: '5px' }}
-          />
+          >
+            {BOT_AVERAGES.map(avg => (
+              <option key={avg} value={avg}>Ø {avg} pro Aufnahme</option>
+            ))}
+          </select>
         </div>
       )}
     </Card>

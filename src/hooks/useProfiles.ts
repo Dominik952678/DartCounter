@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useLayoutEffect, useRef } from 'react
 import type { Profile } from '../types';
 import { getProfiles, saveProfiles } from '../db';
 import { reportPersistenceError } from '../store/useNotificationStore';
+import { DEFAULT_BOT_AVERAGE } from '../utils/botProfiles';
 
 export function useProfiles(user?: { id: string; user_metadata?: { username?: string } } | null) {
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
@@ -101,7 +102,12 @@ export function useProfiles(user?: { id: string; user_metadata?: { username?: st
   const handleCreateProfile = useCallback(async (name: string, isBot?: boolean, targetAverage?: number) => {
     await applyProfiles({
       ...profilesRef.current,
-      [name]: { wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0, isBot, targetAverage }
+      // Ein Bot bekommt hier seinen Zielschnitt, damit er nie ohne einen in den
+      // Speicher kommt; für einen Menschen bleibt das Feld leer.
+      [name]: {
+        wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0, isBot,
+        targetAverage: isBot ? (targetAverage ?? DEFAULT_BOT_AVERAGE) : targetAverage
+      }
     });
   }, [applyProfiles]);
 

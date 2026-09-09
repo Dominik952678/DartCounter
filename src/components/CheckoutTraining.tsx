@@ -10,6 +10,7 @@ import { Button, CallOut, StatStrip, Icons } from './ui';
 import { withDartRecorded } from '../utils/segmentStats';
 import { liveStats } from '../utils/storyExport';
 import { playerColorBySeat } from '../utils/playerColors';
+import { botAverage } from '../utils/botProfiles';
 
 interface CheckoutTrainingProps {
   players: string[];
@@ -78,7 +79,7 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
         return {
             name: p,
             isBot: profiles[p]?.isBot || false,
-            targetAverage: profiles[p]?.targetAverage || 40,
+            targetAverage: botAverage(profiles[p]),
             color: profiles[p]?.color,
             targetScore: target,
             currentScore: target,
