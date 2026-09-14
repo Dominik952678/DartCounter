@@ -11,7 +11,85 @@ export const setSoundEnabled = (enabled: boolean) => {
   if (enabled && !audioCtx) {
     initAudio();
   }
+  if (!enabled) {
+    releasePlaybackSession();
+  }
 };
+
+// --- iOS audio session ---
+//
+// iOS files Web Audio under the "ambient" audio session, which the ring/silent
+// switch mutes — while speechSynthesis keeps talking. That is why the caller
+// could be heard but T20, T19 and the board hits stayed silent. Declaring a
+// playback session (Safari 17+) or, on older iOS, keeping a silent media
+// element playing moves the page into the playback category.
+
+type AudioSessionNavigator = Navigator & { audioSession?: { type: string } };
+
+let silentKeepAlive: HTMLAudioElement | null = null;
+
+const isIOS = () =>
+  typeof navigator !== 'undefined' &&
+  (/iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+
+/** 0.1 s of 8 kHz, 8-bit mono silence as a WAV data URI. */
+const silentWavDataUri = () => {
+  const samples = 800;
+  const bytes = new Uint8Array(44 + samples);
+  const view = new DataView(bytes.buffer);
+  const ascii = (offset: number, text: string) => {
+    for (let i = 0; i < text.length; i++) bytes[offset + i] = text.charCodeAt(i);
+  };
+  ascii(0, 'RIFF');
+  view.setUint32(4, 36 + samples, true);
+  ascii(8, 'WAVE');
+  ascii(12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, 8000, true);
+  view.setUint32(28, 8000, true);
+  view.setUint16(32, 1, true);
+  view.setUint16(34, 8, true);
+  ascii(36, 'data');
+  view.setUint32(40, samples, true);
+  bytes.fill(0x80, 44);
+  return `data:audio/wav;base64,${btoa(String.fromCharCode(...bytes))}`;
+};
+
+/** Must run inside a user gesture — every caller of getAudioCtx is a click handler. */
+const ensurePlaybackSession = () => {
+  if (typeof navigator === 'undefined') return;
+  const session = (navigator as AudioSessionNavigator).audioSession;
+  if (session) {
+    if (session.type !== 'playback') session.type = 'playback';
+    return;
+  }
+  if (!isIOS()) return;
+  if (!silentKeepAlive) {
+    silentKeepAlive = new Audio(silentWavDataUri());
+    silentKeepAlive.loop = true;
+  }
+  if (silentKeepAlive.paused !== false) {
+    silentKeepAlive.play()?.catch(() => {});
+  }
+};
+
+/** Hands the audio session back so muting the app lets other audio (music) mix again. */
+const releasePlaybackSession = () => {
+  silentKeepAlive?.pause();
+  if (typeof navigator === 'undefined') return;
+  const session = (navigator as AudioSessionNavigator).audioSession;
+  if (session) session.type = 'auto';
+};
+
+if (typeof document !== 'undefined') {
+  // A playing element in a background tab shows up on the lock screen; the next tap restarts it.
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) silentKeepAlive?.pause();
+  });
+}
 
 let cachedVoice: SpeechSynthesisVoice | null = null;
 
@@ -35,13 +113,15 @@ if (typeof window !== 'undefined' && window.speechSynthesis) {
 
 export const getAudioCtx = () => {
   if (!soundEnabled) return null;
-  if (!audioCtx) {
+  ensurePlaybackSession();
+  if (!audioCtx || audioCtx.state === 'closed') {
     const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (Ctx) {
       audioCtx = new Ctx();
     }
   }
-  if (audioCtx && audioCtx.state === 'suspended') {
+  // iOS reports 'interrupted' (not 'suspended') after a call, the lock screen or an app switch.
+  if (audioCtx && audioCtx.state !== 'running') {
     audioCtx.resume().catch(() => {});
   }
   return audioCtx;
@@ -200,6 +280,22 @@ export const playDartHitSound = () => {
   gainNode.connect(ctx.destination);
   osc.start();
   osc.stop(ctx.currentTime + 0.08);
+
+  // The 120 Hz thud sits below what phone speakers reproduce; this short tick is what an iPhone plays.
+  const tick = ctx.createOscillator();
+  const tickGain = ctx.createGain();
+
+  tick.type = 'square';
+  tick.frequency.setValueAtTime(1800, ctx.currentTime);
+  tick.frequency.exponentialRampToValueAtTime(700, ctx.currentTime + 0.03);
+
+  tickGain.gain.setValueAtTime(0.06, ctx.currentTime);
+  tickGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.03);
+
+  tick.connect(tickGain);
+  tickGain.connect(ctx.destination);
+  tick.start();
+  tick.stop(ctx.currentTime + 0.03);
 };
 
 export const playBustSound = () => {
