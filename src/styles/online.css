@@ -1,0 +1,547 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Online (Entwurf F1–F4) — unter „Spielen"
+   Markup: components/LobbyBrowser.tsx, components/LobbyRoom.tsx,
+   components/online/*, components/DisconnectOverlay.tsx,
+   components/OnlineGameWrapper.tsx.
+   Abschnitts-Titel, Stepper, Fehlertext und Avatar kommen aus setup.css.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.online-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.online-screen .slider {
+  margin-bottom: 0;
+}
+/* Beitreten ist eine schmale Spalte; auf dem iPad würden die Code-Kästchen sonst 200 px breit. */
+.online-screen:not(.lobby-room) {
+  width: 100%;
+  max-width: 600px;
+  margin-inline: auto;
+}
+
+.online-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.online-hint {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+/* ── Verbindung ── */
+.connection-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex: none;
+}
+.connection-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--text-success);
+}
+.connection-status.is-online .label-caps { color: var(--text-success); }
+.connection-status.is-connecting .connection-dot {
+  background: var(--accent-primary);
+  animation: waitPulse 1.4s ease-in-out infinite;
+}
+.connection-status.is-connecting .label-caps { color: var(--accent-primary); }
+.connection-status.is-offline .connection-dot { background: var(--text-danger); }
+.connection-status.is-offline .label-caps { color: var(--text-danger); }
+
+.online-offline-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 calc(-1 * var(--space-4));
+  padding: 12px var(--space-4);
+  border-bottom: 1px solid var(--line-1);
+  background: var(--surface-card);
+  color: var(--text-primary);
+}
+.online-offline-bar .label-caps {
+  color: var(--text-primary);
+}
+
+/* ── Name ── */
+.online-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: var(--surface-card);
+}
+
+.online-identity-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.online-identity-body .label-caps {
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+.online-identity-name {
+  font-size: 16px;
+  font-weight: var(--weight-medium);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.online-identity .online-identity-input {
+  min-height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  font-family: var(--font);
+  font-size: 16px;
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+}
+.online-identity .online-identity-input:focus {
+  background: transparent;
+  box-shadow: none;
+}
+
+/* ── Code in vier Kästchen ── */
+.code-input {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+/* Das echte Feld liegt unsichtbar über allen Kästchen und nimmt jeden Tap an. */
+.code-input .code-input-field {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  color: transparent;
+  caret-color: transparent;
+  font-size: 16px;
+  opacity: 0;
+}
+
+.code-box {
+  height: 78px;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  border-radius: 16px;
+  border: 1.5px solid var(--line-1);
+  background: var(--surface-card);
+  font-family: var(--font-display);
+  font-size: 44px;
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+  color: var(--text-primary);
+  transition: border-color var(--motion-color) ease;
+}
+.code-box.is-cursor {
+  border-color: var(--accent-bone);
+}
+.code-box.is-cursor:empty::after {
+  content: '';
+  width: 2px;
+  height: 36px;
+  background: var(--accent-bone);
+  animation: codeCaret 1s steps(1) infinite;
+}
+.code-input.is-invalid .code-box {
+  border-color: var(--text-danger);
+}
+.code-input.is-disabled .code-box {
+  opacity: 0.45;
+}
+
+@keyframes codeCaret {
+  50% { opacity: 0; }
+}
+
+.online-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* ── Öffentliche Räume ── */
+.room-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.room-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 60px;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 16px;
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font-family: var(--font);
+  text-align: left;
+}
+.room-row:hover {
+  background: var(--surface-raised);
+}
+.room-row .seat-avatar {
+  width: 36px;
+  height: 36px;
+}
+.room-row svg {
+  flex: none;
+  color: var(--text-secondary);
+}
+
+.room-row-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.room-row-host {
+  font-size: 15px;
+  font-weight: var(--weight-medium);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.room-row-rules {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.room-row-code {
+  color: var(--text-secondary);
+}
+
+/* ── Ohne Netz ── */
+.online-local {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  width: 100%;
+  padding: 18px;
+  border: none;
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font-family: var(--font);
+  text-align: left;
+}
+.online-local-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.online-local-text .label-caps {
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+.online-local-title {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+}
+.online-local-go {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  flex: none;
+  border-radius: var(--radius-pill);
+  background: var(--accent-bone);
+  color: var(--on-accent-bone);
+}
+
+/* ── Raum erstellen (Blatt) ── */
+.online-create,
+.room-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.online-create .slider,
+.room-settings .slider {
+  margin-bottom: 0;
+}
+
+/* ── Warteraum ── */
+.online-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 16px 18px;
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+}
+.online-card .setup-stepper {
+  background: var(--surface-raised);
+}
+.online-card .setup-section-title {
+  flex: none;
+  white-space: nowrap;
+}
+
+.online-card-meta {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  color: var(--text-tertiary);
+}
+
+.room-code-card {
+  align-items: center;
+  text-align: center;
+}
+
+.room-code-value {
+  display: flex;
+  justify-content: center;
+  gap: 0.14em;
+  font-family: var(--font-display);
+  font-size: clamp(60px, 20vw, 76px);
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+  color: var(--text-primary);
+}
+
+.room-code-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+  width: 100%;
+  margin-top: 2px;
+}
+
+.lobby-player-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lobby-player {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line-1);
+}
+.lobby-player:last-child {
+  border-bottom: none;
+  padding-bottom: 2px;
+}
+
+.lobby-player-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 15px;
+  font-weight: var(--weight-medium);
+}
+.lobby-player.is-empty .lobby-player-name {
+  font-weight: var(--weight-regular);
+  color: var(--text-tertiary);
+}
+
+.lobby-player-slot {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  box-sizing: border-box;
+  border-radius: var(--radius-pill);
+  border: 1.5px dashed var(--line-2);
+}
+
+.lobby-player-tag {
+  color: var(--text-success);
+}
+
+.room-rules {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.room-rules li {
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: var(--surface-raised);
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+}
+.room-rules li.is-lead {
+  background: var(--accent-bone);
+  color: var(--on-accent-bone);
+}
+
+.lobby-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: var(--z-sticky);
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: var(--space-2);
+  padding: var(--space-3) 0 max(calc(var(--safe-bottom) + 8px), 16px);
+  background: linear-gradient(to top, var(--bg-base) 60%, transparent);
+}
+
+.waiting-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-row);
+  background: var(--surface-card);
+  font-family: var(--font);
+  font-size: var(--text-label);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.waiting-dot {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: var(--radius-pill);
+  background: var(--accent-primary);
+  animation: waitPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes waitPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.8); }
+}
+
+/* Auf dem Tablet stehen Code und Spieler nebeneinander, die Regeln darunter. */
+@media (min-width: 900px) {
+  .lobby-room {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 18px;
+  }
+  .lobby-room > .online-head,
+  .lobby-room > .online-card:nth-of-type(3),
+  .lobby-room > .lobby-actions {
+    grid-column: 1 / -1;
+  }
+  .lobby-room .lobby-actions {
+    bottom: calc(var(--safe-bottom) + var(--space-4));
+  }
+}
+
+/* ── Im Online-Match ── */
+.online-game-shell {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.online-board {
+  height: 100%;
+  transition: opacity var(--motion-color) ease;
+}
+.online-board.is-waiting {
+  opacity: 0.72;
+}
+
+.turn-banner {
+  position: absolute;
+  top: max(calc(var(--safe-top) + 6px), 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: var(--z-sticky);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100vw - 32px);
+  padding: 8px 16px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  border-radius: var(--radius-pill);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-md);
+}
+.turn-banner-dot {
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: var(--radius-pill);
+  background: var(--accent-primary);
+  animation: waitPulse 1.4s ease-in-out infinite;
+}
+
+/* ── Verbindungsabbruch (F4) ── */
+.disconnect-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-primary);
+}
+.disconnect-ring {
+  width: 10px;
+  height: 10px;
+  box-sizing: border-box;
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--accent-primary);
+  animation: waitPulse 1.4s ease-in-out infinite;
+}
+
+.disconnect-countdown {
+  font-family: var(--font-display);
+  font-size: 84px;
+  font-weight: var(--weight-semibold);
+  line-height: 0.9;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-primary);
+}
+.disconnect-countdown span {
+  margin-left: 4px;
+  font-size: 28px;
+}

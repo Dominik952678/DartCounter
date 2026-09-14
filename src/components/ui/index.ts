@@ -26,6 +26,9 @@ export type { SheetProps } from './Sheet';
 export { Dialog } from './Dialog';
 export type { DialogProps } from './Dialog';
 
+export { Stepper } from './Stepper';
+export type { StepperProps } from './Stepper';
+
 export { Toggle } from './Toggle';
 export type { ToggleProps } from './Toggle';
 

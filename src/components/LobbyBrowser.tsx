@@ -2,39 +2,41 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { useOnlineStore } from '../store/useOnlineStore';
+import { useNetworkStatus } from '../hooks/useNetworkStatus';
 import type { GameConfig } from '../types';
 import { readString, write } from '../utils/storage';
-import { Button, Card, CardHeader, Choice, Icons, Slider } from './ui';
-import type { IconProps } from './ui';
+import { playerColorBySeat } from '../utils/playerColors';
+import { Button, Icons, Sheet, Slider } from './ui';
+import { CodeInput, ROOM_CODE_LENGTH } from './online/CodeInput';
+import { ConnectionStatus } from './online/ConnectionStatus';
+import { RoomSettingsForm } from './online/RoomSettingsForm';
+import { roomRulesLine } from './online/rules';
 
-type Mode = 'standard' | 'powerscoring' | 'splitscore' | 'checkout';
+const DEFAULT_ROOM: GameConfig = {
+  mode: 'standard',
+  startScore: 501,
+  outMode: 'DO',
+  setsToWin: 1,
+  legsToWin: 3,
+  rounds: 10,
+  checkoutTargets: 10,
+  checkoutRounds: 1
+};
 
-const MODES: { id: Mode; icon: React.FC<IconProps>; title: string; desc: string }[] = [
-  { id: 'standard', icon: Icons.IconTarget, title: 'Standard X01', desc: '501 / 301 · Sets & Legs' },
-  { id: 'powerscoring', icon: Icons.IconBars, title: 'Power Scoring', desc: 'Maximale Punkte pro Runde' },
-  { id: 'splitscore', icon: Icons.IconSplit, title: 'Split Score', desc: 'Ziel treffen oder halbieren' },
-  { id: 'checkout', icon: Icons.IconTarget, title: 'Checkout Training', desc: 'Finishes unter Druck' }
-];
-
+/** Online unter „Spielen": beitreten, Raum öffnen, offene Räume (Entwurf F1, F2). */
 export const LobbyBrowser: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const { initGlobalLobby, publicLobbies, joinRoom, createRoom, connectionState } = useOnlineStore();
+  const isOnline = useNetworkStatus();
 
   const [joinCode, setJoinCode] = useState('');
   const [busy, setBusy] = useState<'join' | 'create' | null>(null);
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [localError, setLocalError] = useState('');
-
+  const [joinError, setJoinError] = useState('');
+  const [createError, setCreateError] = useState('');
+  const [showCreate, setShowCreate] = useState(false);
   const [isPublic, setIsPublic] = useState(true);
-  const [mode, setMode] = useState<Mode>('standard');
-  const [startScore, setStartScore] = useState(501);
-  const [outMode, setOutMode] = useState<'SO' | 'DO' | 'MO'>('DO');
-  const [setsToWin, setSetsToWin] = useState<number | ''>(1);
-  const [legsToWin, setLegsToWin] = useState<number | ''>(3);
-  const [rounds, setRounds] = useState(10);
-  const [checkoutTargets, setCheckoutTargets] = useState(10);
-  const [checkoutRounds, setCheckoutRounds] = useState(1);
+  const [roomConfig, setRoomConfig] = useState<GameConfig>(DEFAULT_ROOM);
 
   const [guestName, setGuestName] = useState<string>(
     () => readString('guestOnlineName', '') || `Gast ${Math.floor(100 + Math.random() * 900)}`
@@ -52,15 +54,15 @@ export const LobbyBrowser: React.FC = () => {
   };
 
   const handleJoin = async (code: string) => {
-    if (!code || busy) return;
-    setLocalError('');
+    if (code.length !== ROOM_CODE_LENGTH || busy || !isOnline) return;
+    setJoinError('');
     setBusy('join');
     try {
       const res = await joinRoom(code, username);
-      if (res.error) setLocalError(res.error);
+      if (res.error) setJoinError(res.error);
       else navigate('/lobby/' + code.toUpperCase());
     } catch (err) {
-      setLocalError(err instanceof Error ? err.message : 'Beitritt fehlgeschlagen.');
+      setJoinError(err instanceof Error ? err.message : 'Beitritt fehlgeschlagen.');
     } finally {
       setBusy(null);
     }
@@ -68,260 +70,164 @@ export const LobbyBrowser: React.FC = () => {
 
   const handleCreate = async () => {
     if (busy) return;
-    setLocalError('');
+    setCreateError('');
     setBusy('create');
-    const config: GameConfig = {
-      mode, startScore, outMode,
-      setsToWin: setsToWin || 1,
-      legsToWin: legsToWin || 3,
-      rounds, checkoutTargets, checkoutRounds
-    };
     try {
-      const res = await createRoom(username, isPublic, config);
-      if (res.error || !res.code) setLocalError(res.error || 'Raum konnte nicht erstellt werden.');
+      const res = await createRoom(username, isPublic, roomConfig);
+      if (res.error || !res.code) setCreateError(res.error || 'Raum konnte nicht erstellt werden.');
       else navigate('/lobby/' + res.code);
     } catch (err) {
-      setLocalError(err instanceof Error ? err.message : 'Raum konnte nicht erstellt werden.');
+      setCreateError(err instanceof Error ? err.message : 'Raum konnte nicht erstellt werden.');
     } finally {
       setBusy(null);
     }
   };
 
+  const tone = !isOnline || connectionState === 'error' ? 'offline' : connectionState === 'connecting' ? 'connecting' : 'online';
+
   return (
-    <div className="screen active-screen">
-      <div className="ambient-glow" aria-hidden="true" />
-
-      <header className="page-header">
-        <Button variant="ghost" className="btn-back" onClick={() => navigate('/')}><Icons.IconArrowLeft size={17} /> Menü</Button>
-        <h2 className="page-title"><Icons.IconGlobe size={22} /> Multiplayer</h2>
-        <div className="page-header-spacer" />
-      </header>
-
-      <div className="identity-bar">
-        <span className="identity-avatar" aria-hidden="true">{username.charAt(0).toUpperCase()}</span>
-        {user ? (
-          <div className="identity-body">
-            <span className="identity-name">{username}</span>
-            <span className="identity-sub">Angemeldet · Stats werden in der Cloud gesichert</span>
-          </div>
-        ) : (
-          <div className="identity-body">
-            <label className="identity-label" htmlFor="guest-name">Dein Anzeigename</label>
-            <input
-              id="guest-name"
-              type="text"
-              value={guestName}
-              onChange={e => handleGuestNameChange(e.target.value)}
-              maxLength={15}
-              className="identity-input"
-              placeholder="Name eingeben"
-            />
-          </div>
-        )}
-        {!user && (
-          <Button variant="secondary" size="compact" onClick={() => navigate('/auth')}>Login</Button>
-        )}
-      </div>
-
-      {localError && (
-        <div className="alert alert-error" role="alert">
-          <Icons.IconAlert size={18} />
-          <span>{localError}</span>
+    <div className="screen active-screen online-screen">
+      {!isOnline && (
+        <div className="online-offline-bar" role="status">
+          <Icons.IconAlert size={16} />
+          <span className="label-caps">Keine Verbindung · lokale Spiele gehen weiter</span>
         </div>
       )}
 
-      {!showCreateForm ? (
-        <>
-          <Card as="section">
-            <CardHeader heading={"Raum beitreten"} />
-            <div className="join-row">
+      <div className="online-head">
+        <h1 className="setup-title">Online</h1>
+        <ConnectionStatus tone={tone} />
+      </div>
+
+      <section className="online-identity">
+        <span className="seat-avatar" style={{ '--player-color': playerColorBySeat(0) } as React.CSSProperties} aria-hidden="true">
+          {username.charAt(0).toUpperCase()}
+        </span>
+        <div className="online-identity-body">
+          {user ? (
+            <>
+              <span className="label-caps">Angemeldet</span>
+              <span className="online-identity-name">{username}</span>
+            </>
+          ) : (
+            <>
+              <label className="label-caps" htmlFor="guest-name">Anzeigename</label>
               <input
+                id="guest-name"
                 type="text"
-                inputMode="text"
-                autoCapitalize="characters"
-                autoCorrect="off"
-                spellCheck={false}
-                placeholder="CODE"
-                aria-label="Raumcode"
-                value={joinCode}
-                onChange={e => setJoinCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
-                onKeyDown={e => { if (e.key === 'Enter') handleJoin(joinCode); }}
-                maxLength={4}
-                className="join-code-input"
+                value={guestName}
+                onChange={e => handleGuestNameChange(e.target.value)}
+                maxLength={15}
+                className="online-identity-input"
+                placeholder="Name eingeben"
               />
-              <Button
-                variant="primary"
-                onClick={() => handleJoin(joinCode)}
-                disabled={joinCode.length !== 4 || busy !== null}
-              >
-                {busy === 'join' ? 'Verbinde…' : 'Beitreten'}
-              </Button>
-            </div>
-          </Card>
+            </>
+          )}
+        </div>
+        {!user && (
+          <button type="button" className="setup-link" onClick={() => navigate('/auth')}>Anmelden</button>
+        )}
+      </section>
 
-          <Card as="section">
-            <CardHeader
-              heading="Öffentliche Räume"
-              action={
-                <Button variant="primary" size="compact" onClick={() => setShowCreateForm(true)}>
-                  + Raum erstellen
-                </Button>
-              }
-            />
+      <section className="setup-section">
+        <h2 className="setup-section-title">Raumcode</h2>
+        <CodeInput
+          value={joinCode}
+          onChange={code => { setJoinCode(code); setJoinError(''); }}
+          onSubmit={() => handleJoin(joinCode)}
+          invalid={!!joinError}
+        />
+        {joinError
+          ? <p className="setup-error-text" role="alert">{joinError}</p>
+          : <p className="online-hint">Den 4-stelligen Code bekommst du vom Gastgeber.</p>}
+      </section>
 
-            {publicLobbies.length === 0 ? (
-              <div className="empty-state">
-                <Icons.IconGlobe size={38} className="empty-state-icon" />
-                <p className="empty-state-title">Gerade ist kein offener Raum aktiv</p>
-                <p className="empty-state-text">
-                  Erstelle selbst einen Raum — der 4-stellige Code lässt sich direkt teilen.
-                </p>
-              </div>
-            ) : (
-              <ul className="lobby-list">
-                {publicLobbies.map(lobby => (
-                  <li key={lobby.code} className="lobby-list-item">
-                    <div className="lobby-list-body">
-                      <strong className="lobby-list-host">{lobby.hostName}</strong>
-                      <span className="lobby-list-meta">
-                        {lobby.settings?.mode === 'powerscoring' ? 'Power Scoring'
-                          : lobby.settings?.mode === 'splitscore' ? 'Split Score'
-                            : lobby.settings?.mode === 'checkout' ? 'Checkout Training'
-                              : `${lobby.settings?.startScore} · ${lobby.settings?.outMode} · Bis ${lobby.settings?.legsToWin} Legs`}
-                      </span>
-                    </div>
-                    <div className="lobby-list-actions">
-                      <span className="pill pill-muted">{lobby.code}</span>
-                      <Button variant="secondary" size="compact" onClick={() => handleJoin(lobby.code)} disabled={busy !== null}>
-                        Beitreten
-                      </Button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Card>
-        </>
-      ) : (
-        <Card as="section">
-          <CardHeader
-            heading="Raum erstellen"
-            action={
-              <Button variant="ghost" className="btn-close" onClick={() => setShowCreateForm(false)} aria-label="Schließen"><Icons.IconClose size={18} /></Button>
-            }
-          />
+      <div className="online-actions">
+        <Button
+          variant="primary"
+          size="large"
+          fullWidth
+          className="setup-start-btn"
+          onClick={() => handleJoin(joinCode)}
+          disabled={joinCode.length !== ROOM_CODE_LENGTH || busy !== null || !isOnline}
+        >
+          <span>{busy === 'join' ? 'Verbinde …' : 'Beitreten'}</span>
+          {joinCode && <span className="setup-start-summary">{joinCode}</span>}
+        </Button>
+        <Button variant="secondary" size="large" fullWidth onClick={() => setShowCreate(true)} disabled={!isOnline}>
+          <Icons.IconPlus size={18} /> Raum erstellen
+        </Button>
+      </div>
 
-          <label className="section-label">Sichtbarkeit</label>
-          <Slider
-            name="visibility"
-            value={isPublic ? 'public' : 'code'}
-            options={[
-              { value: 'public', label: 'Öffentlich' },
-              { value: 'code', label: 'Nur per Code' }
-            ]}
-            onChange={value => setIsPublic(value === 'public')}
-            ariaLabel="Sichtbarkeit"
-          />
-
-          <label className="section-label">Spielmodus</label>
-          <div className="mode-grid">
-            {MODES.map(m => (
-              <Choice
-                key={m.id}
-                className="mode-tile"
-                selected={mode === m.id}
-                onClick={() => setMode(m.id)}
-              >
-                <span className="mode-tile-icon" aria-hidden="true"><m.icon size={22} /></span>
-                <span className="mode-tile-body">
-                  <span className="mode-tile-title">{m.title}</span>
-                  <span className="mode-tile-desc">{m.desc}</span>
-                </span>
-              </Choice>
-            ))}
+      {isOnline ? (
+        <section className="setup-section">
+          <div className="setup-section-head">
+            <h2 className="setup-section-title">Öffentliche Räume · {publicLobbies.length}</h2>
           </div>
-
-          {mode === 'standard' && (
-            <div className="config-grid">
-              <div className="config-item">
-                <label className="section-label" htmlFor="create-score">Punkte</label>
-                <select id="create-score" value={startScore} onChange={e => setStartScore(parseInt(e.target.value))}>
-                  <option value={301}>301</option>
-                  <option value={501}>501</option>
-                  <option value={701}>701</option>
-                </select>
-              </div>
-              <div className="config-item">
-                <label className="section-label" htmlFor="create-out">Out-Modus</label>
-                <select id="create-out" value={outMode} onChange={e => setOutMode(e.target.value as 'SO' | 'DO' | 'MO')}>
-                  <option value="SO">Single Out</option>
-                  <option value="DO">Double Out</option>
-                  <option value="MO">Master Out</option>
-                </select>
-              </div>
-              <div className="config-item">
-                <label className="section-label" htmlFor="create-sets">Sets</label>
-                <input id="create-sets" type="number" inputMode="numeric" min={1} max={10} value={setsToWin}
-                  onChange={e => setSetsToWin(e.target.value === '' ? '' : parseInt(e.target.value) || 1)}
-                  onBlur={() => setSetsToWin(Math.min(10, Math.max(1, setsToWin || 1)))} />
-              </div>
-              <div className="config-item">
-                <label className="section-label" htmlFor="create-legs">Legs</label>
-                <input id="create-legs" type="number" inputMode="numeric" min={1} max={15} value={legsToWin}
-                  onChange={e => setLegsToWin(e.target.value === '' ? '' : parseInt(e.target.value) || 1)}
-                  onBlur={() => setLegsToWin(Math.min(15, Math.max(1, legsToWin || 1)))} />
-              </div>
-            </div>
+          {publicLobbies.length === 0 ? (
+            <p className="online-hint">Gerade ist kein offener Raum aktiv.</p>
+          ) : (
+            <ul className="room-list">
+              {publicLobbies.map((lobby, i) => (
+                <li key={lobby.code}>
+                  <button
+                    type="button"
+                    className="room-row"
+                    onClick={() => handleJoin(lobby.code)}
+                    disabled={busy !== null}
+                    aria-label={`Raum ${lobby.code} von ${lobby.hostName} beitreten`}
+                  >
+                    <span className="seat-avatar" style={{ '--player-color': playerColorBySeat(i + 1) } as React.CSSProperties} aria-hidden="true">
+                      {lobby.hostName.charAt(0).toUpperCase()}
+                    </span>
+                    <span className="room-row-text">
+                      <span className="room-row-host">{lobby.hostName}</span>
+                      <span className="room-row-rules">{roomRulesLine(lobby.settings)}</span>
+                    </span>
+                    <span className="label-caps room-row-code">{lobby.code}</span>
+                    <Icons.IconChevronRight size={18} />
+                  </button>
+                </li>
+              ))}
+            </ul>
           )}
+        </section>
+      ) : (
+        <button type="button" className="online-local" onClick={() => navigate('/play')}>
+          <span className="online-local-text">
+            <span className="label-caps">Solange</span>
+            <span className="online-local-title">Lokales Match spielen</span>
+          </span>
+          <span className="online-local-go" aria-hidden="true"><Icons.IconChevronRight size={18} /></span>
+        </button>
+      )}
 
-          {mode === 'powerscoring' && (
-            <>
-              <label className="section-label">Rundenlimit</label>
+      {showCreate && (
+        <Sheet title="Raum erstellen" onClose={() => setShowCreate(false)}>
+          <div className="online-create">
+            <section className="setup-section">
+              <h3 className="setup-section-title">Sichtbarkeit</h3>
               <Slider
-                name="rounds"
-                variant="tiles"
-                value={rounds}
-                options={[5, 10, 15, 20].map(r => ({ value: r, label: r, ariaLabel: `${r} Runden` }))}
-                onChange={setRounds}
-                ariaLabel="Rundenlimit"
+                name="visibility"
+                value={isPublic ? 'public' : 'code'}
+                options={[
+                  { value: 'public', label: 'Öffentlich' },
+                  { value: 'code', label: 'Nur per Code' }
+                ]}
+                onChange={value => setIsPublic(value === 'public')}
+                ariaLabel="Sichtbarkeit"
               />
-            </>
-          )}
+            </section>
 
-          {mode === 'checkout' && (
-            <>
-              <label className="section-label">Anzahl Targets</label>
-              <Slider
-                name="targets"
-                variant="tiles"
-                value={checkoutTargets}
-                options={[5, 10, 15, 20].map(r => ({ value: r, label: r, ariaLabel: `${r} Targets` }))}
-                onChange={setCheckoutTargets}
-                ariaLabel="Anzahl Targets"
-              />
-              <label className="section-label">Versuche pro Finish</label>
-              <Slider
-                name="attempts"
-                variant="tiles"
-                value={checkoutRounds}
-                options={[1, 2, 3, 5].map(r => ({ value: r, label: r, ariaLabel: `${r} Versuche` }))}
-                onChange={setCheckoutRounds}
-                ariaLabel="Versuche pro Finish"
-              />
-            </>
-          )}
+            <RoomSettingsForm settings={roomConfig} onChange={setRoomConfig} withMode />
 
-          <Button
-            variant="primary"
-            size="large"
-            fullWidth
-            onClick={handleCreate}
-            disabled={busy !== null}
-            style={{ marginTop: 'var(--space-5)' }}
-          >
-            {busy === 'create' || connectionState === 'connecting' ? 'Erstelle Raum…' : 'Raum eröffnen'}
-          </Button>
-        </Card>
+            {createError && <p className="setup-error-text" role="alert">{createError}</p>}
+
+            <Button variant="primary" size="large" fullWidth onClick={handleCreate} disabled={busy !== null || !isOnline}>
+              {busy === 'create' ? 'Erstelle Raum …' : 'Raum eröffnen'}
+            </Button>
+          </div>
+        </Sheet>
       )}
     </div>
   );

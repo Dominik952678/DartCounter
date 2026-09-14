@@ -184,3 +184,76 @@
 @keyframes dialogIn {
   from { opacity: 0; transform: scale(0.96); }
 }
+
+/* ── Hinweise (Toast) ── Markup: App.tsx */
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 16px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+/**
+ * The stack, not the individual message, is what is positioned.
+ *
+ * Every toast was `position: fixed` at the same offset, so the three the store
+ * keeps landed exactly on top of each other and the one actually visible was
+ * the oldest — the reverse of what the store sorts for. `column-reverse` puts
+ * the newest closest to the dock while the list stays newest-first in the DOM.
+ */
+.toast-stack {
+  position: fixed;
+  left: 50%;
+  bottom: max(calc(var(--safe-bottom) + 92px), 100px);
+  transform: translateX(-50%);
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 10px;
+  width: min(520px, calc(100vw - 28px));
+  pointer-events: none;
+}
+
+.global-toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  background: var(--surface-raised);
+  border: 1px solid var(--line-2);
+  box-shadow: var(--shadow-lg);
+  animation: toastIn 0.25s cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* The border carries the severity, which the icon repeats for anyone who does
+   not see the colour. */
+.global-toast-error {
+  border-color: color-mix(in srgb, var(--text-danger) 60%, transparent);
+}
+.global-toast-success {
+  border-color: color-mix(in srgb, var(--text-success) 60%, transparent);
+}
+.global-toast-info {
+  border-color: var(--line-3);
+}
+.global-toast-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.global-toast-body strong {
+  font-size: 0.95em;
+}
+.global-toast-body span {
+  font-size: 0.84em;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}

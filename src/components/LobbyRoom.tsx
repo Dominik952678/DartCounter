@@ -2,22 +2,23 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { LoadingScreen } from './LoadingScreen';
 import { useOnlineStore } from '../store/useOnlineStore';
-import { Button, Card, CardHeader, Icons } from './ui';
+import { useNetworkStatus } from '../hooks/useNetworkStatus';
+import { Button, Icons } from './ui';
 import { playerColorBySeat } from '../utils/playerColors';
+import { ConnectionStatus } from './online/ConnectionStatus';
+import { RoomSettingsForm } from './online/RoomSettingsForm';
+import { modeTitle, roomRuleParts, roomRulesLine } from './online/rules';
 
-const modeLabel = (mode?: string) => {
-  if (mode === 'powerscoring') return 'Power Scoring';
-  if (mode === 'splitscore') return 'Split Score';
-  if (mode === 'checkout') return 'Checkout Training';
-  return 'Standard X01';
-};
+const MAX_ONLINE_PLAYERS = 4;
 
+/** Der Warteraum (Entwurf F3): Code teilen, wer da ist, die Regeln. */
 export const LobbyRoom: React.FC = () => {
   const navigate = useNavigate();
   const { code } = useParams();
   const {
     roomCode,
     isHost,
+    myPlayerId,
     players,
     roomSettings,
     leaveRoom,
@@ -26,6 +27,7 @@ export const LobbyRoom: React.FC = () => {
     onRoomEvent,
     sendRoomEvent
   } = useOnlineStore();
+  const isOnline = useNetworkStatus();
 
   const [copied, setCopied] = useState(false);
 
@@ -79,202 +81,104 @@ export const LobbyRoom: React.FC = () => {
     handleCopyCode();
   };
 
+  const handleLeave = () => {
+    leaveRoom();
+    navigate('/online');
+  };
+
   const handleStartGame = () => {
     startGame();
     navigate('/online-game');
   };
 
   if (!roomCode) {
-    return (
-      <LoadingScreen message="Verbinde…" />
-    );
+    return <LoadingScreen message="Verbinde…" />;
   }
 
   const settings = roomSettings;
 
   return (
-    <div className="screen active-screen lobby-room">
-      <div className="ambient-glow" aria-hidden="true" />
+    <div className="screen active-screen online-screen lobby-room">
+      <div className="online-head">
+        <h1 className="setup-title">{isHost ? 'Dein Raum' : 'Warteraum'}</h1>
+        <ConnectionStatus tone={isOnline ? 'online' : 'offline'} />
+      </div>
 
-      <header className="page-header">
-        <Button variant="ghost" className="btn-back" onClick={() => { leaveRoom(); navigate('/online'); }}>
-          <Icons.IconArrowLeft size={17} /> Verlassen
-        </Button>
-        <h2 className="page-title">Warteraum</h2>
-        <div className="page-header-spacer" />
-      </header>
-
-      <Card as="section" className="room-code-card">
-        <span className="section-label">Raumcode</span>
+      <section className="online-card room-code-card">
+        <span className="label-caps">Diesen Code teilen</span>
         <div className="room-code-value" aria-label={`Raumcode ${roomCode.split('').join(' ')}`}>
           {roomCode.split('').map((char, i) => (
             <span key={i} className="room-code-char">{char}</span>
           ))}
         </div>
-        <p className="room-code-hint">
-          Deine Freunde geben diesen Code unter „Raum beitreten“ ein.
-        </p>
         <div className="room-code-actions">
           <Button variant="secondary" onClick={handleCopyCode}>
-            {copied ? <><Icons.IconCheck size={17} /> Kopiert</> : <><Icons.IconCopy size={17} /> Code kopieren</>}
+            {copied ? <><Icons.IconCheck size={17} /> Kopiert</> : <><Icons.IconCopy size={17} /> Kopieren</>}
           </Button>
           <Button variant="secondary" onClick={handleShare}>
             <Icons.IconExternal size={17} /> Teilen
           </Button>
         </div>
-      </Card>
+      </section>
 
-      <Card as="section">
-        <CardHeader heading="Spieler am Board" action={<span className="card-badge">{players.length}</span>} />
+      <section className="online-card">
+        <div className="setup-section-head">
+          <h2 className="setup-section-title">Spieler · {players.length} / {MAX_ONLINE_PLAYERS}</h2>
+          {settings && <span className="label-caps online-card-meta">{roomRulesLine(settings)}</span>}
+        </div>
         <ul className="lobby-player-list">
           {players.map((p, i) => (
             <li key={p.id} className="lobby-player">
-              {/* Sitzplatzfarbe statt eines gemeinsamen Blaus für alle — dieselbe
-                  Palette, die das Match-Setup und der Scoreboard benutzen. */}
-              <span
-                className="lobby-player-avatar"
-                style={{ backgroundColor: playerColorBySeat(i) }}
-                aria-hidden="true"
-              >
+              <span className="seat-avatar" style={{ '--player-color': playerColorBySeat(i) } as React.CSSProperties} aria-hidden="true">
                 {p.username.charAt(0).toUpperCase() || '?'}
               </span>
-              <span className="lobby-player-name">{p.username}</span>
-              {p.isHost && <span className="pill pill-success">Host</span>}
+              <span className="lobby-player-name">
+                {p.username}{p.id === myPlayerId ? ' (du)' : ''}
+              </span>
+              {p.isHost && <span className="label-caps lobby-player-tag">Gastgeber</span>}
             </li>
           ))}
-          {players.length === 0 && (
-            <li className="lobby-player lobby-player-empty">Warte auf Spieler…</li>
+          {players.length < MAX_ONLINE_PLAYERS && (
+            <li className="lobby-player is-empty">
+              <span className="lobby-player-slot" aria-hidden="true" />
+              <span className="lobby-player-name">Warte auf Mitspieler …</span>
+            </li>
           )}
         </ul>
-        {players.length < 2 && (
-          <p className="hint-text">
-            Es kann auch allein gestartet werden — weitere Spieler können bis zum Start beitreten.
-          </p>
-        )}
-      </Card>
+      </section>
 
-      <Card as="section">
-        <CardHeader heading="Einstellungen" action={<span className="card-badge">{modeLabel(settings?.mode)}</span>} />
+      <section className="online-card">
+        <div className="setup-section-head">
+          <h2 className="setup-section-title">Regeln</h2>
+          <span className="label-caps online-card-meta">{modeTitle(settings?.mode)}</span>
+        </div>
 
-        {!settings && <p className="text-dim">Einstellungen werden vom Host geladen…</p>}
+        {!settings && <p className="online-hint">Einstellungen werden vom Gastgeber geladen …</p>}
 
-        {settings && isHost && (!settings.mode || settings.mode === 'standard') && (
-          <div className="config-grid">
-            <div className="config-item">
-              <label className="section-label" htmlFor="lobby-start-score">Punkte</label>
-              <select
-                id="lobby-start-score"
-                value={settings.startScore}
-                onChange={e => updateSettings({ ...settings, startScore: parseInt(e.target.value) })}
-              >
-                <option value={301}>301</option>
-                <option value={501}>501</option>
-                <option value={701}>701</option>
-              </select>
-            </div>
-            <div className="config-item">
-              <label className="section-label" htmlFor="lobby-out-mode">Out-Modus</label>
-              <select
-                id="lobby-out-mode"
-                value={settings.outMode}
-                onChange={e => updateSettings({ ...settings, outMode: e.target.value as 'SO' | 'DO' | 'MO' })}
-              >
-                <option value="SO">Single Out</option>
-                <option value="DO">Double Out</option>
-                <option value="MO">Master Out</option>
-              </select>
-            </div>
-            <div className="config-item">
-              <label className="section-label" htmlFor="lobby-sets">Sets</label>
-              <input
-                id="lobby-sets"
-                type="number"
-                inputMode="numeric"
-                value={settings.setsToWin}
-                min={1}
-                max={10}
-                onChange={e => updateSettings({ ...settings, setsToWin: Math.min(10, Math.max(1, parseInt(e.target.value) || 1)) })}
-              />
-            </div>
-            <div className="config-item">
-              <label className="section-label" htmlFor="lobby-legs">Legs</label>
-              <input
-                id="lobby-legs"
-                type="number"
-                inputMode="numeric"
-                value={settings.legsToWin}
-                min={1}
-                max={15}
-                onChange={e => updateSettings({ ...settings, legsToWin: Math.min(15, Math.max(1, parseInt(e.target.value) || 1)) })}
-              />
-            </div>
-          </div>
-        )}
-
-        {settings && isHost && settings.mode === 'powerscoring' && (
-          <div className="config-item">
-            <label className="section-label" htmlFor="lobby-rounds">Rundenlimit</label>
-            <select
-              id="lobby-rounds"
-              value={settings.rounds || 10}
-              onChange={e => updateSettings({ ...settings, rounds: parseInt(e.target.value) })}
-            >
-              {[5, 10, 15, 20].map(r => <option key={r} value={r}>{r} Runden</option>)}
-            </select>
-          </div>
-        )}
-
-        {settings && isHost && settings.mode === 'checkout' && (
-          <div className="config-grid">
-            <div className="config-item">
-              <label className="section-label" htmlFor="lobby-targets">Targets</label>
-              <select
-                id="lobby-targets"
-                value={settings.checkoutTargets || 10}
-                onChange={e => updateSettings({ ...settings, checkoutTargets: parseInt(e.target.value) })}
-              >
-                {[5, 10, 15, 20].map(r => <option key={r} value={r}>{r}</option>)}
-              </select>
-            </div>
-            <div className="config-item">
-              <label className="section-label" htmlFor="lobby-attempts">Versuche</label>
-              <select
-                id="lobby-attempts"
-                value={settings.checkoutRounds || 1}
-                onChange={e => updateSettings({ ...settings, checkoutRounds: parseInt(e.target.value) })}
-              >
-                {[1, 2, 3, 5].map(r => <option key={r} value={r}>{r} {r === 1 ? 'Runde' : 'Runden'}</option>)}
-              </select>
-            </div>
-          </div>
-        )}
+        {settings && isHost && <RoomSettingsForm settings={settings} onChange={updateSettings} />}
 
         {settings && !isHost && (
-          <>
-            <p className="settings-summary">
-              {(!settings.mode || settings.mode === 'standard') && `${settings.startScore} · ${settings.outMode} · Bis ${settings.legsToWin} Legs${settings.setsToWin > 1 ? ` · ${settings.setsToWin} Sätze` : ''}`}
-              {settings.mode === 'powerscoring' && `${settings.rounds || 10} Runden`}
-              {settings.mode === 'splitscore' && 'Standard Runden'}
-              {settings.mode === 'checkout' && `${settings.checkoutTargets || 10} Targets · ${settings.checkoutRounds || 1} Versuche`}
-            </p>
-            <p className="hint-text">Nur der Host kann die Einstellungen ändern.</p>
-          </>
+          <ul className="room-rules" aria-label="Regeln des Raums">
+            {roomRuleParts(settings).map((part, i) => (
+              <li key={part} className={i === 0 ? 'is-lead' : ''}>{part}</li>
+            ))}
+          </ul>
         )}
-      </Card>
+      </section>
 
       <div className="lobby-actions">
         {isHost ? (
           <Button variant="primary" size="large" fullWidth onClick={handleStartGame}>
-            <Icons.IconPlayFilled size={20} /> Spiel starten
+            <Icons.IconPlayFilled size={20} /> Match starten
           </Button>
         ) : (
-          <div className="waiting-banner">
+          <div className="waiting-banner" role="status">
             <span className="waiting-dot" aria-hidden="true" />
-            Warte auf den Start durch den Host…
+            Warte auf den Start
           </div>
         )}
-        <Button variant="secondary" onClick={() => { leaveRoom(); navigate('/online'); }}>
-          Raum verlassen
+        <Button variant="secondary" size="large" fullWidth onClick={handleLeave}>
+          Verlassen
         </Button>
       </div>
     </div>

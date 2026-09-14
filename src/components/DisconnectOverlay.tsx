@@ -1,6 +1,10 @@
 import React, { useEffect, useId, useState } from 'react';
 import { useModalA11y } from '../hooks/useModalA11y';
 
+/**
+ * Der Host ist weg (Entwurf F4). Zeigt den bestehenden 60-s-Countdown; ein
+ * echtes Wiederverbinden nach einem Reload steht in der ROADMAP.
+ */
 export const DisconnectOverlay: React.FC<{ isHostDisconnected: boolean, onTimeout: () => void }> = ({ isHostDisconnected, onTimeout }) => {
   const [timeLeft, setTimeLeft] = useState(60);
   const titleId = useId();
@@ -26,18 +30,23 @@ export const DisconnectOverlay: React.FC<{ isHostDisconnected: boolean, onTimeou
   if (!isHostDisconnected) return null;
 
   return (
-    <div
-      ref={overlayRef}
-      role="alertdialog"
-      aria-modal="true"
-      aria-labelledby={titleId}
-      tabIndex={-1}
-      className="disconnect-overlay"
-    >
-      <h2 id={titleId}>Verbindung zum Host verloren</h2>
-      <p>Warte auf Wiederverbindung…</p>
-      <div aria-live="assertive" className="disconnect-countdown">{timeLeft}s</div>
-      <p>Wenn der Host nicht rechtzeitig zurückkehrt, wird das Spiel abgebrochen.</p>
+    <div className="dialog-overlay disconnect-overlay">
+      <div
+        ref={overlayRef}
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        className="dialog disconnect-dialog"
+      >
+        <span className="label-caps dialog-label disconnect-label">
+          <span className="disconnect-ring" aria-hidden="true" />
+          Wiederverbinden
+        </span>
+        <h2 id={titleId} className="dialog-title">Verbindung zum Host verloren</h2>
+        <div aria-live="assertive" className="disconnect-countdown">{timeLeft}<span>s</span></div>
+        <p className="dialog-text">Kommt der Host nicht zurück, endet das Match.</p>
+      </div>
     </div>
   );
 };

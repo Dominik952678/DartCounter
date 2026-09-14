@@ -8,7 +8,7 @@ import {
   START_SCORES,
   isValidStartScore
 } from './useMatchSetupConfig';
-import { Icons, Slider } from '../ui';
+import { Slider, Stepper } from '../ui';
 
 interface GameConfigPanelProps {
   config: MatchSetupConfig;
@@ -20,62 +20,6 @@ const FINISHES: readonly (readonly [OutMode, string])[] = [
   ['SO', 'Single Out'],
   ['MO', 'Master Out']
 ];
-
-interface StepperProps {
-  title: string;
-  hint: string;
-  value: number | '';
-  max: number;
-  onChange: (value: number | '') => void;
-}
-
-/** Sätze und Legs sind dasselbe Bedienelement zweimal, nur mit anderen Grenzen. */
-const Stepper: React.FC<StepperProps> = ({ title, hint, value, max, onChange }) => {
-  const current = typeof value === 'number' ? value : 1;
-  const inputId = useId();
-
-  return (
-    <div className="setup-stepper">
-      <div className="setup-stepper-head">
-        <label className="label-caps" htmlFor={inputId}>{title}</label>
-        <span className="label-caps setup-stepper-hint">{hint}</span>
-      </div>
-      <div className="setup-stepper-row">
-        <button
-          type="button"
-          className="stepper-btn"
-          onClick={() => onChange(Math.max(1, current - 1))}
-          disabled={current <= 1}
-          aria-label={`${title} verringern`}
-        >
-          <Icons.IconMinus size={18} />
-        </button>
-        <input
-          id={inputId}
-          type="number"
-          inputMode="numeric"
-          min={1}
-          max={max}
-          value={value}
-          // Begrenzt wird erst beim Verlassen, damit ein Wert beim Neutippen
-          // (aus „9" wird „12") nicht nach jeder Ziffer zurückspringt.
-          onChange={e => onChange(e.target.value === '' ? '' : parseInt(e.target.value, 10) || 1)}
-          onBlur={() => onChange(Math.min(max, Math.max(1, value === '' ? 1 : value)))}
-          className="stepper-input"
-        />
-        <button
-          type="button"
-          className="stepper-btn"
-          onClick={() => onChange(Math.min(max, current + 1))}
-          disabled={current >= max}
-          aria-label={`${title} erhöhen`}
-        >
-          <Icons.IconPlus size={18} />
-        </button>
-      </div>
-    </div>
-  );
-};
 
 /** Startpunktzahl, Distanz und Finish (Entwurf B1, B3). */
 export const GameConfigPanel: React.FC<GameConfigPanelProps> = ({ config, dispatch }) => {

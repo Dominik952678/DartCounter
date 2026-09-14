@@ -81,6 +81,19 @@ profile already accumulates per-mode aggregates (`powerScoring`, `splitScore`,
 breaks a streak (calendar-based state needs a stored "last played" date, which
 `createdAt` on matches now makes reliable).
 
+### Online reconnect
+**Problem.** A player whose tab reloads or loses the network mid-match cannot
+get back in. The others see the 60-second host countdown (`DisconnectOverlay`)
+and the match ends; a guest who drops is simply gone.
+**Touches.** `useOnlineStore` (rejoin with the stored seat id), `OnlineGameWrapper`
+(resync the state from the host), `DisconnectOverlay` (a banner above the
+keypad instead of a blocking dialog, as sketched in design draft F4).
+**Exists.** The seat id already survives a reload in `sessionStorage`
+(`dart_online_seat_id`), and the host already broadcasts full game states.
+**Effort.** 2–3 days, mostly testing on two devices.
+**Open.** How long a room stays open after the host leaves (the draft suggests
+30 minutes), and what a guest sees while the host is the one reconnecting.
+
 ---
 
 ## Long term
