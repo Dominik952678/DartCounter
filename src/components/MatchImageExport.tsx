@@ -31,10 +31,10 @@ export const MatchImageExport: React.FC<MatchImageExportProps> = ({ matchData, p
         top: 0,
         width: '1080px',
         minHeight: '1920px',
-        backgroundColor: '#0f172a', // Deep slate dark
-        backgroundImage: 'radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 100%)',
-        color: '#ffffff',
-        fontFamily: 'system-ui, -apple-system, sans-serif',
+        backgroundColor: '#0F1613', // Deep slate dark
+        backgroundImage: 'radial-gradient(circle at 50% 0%, #17211C 0%, #0F1613 100%)',
+        color: '#EDE6D3',
+        fontFamily: "'Barlow', system-ui, sans-serif",
         display: 'flex',
         flexDirection: 'column',
         padding: '60px',
@@ -44,13 +44,13 @@ export const MatchImageExport: React.FC<MatchImageExportProps> = ({ matchData, p
     >
       {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-        <div style={{ color: '#38bdf8', fontSize: '28px', fontWeight: 'bold', letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '10px' }}>
+        <div style={{ color: '#FF6A3D', fontSize: '28px', fontWeight: 'bold', letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '10px' }}>
           OFFIZIELLER MATCH-BERICHT
         </div>
-        <div style={{ fontSize: '60px', fontWeight: '900', margin: '0', textTransform: 'uppercase', background: 'linear-gradient(to right, #38bdf8, #818cf8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+        <div style={{ fontSize: '60px', fontWeight: '900', margin: '0', textTransform: 'uppercase', background: 'linear-gradient(to right, #FF6A3D, #E8C46B)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
           Dartcounter
         </div>
-        <div style={{ fontSize: '24px', color: '#94a3b8', marginTop: '15px' }}>
+        <div style={{ fontSize: '24px', color: '#8E8B7F', marginTop: '15px' }}>
           {matchData.date}
         </div>
       </div>
@@ -59,7 +59,7 @@ export const MatchImageExport: React.FC<MatchImageExportProps> = ({ matchData, p
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '30px' }}>
         {matchData.players.map((p, i) => {
           const isWinner = p.name === matchData.winner;
-          const playerColor = profiles[p.name]?.color || (i === 0 ? '#38bdf8' : '#f43f5e'); // Fallback PDC blue/red
+          const playerColor = profiles[p.name]?.color || (i === 0 ? '#FF6A3D' : '#E0564B'); // Fallback PDC blue/red
           const checkoutQuote = p.checkoutAttempts && p.checkoutAttempts > 0 
             ? Math.round(((p.checkoutSuccesses || 0) / p.checkoutAttempts) * 100) 
             : 0;
@@ -68,10 +68,10 @@ export const MatchImageExport: React.FC<MatchImageExportProps> = ({ matchData, p
             <div 
               key={i} 
               style={{
-                backgroundColor: 'rgba(30, 41, 59, 0.7)',
+                backgroundColor: 'rgba(23, 33, 28, 0.9)',
                 borderRadius: '24px',
-                border: `2px solid ${isWinner ? '#fbbf24' : 'rgba(255,255,255,0.1)'}`,
-                boxShadow: isWinner ? '0 0 40px rgba(251, 191, 36, 0.15)' : 'none',
+                border: `2px solid ${isWinner ? '#E8C46B' : 'rgba(255,255,255,0.1)'}`,
+                boxShadow: isWinner ? '0 0 40px rgba(232, 196, 107, 0.15)' : 'none',
                 padding: '40px',
                 position: 'relative',
                 overflow: 'hidden'
@@ -83,53 +83,53 @@ export const MatchImageExport: React.FC<MatchImageExportProps> = ({ matchData, p
               {/* Player Header */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                  <h2 style={{ fontSize: '50px', margin: 0, fontWeight: '900', color: '#fff' }}>
+                  <h2 style={{ fontSize: '50px', margin: 0, fontWeight: '900', color: '#EDE6D3' }}>
                     {p.name}
                   </h2>
                   {isWinner && <span style={{ fontSize: '45px' }}>👑</span>}
                 </div>
                 <div style={{ fontSize: '65px', fontWeight: '900', color: playerColor, textShadow: '0 4px 10px rgba(0,0,0,0.3)' }}>
-                  {p.sets} <span style={{ color: '#64748b', fontSize: '45px' }}>SÄTZE</span> <span style={{ margin: '0 10px' }}>-</span> {p.legs} <span style={{ color: '#64748b', fontSize: '45px' }}>LEGS</span>
+                  {p.sets} <span style={{ color: '#5B6560', fontSize: '45px' }}>SÄTZE</span> <span style={{ margin: '0 10px' }}>-</span> {p.legs} <span style={{ color: '#5B6560', fontSize: '45px' }}>LEGS</span>
                 </div>
               </div>
 
               {/* Big TV Stats Panels */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px', marginBottom: '30px' }}>
                 <div style={{ backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: '16px', padding: '25px', textAlign: 'center', borderBottom: `4px solid ${playerColor}` }}>
-                  <div style={{ color: '#94a3b8', fontSize: '20px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' }}>Average</div>
-                  <div style={{ fontSize: '55px', fontWeight: '900', color: '#fff' }}>{p.avg}</div>
+                  <div style={{ color: '#8E8B7F', fontSize: '20px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' }}>Average</div>
+                  <div style={{ fontSize: '55px', fontWeight: '900', color: '#EDE6D3' }}>{p.avg}</div>
                 </div>
                 <div style={{ backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: '16px', padding: '25px', textAlign: 'center', borderBottom: `4px solid ${playerColor}` }}>
-                  <div style={{ color: '#94a3b8', fontSize: '20px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' }}>Ø Erste 9</div>
-                  <div style={{ fontSize: '55px', fontWeight: '900', color: '#fff' }}>{p.first9 || p.avg}</div>
+                  <div style={{ color: '#8E8B7F', fontSize: '20px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' }}>Ø Erste 9</div>
+                  <div style={{ fontSize: '55px', fontWeight: '900', color: '#EDE6D3' }}>{p.first9 || p.avg}</div>
                 </div>
                 <div style={{ backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: '16px', padding: '25px', textAlign: 'center', borderBottom: `4px solid ${playerColor}` }}>
-                  <div style={{ color: '#94a3b8', fontSize: '20px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' }}>Checkout-Quote</div>
-                  <div style={{ fontSize: '55px', fontWeight: '900', color: '#fff' }}>{checkoutQuote}%</div>
-                  <div style={{ color: '#64748b', fontSize: '18px', marginTop: '5px' }}>{p.checkoutSuccesses || 0}/{p.checkoutAttempts || 0}</div>
+                  <div style={{ color: '#8E8B7F', fontSize: '20px', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' }}>Checkout-Quote</div>
+                  <div style={{ fontSize: '55px', fontWeight: '900', color: '#EDE6D3' }}>{checkoutQuote}%</div>
+                  <div style={{ color: '#5B6560', fontSize: '18px', marginTop: '5px' }}>{p.checkoutSuccesses || 0}/{p.checkoutAttempts || 0}</div>
                 </div>
               </div>
 
               {/* Detail Stats Grid */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '15px', marginBottom: '30px' }}>
                 <div style={{ backgroundColor: 'rgba(255,255,255,0.05)', padding: '20px', borderRadius: '12px', textAlign: 'center' }}>
-                  <div style={{ color: '#94a3b8', fontSize: '18px', marginBottom: '8px' }}>100+</div>
+                  <div style={{ color: '#8E8B7F', fontSize: '18px', marginBottom: '8px' }}>100+</div>
                   <div style={{ fontSize: '32px', fontWeight: 'bold' }}>{p.hundredPlus || 0}</div>
                 </div>
                 <div style={{ backgroundColor: 'rgba(255,255,255,0.05)', padding: '20px', borderRadius: '12px', textAlign: 'center' }}>
-                  <div style={{ color: '#94a3b8', fontSize: '18px', marginBottom: '8px' }}>140+</div>
+                  <div style={{ color: '#8E8B7F', fontSize: '18px', marginBottom: '8px' }}>140+</div>
                   <div style={{ fontSize: '32px', fontWeight: 'bold' }}>{p.oneFortyPlus || 0}</div>
                 </div>
                 <div style={{ backgroundColor: 'rgba(255,255,255,0.1)', padding: '20px', borderRadius: '12px', textAlign: 'center', border: '1px solid rgba(255,255,255,0.2)' }}>
-                  <div style={{ color: '#fbbf24', fontSize: '18px', marginBottom: '8px', fontWeight: 'bold' }}>180s</div>
-                  <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#fbbf24' }}>{p.oneEighty || 0}</div>
+                  <div style={{ color: '#E8C46B', fontSize: '18px', marginBottom: '8px', fontWeight: 'bold' }}>180s</div>
+                  <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#E8C46B' }}>{p.oneEighty || 0}</div>
                 </div>
                 <div style={{ backgroundColor: 'rgba(255,255,255,0.05)', padding: '20px', borderRadius: '12px', textAlign: 'center' }}>
-                  <div style={{ color: '#94a3b8', fontSize: '18px', marginBottom: '8px' }}>Bestes Leg</div>
+                  <div style={{ color: '#8E8B7F', fontSize: '18px', marginBottom: '8px' }}>Bestes Leg</div>
                   <div style={{ fontSize: '32px', fontWeight: 'bold' }}>{p.bestMatchLeg ? `${p.bestMatchLeg} D` : '-'}</div>
                 </div>
                 <div style={{ backgroundColor: 'rgba(255,255,255,0.05)', padding: '20px', borderRadius: '12px', textAlign: 'center' }}>
-                  <div style={{ color: '#94a3b8', fontSize: '18px', marginBottom: '8px' }}>Highest Finish</div>
+                  <div style={{ color: '#8E8B7F', fontSize: '18px', marginBottom: '8px' }}>Highest Finish</div>
                   <div style={{ fontSize: '32px', fontWeight: 'bold' }}>{p.highestCheckout || '-'}</div>
                 </div>
               </div>
@@ -137,14 +137,14 @@ export const MatchImageExport: React.FC<MatchImageExportProps> = ({ matchData, p
               {/* Leg-by-Leg Chart (CSS Bar Chart) */}
               {p.legHistory && p.legHistory.length > 0 && (
                 <div style={{ marginTop: '20px' }}>
-                  <div style={{ color: '#94a3b8', fontSize: '18px', textTransform: 'uppercase', marginBottom: '15px' }}>Average-Verlauf pro Leg</div>
+                  <div style={{ color: '#8E8B7F', fontSize: '18px', textTransform: 'uppercase', marginBottom: '15px' }}>Average-Verlauf pro Leg</div>
                   <div style={{ display: 'flex', alignItems: 'flex-end', gap: '8px', height: '120px', backgroundColor: 'rgba(0,0,0,0.2)', padding: '20px 20px 0 20px', borderRadius: '12px' }}>
                     {p.legHistory.map((avgStr, idx) => {
                       const avg = parseFloat(avgStr as unknown as string);
                       const heightPercent = (avg / chartMax) * 100;
                       return (
                         <div key={idx} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', height: '100%' }}>
-                          <span style={{ fontSize: '16px', color: '#fff', marginBottom: '8px', fontWeight: 'bold' }}>{avg.toFixed(1)}</span>
+                          <span style={{ fontSize: '16px', color: '#EDE6D3', marginBottom: '8px', fontWeight: 'bold' }}>{avg.toFixed(1)}</span>
                           <div 
                             style={{ 
                               width: '100%', 
@@ -167,8 +167,8 @@ export const MatchImageExport: React.FC<MatchImageExportProps> = ({ matchData, p
       </div>
 
       {/* Footer */}
-      <div style={{ textAlign: 'center', marginTop: '40px', color: '#64748b', fontSize: '20px' }}>
-        Erstellt mit <span style={{ color: '#38bdf8', fontWeight: 'bold' }}>Dartcounter</span>
+      <div style={{ textAlign: 'center', marginTop: '40px', color: '#5B6560', fontSize: '20px' }}>
+        Erstellt mit <span style={{ color: '#FF6A3D', fontWeight: 'bold' }}>Dartcounter</span>
       </div>
     </div>
   );

@@ -1,8 +1,7 @@
 import React from 'react';
-import { BOARD_RADII, segmentAngle, segmentPath } from '../../utils/dartboardGeometry';
+import { BOARD_RADII, segmentAngle } from '../../utils/dartboardGeometry';
 import { BOARD_ORDER } from '../../utils/bot';
-
-export type HeatFilter = 'all' | 'triples' | 'doubles';
+import { EXPORT_HEAT_COLORS, heatAreas, isShownBy, type HeatArea, type HeatFilter } from '../../utils/heatmap';
 
 export interface HeatBoardProps {
   /** Treffer nach Segment, wie die Engine sie zählt: `S20`, `T20`, `D16`, `SB`, `DB`. */
@@ -12,63 +11,42 @@ export interface HeatBoardProps {
   focus?: string;
   /** Zahlen am Rand. */
   numbers?: boolean;
+  /** Macht die Flächen antippbar. */
+  onSelect?: (area: HeatArea) => void;
+  /** Farben als Attribute statt über das Stylesheet — für html2canvas. */
+  exportColors?: boolean;
   className?: string;
 }
-
-type Ring = 'S' | 'T' | 'D' | 'B';
-
-interface Area {
-  key: string;
-  d: string;
-  value: number;
-  ring: Ring;
-}
-
-const circle = (r: number) => `M ${r} 0 A ${r} ${r} 0 1 1 ${-r} 0 A ${r} ${r} 0 1 1 ${r} 0 Z`;
-
-/**
- * Die Flächen des Boards mit ihren Treffern. Die Engine zählt jeden Dart
- * zusätzlich unter seiner nackten Zahl; die zählt nur, wenn es keine genauen
- * Schlüssel gibt — bei Daten aus der Zeit, bevor es sie gab.
- */
-const areasFor = (hits: Record<string, number>): Area[] => {
-  const detailed = Object.keys(hits).some(key => /^[STD]/.test(key));
-  const single = (n: number) => (detailed ? hits[`S${n}`] : hits[String(n)]) ?? 0;
-
-  const areas: Area[] = [];
-  BOARD_ORDER.forEach(n => {
-    areas.push({ key: `I${n}`, d: segmentPath(n, 'innerSingle'), value: single(n), ring: 'S' });
-    areas.push({ key: `S${n}`, d: segmentPath(n, 'outerSingle'), value: single(n), ring: 'S' });
-    areas.push({ key: `T${n}`, d: segmentPath(n, 'treble'), value: hits[`T${n}`] ?? 0, ring: 'T' });
-    areas.push({ key: `D${n}`, d: segmentPath(n, 'double'), value: hits[`D${n}`] ?? 0, ring: 'D' });
-  });
-  areas.push({
-    key: 'SB',
-    d: `${circle(BOARD_RADII.bullOut)} ${circle(BOARD_RADII.bullIn)}`,
-    value: (detailed ? hits.SB : hits['25']) ?? 0,
-    ring: 'B'
-  });
-  areas.push({
-    key: 'DB',
-    d: circle(BOARD_RADII.bullIn),
-    value: (detailed ? hits.DB : hits['50']) ?? 0,
-    ring: 'D'
-  });
-  return areas;
-};
-
-const shownBy = (filter: HeatFilter) => (area: Area): boolean =>
-  filter === 'all' || (filter === 'triples' ? area.ring === 'T' : area.ring === 'D' || area.ring === 'B');
 
 /**
  * Die Treffer eines Spielers in Form des Boards: jede Fläche im Orange, so
  * kräftig wie ihr Anteil am meistgetroffenen sichtbaren Segment.
  */
-export const HeatBoard: React.FC<HeatBoardProps> = ({ hits, filter = 'all', focus, numbers = false, className }) => {
-  const areas = areasFor(hits);
-  const shown = shownBy(filter);
+export const HeatBoard: React.FC<HeatBoardProps> = ({
+  hits,
+  filter = 'all',
+  focus,
+  numbers = false,
+  onSelect,
+  exportColors = false,
+  className
+}) => {
+  const areas = heatAreas(hits);
+  const shown = isShownBy(filter);
   const max = Math.max(1, ...areas.filter(shown).map(area => area.value));
-  const focusArea = focus ? areas.find(area => area.key === focus) : undefined;
+  // Ein Single sind zwei Flächen, innen und außen — beide werden umrandet.
+  const focusKeys = focus ? [focus, focus.startsWith('S') && focus !== 'SB' ? `I${focus.slice(1)}` : ''] : [];
+
+  const colored = (area: HeatArea, visible: boolean, hit: boolean): React.CSSProperties | undefined => {
+    const opacity = hit ? 0.16 + (0.84 * area.value) / max : undefined;
+    if (!exportColors) return opacity !== undefined ? { fillOpacity: opacity } : undefined;
+    return {
+      fill: hit ? EXPORT_HEAT_COLORS.hit : visible ? EXPORT_HEAT_COLORS.empty : 'transparent',
+      fillOpacity: opacity,
+      stroke: EXPORT_HEAT_COLORS.edge,
+      strokeWidth: 1.4
+    };
+  };
 
   return (
     <svg
@@ -77,7 +55,11 @@ export const HeatBoard: React.FC<HeatBoardProps> = ({ hits, filter = 'all', focu
       aria-hidden="true"
       focusable="false"
     >
-      <circle className="hb-back" r={BOARD_RADII.doubleOut + 2} />
+      <circle
+        className="hb-back"
+        r={BOARD_RADII.doubleOut + 2}
+        style={exportColors ? { fill: EXPORT_HEAT_COLORS.back } : undefined}
+      />
       {areas.map(area => {
         const visible = shown(area);
         const hit = visible && area.value > 0;
@@ -86,16 +68,25 @@ export const HeatBoard: React.FC<HeatBoardProps> = ({ hits, filter = 'all', focu
             key={area.key}
             d={area.d}
             fillRule="evenodd"
-            className={`hb-seg ${!visible ? 'is-off' : hit ? 'is-hit' : ''}`}
-            style={hit ? { fillOpacity: 0.16 + (0.84 * area.value) / max } : undefined}
+            className={['hb-seg', !visible ? 'is-off' : hit && 'is-hit', onSelect && visible && 'is-selectable'].filter(Boolean).join(' ')}
+            style={colored(area, visible, hit)}
+            onClick={onSelect && visible ? () => onSelect(area.key.startsWith('I') ? { ...area, key: `S${area.key.slice(1)}` } : area) : undefined}
           />
         );
       })}
-      {focusArea && <path className="hb-focus" d={focusArea.d} fillRule="evenodd" />}
+      {areas
+        .filter(area => focusKeys.includes(area.key))
+        .map(area => <path key={`focus-${area.key}`} className="hb-focus" d={area.d} fillRule="evenodd" />)}
       {numbers && BOARD_ORDER.map(n => {
         const angle = (segmentAngle(n) * Math.PI) / 180;
         return (
-          <text key={n} className="hb-number" x={186 * Math.cos(angle)} y={186 * Math.sin(angle)}>
+          <text
+            key={n}
+            className="hb-number"
+            x={186 * Math.cos(angle)}
+            y={186 * Math.sin(angle)}
+            style={exportColors ? { fill: EXPORT_HEAT_COLORS.number, fontSize: 14, textAnchor: 'middle', dominantBaseline: 'central' } : undefined}
+          >
             {n}
           </text>
         );

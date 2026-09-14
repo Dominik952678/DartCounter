@@ -13,7 +13,7 @@ export const exportElementAsImage = async (elementId: string, filename: string) 
     buttons.forEach(btn => btn.style.display = 'none');
 
     const canvas = await html2canvas(el, { 
-      backgroundColor: '#0a0a0c', 
+      backgroundColor: '#0F1613', 
       scale: 2, 
       logging: false 
     });

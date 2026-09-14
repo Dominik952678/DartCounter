@@ -458,6 +458,7 @@ export default function App() {
         winnerIndex={statsModalData.winnerIndex}
         players={statsModalData.players}
         matchData={statsModalData.matchData}
+        profiles={profiles}
         onClose={async () => {
           await commitPendingMatch();
           setStatsModalData({ isOpen: false, winnerIndex: null, players: [], matchData: null });

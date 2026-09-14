@@ -6,6 +6,7 @@
 @import "./styles/start.css";
 @import "./styles/match.css";
 @import "./styles/setup.css";
+@import "./styles/result.css";
 @import "./styles/celebration.css";
 
 /* ── Breakpoint-Skala ──
@@ -797,6 +798,8 @@ button,
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  /* Icon und Beschriftung stehen sonst Kante an Kante. */
+  gap: var(--space-2);
   padding: 14px 20px;
   border-radius: var(--radius-tile);
   font-weight: var(--weight-semibold);

@@ -1,255 +1,285 @@
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 import { useModalA11y } from '../hooks/useModalA11y';
-import type { Player, MatchHistory } from '../types';
+import type { Player, MatchHistory, PlayerStats, Profile } from '../types';
 import { DartboardHeatmap } from './DartboardHeatmap';
 import { checkoutQuote } from '../utils/stats';
+import { matchPlayerColor } from '../utils/playerColors';
+import { matchSides } from '../utils/matchProgress';
 import { Button, Icons, Slider } from './ui';
 import { MiniGameStoryExport } from './MiniGameStoryExport';
+import { MatchImageExport } from './MatchImageExport';
+import { CompareTable, type CompareRow } from './charts/CompareTable';
+import { distanceLabel, outModeLabel } from './matchSetup/configSummary';
 import { buildStoryData, hasStoryData, type MiniGameType } from '../utils/storyExport';
 
 const STORY_EXPORT_ID = 'power-scoring-story';
+const MATCH_EXPORT_ID = 'result-match-image';
+
+const TRAINING_TITLES: Record<MiniGameType, string> = {
+  powerScoring: 'Power Scoring',
+  splitScore: 'Split Score',
+  checkoutTraining: 'Checkout-Training'
+};
+
+const quote = (hits: number | undefined, darts: number | undefined): string =>
+  hits !== undefined && darts ? `${((hits / darts) * 100).toFixed(1)} %` : '–';
+
+/** Alle Kennzahlen, die das Ergebnis eines X01-Matches bis v1.17 zeigte (Entwurf D3). */
+const x01Rows = (rows: PlayerStats[]): CompareRow[] => [
+  { label: 'Average', values: rows.map(p => p.avg), better: 'high' },
+  { label: 'Erste 9', values: rows.map(p => p.first9), better: 'high' },
+  { label: 'Bestes Leg (Darts)', values: rows.map(p => p.bestMatchLeg || '–'), better: 'low' },
+  { label: 'Checkout-Quote', values: rows.map(p => checkoutQuote(p.checkoutSuccesses || 0, p.checkoutAttempts || 0)), better: 'high' },
+  { label: 'Checkouts', values: rows.map(p => `${p.checkoutSuccesses || 0}/${p.checkoutAttempts || 0}`) },
+  { label: 'Triple-Quote', values: rows.map(p => quote(p.triplesHit, p.matchDarts)), better: 'high' },
+  { label: '180', values: rows.map(p => p.oneEighty || 0), better: 'high' },
+  { label: '140+', values: rows.map(p => p.oneFortyPlus || 0), better: 'high' },
+  { label: '100+', values: rows.map(p => p.hundredPlus || 0), better: 'high' },
+  { label: 'Höchstes Finish', values: rows.map(p => p.highestCheckout || '–'), better: 'high' },
+  { label: 'Darts', values: rows.map(p => p.matchDarts || 0) }
+];
+
+/** Das Ergebnis einer Trainingsrunde (Entwurf E6). */
+const trainingRows = (type: MiniGameType, rows: PlayerStats[]): CompareRow[] =>
+  type === 'checkoutTraining'
+    ? [
+        { label: 'Bestes Checkout', values: rows.map(p => p.score || '–'), better: 'high' },
+        { label: 'Versuche', values: rows.map(p => p.attempts || 0) },
+        { label: 'Darts', values: rows.map(p => p.dartsUsed || 0) }
+      ]
+    : [
+        { label: 'Punkte', values: rows.map(p => p.score || 0), better: 'high' },
+        { label: 'Darts', values: rows.map(p => p.dartsThrown || '–') },
+        { label: 'Triple-Quote', values: rows.map(p => quote(p.triplesHit, p.dartsThrown)), better: 'high' }
+      ];
 
 export const StatsModal: React.FC<{
   isOpen: boolean;
   winnerIndex: number | null;
   players: Player[];
   matchData: MatchHistory | null;
+  /** Für „Match-Bild teilen"; ohne Profile gibt es das Bild nicht. */
+  profiles?: Record<string, Profile>;
   onClose: () => void;
   onRematch?: () => void;
   onUndoLastDart?: () => void;
-}> = ({ isOpen, winnerIndex, players, matchData, onClose, onRematch, onUndoLastDart }) => {
+}> = ({ isOpen, winnerIndex, players, matchData, profiles, onClose, onRematch, onUndoLastDart }) => {
   const [exportName, setExportName] = useState<string | null>(null);
+  const [heatName, setHeatName] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const titleId = useId();
 
   const isReady = isOpen && winnerIndex !== null && !!matchData;
-  // Escape is deliberately not wired: closing this dialog books the match and
-  // navigates away, which is not what a stray key press should do.
+  // Escape is deliberately not wired: closing books the match and navigates away.
   const dialogRef = useModalA11y<HTMLDivElement>({ isOpen: isReady });
 
   if (!isReady || winnerIndex === null || !matchData) return null;
 
+  const rows = matchData.players;
   const winnerName = players[winnerIndex]?.name || matchData.winner;
+  const is2v2 = Boolean(matchData.config?.is2v2 || matchData.is2v2);
+  const colorOf = (name: string, i: number) =>
+    matchPlayerColor(players.find(p => p.name === name) ?? players[i] ?? {}, i, is2v2);
+  const tablePlayers = rows.map((p, i) => ({ name: p.name, color: colorOf(p.name, i) }));
 
-  // Alle drei Trainingsmodi liefern inzwischen einen Rundenverlauf. Fehlt er —
-  // ein X01-Match oder ein Ergebnis von vor dieser Aufzeichnung —, erscheint
-  // der Block gar nicht erst, statt ein leeres Bild anzubieten.
   const storyType = (['powerScoring', 'splitScore', 'checkoutTraining'] as const)
     .find(t => t === matchData.gameType) as MiniGameType | undefined;
-  const exportablePlayers = storyType
-    ? matchData.players.filter(p => hasStoryData(p, matchData.gameType))
-    : [];
-  const canExportStory = exportablePlayers.length > 0;
-  const exportTarget = canExportStory
+  const exportablePlayers = storyType ? rows.filter(p => hasStoryData(p, matchData.gameType)) : [];
+  const exportTarget = exportablePlayers.length > 0
     ? exportablePlayers.find(p => p.name === exportName) ?? exportablePlayers[0]
     : null;
 
-  const handleStoryExport = async () => {
-    if (!exportTarget) return;
+  const heatPlayers = rows.filter(p => p.segmentHits && Object.keys(p.segmentHits).length > 0);
+  const heatShown = heatPlayers.find(p => p.name === heatName) ?? heatPlayers[0];
+
+  const exportImage = async (id: string, filename: string) => {
     setIsExporting(true);
     try {
       const { exportElementAsImage } = await import('../utils/exportImage');
-      await exportElementAsImage(STORY_EXPORT_ID, `Dartcounter-${storyType}-${exportTarget.name}.png`);
+      await exportElementAsImage(id, filename);
     } finally {
       setIsExporting(false);
     }
   };
 
+  const renderHead = () => {
+    if (storyType) {
+      const winnerRow = rows.find(p => p.name === matchData.winner) ?? rows[0];
+      return (
+        <div className="result-hero">
+          <span className="label-caps">{TRAINING_TITLES[storyType]}</span>
+          <div className="result-hero-value">
+            <span id={titleId} className="num-lg">{winnerRow?.score ?? 0}</span>
+            <span className="result-hero-unit">{storyType === 'checkoutTraining' ? 'bestes Checkout' : 'Punkte'}</span>
+          </div>
+          <div className="result-hero-sub">
+            {rows.length > 1 ? `${winnerName} gewinnt` : winnerName}
+          </div>
+        </div>
+      );
+    }
+
+    const sides = matchSides(rows.map(p => ({ ...p, score: p.score ?? 0 })), { is2v2 });
+    const bySets = (matchData.config?.setsToWin ?? 1) > 1;
+    const scoreline = sides.length === 2
+      ? `${bySets ? sides[0].sets : sides[0].legs} – ${bySets ? sides[1].sets : sides[1].legs}`
+      : `${rows.find(p => p.name === matchData.winner)?.legs ?? 0} Legs`;
+    const meta = matchData.config
+      ? `${matchData.config.startScore} · ${outModeLabel(matchData.config.outMode)} · ${distanceLabel(matchData.config)}`
+      : matchData.date;
+
+    return (
+      <div className="result-head">
+        <span id={titleId} className="label-caps">{`${winnerName} gewinnt das Match`}</span>
+        <p className="result-score">{scoreline}</p>
+        <span className="result-meta">{meta}</span>
+      </div>
+    );
+  };
+
+  const legCount = Math.max(0, ...rows.map(p => p.legHistory?.length ?? 0));
+
   return (
     <>
-      {/* No backdrop-click close either: it commits the match and leaves the board. */}
-      <div className="bottom-sheet-overlay">
+      {/* Kein Schließen über den Hintergrund: das bucht das Match und verlässt das Board. */}
+      <div className="result-overlay">
         <div
           ref={dialogRef}
-          className="bottom-sheet-content"
+          className="result-screen"
           role="dialog"
           aria-modal="true"
-          aria-labelledby="stats-modal-title"
+          aria-labelledby={titleId}
           tabIndex={-1}
-          style={{ maxWidth: '540px' }}
         >
-          <div className="drag-handle" />
-          
-          <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-            <div className="confetti" aria-hidden="true"><Icons.IconTrophy size={44} /></div>
-            <h2 id="stats-modal-title" className="result-winner">{winnerName} gewinnt!</h2>
-            <p className="result-subtitle">Match-Statistik &amp; Analyse</p>
-          </div>
-          
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginBottom: '20px' }}>
-            {matchData.players.map((pData, i) => {
-              const isWinner = pData.name === matchData.winner;
-              const playerObj = players[i];
-              const coQuote = checkoutQuote(pData.checkoutSuccesses || 0, pData.checkoutAttempts || 0);
-              const tripleQuote = (pData.triplesHit && pData.matchDarts && pData.matchDarts > 0)
-                ? (((pData.triplesHit || 0) / pData.matchDarts) * 100).toFixed(1) + '%'
-                : '–';
+          {renderHead()}
 
-              return (
-                <div key={i} style={{
-                  background: isWinner ? 'color-mix(in srgb, var(--primary) 12%, transparent)' : 'var(--bg-surface)',
-                  border: `1.5px solid ${isWinner ? 'var(--text-success)' : 'var(--card-border)'}`,
-                  borderRadius: 'var(--radius, 12px)',
-                  padding: '16px'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      {playerObj?.isBot ? <Icons.IconBot size={19} /> : <Icons.IconUser size={19} />}
-                      <strong className={`result-player ${isWinner ? 'is-winner' : ''}`}>
-                        {pData.name} {isWinner && <Icons.IconTrophy size={17} />}
-                      </strong>
-                    </div>
-                    <span className="result-stat-card result-rank">
-                      {matchData.gameType && matchData.gameType !== 'standard'
-                        ? (pData.score !== undefined ? `${pData.score} Pkt` : '')
-                        : (pData.sets !== undefined ? `${pData.sets}S : ${pData.legs}L` : `${pData.legs} Legs`)}
-                    </span>
-                  </div>
-                  
-                  {matchData.gameType && matchData.gameType !== 'standard' ? (
-                    <div style={{ display: 'grid', gridTemplateColumns: matchData.gameType === 'checkoutTraining' ? '1fr 1fr 1fr' : '1fr', gap: '8px', marginBottom: '6px' }}>
-                      <div className="result-stat-card" style={{ padding: '12px 8px', textAlign: 'center' }}>
-                        <div className="stat-label">
-                          {matchData.gameType === 'checkoutTraining' ? 'Bestes Checkout' : 'Punkte'}
-                        </div>
-                        <div className="stat-value">{pData.score || 0}</div>
-                      </div>
-                      {matchData.gameType === 'checkoutTraining' && (
-                        <>
-                          <div className="result-stat-card" style={{ padding: '12px 8px', textAlign: 'center' }}>
-                            <div className="stat-label">Versuche</div>
-                            <div className="stat-value">{pData.attempts || 0}</div>
-                          </div>
-                          <div className="result-stat-card" style={{ padding: '12px 8px', textAlign: 'center' }}>
-                            <div className="stat-label">Darts</div>
-                            <div className="stat-value">{pData.dartsUsed || 0}</div>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  ) : (
-                    <>
-                      {/* Primary Stats Grid */}
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '10px' }}>
-                        <div className="result-stat-card" style={{ padding: '10px 8px', textAlign: 'center' }}>
-                          <div className="stat-label">Average</div>
-                          <div className="stat-value stat-value-sm">{pData.avg}</div>
-                        </div>
-                        <div className="result-stat-card" style={{ padding: '10px 8px', textAlign: 'center' }}>
-                          <div className="stat-label">Erste 9</div>
-                          <div className="stat-value stat-value-sm">{pData.first9}</div>
-                        </div>
-                        <div className="result-stat-card" style={{ padding: '10px 8px', textAlign: 'center' }}>
-                          <div className="stat-label">Bestes Leg</div>
-                          <div className="stat-value stat-value-sm">
-                            {pData.bestMatchLeg ? `${pData.bestMatchLeg} Darts` : '–'}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Secondary Quotas */}
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '10px' }}>
-                        <div className="result-stat-card" style={{ padding: '8px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span className="stat-label">Checkout-Quote:</span>
-                          <strong style={{ color: 'var(--text)' }}>{coQuote}</strong>
-                        </div>
-                        <div className="result-stat-card" style={{ padding: '8px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span className="stat-label">Triple-Quote:</span>
-                          <strong style={{ color: 'var(--text)' }}>{tripleQuote}</strong>
-                        </div>
-                      </div>
-
-                      {/* Highlights Grid */}
-                      <div className="result-stat-card" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '6px', padding: '10px 6px', fontSize: '0.82em', textAlign: 'center' }}>
-                        <div><span className="stat-label">180:</span> <strong>{pData.oneEighty || 0}</strong></div>
-                        <div><span style={{ color: 'var(--text-dim)' }}>140+:</span> <strong>{pData.oneFortyPlus || 0}</strong></div>
-                        <div><span style={{ color: 'var(--text-dim)' }}>100+:</span> <strong>{pData.hundredPlus || 0}</strong></div>
-                        <div><span className="stat-label">Finish:</span> <strong>{pData.highestCheckout || '–'}</strong></div>
-                      </div>
-
-                      {/* Leg Averages progression if available */}
-                      {pData.legHistory && pData.legHistory.length > 0 && (
-                        <div style={{ marginTop: '10px', display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
-                          <span className="stat-label">Legs:</span>
-                          {pData.legHistory.map((avg, li) => (
-                            <span key={li} className="result-stat-card" style={{ fontSize: '0.75em', padding: '2px 6px', borderRadius: '4px' }}>
-                              L{li + 1}: Ø{avg}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* 2D Treffer-Heatmap for this match */}
-                      {pData.segmentHits && Object.keys(pData.segmentHits).length > 0 && (
-                        <div style={{ marginTop: '12px' }}>
-                          <DartboardHeatmap customHits={pData.segmentHits} title={`Treffer-Board: ${pData.name}`} />
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-          
-          {canExportStory && (
-            <div className="story-export">
-              <span className="section-label">Als Bild teilen</span>
-              {exportablePlayers.length > 1 && (
-                <Slider
-                  name="storyExportPlayer"
-                  value={exportTarget?.name ?? ''}
-                  options={exportablePlayers.map(p => ({ value: p.name, label: p.name }))}
-                  onChange={setExportName}
-                  ariaLabel="Wessen Statistik exportiert wird"
+          <div className="result-grid">
+            <div className="result-column">
+              <section className="result-card">
+                <span className="label-caps">{storyType ? 'Ergebnis' : 'Match-Statistik'}</span>
+                <CompareTable
+                  players={tablePlayers}
+                  rows={storyType ? trainingRows(storyType, rows) : x01Rows(rows)}
                 />
-              )}
-              <Button
-                variant="secondary"
-                fullWidth
-                disabled={isExporting}
-                onClick={handleStoryExport}
-              >
-                {isExporting ? 'Bild wird erstellt…' : <><Icons.IconCamera size={18} /> Story-Bild erstellen</>}
-              </Button>
-            </div>
-          )}
+              </section>
 
-          {/* Action Buttons: Start Again, Undo last throw, Back to Menu */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '12px' }}>
-            {onRematch && (
-              <Button
-                variant="primary" className="result-btn-rematch"
-                onClick={onRematch}
-              >
-                <Icons.IconRefresh size={18} /> <span>Nochmal spielen</span>
-              </Button>
+              {!storyType && legCount > 0 && (
+                <section className="result-card">
+                  <span className="label-caps">Legs</span>
+                  <div className="compare-scroll">
+                    <table className="compare-table">
+                      <thead>
+                        <tr>
+                          <th scope="col">Leg</th>
+                          {tablePlayers.map(p => (
+                            <th key={p.name} scope="col"><span className="compare-player">{`Ø ${p.name}`}</span></th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {Array.from({ length: legCount }, (_, leg) => (
+                          <tr key={leg}>
+                            <th scope="row">{leg + 1}</th>
+                            {rows.map((p, i) => <td key={i}>{p.legHistory?.[leg] ?? '–'}</td>)}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              )}
+            </div>
+
+            <div className="result-column">
+              {heatShown && (
+                <section className="result-card">
+                  {heatPlayers.length > 1 && (
+                    <Slider
+                      name="resultHeatPlayer"
+                      variant="chips"
+                      value={heatShown.name}
+                      options={heatPlayers.map(p => ({ value: p.name, label: p.name, ariaLabel: `Heatmap von ${p.name}` }))}
+                      onChange={setHeatName}
+                      ariaLabel="Heatmap von"
+                    />
+                  )}
+                  <DartboardHeatmap
+                    key={heatShown.name}
+                    customHits={heatShown.segmentHits}
+                    title={storyType ? 'Treffer der Sitzung' : 'Treffer-Board'}
+                  />
+                </section>
+              )}
+
+              {exportTarget && storyType && (
+                <section className="result-card">
+                  <span className="label-caps">Als Bild teilen</span>
+                  {exportablePlayers.length > 1 && (
+                    <Slider
+                      name="storyExportPlayer"
+                      variant="chips"
+                      value={exportTarget.name}
+                      options={exportablePlayers.map(p => ({ value: p.name, label: p.name, ariaLabel: p.name }))}
+                      onChange={setExportName}
+                      ariaLabel="Wessen Statistik exportiert wird"
+                    />
+                  )}
+                  <Button
+                    variant="secondary"
+                    fullWidth
+                    disabled={isExporting}
+                    onClick={() => exportImage(STORY_EXPORT_ID, `Dartcounter-${storyType}-${exportTarget.name}.png`)}
+                  >
+                    {isExporting ? 'Bild wird erstellt…' : <><Icons.IconCamera size={18} /> Story-Bild erstellen</>}
+                  </Button>
+                </section>
+              )}
+            </div>
+          </div>
+
+          <div className="result-actions">
+            {storyType ? (
+              <div className="result-actions-row">
+                {onRematch && <Button variant="bone" size="large" onClick={onRematch}>Nochmal</Button>}
+                <Button variant="secondary" size="large" onClick={onClose}>Fertig</Button>
+              </div>
+            ) : (
+              <>
+                {onRematch && (
+                  <Button variant="primary" size="large" fullWidth onClick={onRematch}>
+                    <Icons.IconRefresh size={20} /> Revanche
+                  </Button>
+                )}
+                <div className="result-actions-row">
+                  {onUndoLastDart && (
+                    <Button variant="secondary" onClick={onUndoLastDart} title="Letzten Wurf zurücknehmen">
+                      <Icons.IconUndo size={18} /> Wurf zurück
+                    </Button>
+                  )}
+                  <Button variant="secondary" onClick={onClose}>
+                    <Icons.IconHome size={18} /> Start
+                  </Button>
+                </div>
+                {profiles && (
+                  <Button
+                    variant="ghost"
+                    size="compact"
+                    className="result-share"
+                    disabled={isExporting}
+                    onClick={() => exportImage(MATCH_EXPORT_ID, `Dartcounter-Match-${matchData.date}.png`)}
+                  >
+                    <Icons.IconCamera size={16} /> {isExporting ? 'Bild wird erstellt…' : 'Match-Bild teilen'}
+                  </Button>
+                )}
+              </>
             )}
-
-            <div style={{ display: 'grid', gridTemplateColumns: onUndoLastDart ? '1fr 1fr' : '1fr', gap: '10px' }}>
-              {onUndoLastDart && (
-                <button
-                  className="result-btn-undo"
-                  onClick={onUndoLastDart}
-                  title="Letzten Wurf rückgängig machen (falls verklickt)"
-                >
-                  <Icons.IconUndo size={18} /> <span>Wurf zurücknehmen</span>
-                </button>
-              )}
-
-              <Button
-                variant="ghost" className="result-btn-home"
-                onClick={onClose}
-              >
-                <Icons.IconHome size={18} /> <span>Zurück zum Menü</span>
-              </Button>
-            </div>
           </div>
         </div>
       </div>
 
-      {/* Liegt außerhalb des Sichtbereichs; html2canvas filmt genau diesen
-          Knoten ab. Nur der gewählte Spieler wird gerendert, sonst stünden bis
-          zu vier 1080×1920-Bäume im DOM. */}
+      {/* Liegen außerhalb des Sichtbereichs; html2canvas filmt genau diese Knoten ab.
+          Nur der gewählte Spieler wird gerendert, sonst stünden bis zu vier
+          1080×1920-Bäume im DOM. */}
       {exportTarget && storyType && (
         <MiniGameStoryExport
           exportId={STORY_EXPORT_ID}
@@ -259,6 +289,9 @@ export const StatsModal: React.FC<{
           segmentHits={exportTarget.segmentHits ?? {}}
           {...buildStoryData(exportTarget, storyType)}
         />
+      )}
+      {!storyType && profiles && (
+        <MatchImageExport matchData={matchData} profiles={profiles} exportId={MATCH_EXPORT_ID} />
       )}
     </>
   );

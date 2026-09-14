@@ -1,320 +1,105 @@
 import React, { useState } from 'react';
-import { Icons, Slider } from './ui';
 import type { Profile } from '../types';
 import { totalSegmentHits } from '../utils/segmentStats';
+import { heatAreas, type HeatArea, type HeatFilter } from '../utils/heatmap';
+import { HeatBoard } from './charts/HeatBoard';
+import { DartboardArt, Slider } from './ui';
 
 interface DartboardHeatmapProps {
   profile?: Profile;
   customHits?: Record<string, number>;
   title?: string;
   /**
-   * Nur das Board, ohne Filter-Chips und ohne Hover-Anzeige — für den
-   * Bild-Export, wo nichts bedienbar ist. Die Visualisierung selbst ist
-   * identisch.
+   * Nur Board und Legende, ohne Filter und ohne Antippen — für den Bild-Export,
+   * wo nichts bedienbar ist. Die Farben stehen dann als Attribute am SVG.
    */
   staticView?: boolean;
 }
 
-// Standard PDC sector order clockwise from the top (12 o'clock)
-const SECTORS = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5];
-
-const resolveSegmentHits = (segmentHits: Record<string, number>, key: string): number => {
-  if (segmentHits[key] !== undefined) return segmentHits[key];
-  // Fallback for legacy data with only numeric sector keys (e.g. "20")
-  if (key === 'DB' && segmentHits['50'] !== undefined) return segmentHits['50'];
-  if (key === 'SB' && segmentHits['25'] !== undefined) return segmentHits['25'];
-  if (key.startsWith('S')) {
-    const num = key.slice(1);
-    if (segmentHits[num] !== undefined && segmentHits[`T${num}`] === undefined && segmentHits[`D${num}`] === undefined) {
-      return segmentHits[num];
-    }
-  }
-  return 0;
-};
-
 const EMPTY_HITS: Record<string, number> = {};
 
-export const DartboardHeatmap: React.FC<DartboardHeatmapProps> = ({ profile, customHits, title = "2D Treffer-Heatmap", staticView = false }) => {
-  const [filterMode, setFilterMode] = useState<'all' | 'triples' | 'doubles'>('all');
-  const [hoveredSegment, setHoveredSegment] = useState<{ label: string; count: number; percent: number } | null>(null);
+const FILTERS: readonly { value: HeatFilter; label: string }[] = [
+  { value: 'all', label: 'Alle' },
+  { value: 'triples', label: 'Triples' },
+  { value: 'doubles', label: 'Doppel' }
+];
+
+const LEGEND: readonly [string, string][] = [
+  ['Keine', 'is-none'],
+  ['Niedrig', 'is-low'],
+  ['Mittel', 'is-mid'],
+  ['Hotspot', 'is-high']
+];
+
+/**
+ * Die Treffer-Heatmap: das Board im Orange, ein Filter auf Triples oder Doppel,
+ * und beim Antippen einer Fläche die Zahl dazu.
+ */
+export const DartboardHeatmap: React.FC<DartboardHeatmapProps> = ({
+  profile,
+  customHits,
+  title = 'Treffer-Heatmap',
+  staticView = false
+}) => {
+  const [filter, setFilter] = useState<HeatFilter>('all');
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
 
   const segmentHits = customHits || profile?.segmentHits || EMPTY_HITS;
-
-  const totalRecordedHits = totalSegmentHits(segmentHits);
-
-  let maxHits = 1;
-  SECTORS.forEach(s => {
-    if (filterMode === 'all' || filterMode === 'triples') {
-      maxHits = Math.max(maxHits, resolveSegmentHits(segmentHits, `T${s}`));
-    }
-    if (filterMode === 'all' || filterMode === 'doubles') {
-      maxHits = Math.max(maxHits, resolveSegmentHits(segmentHits, `D${s}`));
-    }
-    if (filterMode === 'all') {
-      maxHits = Math.max(maxHits, resolveSegmentHits(segmentHits, `S${s}`));
-    }
-  });
-  if (filterMode !== 'triples') {
-    maxHits = Math.max(maxHits, resolveSegmentHits(segmentHits, 'DB'), resolveSegmentHits(segmentHits, 'SB'));
-  }
-
-  const getSegmentCount = (key: string) => resolveSegmentHits(segmentHits, key);
-
-  // Center and geometry
-  const cx = 200;
-  const cy = 200;
-  const rDBull = 10;
-  const rSBull = 24;
-  const rTripleInner = 92;
-  const rTripleOuter = 107;
-  const rDoubleInner = 152;
-  const rDoubleOuter = 168;
-
-  // Polar to Cartesian conversion
-  const polarToCartesian = (centerX: number, centerY: number, radius: number, angleInDegrees: number) => {
-    const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180.0;
-    return {
-      x: centerX + radius * Math.cos(angleInRadians),
-      y: centerY + radius * Math.sin(angleInRadians)
-    };
-  };
-
-  // Helper to generate SVG annular slice path
-  const describeArc = (x: number, y: number, innerR: number, outerR: number, startAngle: number, endAngle: number) => {
-    const startOuter = polarToCartesian(x, y, outerR, endAngle);
-    const endOuter = polarToCartesian(x, y, outerR, startAngle);
-    const startInner = polarToCartesian(x, y, innerR, startAngle);
-    const endInner = polarToCartesian(x, y, innerR, endAngle);
-
-    const largeArcFlag = endAngle - startAngle <= 180 ? '0' : '1';
-
-    return [
-      'M', startOuter.x, startOuter.y,
-      'A', outerR, outerR, 0, largeArcFlag, 0, endOuter.x, endOuter.y,
-      'L', startInner.x, startInner.y,
-      'A', innerR, innerR, 0, largeArcFlag, 1, endInner.x, endInner.y,
-      'Z'
-    ].join(' ');
-  };
-
-  const getHeatColor = (hits: number) => {
-    if (hits <= 0) return 'rgba(148, 163, 184, 0.06)';
-    const intensity = Math.min(1, hits / maxHits);
-
-    if (intensity < 0.25) {
-      return `rgba(59, 130, 246, ${0.35 + intensity * 1.5})`; // Blue
-    } else if (intensity < 0.6) {
-      return `rgba(255, 214, 10, ${0.5 + intensity * 0.7})`; // Yellow
-    } else {
-      return `rgba(239, 68, 68, ${0.7 + intensity * 0.3})`; // Hot Red
-    }
-  };
-
-  const handleHover = (label: string, count: number) => {
-    const percent = totalRecordedHits > 0 ? (count / totalRecordedHits) * 100 : 0;
-    setHoveredSegment({ label, count, percent });
-  };
-
-  const sectorAngle = 360 / 20;
+  const total = totalSegmentHits(segmentHits);
+  const selected: HeatArea | undefined = selectedKey
+    ? heatAreas(segmentHits).find(area => area.key === selectedKey)
+    : undefined;
 
   return (
-    <div className="dash-section" style={{ position: 'relative' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
-        <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Icons.IconTarget size={18} /> {title}
-        </h3>
-
-        {/* Filter (§5: ein Selected-State fuer alles). Vorher drei Kopien
-            desselben Chips mit blauer Vollflaeche, Inline-Farben und 28px
-            Hoehe — unter der 44pt-Grenze aus §4. */}
-        {!staticView && <Slider
-          name="heatmapFilter"
-          variant="chips"
-          value={filterMode}
-          options={[
-            { value: 'all', label: 'Alle' },
-            { value: 'triples', label: 'Triples' },
-            { value: 'doubles', label: 'Doppel' }
-          ]}
-          onChange={setFilterMode}
-          ariaLabel="Trefferfilter"
-        />}
+    <div className={`heatmap-card ${staticView ? 'is-static' : ''}`}>
+      <div className="heatmap-head">
+        <span className="label-caps">{title}</span>
+        {total > 0 && <span className="heatmap-total">{`${total} Darts`}</span>}
       </div>
 
-      {totalRecordedHits === 0 ? (
-        <div style={{ textAlign: 'center', padding: '32px 16px', color: 'var(--text-dim)' }}>
-          <Icons.IconTarget size={40} style={{ margin: '0 auto 8px' }} />
-          <p style={{ margin: 0, fontSize: '0.9em' }}>Noch keine Trefferdaten erfasst.</p>
-          <p style={{ margin: '4px 0 0', fontSize: '0.78em', opacity: 0.7 }}>Spiele Matches, um deine persönliche Treffer-Heatmap zu füllen.</p>
+      {total === 0 ? (
+        <div className="heatmap-empty">
+          <DartboardArt tone="quiet" className="heatmap-empty-board" />
+          <p>Noch keine Trefferdaten erfasst.</p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          {/* Tooltip Display */}
-          <div style={{
-            minHeight: '36px',
-            marginBottom: '10px',
-            textAlign: 'center',
-            background: hoveredSegment ? 'rgba(148, 163, 184, 0.12)' : 'transparent',
-            padding: '4px 14px',
-            borderRadius: '16px',
-            transition: 'all 0.15s ease',
-            border: hoveredSegment ? '1px solid var(--card-border)' : '1px solid transparent'
-          }}>
-            {hoveredSegment ? (
-              <span style={{ fontSize: '0.85em', fontWeight: 800 }}>
-                {hoveredSegment.label}: <span style={{ color: 'var(--blue)' }}>{hoveredSegment.count} Treffer</span> ({hoveredSegment.percent.toFixed(1)}%)
-              </span>
-            ) : (
-              <span style={{ fontSize: '0.78em', color: 'var(--text-dim)' }}>
-                Tippe oder fahre über ein Segment für Details
-              </span>
-            )}
-          </div>
-
-          <div style={{ width: '100%', maxWidth: '340px', aspectRatio: '1/1', position: 'relative' }}>
-            <svg 
-              viewBox="0 0 400 400" 
-              style={{ 
-                width: '100%', 
-                height: '100%', 
-                filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.6))',
-                transform: 'rotate(0deg)'
+        <>
+          {!staticView && (
+            <Slider
+              name="heatmapFilter"
+              variant="chips"
+              value={filter}
+              options={FILTERS}
+              onChange={value => {
+                setFilter(value);
+                setSelectedKey(null);
               }}
-            >
-              {/* Outer Board Ring */}
-              <circle cx={cx} cy={cy} r={192} fill="#121214" stroke="rgba(255,255,255,0.12)" strokeWidth="3" />
+              ariaLabel="Trefferfilter"
+            />
+          )}
 
-              {/* Board Segments */}
-              {SECTORS.map((sector, index) => {
-                const startAngle = index * sectorAngle - sectorAngle / 2;
-                const endAngle = index * sectorAngle + sectorAngle / 2;
+          {!staticView && selected && (
+            <p className="heatmap-detail" role="status">
+              {`${selected.label} · ${selected.value} Treffer · ${((selected.value / total) * 100).toFixed(1)} %`}
+            </p>
+          )}
 
-                const doubleKey = `D${sector}`;
-                const tripleKey = `T${sector}`;
-                const singleKey = `S${sector}`;
+          <HeatBoard
+            hits={segmentHits}
+            filter={filter}
+            focus={selected?.key}
+            numbers
+            onSelect={staticView ? undefined : area => setSelectedKey(area.key)}
+            exportColors={staticView}
+            className="heatmap-board"
+          />
 
-                const dHits = getSegmentCount(doubleKey);
-                const tHits = getSegmentCount(tripleKey);
-                const sHits = getSegmentCount(singleKey);
-
-                const showDoubles = filterMode === 'all' || filterMode === 'doubles';
-                const showTriples = filterMode === 'all' || filterMode === 'triples';
-                const showSingles = filterMode === 'all';
-
-                // Number label coordinates
-                const labelPos = polarToCartesian(cx, cy, 180, index * sectorAngle);
-
-                return (
-                  <g key={sector}>
-                    {/* Double Ring */}
-                    <path
-                      d={describeArc(cx, cy, rDoubleInner, rDoubleOuter, startAngle, endAngle)}
-                      fill={showDoubles ? getHeatColor(dHits) : 'rgba(255,255,255,0.02)'}
-                      stroke="rgba(255,255,255,0.2)"
-                      strokeWidth="0.8"
-                      onMouseEnter={() => handleHover(`Doppel ${sector}`, dHits)}
-                      onTouchStart={() => handleHover(`Doppel ${sector}`, dHits)}
-                      style={{ cursor: 'pointer', transition: 'fill 0.2s ease' }}
-                    />
-
-                    {/* Outer Single */}
-                    <path
-                      d={describeArc(cx, cy, rTripleOuter, rDoubleInner, startAngle, endAngle)}
-                      fill={showSingles ? getHeatColor(sHits) : 'rgba(255,255,255,0.02)'}
-                      stroke="rgba(255,255,255,0.12)"
-                      strokeWidth="0.5"
-                      onMouseEnter={() => handleHover(`Single ${sector}`, sHits)}
-                      onTouchStart={() => handleHover(`Single ${sector}`, sHits)}
-                      style={{ cursor: 'pointer', transition: 'fill 0.2s ease' }}
-                    />
-
-                    {/* Triple Ring */}
-                    <path
-                      d={describeArc(cx, cy, rTripleInner, rTripleOuter, startAngle, endAngle)}
-                      fill={showTriples ? getHeatColor(tHits) : 'rgba(255,255,255,0.02)'}
-                      stroke="rgba(255,255,255,0.25)"
-                      strokeWidth="0.8"
-                      onMouseEnter={() => handleHover(`Triple ${sector}`, tHits)}
-                      onTouchStart={() => handleHover(`Triple ${sector}`, tHits)}
-                      style={{ cursor: 'pointer', transition: 'fill 0.2s ease' }}
-                    />
-
-                    {/* Inner Single */}
-                    <path
-                      d={describeArc(cx, cy, rSBull, rTripleInner, startAngle, endAngle)}
-                      fill={showSingles ? getHeatColor(sHits) : 'rgba(255,255,255,0.02)'}
-                      stroke="rgba(255,255,255,0.12)"
-                      strokeWidth="0.5"
-                      onMouseEnter={() => handleHover(`Single ${sector}`, sHits)}
-                      onTouchStart={() => handleHover(`Single ${sector}`, sHits)}
-                      style={{ cursor: 'pointer', transition: 'fill 0.2s ease' }}
-                    />
-
-                    {/* Sector Number Text */}
-                    <text
-                      x={labelPos.x}
-                      y={labelPos.y}
-                      fill="#e5e5ea"
-                      fontSize="12"
-                      fontWeight="900"
-                      textAnchor="middle"
-                      dominantBaseline="central"
-                      pointerEvents="none"
-                    >
-                      {sector}
-                    </text>
-                  </g>
-                );
-              })}
-
-              {/* Single Bull (25) */}
-              <circle
-                cx={cx}
-                cy={cy}
-                r={rSBull}
-                fill={filterMode !== 'triples' ? getHeatColor(getSegmentCount('SB') + getSegmentCount('25')) : 'rgba(255,255,255,0.02)'}
-                stroke="rgba(255,255,255,0.3)"
-                strokeWidth="1"
-                onMouseEnter={() => handleHover('Single Bull (25)', getSegmentCount('SB') + getSegmentCount('25'))}
-                onTouchStart={() => handleHover('Single Bull (25)', getSegmentCount('SB') + getSegmentCount('25'))}
-                style={{ cursor: 'pointer', transition: 'fill 0.2s ease' }}
-              />
-
-              {/* Double Bull (50) */}
-              <circle
-                cx={cx}
-                cy={cy}
-                r={rDBull}
-                fill={filterMode !== 'triples' ? getHeatColor(getSegmentCount('DB') + getSegmentCount('50')) : 'rgba(255,255,255,0.02)'}
-                stroke="rgba(255,255,255,0.4)"
-                strokeWidth="1.2"
-                onMouseEnter={() => handleHover('Bullseye (50)', getSegmentCount('DB') + getSegmentCount('50'))}
-                onTouchStart={() => handleHover('Bullseye (50)', getSegmentCount('DB') + getSegmentCount('50'))}
-                style={{ cursor: 'pointer', transition: 'fill 0.2s ease' }}
-              />
-            </svg>
+          <div className="heatmap-legend" aria-hidden="true">
+            {LEGEND.map(([label, tone]) => (
+              <span key={label}><i className={tone} />{label}</span>
+            ))}
           </div>
-
-          {/* Legend */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px', marginTop: '16px', fontSize: '0.72em', color: 'var(--text-dim)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.2)' }} />
-              Keine
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'var(--blue)' }} />
-              Niedrig
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'var(--orange)' }} />
-              Mittel
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: 'var(--red)' }} />
-              Hotspot
-            </div>
-          </div>
-        </div>
+        </>
       )}
     </div>
   );

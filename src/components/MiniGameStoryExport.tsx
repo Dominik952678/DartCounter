@@ -48,16 +48,16 @@ interface MiniGameStoryExportProps {
  * soll in jedem Theme gleich aussehen. Wer es in einer Story teilt, teilt nicht
  * seine Theme-Einstellung mit.
  */
-const INK = '#0B1120';
-const ACCENT = '#F59E0B';
-const TEXT = '#F5F5F0';
-const MUTED = '#8B93A6';
-const GOOD = '#10B981';
-const BAD = '#EF4444';
+const INK = '#0F1613';
+const ACCENT = '#FF6A3D';
+const TEXT = '#EDE6D3';
+const MUTED = '#8E8B7F';
+const GOOD = '#63C48A';
+const BAD = '#E0564B';
 
 const ENTRY_STYLE: Record<StoryEntry['state'], { bg: string; border: string; value: string }> = {
-  hit: { bg: 'rgba(245, 158, 11, 0.14)', border: 'rgba(245, 158, 11, 0.35)', value: TEXT },
-  miss: { bg: 'rgba(239, 68, 68, 0.12)', border: 'rgba(239, 68, 68, 0.35)', value: BAD },
+  hit: { bg: 'rgba(255, 106, 61, 0.14)', border: 'rgba(255, 106, 61, 0.35)', value: TEXT },
+  miss: { bg: 'rgba(224, 86, 75, 0.12)', border: 'rgba(224, 86, 75, 0.35)', value: BAD },
   open: { bg: 'rgba(255, 255, 255, 0.03)', border: 'rgba(255, 255, 255, 0.06)', value: MUTED }
 };
 
@@ -66,7 +66,7 @@ const StatTile: React.FC<StoryStat & { accent?: boolean }> = ({ label, value, ac
     style={{
       flex: 1,
       background: 'rgba(255, 255, 255, 0.04)',
-      border: `1px solid ${accent ? 'rgba(245, 158, 11, 0.25)' : 'rgba(255,255,255,0.08)'}`,
+      border: `1px solid ${accent ? 'rgba(255, 106, 61, 0.25)' : 'rgba(255,255,255,0.08)'}`,
       borderRadius: '18px',
       padding: '20px 14px',
       textAlign: 'center'
@@ -114,9 +114,9 @@ export const MiniGameStoryExport: React.FC<MiniGameStoryExportProps> = ({
         top: 0,
         width: '1080px',
         height: '1920px',
-        background: `radial-gradient(circle at 50% 0%, #1B2233 0%, ${INK} 60%)`,
+        background: `radial-gradient(circle at 50% 0%, #1F2B25 0%, ${INK} 60%)`,
         color: TEXT,
-        fontFamily: 'system-ui, -apple-system, sans-serif',
+        fontFamily: "'Barlow', system-ui, sans-serif",
         display: 'flex',
         flexDirection: 'column',
         padding: '70px 60px',
@@ -142,7 +142,7 @@ export const MiniGameStoryExport: React.FC<MiniGameStoryExportProps> = ({
             color: ACCENT,
             lineHeight: 1,
             fontVariantNumeric: 'tabular-nums',
-            textShadow: '0 0 60px rgba(245, 158, 11, 0.35)'
+            textShadow: '0 0 60px rgba(255, 106, 61, 0.35)'
           }}
         >
           {headline}
