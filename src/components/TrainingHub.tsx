@@ -55,7 +55,10 @@ interface TrainingHubProps {
   initialMode?: MiniGameMode;
 }
 
-export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles, onStartMiniGame, initialMode = 'checkout' }) => {
+// `initialMode` has no default on purpose: HomeContainer passes `undefined`
+// unless the URL names a mode, and a default of 'checkout' here meant the
+// remembered mode below was never read — the hub always opened on checkout.
+export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles, onStartMiniGame, initialMode }) => {
   const { user } = useAuthStore();
   const isGuest = !user;
   const profileNames = Object.keys(profiles);

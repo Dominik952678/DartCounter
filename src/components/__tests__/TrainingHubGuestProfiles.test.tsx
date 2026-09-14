@@ -50,6 +50,22 @@ describe('TrainingHub, signed out', () => {
     expect(next['Gast 2'].wins).toBe(1);
   });
 
+  // The mode was written to storage on every change but never read back: a
+  // default of 'checkout' on the prop always won.
+  it('starts the training mode that was chosen last time', async () => {
+    localStorage.setItem('dart_training_mode', 'splitscore');
+    const onStartMiniGame = vi.fn();
+
+    render(
+      <TrainingHub profiles={{}} setProfiles={vi.fn()} onStartMiniGame={onStartMiniGame} />
+    );
+
+    fireEvent.click(screen.getByText(/Training starten/i));
+
+    await waitFor(() => expect(onStartMiniGame).toHaveBeenCalled());
+    expect(onStartMiniGame.mock.calls[0][0]).toBe('splitscore');
+  });
+
   it('still creates a record for a name that has none yet', async () => {
     const setProfiles = vi.fn();
     const onStartMiniGame = vi.fn();
