@@ -1,0 +1,120 @@
+{
+  "pages": [
+    {
+      "id": "p-system",
+      "name": "System"
+    },
+    {
+      "id": "p-spielen",
+      "name": "Spielen"
+    },
+    {
+      "id": "p-training",
+      "name": "Training"
+    },
+    {
+      "id": "p-online",
+      "name": "Online"
+    },
+    {
+      "id": "p-statistik",
+      "name": "Statistik & Profil"
+    }
+  ],
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "title": "System",
+      "x": 0,
+      "y": 0,
+      "w": 1500,
+      "h": 1900,
+      "page": "p-system",
+      "is_interactive": true
+    },
+    {
+      "file": "Start.dc.html",
+      "title": "Startseite",
+      "x": 0,
+      "y": 0,
+      "w": 1390,
+      "h": 1164,
+      "page": "p-spielen",
+      "is_interactive": true
+    },
+    {
+      "file": "NeuesSpiel.dc.html",
+      "title": "Neues Spiel",
+      "x": 0,
+      "y": 1324,
+      "w": 1836,
+      "h": 1510,
+      "page": "p-spielen",
+      "is_interactive": true
+    },
+    {
+      "file": "Match.dc.html",
+      "title": "Match am Handy",
+      "x": 0,
+      "y": 2994,
+      "w": 3620,
+      "h": 1164,
+      "page": "p-spielen",
+      "is_interactive": true
+    },
+    {
+      "file": "MatchQuer.dc.html",
+      "title": "Querformat und Matchende",
+      "x": 0,
+      "y": 4318,
+      "w": 2640,
+      "h": 2070,
+      "page": "p-spielen",
+      "is_interactive": true
+    },
+    {
+      "file": "Training.dc.html",
+      "title": "Training",
+      "x": 0,
+      "y": 0,
+      "w": 2728,
+      "h": 1530,
+      "page": "p-training",
+      "is_interactive": true
+    },
+    {
+      "file": "Online.dc.html",
+      "title": "Online",
+      "x": 0,
+      "y": 0,
+      "w": 1836,
+      "h": 1164,
+      "page": "p-online",
+      "is_interactive": true
+    },
+    {
+      "file": "Statistik.dc.html",
+      "title": "Statistik",
+      "x": 0,
+      "y": 0,
+      "w": 2728,
+      "h": 1650,
+      "page": "p-statistik",
+      "is_interactive": true
+    },
+    {
+      "file": "Profil.dc.html",
+      "title": "Profil",
+      "x": 0,
+      "y": 1810,
+      "w": 2282,
+      "h": 1290,
+      "page": "p-statistik",
+      "is_interactive": true
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "p-system"
+  }
+}
