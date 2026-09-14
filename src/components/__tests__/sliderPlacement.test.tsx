@@ -40,14 +40,14 @@ describe('Match-Setup', () => {
   it('leaves sets and legs on the stepper', () => {
     const { container } = render(<MatchSetup profiles={profiles} onStartGame={vi.fn()} />);
 
-    expect(container.querySelectorAll('.stepper-box')).toHaveLength(2);
+    expect(container.querySelectorAll('.setup-stepper')).toHaveLength(2);
     expect(container.querySelectorAll('.slider input[name="setsToWin"]')).toHaveLength(0);
     expect(container.querySelectorAll('.slider input[name="legsToWin"]')).toHaveLength(0);
   });
 });
 
 describe('Training-Setup', () => {
-  it('puts a slider on the mode, the player count and every parameter set', () => {
+  it('puts a slider on the player count and every parameter set', () => {
     const { container } = render(
       <TrainingHub profiles={profiles} onStartMiniGame={vi.fn()} initialMode="checkout" />
     );
@@ -55,25 +55,21 @@ describe('Training-Setup', () => {
     const names = Array.from(container.querySelectorAll('.slider input[type="radio"]'))
       .map(input => input.getAttribute('name'));
 
-    // Checkout bringt zwei Parameter mit: Anzahl Ziele und Versuche je Finish.
+    // Checkout bringt zwei Parameter mit: Anzahl Ziele und Runden je Ziel.
     expect(new Set(names)).toEqual(
-      new Set(['trainingMode', 'playerCount', 'checkoutTargets', 'checkoutRounds'])
+      new Set(['playerCount', 'checkoutTargets', 'checkoutRounds'])
     );
   });
 
   /**
-   * Der Modus-Slider ersetzt drei gestapelte Karten. Die Beschreibung, die
-   * vorher auf jeder Karte stand, erscheint jetzt nur für den gewählten Modus —
-   * sie darf dabei nicht verloren gehen.
+   * Der Modus ist keine Einstellung, sondern die Wahl, womit man trainiert —
+   * deshalb drei Karten statt eines Sliders, jede mit ihrer Beschreibung.
    */
-  it('describes the mode the slider is on', () => {
-    const { container } = render(
-      <TrainingHub profiles={profiles} onStartMiniGame={vi.fn()} initialMode="splitscore" />
-    );
+  it('describes every mode on its own card', () => {
+    const { container } = render(<TrainingHub profiles={profiles} onStartMiniGame={vi.fn()} />);
 
-    expect(container.querySelectorAll('.training-mode-hint')).toHaveLength(1);
-    expect(container.querySelector('.training-mode-hint')?.textContent)
-      .toContain('halbieren');
+    expect(container.querySelectorAll('.training-mode-card')).toHaveLength(3);
+    expect(container.textContent).toContain('sonst wird halbiert');
   });
 });
 

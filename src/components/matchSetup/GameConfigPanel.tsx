@@ -1,134 +1,160 @@
 import React, { useId } from 'react';
 import type { MatchSetupAction, MatchSetupConfig, OutMode } from './useMatchSetupConfig';
-import { MAX_LEGS, MAX_SETS, START_SCORES } from './useMatchSetupConfig';
-import { Card, CardHeader, Slider } from '../ui';
+import {
+  MAX_LEGS,
+  MAX_SETS,
+  MAX_START_SCORE,
+  MIN_START_SCORE,
+  START_SCORES,
+  isValidStartScore
+} from './useMatchSetupConfig';
+import { Icons, Slider } from '../ui';
 
 interface GameConfigPanelProps {
   config: MatchSetupConfig;
   dispatch: React.Dispatch<MatchSetupAction>;
 }
 
-/* Kurz auf dem Slider, ausgeschrieben für Screenreader — „Master" allein sagt
-   nicht, dass es um den Ausgang des Legs geht. */
-const OUT_MODE_LABELS: readonly (readonly [OutMode, string, string])[] = [
-  ['SO', 'Single', 'Single Out'],
-  ['DO', 'Double', 'Double Out'],
-  ['MO', 'Master', 'Master Out']
+const FINISHES: readonly (readonly [OutMode, string])[] = [
+  ['DO', 'Double Out'],
+  ['SO', 'Single Out'],
+  ['MO', 'Master Out']
 ];
 
 interface StepperProps {
   title: string;
-  subtitle: string;
+  hint: string;
   value: number | '';
   max: number;
-  label: string;
   onChange: (value: number | '') => void;
 }
 
-/** Sets and legs are the same control twice, differing only in their bounds. */
-const DistanceStepper: React.FC<StepperProps> = ({ title, subtitle, value, max, label, onChange }) => {
+/** Sätze und Legs sind dasselbe Bedienelement zweimal, nur mit anderen Grenzen. */
+const Stepper: React.FC<StepperProps> = ({ title, hint, value, max, onChange }) => {
   const current = typeof value === 'number' ? value : 1;
   const inputId = useId();
+
   return (
-    <div className="distance-card">
-      <div className="distance-header">
-        <span className="distance-title">{title}</span>
-        <span className="distance-subtitle">{subtitle}</span>
+    <div className="setup-stepper">
+      <div className="setup-stepper-head">
+        <label className="label-caps" htmlFor={inputId}>{title}</label>
+        <span className="label-caps setup-stepper-hint">{hint}</span>
       </div>
-      <div className="stepper-box">
+      <div className="setup-stepper-row">
         <button
           type="button"
           className="stepper-btn"
           onClick={() => onChange(Math.max(1, current - 1))}
           disabled={current <= 1}
-          aria-label={`${label} verringern`}
+          aria-label={`${title} verringern`}
         >
-          −
+          <Icons.IconMinus size={18} />
         </button>
-        <div className="stepper-val-wrap">
-          <label htmlFor={inputId} className="sr-only">{title} ({subtitle})</label>
-          <input
-            id={inputId}
-            type="number"
-            min="1"
-            max={max}
-            value={value}
-            // Clamping is deferred to blur so a value being retyped (e.g. clearing
-            // "9" to type "12") isn't snapped back to the limit after every digit.
-            onChange={e => onChange(e.target.value === '' ? '' : parseInt(e.target.value) || 1)}
-            onBlur={() => onChange(Math.min(max, Math.max(1, value === '' ? 1 : value)))}
-            className="stepper-input"
-          />
-          <span className="stepper-unit">Bis {value || 1}</span>
-        </div>
+        <input
+          id={inputId}
+          type="number"
+          inputMode="numeric"
+          min={1}
+          max={max}
+          value={value}
+          // Begrenzt wird erst beim Verlassen, damit ein Wert beim Neutippen
+          // (aus „9" wird „12") nicht nach jeder Ziffer zurückspringt.
+          onChange={e => onChange(e.target.value === '' ? '' : parseInt(e.target.value, 10) || 1)}
+          onBlur={() => onChange(Math.min(max, Math.max(1, value === '' ? 1 : value)))}
+          className="stepper-input"
+        />
         <button
           type="button"
           className="stepper-btn"
           onClick={() => onChange(Math.min(max, current + 1))}
           disabled={current >= max}
-          aria-label={`${label} erhöhen`}
+          aria-label={`${title} erhöhen`}
         >
-          +
+          <Icons.IconPlus size={18} />
         </button>
       </div>
     </div>
   );
 };
 
-/** Distance, start score and out mode — everything except who is playing. */
-export const GameConfigPanel: React.FC<GameConfigPanelProps> = ({ config, dispatch }) => (
-  <Card>
-    <CardHeader
-      heading="Spieleinstellungen"
-      style={{ borderBottom: '1px solid var(--card-border)', paddingBottom: 'var(--space-3)' }}
-    />
+/** Startpunktzahl, Distanz und Finish (Entwurf B1, B3). */
+export const GameConfigPanel: React.FC<GameConfigPanelProps> = ({ config, dispatch }) => {
+  const customId = useId();
+  const customInvalid = config.customScore && !isValidStartScore(config.startScore);
 
-    <div style={{ marginBottom: 'var(--space-6)' }}>
-      <h3 className="field-label">Distanz</h3>
-      <div className="distance-grid">
-        <DistanceStepper
-          title="Sets"
-          subtitle="Gewinnsätze"
-          label="Sets"
+  return (
+    <>
+      <section className="setup-section">
+        <h2 className="setup-section-title">Startpunktzahl</h2>
+        <Slider
+          name="startScore"
+          variant="tiles"
+          value={config.customScore ? 'custom' : String(config.startScore)}
+          options={[
+            ...START_SCORES.map(score => ({ value: String(score), label: score, ariaLabel: `${score} Punkte` })),
+            { value: 'custom', label: 'Custom', ariaLabel: 'Eigene Startpunktzahl' }
+          ]}
+          onChange={value =>
+            value === 'custom'
+              ? dispatch({ type: 'customScore', value: config.startScore })
+              : dispatch({ type: 'startScore', value: Number(value) })
+          }
+          ariaLabel="Startpunktzahl"
+        />
+        {config.customScore && (
+          <>
+            <div className={`setup-custom ${customInvalid ? 'is-invalid' : ''}`}>
+              <label className="label-caps" htmlFor={customId}>Eigene Punktzahl</label>
+              <input
+                id={customId}
+                type="number"
+                inputMode="numeric"
+                min={MIN_START_SCORE}
+                max={MAX_START_SCORE}
+                value={config.startScore}
+                aria-invalid={customInvalid}
+                onChange={e =>
+                  dispatch({ type: 'customScore', value: e.target.value === '' ? '' : parseInt(e.target.value, 10) })
+                }
+                className="setup-custom-input"
+              />
+            </div>
+            {customInvalid && (
+              <p className="setup-error-text" role="alert">
+                {`Die Startpunktzahl muss zwischen ${MIN_START_SCORE} und ${MAX_START_SCORE} liegen.`}
+              </p>
+            )}
+          </>
+        )}
+      </section>
+
+      <div className="setup-distance">
+        <Stepper
+          title="Sätze"
+          hint={config.setsToWin === 1 ? 'nur Legs' : 'Gewinnsätze'}
           value={config.setsToWin}
           max={MAX_SETS}
           onChange={value => dispatch({ type: 'sets', value })}
         />
-        <DistanceStepper
+        <Stepper
           title="Legs"
-          subtitle="pro Satz"
-          label="Legs"
+          hint="pro Satz"
           value={config.legsToWin}
           max={MAX_LEGS}
           onChange={value => dispatch({ type: 'legs', value })}
         />
       </div>
-    </div>
 
-    <div style={{ marginBottom: 'var(--space-6)' }}>
-      <h3 className="field-label">Startpunktzahl</h3>
-      <Slider
-        name="startScore"
-        value={config.startScore}
-        options={START_SCORES.map(score => ({
-          value: score,
-          label: score,
-          ariaLabel: `${score} Punkte`
-        }))}
-        onChange={value => dispatch({ type: 'startScore', value })}
-        ariaLabel="Startpunktzahl"
-      />
-    </div>
-
-    <div>
-      <h3 className="field-label">Out-Modus</h3>
-      <Slider
-        name="outMode"
-        value={config.outMode}
-        options={OUT_MODE_LABELS.map(([value, label, ariaLabel]) => ({ value, label, ariaLabel }))}
-        onChange={value => dispatch({ type: 'outMode', value })}
-        ariaLabel="Out-Modus"
-      />
-    </div>
-  </Card>
-);
+      <section className="setup-section">
+        <h2 className="setup-section-title">Finish</h2>
+        <Slider
+          name="outMode"
+          value={config.outMode}
+          options={FINISHES.map(([value, label]) => ({ value, label }))}
+          onChange={value => dispatch({ type: 'outMode', value })}
+          ariaLabel="Finish"
+        />
+      </section>
+    </>
+  );
+};

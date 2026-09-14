@@ -40,6 +40,7 @@ describe('TrainingHub, signed out', () => {
       />
     );
 
+    fireEvent.click(screen.getByText('Checkout-Training'));
     fireEvent.click(screen.getByText(/Training starten/i));
 
     await waitFor(() => expect(onStartMiniGame).toHaveBeenCalled());
@@ -50,14 +51,12 @@ describe('TrainingHub, signed out', () => {
     expect(next['Gast 2'].wins).toBe(1);
   });
 
-  // The mode was written to storage on every change but never read back: a
-  // default of 'checkout' on the prop always won.
-  it('starts the training mode that was chosen last time', async () => {
-    localStorage.setItem('dart_training_mode', 'splitscore');
+  /** Ein Link mit `?mode=` öffnet gleich die Einstellungen dieses Modus. */
+  it('opens and starts the training mode the link names', async () => {
     const onStartMiniGame = vi.fn();
 
     render(
-      <TrainingHub profiles={{}} setProfiles={vi.fn()} onStartMiniGame={onStartMiniGame} />
+      <TrainingHub profiles={{}} setProfiles={vi.fn()} onStartMiniGame={onStartMiniGame} initialMode="splitscore" />
     );
 
     fireEvent.click(screen.getByText(/Training starten/i));
@@ -74,6 +73,7 @@ describe('TrainingHub, signed out', () => {
       <TrainingHub profiles={{}} setProfiles={setProfiles} onStartMiniGame={onStartMiniGame} />
     );
 
+    fireEvent.click(screen.getByText('Power Scoring'));
     fireEvent.click(screen.getByText(/Training starten/i));
     await waitFor(() => expect(onStartMiniGame).toHaveBeenCalled());
 

@@ -1,0 +1,640 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Neues Spiel und Training (Entwurf B1–B4, E1–E2)
+   Markup: components/MatchSetup.tsx, components/matchSetup/*,
+   components/TrainingHub.tsx, components/ui/Toggle.tsx.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Der Schein oben auf Anmeldung, Statistik und Profil — bis zu deren Umbau. */
+.hero-glow-bg-setup,
+.hero-glow-bg-profile {
+  position: absolute;
+  top: -80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(500px, 90vw);
+  height: 300px;
+  background: radial-gradient(circle, var(--bg-accent-muted) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Gerüst ── */
+.setup-screen,
+.training-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.setup-title {
+  padding-top: var(--space-2);
+  font-size: 40px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.setup-grid,
+.setup-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+/* §6: zweispaltige Formulare ab der 900px-Stufe. */
+@media (min-width: 900px) {
+  .setup-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: var(--space-8);
+  }
+}
+
+.setup-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.setup-screen .slider,
+.training-settings .slider {
+  margin-bottom: 0;
+}
+
+.setup-section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.setup-section-title {
+  margin: 0;
+  font-family: var(--font);
+  font-size: var(--text-label);
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.setup-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 var(--space-2);
+  border: none;
+  background: transparent;
+  font-family: var(--font);
+  font-size: var(--text-label);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+/* ── Eigene Startpunktzahl ── */
+.setup-custom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 10px 10px 10px 16px;
+  border-radius: var(--radius-row);
+  border: 1.5px solid transparent;
+  background: var(--surface-card);
+}
+.setup-custom.is-invalid {
+  border-color: var(--text-danger);
+}
+
+.setup-custom .setup-custom-input {
+  width: 120px;
+  min-height: 48px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 12px;
+  background: var(--bg-base);
+  box-shadow: none;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+  -moz-appearance: textfield;
+}
+.setup-custom.is-invalid .setup-custom-input {
+  color: var(--text-danger);
+}
+
+.setup-error-text {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-danger);
+}
+
+/* ── Sätze und Legs ── */
+.setup-distance {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.setup-stepper {
+  padding: 14px 14px 12px;
+  border-radius: 18px;
+  background: var(--surface-card);
+}
+
+.setup-stepper-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+}
+.setup-stepper-hint {
+  color: var(--text-tertiary);
+}
+
+.setup-stepper-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-top: 10px;
+}
+
+.stepper-btn {
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  flex: none;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+}
+.stepper-btn:disabled {
+  opacity: 0.3;
+}
+
+.setup-stepper .stepper-input {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 44px;
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  -moz-appearance: textfield;
+}
+.setup-stepper .stepper-input:focus {
+  background: transparent;
+  box-shadow: none;
+}
+
+.stepper-input::-webkit-outer-spin-button,
+.stepper-input::-webkit-inner-spin-button,
+.setup-custom-input::-webkit-outer-spin-button,
+.setup-custom-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* ── Sitzplätze ── */
+.seat-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.seat-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: 6px 10px 6px 4px;
+  border-radius: var(--radius-row);
+  background: var(--surface-card);
+}
+
+.seat-handle {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  flex: none;
+  color: var(--text-tertiary);
+  cursor: grab;
+}
+
+.seat-order {
+  display: flex;
+  flex-direction: column;
+  flex: none;
+}
+
+.seat-move-btn {
+  width: 36px;
+  height: 30px;
+  min-height: 30px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+}
+.seat-move-btn:disabled {
+  opacity: 0.2;
+}
+
+.seat-avatar {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--player-color);
+  background: var(--surface-raised);
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+}
+
+.seat-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.seat-main .seat-input {
+  min-height: 44px;
+  padding: 0 var(--space-2);
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  font-family: var(--font);
+  font-size: 16px;
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+}
+.seat-main .seat-input:focus {
+  background: var(--surface-raised);
+  box-shadow: none;
+}
+.seat-input option {
+  color: var(--on-accent-bone);
+  background: var(--accent-bone);
+}
+
+.seat-tag {
+  flex: none;
+  font-family: var(--font);
+  font-size: var(--text-label);
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.seat-tag.is-starter {
+  color: var(--accent-primary);
+}
+
+.seat-bot {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 var(--space-1);
+  font-family: var(--font);
+  font-size: var(--text-label);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.seat-bot input {
+  width: 18px;
+  height: 18px;
+  min-height: 0;
+  margin: 0;
+  accent-color: var(--accent-primary);
+}
+
+.setup-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--radius-row);
+  border: 1px solid var(--text-danger);
+  background: color-mix(in srgb, var(--text-danger) 14%, transparent);
+  font-size: var(--text-body);
+  color: var(--text-primary);
+}
+
+/* ── Schalter ── Markup: components/ui/Toggle.tsx */
+.toggle-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.toggle-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 8px 14px;
+  border-radius: var(--radius-row);
+  background: var(--surface-card);
+  cursor: pointer;
+}
+.toggle-row.is-disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.toggle-icon {
+  display: flex;
+  color: var(--text-secondary);
+}
+
+.toggle-label {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: var(--weight-medium);
+  line-height: 1.3;
+  color: var(--text-primary);
+}
+
+/* Bleibt im DOM und in der Tab-Reihenfolge — `display: none` nähme den
+   Schalter auch aus dem Accessibility-Tree. */
+.toggle-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+}
+
+.toggle-track {
+  position: relative;
+  width: 52px;
+  height: 32px;
+  flex: none;
+  border-radius: var(--radius-pill);
+  background: var(--surface-raised);
+  transition: background-color var(--motion-switch) ease;
+}
+
+.toggle-thumb {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-pill);
+  background: var(--text-tertiary);
+  transition:
+    transform var(--motion-switch) var(--ease-switch),
+    background-color var(--motion-switch) ease;
+}
+
+.toggle-row.is-on .toggle-track {
+  background: var(--accent-bone);
+}
+.toggle-row.is-on .toggle-thumb {
+  transform: translateX(20px);
+  background: var(--bg-base);
+}
+.toggle-input:focus-visible ~ .toggle-track {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+.setup-shuffle {
+  align-self: center;
+}
+
+/* ── Start ── klebt über dem Dock */
+.setup-start {
+  position: sticky;
+  bottom: var(--dock-space);
+  z-index: var(--z-sticky);
+  padding: var(--space-3) 0 var(--space-2);
+  background: linear-gradient(to top, var(--bg-base) 55%, transparent);
+}
+@media (min-width: 900px) {
+  .setup-start {
+    bottom: calc(var(--safe-bottom) + var(--space-4));
+  }
+}
+
+.setup-start-btn {
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 0 22px;
+}
+
+.setup-start-summary {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-family: var(--font);
+  font-size: var(--text-label);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--on-accent-primary) 70%, transparent);
+}
+
+/* ── Ausbullen ── Markup: components/matchSetup/BullOffModal.tsx */
+.bulloff {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.bulloff-note {
+  margin: 0;
+  font-family: var(--font);
+  font-size: var(--text-label);
+  font-weight: var(--weight-semibold);
+  line-height: 1.3;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent-primary);
+}
+
+.bulloff-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bulloff-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 52px;
+  padding: 0 16px;
+  border-radius: var(--radius-row);
+  border: 1.5px solid transparent;
+  background: var(--surface-raised);
+}
+.bulloff-row.is-active {
+  border-color: var(--accent-primary);
+}
+.bulloff-row.is-out {
+  opacity: 0.45;
+}
+
+.bulloff-name {
+  font-family: var(--font);
+  font-size: var(--text-label);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+.bulloff-state {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: var(--weight-semibold);
+  color: var(--text-secondary);
+}
+
+.bulloff-choices {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.bulloff-choice {
+  height: 56px;
+  border-radius: var(--radius-key);
+  border: 1px solid var(--line-2);
+  background: var(--surface-raised);
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+}
+
+/* ── Training ── */
+.training-sub {
+  margin: -12px 0 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.training-modes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.training-mode-card {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 16px 18px;
+  border: none;
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font-family: var(--font);
+  text-align: left;
+}
+.training-mode-card:hover {
+  background: var(--surface-raised);
+}
+
+.training-mode-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.training-mode-text .label-caps {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+}
+
+.training-mode-title {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+}
+
+.training-mode-desc {
+  font-size: 13px;
+  font-weight: var(--weight-regular);
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+.training-mode-best {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex: none;
+  text-align: right;
+}
+.training-mode-best .num {
+  font-size: 30px;
+  line-height: 0.9;
+}
+.training-mode-best-label {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+.training-settings {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+@media (min-width: 900px) {
+  .training-modes {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .training-mode-card {
+    flex-direction: column;
+  }
+  .training-mode-best {
+    align-items: flex-start;
+    text-align: left;
+  }
+}

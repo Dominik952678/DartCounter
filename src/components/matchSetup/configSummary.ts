@@ -44,7 +44,8 @@ export const lineupLabel = (config: Pick<MatchSetupConfig, 'is2v2' | 'playerCoun
  * überfliegt sie.
  */
 export const configPills = (config: MatchSetupConfig): string[] => [
-  String(config.startScore),
+  // Ein halb getipptes eigenes Feld ist `''`.
+  config.startScore === '' ? '–' : String(config.startScore),
   outModeLabel(config.outMode),
   distanceLabel({
     // Ein halb getipptes Zahlenfeld ist hier `''`; die Karte zeigt dann die 1,

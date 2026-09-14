@@ -336,6 +336,7 @@ export default function App() {
             <TrainingHub
               profiles={profiles}
               setProfiles={setProfiles}
+              matches={savedMatches}
               initialMode={(new URLSearchParams(location.search).get('mode') as MiniGameMode | null) ?? undefined}
               onStartMiniGame={(mode, players, settings) => {
                 setMiniGameConfig({ players, settings });

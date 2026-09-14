@@ -8,11 +8,17 @@ import { BullOffModal } from './matchSetup/BullOffModal';
 import { GameConfigPanel } from './matchSetup/GameConfigPanel';
 import { GuestSyncRedeemModal } from './GuestSyncRedeemModal';
 import { PlayerSelection } from './matchSetup/PlayerSelection';
-import { OverwriteSavedGameModal, SavedGameCard } from './matchSetup/SavedGameCard';
+import { OverwriteSavedGameModal } from './matchSetup/SavedGameCard';
 import type { SavedMatchSummary } from './matchSetup/SavedGameCard';
 import { useLineup } from './matchSetup/useLineup';
-import { toGameConfig, useMatchSetupConfig } from './matchSetup/useMatchSetupConfig';
-import { Button, Icons } from './ui';
+import {
+  MAX_START_SCORE,
+  MIN_START_SCORE,
+  isValidStartScore,
+  toGameConfig,
+  useMatchSetupConfig
+} from './matchSetup/useMatchSetupConfig';
+import { Button, Slider } from './ui';
 import { DEFAULT_BOT_AVERAGE } from '../utils/botProfiles';
 import { configPills } from './matchSetup/configSummary';
 
@@ -25,24 +31,24 @@ interface MatchSetupProps {
   setProfiles?: (profiles: Record<string, Profile>) => void;
   /**
    * Startet das Match, sobald die Aufstellung steht — der „Ein Tap"-Weg von der
-   * Weiter-Karte des Start-Screens.
+   * orangen Karte des Start-Screens.
    *
    * Der Weg führt bewusst durch diesen Screen und nicht um ihn herum: hier
    * liegen die Vorprüfungen (gekoppelte Cloud-Profile, gültige Gast-Tokens, ein
    * noch laufendes Match, das Anlegen von Gastprofilen). Blockt eine davon,
-   * bleibt der Nutzer genau hier stehen und sieht die Meldung — statt in ein
-   * Match zu fallen, das nicht hätte starten dürfen.
+   * bleibt der Nutzer genau hier stehen und sieht die Meldung.
    */
   autoStart?: boolean;
 }
 
 /**
- * The screen that configures a match: who plays, over what distance, and what
- * to do with a match that was never finished.
+ * „Neues Spiel" (Entwurf B1–B4): wer spielt, über welche Distanz, mit welchem
+ * Finish.
  *
- * It owns the pre-flight checks that have to see everything at once — the
- * line-up, the configuration and the cloud state — and leaves the rest to the
- * pieces in `matchSetup/`.
+ * Er besitzt die Vorprüfungen, die alles zugleich sehen müssen — Aufstellung,
+ * Konfiguration und Cloud-Zustand — und überlässt den Rest den Teilen in
+ * `matchSetup/`. Ein unterbrochenes Match bietet der Start-Screen an; hier wird
+ * nur gefragt, bevor ein neues es ersetzt.
  */
 export const MatchSetup: React.FC<MatchSetupProps> = ({
   profiles,
@@ -63,25 +69,17 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
     const parsed = readJson<SavedMatchSummary | null>('savedGame', null);
     return parsed?.players && parsed.config ? { players: parsed.players, config: parsed.config } : null;
   });
-  const [isSavedBannerDismissed, setIsSavedBannerDismissed] = useState(false);
   const [showOverwriteModal, setShowOverwriteModal] = useState(false);
   const [showGuestSyncModal, setShowGuestSyncModal] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [bullOffPlayers, setBullOffPlayers] = useState<string[] | null>(null);
 
-  /** Die Karte oben verschiebt die primäre Aktion, siehe unten beim Button. */
-  const showSavedBanner = Boolean(hasSavedGame && !isSavedBannerDismissed && savedMatch);
+  const startScoreValid = isValidStartScore(config.startScore);
 
-  /* ── Der „Ein Tap"-Start von der Weiter-Karte ──
-
-     Nicht sofort beim Mounten: die Profile kommen asynchron (lokaler Cache
-     zuerst, Cloud danach), und `useLineup` leitet die Sitzplätze daraus ab. Ein
-     Start im ersten Render träfe eine Aufstellung aus leeren Namen und
-     scheiterte an genau der Prüfung, die dafür da ist.
-
-     Der Ref sorgt dafür, dass es bei einem Versuch bleibt — und er hält den
-     Handler, damit die Abhängigkeit des Effekts eine Bedingung ist und nicht
-     eine Funktion, die sich bei jedem Render neu bildet. */
+  /* ── Der „Ein Tap"-Start ──
+     Nicht sofort beim Mounten: die Profile kommen asynchron, und `useLineup`
+     leitet die Sitzplätze daraus ab. Ein Start im ersten Render träfe leere
+     Namen. Der Ref sorgt dafür, dass es bei einem Versuch bleibt. */
   const autoStartedRef = useRef(false);
   const startGameRef = useRef<() => Promise<void>>(async () => {});
 
@@ -121,8 +119,13 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
   const handleStartGame = async () => {
     const chosenPlayers = lineup.selectedPlayers.slice(0, config.playerCount);
 
+    if (!isValidStartScore(config.startScore)) {
+      setErrorMsg(`Die Startpunktzahl muss zwischen ${MIN_START_SCORE} und ${MAX_START_SCORE} liegen.`);
+      return;
+    }
+
     if (new Set(chosenPlayers).size !== chosenPlayers.length) {
-      setErrorMsg("Ein Spieler kann nicht mehrfach antreten. Bitte wähle unterschiedliche Spieler!");
+      setErrorMsg('Ein Spieler kann nicht mehrfach antreten. Bitte wähle unterschiedliche Spieler!');
       return;
     }
 
@@ -136,15 +139,11 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
       : chosenPlayers.some(p => profiles[p] && !profiles[p].isBot);
 
     if (!hasHuman) {
-      setErrorMsg("Ein Spiel nur mit Bots ist nicht möglich. Bitte wähle mindestens einen echten Spieler!");
+      setErrorMsg('Ein Spiel nur mit Bots ist nicht möglich. Bitte wähle mindestens einen echten Spieler!');
       return;
     }
 
     // 1. Only block while this profile is actually live on another device.
-    //
-    // Previously any live sync code blocked local play, so simply owning a code
-    // — or importing someone else's — meant you had to go and switch your own
-    // sync off before you could start a match on your own device.
     if (user?.id) {
       const syncInfo = await getActiveUserSyncInfo(user.id);
       const coupledHost = syncInfo?.activeHost || syncInfo?.activeHosts?.[0];
@@ -161,8 +160,7 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
     if (hasLinkedGuests) {
       const check = await validateGuestSyncTokens(chosenPlayers, profiles);
       if (!check.valid) {
-        // A cut link means the guest is gone: drop the profile and free the slot
-        // rather than leaving a dead entry the user has to clear by hand.
+        // A cut link means the guest is gone: drop the profile and free the slot.
         const { profiles: cleaned, removed } = removeLinkedGuestProfiles(profiles, check.revokedGuests);
         if (removed.length > 0 && setProfiles) {
           setProfiles(cleaned);
@@ -175,9 +173,7 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
     }
 
     if (isGuest && setProfiles) {
-      // Merge, never replace: a guest's accumulated stats live in these
-      // profiles, and overwriting them with zeroed records wiped the local
-      // history on every single start.
+      // Merge, never replace: a guest's accumulated stats live in these profiles.
       const nextProfiles: Record<string, Profile> = { ...profiles };
       chosenPlayers.forEach(p => {
         const existing = nextProfiles[p];
@@ -193,7 +189,9 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
       saveProfiles(nextProfiles, null).catch(err => reportPersistenceError(err, 'Gastprofile konnten nicht gespeichert werden'));
     }
 
-    if (hasSavedGame && savedMatch && !isSavedBannerDismissed) {
+    setErrorMsg(null);
+
+    if (hasSavedGame && savedMatch) {
       setShowOverwriteModal(true);
       return;
     }
@@ -229,60 +227,54 @@ export const MatchSetup: React.FC<MatchSetupProps> = ({
     });
   };
 
+  // Dieselben Worte wie auf der orangen Karte des Start-Screens.
+  const pills = configPills(config);
+  const summary = `${pills[0]} · ${config.outMode} · ${pills[2]}`;
+
   return (
-    <div className="screen active-screen" style={{ position: 'relative', overflowX: 'hidden' }}>
-      <div className="hero-glow-bg-setup" />
+    <div className="screen active-screen setup-screen">
+      <h1 className="setup-title">Neues Spiel</h1>
 
-      <div className="app-header">
-        <h1>Neues Spiel</h1>
-        <p className="subtitle">Konfiguriere dein Match</p>
+      <Slider
+        name="matchMode2v2"
+        value={config.is2v2 ? 'team' : 'single'}
+        options={[
+          { value: 'single', label: 'Einzel' },
+          { value: 'team', label: '2v2 Doppel' }
+        ]}
+        onChange={value => dispatch({ type: 'mode', is2v2: value === 'team' })}
+        ariaLabel="Spielmodus"
+      />
+
+      <div className="setup-grid">
+        <div className="setup-column">
+          <GameConfigPanel config={config} dispatch={dispatch} />
+        </div>
+        <div className="setup-column">
+          <PlayerSelection
+            profiles={profiles}
+            isGuest={isGuest}
+            playerCount={config.playerCount}
+            is2v2={config.is2v2}
+            lineup={lineup}
+            errorMsg={errorMsg}
+            onPlayerCountChange={value => dispatch({ type: 'playerCount', value })}
+            onAddCloudGuest={() => setShowGuestSyncModal(true)}
+          />
+        </div>
       </div>
 
-      {/* `savedMatch` steckt zwar schon in showSavedBanner, wird hier aber
-          nochmal geprüft, damit TypeScript den Typ verengen kann. */}
-      {showSavedBanner && savedMatch && (
-        <SavedGameCard
-          match={savedMatch}
-          onResume={() => onResumeGame?.()}
-          onDiscard={discardSavedGame}
-          onDismiss={() => setIsSavedBannerDismissed(true)}
-        />
-      )}
-
-      <div className="match-setup-grid match-setup-grid-sticky-clearance">
-        <PlayerSelection
-          profiles={profiles}
-          isGuest={isGuest}
-          playerCount={config.playerCount}
-          is2v2={config.is2v2}
-          lineup={lineup}
-          errorMsg={errorMsg}
-          onModeChange={is2v2 => dispatch({ type: 'mode', is2v2 })}
-          onPlayerCountChange={value => dispatch({ type: 'playerCount', value })}
-          onAddCloudGuest={() => setShowGuestSyncModal(true)}
-        />
-
-        <GameConfigPanel config={config} dispatch={dispatch} />
-      </div>
-
-      <div className="sticky-action-bar">
-        {/* Dieselben Worte wie auf der Weiter-Karte des Start-Screens, aus
-            derselben Funktion — wer hier etwas umstellt, soll die Zeile sehen,
-            die ihn morgen auf dem Start-Screen wieder begrüßt. */}
-        <span className="setup-summary">
-          Startet:{' '}
-          <strong>{configPills(config).join(' · ')}</strong>
-        </span>
-
-        {/* §1 lässt eine gefüllte Akzentfläche pro Screen zu. Steht die Karte
-            oben, hält sie mit „Spiel fortsetzen" die dringlichere Aktion und
-            bekommt sie — dieser Button tritt dann zurück. */}
+      <div className="setup-start">
         <Button
-          variant={showSavedBanner ? 'secondary' : 'primary'}
+          variant="primary"
           size="large"
+          fullWidth
+          className="setup-start-btn"
           onClick={handleStartGame}
+          disabled={!startScoreValid}
         >
-          <Icons.IconPlayFilled size={20} /> Spiel starten
+          <span>Spiel starten</span>
+          <span className="setup-start-summary">{startScoreValid ? summary : 'Startpunktzahl prüfen'}</span>
         </Button>
       </div>
 

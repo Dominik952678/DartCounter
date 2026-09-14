@@ -59,7 +59,6 @@ const Seats: React.FC = () => {
       is2v2={false}
       lineup={lineup}
       errorMsg={null}
-      onModeChange={vi.fn()}
       onPlayerCountChange={vi.fn()}
       onAddCloudGuest={vi.fn()}
     />

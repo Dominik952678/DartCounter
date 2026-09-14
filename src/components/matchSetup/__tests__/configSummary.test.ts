@@ -3,7 +3,7 @@ import { configPills, distanceLabel, lineupLabel, outModeLabel } from '../config
 import type { MatchSetupConfig } from '../useMatchSetupConfig';
 
 const config = (over: Partial<MatchSetupConfig> = {}): MatchSetupConfig => ({
-  setsToWin: 1, legsToWin: 1, startScore: 501, outMode: 'DO', is2v2: false, playerCount: 2, ...over
+  setsToWin: 1, legsToWin: 1, startScore: 501, customScore: false, outMode: 'DO', is2v2: false, playerCount: 2, ...over
 });
 
 describe('outModeLabel', () => {

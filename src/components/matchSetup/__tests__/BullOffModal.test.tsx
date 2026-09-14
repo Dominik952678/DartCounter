@@ -48,9 +48,9 @@ describe('BullOffModal', () => {
   it('starts the leg with the winner, so their team goes first', async () => {
     const onResolved = renderModal({ contenders: [0, 1] });
 
-    // Anna (Sitz 0, Team 1) trifft daneben, Ben (Sitz 1, Team 2) den Bullseye.
-    fireEvent.click(screen.getByRole('button', { name: /Daneben/i }));
-    fireEvent.click(screen.getByRole('button', { name: /Bullseye/i }));
+    // Anna (Sitz 0, Team 1) trifft außen, Ben (Sitz 1, Team 2) das Bull.
+    fireEvent.click(screen.getByRole('button', { name: 'Außen' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Bull' }));
 
     await waitFor(() => expect(onResolved).toHaveBeenCalledWith(1));
   });
@@ -58,9 +58,8 @@ describe('BullOffModal', () => {
   it('re-throws only between the tied players', async () => {
     renderModal({ contenders: [0, 1] });
 
-    // Exakter Name, sonst trifft der Ausdruck auch „Bullseye".
-    fireEvent.click(screen.getByRole('button', { name: 'Bull' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Bull' }));
+    fireEvent.click(screen.getByRole('button', { name: '25' }));
+    fireEvent.click(screen.getByRole('button', { name: '25' }));
 
     await waitFor(() =>
       expect(screen.getByText(/Stechen zwischen Anna und Ben/i)).toBeInTheDocument()
@@ -69,7 +68,7 @@ describe('BullOffModal', () => {
 
   it('does not resolve while a contender still has to throw', () => {
     const onResolved = renderModal({ contenders: [0, 1] });
-    fireEvent.click(screen.getByRole('button', { name: /Bullseye/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Bull' }));
     expect(onResolved).not.toHaveBeenCalled();
   });
 });

@@ -1,8 +1,7 @@
-import React, { useEffect, useId, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import type { Profile } from '../../types';
-import { useModalA11y } from '../../hooks/useModalA11y';
 import { throwAtTarget } from '../../utils/bot';
-import { Button, Icons } from '../ui';
+import { Button, Icons, Sheet } from '../ui';
 import { botAverage } from '../../utils/botProfiles';
 
 type BullResult = 0 | 25 | 50;
@@ -15,20 +14,15 @@ interface BullOffModalProps {
    * Indizes derer, die tatsächlich werfen. Im Einzel sind das alle; im 2v2
    * wirft pro Team nur einer, nämlich der erste seines Teams — die Sitze 0 und
    * 1, weil `startGame` die Teams über die Sitzparität vergibt.
-   *
-   * Der Gewinner beginnt Leg 1, und weil er in seinem Team vorne sitzt, wirft
-   * anschließend regulär abwechselnd weiter.
    */
   contenders?: number[];
   onResolved: (startingIndex: number) => void;
   onCancel: () => void;
 }
 
-const RESULT_LABEL: Record<BullResult, string> = {
-  50: 'Bullseye',
-  25: 'Bull',
-  0: 'Daneben'
-};
+/** Die drei Ergebnisse, wie der Entwurf sie nennt: Bull (50), 25, Außen. */
+const RESULTS: readonly BullResult[] = [50, 25, 0];
+const RESULT_LABEL: Record<BullResult, string> = { 50: 'Bull', 25: '25', 0: 'Außen' };
 
 const categorize = (base: number, mult: number): BullResult => {
   if (base === 25 && mult === 2) return 50;
@@ -37,12 +31,11 @@ const categorize = (base: number, mult: number): BullResult => {
 };
 
 /**
- * Bull-off before leg 1: every player throws once at the bull, highest
- * category starts. Ties re-throw among only the tied players ("Stechen").
+ * Ausbullen vor Leg 1 (Entwurf B4): jeder wirft einmal aufs Bull, das beste
+ * Ergebnis beginnt. Bei Gleichstand wird nur unter den Gleichen neu geworfen.
  *
- * Bots resolve automatically via the same throw simulation used everywhere
- * else (`throwAtTarget`), so a category from a bot and a category typed in by
- * a human are directly comparable.
+ * Bots werfen selbst, über dieselbe Wurfsimulation wie überall sonst — ihr
+ * Ergebnis ist also mit einem eingetippten direkt vergleichbar.
  */
 export const BullOffModal: React.FC<BullOffModalProps> = ({
   players,
@@ -51,13 +44,10 @@ export const BullOffModal: React.FC<BullOffModalProps> = ({
   onResolved,
   onCancel
 }) => {
-  // Ohne Angabe wirft jeder — das ist der Einzelfall.
   const throwers = contenders ?? players.map((_, i) => i);
   const [results, setResults] = useState<(BullResult | null)[]>(() => players.map(() => null));
   const [pendingIndices, setPendingIndices] = useState<number[]>(() => throwers);
   const [tieMessage, setTieMessage] = useState<string | null>(null);
-  const titleId = useId();
-  const dialogRef = useModalA11y<HTMLDivElement>();
 
   const isTeamBullOff = throwers.length < players.length;
   const currentIndex = pendingIndices.find(i => results[i] === null);
@@ -105,68 +95,52 @@ export const BullOffModal: React.FC<BullOffModalProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [results, pendingIndices]);
 
-  return (
-    <div className="modal-overlay">
-      <div
-        ref={dialogRef}
-        className="modal-content"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        tabIndex={-1}
-        style={{ maxWidth: '420px', padding: '24px 20px' }}
-      >
-        <h3 id={titleId} style={{ textAlign: 'center', marginBottom: '6px' }}>Ausbullen</h3>
-        <p style={{ textAlign: 'center', color: 'var(--text-dim)', fontSize: '0.9em', marginBottom: '18px' }}>
-          {tieMessage ?? (isTeamBullOff
-            ? 'Ein Wurf pro Team — das Team des Siegers beginnt Leg 1'
-            : 'Wer den Bull am nächsten trifft, beginnt Leg 1')}
-        </p>
+  const note = tieMessage ?? (isTeamBullOff ? 'Ein Wurf pro Team' : null);
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
+  return (
+    <Sheet title="Ausbullen" onClose={onCancel}>
+      <div className="bulloff">
+        {note && <p className="bulloff-note">{note}</p>}
+
+        <ul className="bulloff-list">
           {throwers.map(i => {
             const name = players[i];
             const isPending = pendingIndices.includes(i);
             const result = results[i];
             const isActive = i === currentIndex;
             return (
-              <div
+              <li
                 key={i}
-                className={`bulloff-row ${isActive ? 'is-active' : ''}`}
-                style={{ opacity: isPending ? 1 : 0.5 }}
+                className={['bulloff-row', isActive && 'is-active', !isPending && 'is-out'].filter(Boolean).join(' ')}
               >
                 <span className="bulloff-name">
-                  {profiles[name]?.isBot && <Icons.IconBot size={15} className="icon-inline" />}{name}
+                  {profiles[name]?.isBot && <Icons.IconBot size={13} className="icon-inline" />}{name}
                 </span>
                 <span className="bulloff-state">
-                  {result !== null ? RESULT_LABEL[result] : (isActive && isCurrentBot ? 'wirft…' : isActive ? 'ist dran' : '—')}
+                  {result !== null ? RESULT_LABEL[result] : isActive ? (isCurrentBot ? 'wirft …' : 'ist dran') : '—'}
                 </span>
-              </div>
+              </li>
             );
           })}
-        </div>
+        </ul>
 
         {currentIndex !== undefined && !isCurrentBot && (
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-            {/* Drei gleichrangige Ergebnisse, keine primäre Aktion — §1 lässt
-                ohnehin nur eine gefüllte Akzentfläche pro Screen zu, und der
-                Dialog hat keine. */}
-            <Button variant="secondary" style={{ flex: 1 }} onClick={() => submitResult(currentIndex, 50)}>
-              <Icons.IconBull size={17} /> Bullseye
-            </Button>
-            <Button variant="secondary" style={{ flex: 1 }} onClick={() => submitResult(currentIndex, 25)}>
-              <Icons.IconTarget size={17} /> Bull
-            </Button>
-            <Button variant="secondary" style={{ flex: 1 }} onClick={() => submitResult(currentIndex, 0)}>
-              <Icons.IconClose size={17} /> Daneben
-            </Button>
+          <div className="bulloff-choices" role="group" aria-label={`Wurf von ${currentPlayer}`}>
+            {RESULTS.map(value => (
+              <button
+                key={value}
+                type="button"
+                className="bulloff-choice"
+                onClick={() => submitResult(currentIndex, value)}
+              >
+                {RESULT_LABEL[value]}
+              </button>
+            ))}
           </div>
         )}
 
-        <Button variant="secondary" onClick={onCancel}>
-          Abbrechen
-        </Button>
+        <Button variant="ghost" onClick={onCancel}>Abbrechen</Button>
       </div>
-    </div>
+    </Sheet>
   );
 };

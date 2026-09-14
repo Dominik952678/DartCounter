@@ -18,32 +18,21 @@ describe('MatchSetup Component', () => {
     localStorage.clear();
   });
 
-  it('renders distance section with sets and legs stepper controls', () => {
+  it('shows sets and legs as steppers, both starting at 1', () => {
     render(<MatchSetup {...defaultProps} />);
 
-    expect(screen.getByText('Distanz')).toBeInTheDocument();
-    expect(screen.getByText('Sets')).toBeInTheDocument();
-    expect(screen.getByText('Gewinnsätze')).toBeInTheDocument();
-    expect(screen.getByText('Legs')).toBeInTheDocument();
-    expect(screen.getByText('pro Satz')).toBeInTheDocument();
+    expect(screen.getByLabelText('Sätze')).toHaveValue(1);
+    expect(screen.getByLabelText('Legs')).toHaveValue(1);
   });
 
-  it('increments and decrements sets and legs via stepper buttons with default 1', () => {
+  it('counts legs up and down with the stepper buttons', () => {
     render(<MatchSetup {...defaultProps} />);
 
-    const increaseLegsBtn = screen.getByRole('button', { name: /Legs erhöhen/i });
-    const decreaseLegsBtn = screen.getByRole('button', { name: /Legs verringern/i });
+    fireEvent.click(screen.getByRole('button', { name: 'Legs erhöhen' }));
+    expect(screen.getByLabelText('Legs')).toHaveValue(2);
 
-    // Starts at default 1 for both sets and legs
-    expect(screen.getAllByText('Bis 1')).toHaveLength(2);
-
-    // Click to increase legs from default (1) to 2
-    fireEvent.click(increaseLegsBtn);
-    expect(screen.getByText('Bis 2')).toBeInTheDocument();
-
-    // Click to decrease back to 1
-    fireEvent.click(decreaseLegsBtn);
-    expect(screen.getAllByText('Bis 1')).toHaveLength(2);
+    fireEvent.click(screen.getByRole('button', { name: 'Legs verringern' }));
+    expect(screen.getByLabelText('Legs')).toHaveValue(1);
   });
 
   it('loads previously saved sets and legs from localStorage', () => {
@@ -52,8 +41,8 @@ describe('MatchSetup Component', () => {
 
     render(<MatchSetup {...defaultProps} />);
 
-    expect(screen.getByText('Bis 3')).toBeInTheDocument();
-    expect(screen.getByText('Bis 5')).toBeInTheDocument();
+    expect(screen.getByLabelText('Sätze')).toHaveValue(3);
+    expect(screen.getByLabelText('Legs')).toHaveValue(5);
   });
 
   it('allows changing start score (301, 501, 701, 1001)', () => {
@@ -64,26 +53,43 @@ describe('MatchSetup Component', () => {
     expect(score301.closest('label')).toHaveClass('active');
   });
 
-  it('allows changing out mode (Single, Double, Master)', () => {
+  /** Entwurf B3: eine eigene Startpunktzahl, und ein Wert, mit dem kein Match starten kann. */
+  it('takes a custom start score and holds the start while it is impossible', () => {
     render(<MatchSetup {...defaultProps} />);
 
-    const doubleOut = screen.getByText('Double');
+    fireEvent.click(screen.getByText('Custom'));
+    const field = screen.getByLabelText('Eigene Punktzahl');
+
+    fireEvent.change(field, { target: { value: '1' } });
+    expect(screen.getByText('Die Startpunktzahl muss zwischen 2 und 9999 liegen.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Spiel starten/ })).toBeDisabled();
+
+    fireEvent.change(field, { target: { value: '170' } });
+    expect(screen.queryByText(/muss zwischen/)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Spiel starten/ })).toBeEnabled();
+  });
+
+  it('allows changing the finish (Double, Single, Master Out)', () => {
+    render(<MatchSetup {...defaultProps} />);
+
+    const doubleOut = screen.getByText('Double Out');
     expect(doubleOut.closest('label')).toHaveClass('active');
 
-    const masterOut = screen.getByText('Master');
+    const masterOut = screen.getByText('Master Out');
     fireEvent.click(masterOut);
     expect(masterOut.closest('label')).toHaveClass('active');
   });
 
-  it('allows toggling between Einzel and 2v2 Doppel mode', () => {
+  /** Keine Regel-Erklärung mehr — der Freeze steht erst im Match als Zustand da. */
+  it('switches to 2v2 Doppel and names the teams on the seats', () => {
     render(<MatchSetup {...defaultProps} />);
 
-    const doppelToggle = screen.getByText(/2v2 Doppel/i);
+    const doppelToggle = screen.getByText('2v2 Doppel');
     fireEvent.click(doppelToggle);
 
     expect(doppelToggle.closest('label')).toHaveClass('active');
-    expect(screen.getByText(/Freeze-Regel/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/T1/i).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText(/T2/i).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Team 1')).toHaveLength(2);
+    expect(screen.getAllByText('Team 2')).toHaveLength(2);
+    expect(screen.queryByText(/Freeze-Regel/i)).not.toBeInTheDocument();
   });
 });

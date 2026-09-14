@@ -79,6 +79,7 @@ export function Slider<T extends string | number>({
       className={['slider', variant !== 'pill' && `slider-${variant}`, className].filter(Boolean).join(' ')}
       role="radiogroup"
       aria-label={ariaLabel}
+      data-count={options.length}
       style={{
         '--slider-count': options.length,
         // Passt der Wert auf keine Option — ein Startscore aus einem alten

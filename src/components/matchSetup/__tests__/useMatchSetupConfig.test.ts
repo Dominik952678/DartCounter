@@ -29,14 +29,38 @@ describe('useMatchSetupConfig', () => {
     expect(renderHook(() => useMatchSetupConfig()).result.current[0].startScore).toBe(1001);
   });
 
-  it('ignores a stored value the screen does not offer', () => {
+  /** Seit v2.0.0 gibt es eine eigene Startpunktzahl zwischen 2 und 9999. */
+  it('restores a score off the tiles as a custom score', () => {
     write('x01StartScore', 999);
+
+    const [config] = renderHook(() => useMatchSetupConfig()).result.current;
+
+    expect(config.startScore).toBe(999);
+    expect(config.customScore).toBe(true);
+  });
+
+  it('ignores a stored value no match can start with', () => {
+    write('x01StartScore', 1);
     write('x01OutMode', 'XO');
 
     const [config] = renderHook(() => useMatchSetupConfig()).result.current;
 
     expect(config.startScore).toBe(501);
+    expect(config.customScore).toBe(false);
     expect(config.outMode).toBe('DO');
+  });
+
+  it('keeps an impossible custom score out of storage and away from the engine', () => {
+    write('x01StartScore', 701);
+    const { result } = renderHook(() => useMatchSetupConfig());
+
+    act(() => result.current[1]({ type: 'customScore', value: 1 }));
+    expect(localStorage.getItem(StorageKey.x01StartScore)).toBe('701');
+    expect(toGameConfig(result.current[0]).startScore).toBe(501);
+
+    act(() => result.current[1]({ type: 'customScore', value: 170 }));
+    expect(localStorage.getItem(StorageKey.x01StartScore)).toBe('170');
+    expect(toGameConfig(result.current[0]).startScore).toBe(170);
   });
 
   it('writes changes back for the next match', () => {

@@ -1,50 +1,55 @@
 import React, { useState, useEffect, useRef } from 'react';
-import type { Profile } from '../types';
+import type { MatchHistory, Profile } from '../types';
 import { useAuthStore } from '../store/useAuthStore';
 import { getActiveUserSyncInfo } from '../db';
 import { readInt, readOneOf, write } from '../utils/storage';
-import { Button, Card, CardHeader, Slider, Icons } from './ui';
-import type { IconProps } from './ui';
-import { playerColorByName } from '../utils/playerColors';
+import { Button, Icons, Sheet, Slider, Toggle } from './ui';
+import { playerColorBySeat } from '../utils/playerColors';
 import { DEFAULT_BOT_AVERAGE, botRosterLabel } from '../utils/botProfiles';
 
 export type MiniGameMode = 'checkout' | 'powerscoring' | 'splitscore';
 
 const MINI_GAME_MODES: readonly MiniGameMode[] = ['checkout', 'powerscoring', 'splitscore'];
 
-/**
- * Die drei Modi. `title` ist kurz, weil er auf einem Slider steht — dort ist
- * neben zwei anderen Namen kein Platz für „Split Score (Halve-It)". Die
- * Langfassung steht in `desc` unter dem Slider, wo sie nur für den gewählten
- * Modus erscheint und deshalb ausführlich sein darf.
- */
-const MODE_CHOICES: readonly {
+interface ModeCard {
   mode: MiniGameMode;
-  icon: React.FC<IconProps>;
+  kicker: string;
   title: string;
   desc: string;
-  tone: 'primary' | 'info' | 'pro';
-}[] = [
+  /** Wie das Ergebnis dieses Modus in der Match-Historie heißt. */
+  gameType: MatchHistory['gameType'];
+  best: (profile?: Profile) => number | undefined;
+  bestLabel: string;
+}
+
+/** Die drei Modi als Karten (Entwurf E1). */
+const MODE_CARDS: readonly ModeCard[] = [
   {
     mode: 'checkout',
-    icon: Icons.IconTarget,
-    title: 'Checkout',
-    desc: 'Zufällige Checkouts unter Druck treffen — jeder Spieler bekommt dieselben Ziele.',
-    tone: 'primary'
+    kicker: 'Finishen',
+    title: 'Checkout-Training',
+    desc: 'Zufällige Finishes unter Druck — alle spielen dieselben Ziele.',
+    gameType: 'checkoutTraining',
+    best: p => p?.checkoutTraining?.bestCheckout,
+    bestLabel: 'bestes Finish'
   },
   {
     mode: 'powerscoring',
-    icon: Icons.IconBars,
+    kicker: 'Scoring',
     title: 'Power Scoring',
-    desc: 'Maximale Punkte in festen Runden sammeln.',
-    tone: 'info'
+    desc: 'So viele Punkte wie möglich in festen Runden.',
+    gameType: 'powerScoring',
+    best: p => p?.powerScoring?.bestScore,
+    bestLabel: 'Bestwert'
   },
   {
     mode: 'splitscore',
-    icon: Icons.IconSplit,
+    kicker: 'Präzision',
     title: 'Split Score',
-    desc: 'Vorgegebene Segmente treffen oder Punkte halbieren.',
-    tone: 'pro'
+    desc: 'Ziel treffen — sonst wird halbiert.',
+    gameType: 'splitScore',
+    best: p => p?.splitScore?.bestScore,
+    bestLabel: 'Bestwert'
   }
 ];
 
@@ -52,13 +57,17 @@ interface TrainingHubProps {
   profiles: Record<string, Profile>;
   setProfiles?: (profiles: Record<string, Profile>) => void;
   onStartMiniGame: (mode: MiniGameMode, players: string[], settings: Record<string, unknown>) => void;
+  /** Öffnet die Einstellungen dieses Modus gleich — für Links mit `?mode=`. */
   initialMode?: MiniGameMode;
+  /** Für die Karte „Zuletzt". */
+  matches?: MatchHistory[];
 }
 
-// `initialMode` has no default on purpose: the /training route passes `undefined`
-// unless the URL names a mode, and a default of 'checkout' here meant the
-// remembered mode below was never read — the hub always opened on checkout.
-export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles, onStartMiniGame, initialMode }) => {
+/**
+ * Training (Entwurf E1–E2): die drei Modi als Karten mit Bestwert, darunter
+ * das letzte Training. Ein Tap öffnet die Einstellungen als Blatt.
+ */
+export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles, onStartMiniGame, initialMode, matches }) => {
   const { user } = useAuthStore();
   const isGuest = !user;
   const profileNames = Object.keys(profiles);
@@ -67,46 +76,32 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
     if (initialMode && MINI_GAME_MODES.includes(initialMode)) return initialMode;
     return readOneOf('trainingMode', MINI_GAME_MODES, 'checkout');
   });
+  const [settingsOpen, setSettingsOpen] = useState(() => Boolean(initialMode && MINI_GAME_MODES.includes(initialMode)));
+  const activeMode = MODE_CARDS.find(m => m.mode === selectedMode) ?? MODE_CARDS[0];
 
-  /** Der gewählte Modus als Datensatz — für Beschreibung, Icon und Ton darunter. */
-  const activeMode = MODE_CHOICES.find(m => m.mode === selectedMode) ?? MODE_CHOICES[0];
-
-  const [playerCount, setPlayerCount] = useState<number>(
-    () => readInt('trainingPlayerCount', 1, { min: 1, max: 4 })
-  );
-
-  const [powerScoringRounds, setPowerScoringRounds] = useState<number>(
-    () => readInt('powerScoringRounds', 10, { min: 1 })
-  );
-
-  const [checkoutRounds, setCheckoutRounds] = useState<number>(
-    () => readInt('checkoutRounds', 1, { min: 1 })
-  );
-
-  const [checkoutTargets, setCheckoutTargets] = useState<number>(
-    () => readInt('checkoutTargets', 10, { min: 1 })
-  );
+  const [playerCount, setPlayerCount] = useState<number>(() => readInt('trainingPlayerCount', 1, { min: 1, max: 4 }));
+  const [powerScoringRounds, setPowerScoringRounds] = useState<number>(() => readInt('powerScoringRounds', 10, { min: 1 }));
+  const [checkoutRounds, setCheckoutRounds] = useState<number>(() => readInt('checkoutRounds', 1, { min: 1 }));
+  const [checkoutTargets, setCheckoutTargets] = useState<number>(() => readInt('checkoutTargets', 10, { min: 1 }));
 
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>(() => {
     if (isGuest) return ['Gast 1', 'Gast 2', 'Gast 3', 'Gast 4'];
     const pNames = Object.keys(profiles);
-    if (pNames.length > 0) {
-      const initial: string[] = [];
-      const humans = pNames.filter(n => !profiles[n]?.isBot);
-      const bots = pNames.filter(n => profiles[n]?.isBot);
-      for (let i = 0; i < 4; i++) {
-        if (i === 0 && humans.length > 0) {
-          initial.push(humans[0]);
-        } else {
-          const nextHuman = humans.find(h => !initial.includes(h));
-          const nextBot = bots.find(b => !initial.includes(b));
-          if (nextHuman) initial.push(nextHuman);
-          else if (nextBot) initial.push(nextBot);
-        }
+    if (pNames.length === 0) return [];
+    const initial: string[] = [];
+    const humans = pNames.filter(n => !profiles[n]?.isBot);
+    const bots = pNames.filter(n => profiles[n]?.isBot);
+    for (let i = 0; i < 4; i++) {
+      if (i === 0 && humans.length > 0) {
+        initial.push(humans[0]);
+      } else {
+        const nextHuman = humans.find(h => !initial.includes(h));
+        const nextBot = bots.find(b => !initial.includes(b));
+        if (nextHuman) initial.push(nextHuman);
+        else if (nextBot) initial.push(nextBot);
       }
-      return initial;
     }
-    return [];
+    return initial;
   });
   const [guestBots, setGuestBots] = useState<Record<string, boolean>>({});
   const [randomOrderOnStart, setRandomOrderOnStart] = useState(false);
@@ -117,35 +112,31 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
     if (errorMsg) errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, [errorMsg]);
 
-  useEffect(() => {
-    write('trainingMode', selectedMode);
-  }, [selectedMode]);
+  useEffect(() => { write('trainingMode', selectedMode); }, [selectedMode]);
+  useEffect(() => { write('trainingPlayerCount', playerCount); }, [playerCount]);
+  useEffect(() => { write('powerScoringRounds', powerScoringRounds); }, [powerScoringRounds]);
+  useEffect(() => { write('checkoutRounds', checkoutRounds); }, [checkoutRounds]);
+  useEffect(() => { write('checkoutTargets', checkoutTargets); }, [checkoutTargets]);
 
-  useEffect(() => {
-    write('trainingPlayerCount', playerCount);
-  }, [playerCount]);
+  // Die Bestwerte gehören dem eigenen Profil, sonst dem ersten Menschen auf dem Gerät.
+  const ownName = user?.user_metadata?.username && profiles[user.user_metadata.username]
+    ? user.user_metadata.username
+    : profileNames.find(n => !profiles[n]?.isBot);
+  const ownProfile = ownName ? profiles[ownName] : undefined;
 
-  useEffect(() => {
-    write('powerScoringRounds', powerScoringRounds);
-  }, [powerScoringRounds]);
-
-  useEffect(() => {
-    write('checkoutRounds', checkoutRounds);
-  }, [checkoutRounds]);
-
-  useEffect(() => {
-    write('checkoutTargets', checkoutTargets);
-  }, [checkoutTargets]);
+  const lastTraining = matches?.find(m => m.gameType && m.gameType !== 'standard');
+  const lastCard = lastTraining ? MODE_CARDS.find(m => m.gameType === lastTraining.gameType) : undefined;
+  const lastScore = lastTraining?.players.find(p => p.name === lastTraining.winner)?.score;
 
   const handlePlayerChange = (index: number, name: string) => {
-    const newSelected = [...selectedPlayers];
-    // If the selected name is already present in another active slot, swap them!
-    const existingIndex = newSelected.slice(0, playerCount).indexOf(name);
+    const next = [...selectedPlayers];
+    // Picking someone who already sits in another active seat swaps the two.
+    const existingIndex = next.slice(0, playerCount).indexOf(name);
     if (existingIndex !== -1 && existingIndex !== index) {
-      newSelected[existingIndex] = newSelected[index];
+      next[existingIndex] = next[index];
     }
-    newSelected[index] = name;
-    setSelectedPlayers(newSelected);
+    next[index] = name;
+    setSelectedPlayers(next);
   };
 
   const handleGuestBotToggle = (index: number, isBot: boolean) => {
@@ -153,11 +144,19 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
     setGuestBots(prev => ({ ...prev, [name]: isBot }));
   };
 
+  const movePlayer = (index: number, direction: 'up' | 'down') => {
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= playerCount) return;
+    const next = [...selectedPlayers];
+    [next[index], next[targetIndex]] = [next[targetIndex], next[index]];
+    setSelectedPlayers(next);
+  };
+
   const handleStart = async () => {
     let chosenPlayers = selectedPlayers.slice(0, playerCount);
 
     if (new Set(chosenPlayers).size !== chosenPlayers.length) {
-      setErrorMsg("Ein Spieler kann nicht mehrfach antreten. Bitte wähle unterschiedliche Spieler!");
+      setErrorMsg('Ein Spieler kann nicht mehrfach antreten. Bitte wähle unterschiedliche Spieler!');
       return;
     }
 
@@ -167,17 +166,15 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
     }
 
     const hasHuman = isGuest
-       ? chosenPlayers.some(p => !guestBots[p])
-       : chosenPlayers.some(p => profiles[p] && !profiles[p].isBot);
-       
+      ? chosenPlayers.some(p => !guestBots[p])
+      : chosenPlayers.some(p => profiles[p] && !profiles[p].isBot);
+
     if (!hasHuman) {
-      setErrorMsg("Ein Spiel nur mit Bots ist nicht möglich. Bitte wähle mindestens einen echten Spieler!");
+      setErrorMsg('Ein Spiel nur mit Bots ist nicht möglich. Bitte wähle mindestens einen echten Spieler!');
       return;
     }
 
     // Nur blockieren, wenn dieses Profil GERADE auf einem fremden Gerät läuft.
-    // Merely owning a sync code is not a conflict — see MatchSetup for the same
-    // rule; the old check made you switch your own sync off to play locally.
     if (user?.id) {
       const syncInfo = await getActiveUserSyncInfo(user.id);
       const coupledHost = syncInfo?.activeHost || syncInfo?.activeHosts?.[0];
@@ -190,11 +187,7 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
     }
 
     if (isGuest && setProfiles) {
-      // Merge, never replace. This used to hand over a map holding only the
-      // players of this session with zeroed records, so starting a training
-      // session dropped every other guest profile and reset the stats of the
-      // ones taking part — which the end-of-session booking then persisted.
-      // The match screen had the same bug and was fixed; this copy was missed.
+      // Merge, never replace: the other guest profiles and their statistics stay.
       const nextProfiles: Record<string, Profile> = { ...profiles };
       chosenPlayers.forEach(p => {
         const existing = nextProfiles[p];
@@ -220,89 +213,86 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
 
     onStartMiniGame(selectedMode, chosenPlayers, {
       rounds: powerScoringRounds,
-      checkoutRounds: checkoutRounds,
-      checkoutTargets: checkoutTargets
+      checkoutRounds,
+      checkoutTargets
     });
   };
 
-  const movePlayer = (index: number, direction: 'up' | 'down') => {
-    const targetIndex = direction === 'up' ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= playerCount) return;
-    const newSelected = [...selectedPlayers];
-    const temp = newSelected[index];
-    newSelected[index] = newSelected[targetIndex];
-    newSelected[targetIndex] = temp;
-    setSelectedPlayers(newSelected);
-  };
+  const summary = selectedMode === 'checkout'
+    ? `${checkoutTargets} Ziele · ${checkoutRounds} ${checkoutRounds === 1 ? 'Runde' : 'Runden'}`
+    : selectedMode === 'powerscoring'
+      ? `${powerScoringRounds} Runden`
+      : `${playerCount} Spieler`;
 
   return (
-    <div className="training-hub screen active-screen" style={{ position: 'relative', overflowX: 'hidden' }}>
+    <div className="screen active-screen training-screen">
+      <h1 className="setup-title">Training</h1>
+      <p className="training-sub">Drei Modi · mit Bots und bis zu vier Spielern</p>
 
-      <div className="hero-glow-bg-training" />
-
-      <div className="app-header" style={{ marginBottom: '20px' }}>
-        <h2>Training &amp; Mini-Games</h2>
-        <p className="subtitle">Verbessere deine Fähigkeiten und trainiere gezielt</p>
+      <div className="training-modes">
+        {MODE_CARDS.map(card => {
+          const best = card.best(ownProfile);
+          return (
+            <button
+              key={card.mode}
+              type="button"
+              className="training-mode-card"
+              onClick={() => {
+                setSelectedMode(card.mode);
+                setErrorMsg(null);
+                setSettingsOpen(true);
+              }}
+            >
+              <span className="training-mode-text">
+                <span className="label-caps">{card.kicker}</span>
+                <span className="training-mode-title">{card.title}</span>
+                <span className="training-mode-desc">{card.desc}</span>
+              </span>
+              <span className="training-mode-best">
+                <span className="num">{best ? best : '–'}</span>
+                <span className="training-mode-best-label">{card.bestLabel}</span>
+              </span>
+            </button>
+          );
+        })}
       </div>
 
-      <div className="training-hub-grid">
-        {/* Modus-Wahl
-            Vorher drei gestapelte Karten mit Icon, Titel und Beschreibung — eine
-            Liste, die die halbe Spalte füllte, um eine von drei Möglichkeiten zu
-            treffen. Jetzt ein Slider mit den drei Namen und darunter die
-            Beschreibung des gewählten Modus. Das ist derselbe Inhalt in einem
-            Viertel der Fläche; der Rest gehört den Einstellungen. */}
-        <Card>
-          <CardHeader heading={"Modus wählen"} />
-          <Slider
-            name="trainingMode"
-            value={selectedMode}
-            options={MODE_CHOICES.map(({ mode, title }) => ({ value: mode, label: title }))}
-            onChange={setSelectedMode}
-            ariaLabel="Trainingsmodus"
-          />
-          <p className="training-mode-hint">
-            <span className={`training-mode-icon tone-${activeMode.tone}`} aria-hidden="true">
-              <activeMode.icon size={20} />
+      {lastTraining && lastCard && (
+        <div className="start-last">
+          <div>
+            <span className="label-caps">Zuletzt</span>
+            <span className="start-last-title">
+              {lastScore !== undefined ? `${lastCard.title} · ${lastScore}` : lastCard.title}
             </span>
-            <span>{activeMode.desc}</span>
-          </p>
-        </Card>
+          </div>
+          <span className="start-last-meta">{lastTraining.date}</span>
+        </div>
+      )}
 
-        {/* Settings Column */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <Card>
-            <CardHeader heading={"Spieler"} />
-            <Slider
-              name="playerCount"
-              value={playerCount}
-              options={[1, 2, 3, 4].map(count => ({
-                value: count,
-                label: count,
-                ariaLabel: `${count} Spieler`
-              }))}
-              onChange={setPlayerCount}
-              ariaLabel="Anzahl Spieler"
-            />
+      {settingsOpen && (
+        <Sheet title={activeMode.title} onClose={() => setSettingsOpen(false)}>
+          <div className="training-settings">
+            <section className="setup-section">
+              <h2 className="setup-section-title">Spieler</h2>
+              <Slider
+                name="playerCount"
+                variant="tiles"
+                value={playerCount}
+                options={[1, 2, 3, 4].map(count => ({ value: count, label: count, ariaLabel: `${count} Spieler` }))}
+                onChange={setPlayerCount}
+                ariaLabel="Anzahl Spieler"
+              />
+            </section>
 
-            <div className="player-selects" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {Array.from({ length: playerCount }).map((_, i) => {
+            <div className="seat-list">
+              {Array.from({ length: playerCount }, (_, i) => {
                 const playerName = selectedPlayers[i] || '';
                 const isBot = isGuest ? guestBots[playerName] : profiles[playerName]?.isBot;
-
                 return (
-                  <div 
-                    key={i} 
-                    className="player-select-wrapper" 
-                    style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: '12px',
-                      background: 'var(--surface)',
-                      padding: '8px 12px',
-                      borderRadius: 'var(--radius)',
-                      border: '1px solid var(--card-border)'
-                    }}
+                  <div
+                    key={i}
+                    className="seat-row"
+                    style={{ '--player-color': playerColorBySeat(i) } as React.CSSProperties}
                   >
                     <div className="seat-order">
                       <button
@@ -311,7 +301,6 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
                         onClick={() => movePlayer(i, 'up')}
                         disabled={i === 0}
                         aria-label="Spieler nach oben"
-                        title="Nach oben"
                       >
                         <Icons.IconChevronUp size={15} />
                       </button>
@@ -321,62 +310,45 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
                         onClick={() => movePlayer(i, 'down')}
                         disabled={i >= playerCount - 1}
                         aria-label="Spieler nach unten"
-                        title="Nach unten"
                       >
                         <Icons.IconChevronDown size={15} />
                       </button>
                     </div>
-
-                    <div className="avatar-circle" style={{ 
-                      width: '32px', 
-                      height: '32px', 
-                      borderRadius: '50%', 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center', 
-                      color: 'white', 
-                      fontWeight: 'var(--weight-medium)', 
-                      fontSize: '14px',
-                      backgroundColor: playerColorByName(playerName || `Spieler ${i+1}`) 
-                    }}>
-                      {isBot ? <Icons.IconBot size={17} /> : (playerName.charAt(0).toUpperCase() || '?')}
-                    </div>
-
-                    {isGuest ? (
-                      <div style={{ flex: 1, display: 'flex', gap: '8px', alignItems: 'center' }}>
-                        <input 
-                          type="text" 
-                          value={playerName} 
-                          onChange={e => handlePlayerChange(i, e.target.value)} 
-                          placeholder={`Spieler ${i + 1}`} 
-                          style={{ flex: 1, padding: '12px', border: 'none', background: 'transparent', color: 'var(--text)', fontSize: '16px' }} 
+                    <span className="seat-avatar" aria-hidden="true">
+                      {isBot ? <Icons.IconBot size={17} /> : playerName.charAt(0).toUpperCase() || '?'}
+                    </span>
+                    <div className="seat-main">
+                      {isGuest ? (
+                        <input
+                          type="text"
+                          className="seat-input"
+                          value={playerName}
+                          onChange={e => handlePlayerChange(i, e.target.value)}
+                          placeholder={`Spieler ${i + 1}`}
+                          aria-label={`Name für Platz ${i + 1}`}
                         />
-                        <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85em', color: 'var(--text-dim)', cursor: 'pointer', minWidth: '48px', minHeight: '48px', justifyContent: 'center' }}>
-                          <input 
-                            type="checkbox" 
-                            checked={guestBots[playerName] || false} 
-                            onChange={e => handleGuestBotToggle(i, e.target.checked)} 
-                            style={{ transform: 'scale(1.2)' }}
-                          />
-                          Bot
-                        </label>
-                      </div>
-                    ) : (
-                      <select 
-                        value={playerName}
-                        onChange={(e) => handlePlayerChange(i, e.target.value)}
-                        style={{ flex: 1, padding: '12px', border: 'none', background: 'transparent', color: 'var(--text)', fontSize: '16px', outline: 'none' }}
-                      >
-                        {profileNames.map(name => (
-                          <option 
-                            key={name} 
-                            value={name}
-                            style={{ color: '#000', background: '#fff' }}
-                          >
-                            {botRosterLabel(name, profiles[name])}
-                          </option>
-                        ))}
-                      </select>
+                      ) : (
+                        <select
+                          className="seat-input"
+                          value={playerName}
+                          onChange={e => handlePlayerChange(i, e.target.value)}
+                          aria-label={`Spieler für Platz ${i + 1}`}
+                        >
+                          {profileNames.map(name => (
+                            <option key={name} value={name}>{botRosterLabel(name, profiles[name])}</option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+                    {isGuest && (
+                      <label className="seat-bot">
+                        <input
+                          type="checkbox"
+                          checked={guestBots[playerName] || false}
+                          onChange={e => handleGuestBotToggle(i, e.target.checked)}
+                        />
+                        Bot
+                      </label>
                     )}
                   </div>
                 );
@@ -384,104 +356,69 @@ export const TrainingHub: React.FC<TrainingHubProps> = ({ profiles, setProfiles,
             </div>
 
             {errorMsg && (
-              <div
-                ref={errorRef}
-                role="alert"
-                style={{
-                  background: 'var(--red)',
-                  color: 'white',
-                  padding: '12px',
-                  borderRadius: 'var(--radius)',
-                  marginTop: '15px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  fontWeight: 'var(--weight-medium)'
-                }}
-              >
+              <div ref={errorRef} role="alert" className="setup-error">
                 <Icons.IconAlert size={18} />
                 <span>{errorMsg}</span>
               </div>
             )}
 
             {playerCount > 1 && (
-              <div style={{ marginTop: '15px' }}>
-                <label className="option-toggle">
-                  <input
-                    type="checkbox"
-                    checked={randomOrderOnStart}
-                    onChange={(e) => setRandomOrderOnStart(e.target.checked)}
-                  />
-                  <span className="option-toggle-title">
-                    <Icons.IconShuffle size={16} /> Zufällige Reihenfolge beim Start auslosen
-                  </span>
-                </label>
-              </div>
+              <Toggle
+                icon={<Icons.IconShuffle size={18} />}
+                label="Zufällige Reihenfolge"
+                checked={randomOrderOnStart}
+                onChange={setRandomOrderOnStart}
+              />
             )}
-          </Card>
 
-          {selectedMode === 'powerscoring' && (
-            <Card>
-              <CardHeader heading={"Rundenlimit"} />
-              <Slider
-                name="powerScoringRounds"
-                value={powerScoringRounds}
-                options={[5, 10, 15, 20].map(r => ({
-                  value: r,
-                  label: r,
-                  ariaLabel: `${r} Runden`
-                }))}
-                onChange={setPowerScoringRounds}
-                ariaLabel="Rundenlimit"
-              />
-            </Card>
-          )}
+            {selectedMode === 'powerscoring' && (
+              <section className="setup-section">
+                <h2 className="setup-section-title">Runden</h2>
+                <Slider
+                  name="powerScoringRounds"
+                  variant="tiles"
+                  value={powerScoringRounds}
+                  options={[5, 10, 15, 20].map(r => ({ value: r, label: r, ariaLabel: `${r} Runden` }))}
+                  onChange={setPowerScoringRounds}
+                  ariaLabel="Runden"
+                />
+              </section>
+            )}
 
-          {selectedMode === 'checkout' && (
-            <>
-            <Card>
-              <CardHeader heading={"Anzahl Targets"} />
-              <Slider
-                name="checkoutTargets"
-                value={checkoutTargets}
-                options={[5, 10, 15, 20].map(r => ({
-                  value: r,
-                  label: r,
-                  ariaLabel: `${r} Targets`
-                }))}
-                onChange={setCheckoutTargets}
-                ariaLabel="Anzahl Targets"
-              />
-            </Card>
+            {selectedMode === 'checkout' && (
+              <>
+                <section className="setup-section">
+                  <h2 className="setup-section-title">Ziele</h2>
+                  <Slider
+                    name="checkoutTargets"
+                    variant="tiles"
+                    value={checkoutTargets}
+                    options={[5, 10, 15, 20].map(r => ({ value: r, label: r, ariaLabel: `${r} Ziele` }))}
+                    onChange={setCheckoutTargets}
+                    ariaLabel="Anzahl Ziele"
+                  />
+                </section>
+                <section className="setup-section">
+                  <h2 className="setup-section-title">Runden pro Ziel</h2>
+                  <Slider
+                    name="checkoutRounds"
+                    variant="tiles"
+                    value={checkoutRounds}
+                    options={[1, 2, 3, 5].map(r => ({ value: r, label: r, ariaLabel: `${r} ${r === 1 ? 'Runde' : 'Runden'}` }))}
+                    onChange={setCheckoutRounds}
+                    ariaLabel="Runden pro Ziel"
+                  />
+                </section>
+              </>
+            )}
 
-            <Card>
-              <CardHeader heading={"Runden (Versuche pro Finish)"} />
-              <Slider
-                name="checkoutRounds"
-                value={checkoutRounds}
-                options={[1, 2, 3, 5].map(r => ({
-                  value: r,
-                  label: r,
-                  ariaLabel: `${r} ${r === 1 ? 'Runde' : 'Runden'}`
-                }))}
-                onChange={setCheckoutRounds}
-                ariaLabel="Runden pro Finish"
-              />
-              <p style={{ fontSize: '0.85em', color: 'var(--text-dim)', marginTop: '10px', textAlign: 'center' }}>
-                1 Runde = 3 Darts um das Finish zu checken.
-              </p>
-            </Card>
-            </>
-          )}
-
-          <Button variant="primary" size="large" fullWidth onClick={handleStart}>
-            <Icons.IconPlayFilled size={20} /> Training starten
-          </Button>
-        </div>
-      </div>
-      
-      {/* spacer for bottom nav */}
+            <Button variant="primary" size="large" fullWidth className="setup-start-btn" onClick={handleStart}>
+              <span>Training starten</span>
+              <span className="setup-start-summary">{summary}</span>
+            </Button>
+          </div>
+        </Sheet>
+      )}
     </div>
   );
 };
-
