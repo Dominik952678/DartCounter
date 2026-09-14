@@ -13,6 +13,13 @@ export const HIGH_FINISH_MIN = 100;
  */
 export const MATCH_STATS_DELAY_MS = 2000;
 
+/**
+ * How long the darts-at-double question waits after a finish is booked. The
+ * quiet check animation runs ~1.8 s from the last dart and the round is booked
+ * at 800 ms, so the dialog opens as it clears.
+ */
+export const CHECKOUT_PROMPT_DELAY_MS = 1000;
+
 const TYPES: readonly CelebrationType[] = ['bust', 'highScore', 'highFinish', 'check'];
 
 export const celebrationTypeFor = (visit: { bust: boolean; isWin: boolean; total: number }): CelebrationType | null => {

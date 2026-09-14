@@ -8,7 +8,7 @@ import { threeDartAverage } from '../utils/stats';
 import { reportPersistenceError } from '../store/useNotificationStore';
 import { has as hasStored, readJson, remove as removeStored, writeJson } from '../utils/storage';
 import { botAverage } from '../utils/botProfiles';
-import { celebrationTypeFor, isMatchWinningLeg, matchScoreFor, MATCH_STATS_DELAY_MS, prefersReducedMotion } from '../utils/celebration';
+import { celebrationTypeFor, isMatchWinningLeg, matchScoreFor, CHECKOUT_PROMPT_DELAY_MS, MATCH_STATS_DELAY_MS, prefersReducedMotion } from '../utils/celebration';
 
 export const get2v2FreezeStatus = (players: Player[], activePlayerIndex: number): {
   is2v2: boolean;
@@ -99,6 +99,8 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
   const callerTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** Holds the stats sheet back while the match-winning celebration plays. */
   const statsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Holds the darts-at-double question back while a finish is celebrated. */
+  const promptTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const celebrationIdRef = useRef(0);
   /** Ensures a guest revocation is announced once per match, not once per poll. */
   const remoteAbortLatch = useRef(false);
@@ -142,6 +144,10 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
     if (statsTimeoutRef.current) {
       clearTimeout(statsTimeoutRef.current);
       statsTimeoutRef.current = null;
+    }
+    if (promptTimeoutRef.current) {
+      clearTimeout(promptTimeoutRef.current);
+      promptTimeoutRef.current = null;
     }
   }, []);
 
@@ -698,7 +704,7 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
 
       // A busted visit is never a finish, so there is nothing to ask about.
       if (needsPrompt && !bust) {
-        setCheckoutPrompt({
+        const prompt = {
           isOpen: true,
           maxDarts: dartsThrown,
           autoDarts: checkoutDarts,
@@ -706,7 +712,21 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
           isWin,
           highestThrow,
           stateAfterDart
-        });
+        };
+        // A finish is still being celebrated; asking right away put the dialog
+        // over the "Check". A missed setup has nothing to celebrate and asks at
+        // once. The engine stays `isProcessing` meanwhile, so no dart and no bot
+        // turn slips in; undo cancels it through `clearTimers`.
+        const delay = isWin && !prefersReducedMotion() ? CHECKOUT_PROMPT_DELAY_MS : 0;
+        if (promptTimeoutRef.current) clearTimeout(promptTimeoutRef.current);
+        if (delay === 0) {
+          setCheckoutPrompt(prompt);
+        } else {
+          promptTimeoutRef.current = setTimeout(() => {
+            promptTimeoutRef.current = null;
+            setCheckoutPrompt(prompt);
+          }, delay);
+        }
         return;
       }
 

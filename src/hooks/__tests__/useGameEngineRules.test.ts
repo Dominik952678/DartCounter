@@ -266,6 +266,44 @@ describe('celebrations', () => {
     expect(props.setStatsModalData).toHaveBeenCalledWith(expect.objectContaining({ isOpen: true }));
   });
 
+  it('asks about darts at the double only after the check has played', () => {
+    const { result } = renderHook(() => useGameEngine(makeProps()));
+    act(() => { result.current.startGame(['Dominik', 'Gegner'], config()); });
+
+    // 50 finished on the bull is the one ambiguous case that asks.
+    setUp(result, 0, 50);
+    act(() => { result.current.addDart(25, 2); });
+    act(() => { vi.advanceTimersByTime(800); });
+    expect(result.current.checkoutPrompt).toBeNull();
+
+    act(() => { vi.advanceTimersByTime(1000); });
+    expect(result.current.checkoutPrompt).toMatchObject({ isWin: true, playerIndex: 0 });
+  });
+
+  it('still asks at once after a missed setup, where nothing is celebrated', () => {
+    const { result } = renderHook(() => useGameEngine(makeProps()));
+    act(() => { result.current.startGame(['Dominik', 'Gegner'], config()); });
+
+    setUp(result, 0, 50);
+    act(() => { result.current.addDart(1, 1); });
+    act(() => { result.current.addDart(1, 1); });
+    act(() => { result.current.addDart(1, 1); });
+    act(() => { vi.advanceTimersByTime(800); });
+    expect(result.current.checkoutPrompt).toMatchObject({ isWin: false });
+  });
+
+  it('drops the pending question when the finishing dart is undone', () => {
+    const { result } = renderHook(() => useGameEngine(makeProps()));
+    act(() => { result.current.startGame(['Dominik', 'Gegner'], config()); });
+
+    setUp(result, 0, 50);
+    act(() => { result.current.addDart(25, 2); });
+    act(() => { vi.advanceTimersByTime(900); });
+    act(() => { result.current.undoSingleDart(); });
+    act(() => { vi.advanceTimersByTime(3000); });
+    expect(result.current.checkoutPrompt).toBeNull();
+  });
+
   it('never opens the stats sheet when the winning dart is undone in time', () => {
     const props = makeProps();
     const { result } = renderHook(() => useGameEngine(props));
