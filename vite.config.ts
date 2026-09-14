@@ -22,8 +22,8 @@ export default defineConfig({
       manifest: {
         name: 'Dart Counter Pro',
         short_name: 'Dart Counter Pro',
-        theme_color: '#1c1c1e',
-        background_color: '#1c1c1e',
+        theme_color: '#0F1613',
+        background_color: '#0F1613',
         display: 'standalone',
         icons: [
           {

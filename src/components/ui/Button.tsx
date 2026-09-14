@@ -3,8 +3,9 @@ import React from 'react';
 /**
  * Die Button-Varianten aus DESIGN.md §5.
  *
- * `primary`, `secondary` und `ghost` stehen dort wörtlich. Zwei Ergänzungen,
- * beide innerhalb der Farbrollen aus §1:
+ * `primary` (orange), `secondary` (umrandet), `bone` (Knochen, die ruhige
+ * Hauptaktion neben einer orangen) und `ghost` stehen dort wörtlich. Zwei
+ * Ergänzungen, beide innerhalb der Farbrollen aus §1:
  *
  * · `danger` — gefüllt in --text-danger, für die Bestätigung im Dialog.
  *   §5 kennt für Destruktives nur Text auf transparent, aber in einem
@@ -16,7 +17,7 @@ import React from 'react';
  *   `ghost` bleibt davon getrennt und neutral, weil alle heutigen Ghost-Buttons
  *   (Zurück, Schließen, Mehr laden) harmlos sind und nicht rot werden dürfen.
  */
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'dangerText';
+export type ButtonVariant = 'primary' | 'secondary' | 'bone' | 'ghost' | 'danger' | 'dangerText';
 
 /**
  * `large` ist für primäre Spielaktionen gedacht und erfüllt die 64pt aus §4.
@@ -34,6 +35,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 const VARIANT_CLASS: Record<ButtonVariant, string> = {
   primary: 'btn-primary',
   secondary: 'btn-secondary',
+  bone: 'btn-bone',
   ghost: 'btn-ghost',
   danger: 'btn-danger',
   dangerText: 'btn-danger-text'

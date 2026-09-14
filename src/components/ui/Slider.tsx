@@ -55,6 +55,11 @@ export interface SliderProps<T extends string | number> {
   onChange: (value: T) => void;
   /** Beschriftet die Gruppe, wenn keine sichtbare Überschrift daneben steht. */
   ariaLabel?: string;
+  /**
+   * `pill` für Wörter (Einzel/2v2, Double Out), `tiles` für Zahlenreihen
+   * (Startpunktzahl, Anzahl), `chips` für Filter über einer Liste.
+   */
+  variant?: 'pill' | 'tiles' | 'chips';
   className?: string;
 }
 
@@ -64,13 +69,14 @@ export function Slider<T extends string | number>({
   options,
   onChange,
   ariaLabel,
+  variant = 'pill',
   className
 }: SliderProps<T>) {
   const activeIndex = options.findIndex(option => option.value === value);
 
   return (
     <div
-      className={['slider', className].filter(Boolean).join(' ')}
+      className={['slider', variant !== 'pill' && `slider-${variant}`, className].filter(Boolean).join(' ')}
       role="radiogroup"
       aria-label={ariaLabel}
       style={{

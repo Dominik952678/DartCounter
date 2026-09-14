@@ -4,7 +4,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { useOnlineStore } from '../store/useOnlineStore';
 import type { GameConfig } from '../types';
 import { readString, write } from '../utils/storage';
-import { Button, Card, CardHeader, Choice, ChoiceGroup, Icons } from './ui';
+import { Button, Card, CardHeader, Choice, Icons, Slider } from './ui';
 import type { IconProps } from './ui';
 
 type Mode = 'standard' | 'powerscoring' | 'splitscore' | 'checkout';
@@ -212,7 +212,7 @@ export const LobbyBrowser: React.FC = () => {
           />
 
           <label className="section-label">Sichtbarkeit</label>
-          <ChoiceGroup
+          <Slider
             name="visibility"
             value={isPublic ? 'public' : 'code'}
             options={[
@@ -277,8 +277,9 @@ export const LobbyBrowser: React.FC = () => {
           {mode === 'powerscoring' && (
             <>
               <label className="section-label">Rundenlimit</label>
-              <ChoiceGroup
+              <Slider
                 name="rounds"
+                variant="tiles"
                 value={rounds}
                 options={[5, 10, 15, 20].map(r => ({ value: r, label: r, ariaLabel: `${r} Runden` }))}
                 onChange={setRounds}
@@ -290,16 +291,18 @@ export const LobbyBrowser: React.FC = () => {
           {mode === 'checkout' && (
             <>
               <label className="section-label">Anzahl Targets</label>
-              <ChoiceGroup
+              <Slider
                 name="targets"
+                variant="tiles"
                 value={checkoutTargets}
                 options={[5, 10, 15, 20].map(r => ({ value: r, label: r, ariaLabel: `${r} Targets` }))}
                 onChange={setCheckoutTargets}
                 ariaLabel="Anzahl Targets"
               />
               <label className="section-label">Versuche pro Finish</label>
-              <ChoiceGroup
+              <Slider
                 name="attempts"
+                variant="tiles"
                 value={checkoutRounds}
                 options={[1, 2, 3, 5].map(r => ({ value: r, label: r, ariaLabel: `${r} Versuche` }))}
                 onChange={setCheckoutRounds}

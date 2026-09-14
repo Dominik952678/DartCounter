@@ -138,7 +138,7 @@ describe('clearCachedUserData', () => {
     localStorage.setItem('matches_user_1', '[]');
     localStorage.setItem('dartcounter_active_sync_code', '{}');
     localStorage.setItem('guest_matches_user_9', '[]');
-    localStorage.setItem('dartcounter_theme', 'cyberpunk');
+    localStorage.setItem('dart_sound_enabled', 'false');
     localStorage.setItem('dart_x01_startScore', '501');
 
     clearCachedUserData('user_1');
@@ -147,7 +147,7 @@ describe('clearCachedUserData', () => {
     expect(localStorage.getItem('matches_user_1')).toBeNull();
     expect(localStorage.getItem('dartcounter_active_sync_code')).toBeNull();
     expect(localStorage.getItem('guest_matches_user_9')).toBeNull();
-    expect(localStorage.getItem('dartcounter_theme')).toBe('cyberpunk');
+    expect(localStorage.getItem('dart_sound_enabled')).toBe('false');
     expect(localStorage.getItem('dart_x01_startScore')).toBe('501');
   });
 });

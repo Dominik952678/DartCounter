@@ -11,8 +11,8 @@ export type { ButtonProps, ButtonVariant, ButtonSize } from './Button';
 export { Card, CardHeader } from './Card';
 export type { CardProps, CardHeaderProps } from './Card';
 
-export { Choice, ChoiceGroup } from './Choice';
-export type { ChoiceProps, ChoiceGroupProps, ChoiceOption } from './Choice';
+export { Choice } from './Choice';
+export type { ChoiceProps } from './Choice';
 
 export { Slider } from './Slider';
 export type { SliderProps, SliderOption } from './Slider';

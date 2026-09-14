@@ -43,8 +43,8 @@ describe('storage registry', () => {
     expect(localStorage.getItem(StorageKey.x01StartScore)).toBe('501');
     expect(readInt('x01StartScore', 301)).toBe(501);
 
-    write('scanlines', false);
-    expect(readBoolean('scanlines', true)).toBe(false);
+    write('hapticsEnabled', false);
+    expect(readBoolean('hapticsEnabled', true)).toBe(false);
 
     writeJson('savedGame', { players: ['A'] });
     expect(readJson<{ players: string[] } | null>('savedGame', null)).toEqual({ players: ['A'] });
@@ -91,7 +91,7 @@ describe('storage registry', () => {
 
   it('answers with the fallback when storage cannot be read at all', () => {
     withBrokenStorage(() => {
-      expect(readString('theme', 'classic')).toBe('classic');
+      expect(readString('guestOnlineName', 'Gast')).toBe('Gast');
       expect(readBoolean('soundEnabled', true)).toBe(true);
     });
   });
@@ -108,5 +108,21 @@ describe('storage registry', () => {
   it('stamps the schema version so a later migration can tell what it has seen', () => {
     migrateStorage();
     expect(localStorage.getItem(StorageKey.schemaVersion)).toBe(String(STORAGE_SCHEMA_VERSION));
+  });
+
+  /** v2.0.0 has one look; the old theme picker's settings must not linger. */
+  it('removes the settings of the retired theme picker', () => {
+    localStorage.setItem(StorageKey.schemaVersion, '1');
+    localStorage.setItem('dartcounter_theme', 'cyberpunk');
+    localStorage.setItem('dartcounter_scanlines', 'true');
+    localStorage.setItem('dartcounter_grid', 'false');
+    localStorage.setItem('dartcounter_glitch', 'true');
+    localStorage.setItem(StorageKey.soundEnabled, 'false');
+
+    migrateStorage();
+
+    ['dartcounter_theme', 'dartcounter_scanlines', 'dartcounter_grid', 'dartcounter_glitch']
+      .forEach(key => expect(localStorage.getItem(key)).toBeNull());
+    expect(localStorage.getItem(StorageKey.soundEnabled)).toBe('false');
   });
 });

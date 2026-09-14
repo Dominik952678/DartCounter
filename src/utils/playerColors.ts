@@ -28,7 +28,7 @@ const PLAYER_COLORS = [
  * MUSS mit dem Spielerpaletten-Block in styles/tokens.css übereinstimmen —
  * eine CSS-Custom-Property lässt sich von hier aus nicht auslesen.
  */
-export const PLAYER_COLOR_HEX = ['#5DA9E9', '#E9A05D', '#A9E95D', '#E95DA9'] as const;
+export const PLAYER_COLOR_HEX = ['#7FB8E8', '#E8C46B', '#6FCFC4', '#D98FC6'] as const;
 
 /** Voreinstellung der Farbwahl im Profil, wenn noch keine gesetzt ist. */
 export const DEFAULT_PLAYER_COLOR_HEX = PLAYER_COLOR_HEX[0];

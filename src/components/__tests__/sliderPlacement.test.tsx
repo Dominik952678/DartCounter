@@ -8,15 +8,12 @@ import type { Profile } from '../../types';
 /**
  * Wo der Slider steht — und wo bewusst nicht.
  *
- * Das ist eine Design-Entscheidung, die kein Typ und kein Lint erzwingt: der
- * Slider sieht überall gut aus, und genau deshalb wandert er mit der Zeit
- * überall hin. Er gehört an geordnete, vollständige, kurze Reihen. Sets/Legs
- * sind ein offener Zahlenbereich und bleiben ein Stepper; Statistik-Filter sind
- * Chips, deren Menge sich mit den Daten ändert, und ein gleitender Thumb würde
- * dort eine Ordnung behaupten, die es nicht gibt.
+ * Das ist eine Design-Entscheidung, die kein Typ und kein Lint erzwingt. Seit
+ * v2.0.0 gilt: jede Auswahl, bei der genau eine Option gewählt sein muss, ist
+ * ein Slider — Filter als schmale Variante `chips`. Sets/Legs sind ein offener
+ * Zahlenbereich und bleiben ein Stepper.
  *
- * Geprüft wird über die Klasse, weil sie die Bauform benennt: `.slider` ist der
- * Thumb-Slider, `.segment-control` die Chip-Reihe aus `ChoiceGroup`.
+ * Geprüft wird über die Klasse, weil sie die Bauform benennt.
  */
 
 const profiles: Record<string, Profile> = {
@@ -81,10 +78,10 @@ describe('Training-Setup', () => {
 });
 
 describe('Statistik-Filter', () => {
-  it('leaves the heatmap filter a chip list', () => {
+  it('puts the heatmap filter on the narrow chips slider', () => {
     const { container } = render(<DartboardHeatmap customHits={{ T20: 4 }} />);
 
-    expect(container.querySelectorAll('.slider')).toHaveLength(0);
-    expect(container.querySelectorAll('.segment-control')).toHaveLength(1);
+    expect(container.querySelectorAll('.slider.slider-chips')).toHaveLength(1);
+    expect(container.querySelectorAll('.segment-control')).toHaveLength(0);
   });
 });

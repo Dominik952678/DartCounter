@@ -25,7 +25,7 @@ describe('buildBackup', () => {
   beforeEach(() => localStorage.clear());
 
   it('carries the profiles, the matches and the portable settings', () => {
-    write('theme', 'cyberpunk');
+    write('soundEnabled', false);
     write('savedGame', '{"players":[]}');
 
     const backup = buildBackup({ Dominik: profile() }, [match('m1')]);
@@ -34,8 +34,8 @@ describe('buildBackup', () => {
     expect(Object.keys(backup.profiles)).toEqual(['Dominik']);
     expect(backup.matches).toHaveLength(1);
     // Keyed by registry name, not by the raw localStorage key.
-    expect(backup.settings).toMatchObject({ theme: 'cyberpunk' });
-    expect(backup.settings).not.toHaveProperty(StorageKey.theme);
+    expect(backup.settings).toMatchObject({ soundEnabled: 'false' });
+    expect(backup.settings).not.toHaveProperty(StorageKey.soundEnabled);
     // The match in progress belongs to the device it is being played on.
     expect(backup.settings).not.toHaveProperty('savedGame');
   });

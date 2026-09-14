@@ -30,8 +30,8 @@ describe('DartboardHeatmap Component', () => {
   });
 
   // Gefragt wird nach dem Auswahl-Zustand, nicht nach der CSS-Klasse, die ihn
-  // gerade darstellt — der Filter ist seit dem Umstieg auf ChoiceGroup eine
-  // echte Radio-Gruppe, und das ist es, was ein Screenreader auch hört.
+  // gerade darstellt — der Filter ist ein Slider auf echten Radios, und das ist
+  // es, was ein Screenreader auch hört.
   it('switches filter modes cleanly when clicking buttons', () => {
     render(<DartboardHeatmap profile={dummyProfileWithHits} />);
 

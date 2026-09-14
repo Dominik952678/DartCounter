@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChoiceGroup, Icons } from './ui';
+import { Icons, Slider } from './ui';
 import type { Profile } from '../types';
 import { totalSegmentHits } from '../utils/segmentStats';
 
@@ -127,8 +127,9 @@ export const DartboardHeatmap: React.FC<DartboardHeatmapProps> = ({ profile, cus
         {/* Filter (§5: ein Selected-State fuer alles). Vorher drei Kopien
             desselben Chips mit blauer Vollflaeche, Inline-Farben und 28px
             Hoehe — unter der 44pt-Grenze aus §4. */}
-        {!staticView && <ChoiceGroup
+        {!staticView && <Slider
           name="heatmapFilter"
+          variant="chips"
           value={filterMode}
           options={[
             { value: 'all', label: 'Alle' },

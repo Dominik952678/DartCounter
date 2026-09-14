@@ -13,11 +13,7 @@
  */
 
 export const StorageKey = {
-  /** Appearance and feedback; device-wide, never tied to an account. */
-  theme: 'dartcounter_theme',
-  scanlines: 'dartcounter_scanlines',
-  gridAnimation: 'dartcounter_grid',
-  glitchEffects: 'dartcounter_glitch',
+  /** Feedback; device-wide, never tied to an account. */
   soundEnabled: 'dart_sound_enabled',
   hapticsEnabled: 'dart_haptics_enabled',
 
@@ -53,7 +49,10 @@ export const StorageKey = {
 export type StorageKeyName = keyof typeof StorageKey;
 
 /** Bump together with a migration in `migrateStorage`. */
-export const STORAGE_SCHEMA_VERSION = 1;
+export const STORAGE_SCHEMA_VERSION = 2;
+
+/** Keys of the three selectable themes, which v2.0.0 replaced by one look. */
+const LEGACY_THEME_KEYS = ['dartcounter_theme', 'dartcounter_scanlines', 'dartcounter_grid', 'dartcounter_glitch'];
 
 const keyOf = (name: StorageKeyName): string => StorageKey[name];
 
@@ -183,7 +182,7 @@ export const remove = (name: StorageKeyName): void => {
  * the others describe the installation rather than the player's preferences.
  */
 const PORTABLE_KEYS: readonly StorageKeyName[] = [
-  'theme', 'scanlines', 'gridAnimation', 'glitchEffects', 'soundEnabled', 'hapticsEnabled',
+  'soundEnabled', 'hapticsEnabled',
   'x01StartScore', 'x01OutMode', 'x01Sets', 'x01Legs', 'x01PlayerCount', 'x01Is2v2',
   'trainingMode', 'trainingPlayerCount', 'powerScoringRounds', 'checkoutRounds', 'checkoutTargets',
   'offlineSubtab', 'guestOnlineName'
@@ -226,16 +225,23 @@ export const resolveHostDeviceId = (): string => {
 
 /**
  * Brings stored data up to `STORAGE_SCHEMA_VERSION`, then records the version.
- *
- * There is nothing to migrate yet — the point is that the next change to a
- * stored shape has one place to do its rewriting, and one way to tell whether
- * it has already run. Called once at startup.
+ * Migrations run in ascending order, each guarded by `stored`. Called once at
+ * startup.
  */
 export const migrateStorage = (): void => {
   const stored = readNumber('schemaVersion', 0);
   if (stored === STORAGE_SCHEMA_VERSION) return;
 
-  // Future migrations run here, in ascending order, guarded by `stored`.
+  // 2: the theme picker is gone; its settings would otherwise linger forever.
+  if (stored < 2) {
+    LEGACY_THEME_KEYS.forEach(key => {
+      try {
+        localStorage.removeItem(key);
+      } catch (err) {
+        console.warn(`Could not remove ${key} from storage`, err);
+      }
+    });
+  }
 
   write('schemaVersion', STORAGE_SCHEMA_VERSION);
 };

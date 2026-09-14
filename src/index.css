@@ -1,13 +1,6 @@
 /* Farbe, Typografie und Spacing kommen aus einer Datei — siehe DESIGN.md §1–3.
-   Neue Farbwerte gehören dorthin, nicht hierher.
-
-   Reihenfolge ist Absicht: tokens.css definiert die Rollen auf `:root`, die
-   beiden Themes überschreiben sie auf `[data-theme="…"]`. Weil die
-   Attribut-Selektoren spezifischer sind, gewinnt das aktive Theme, egal wo
-   seine Datei steht — die Reihenfolge macht nur die Leserichtung klar. */
+   Neue Farbwerte gehören dorthin, nicht hierher. */
 @import "./styles/tokens.css";
-@import "./styles/vaporwave.css";
-@import "./styles/cyberpunk.css";
 @import "./styles/celebration.css";
 
 /* ── Breakpoint-Skala ──
@@ -81,25 +74,15 @@ body {
   }
 }
 
-/* ── Überschriften: --font-heading, und nur die ──
+/* ── Überschriften: Barlow Condensed 600 ──
 
-   h1 und h2 sind Überschriften und bekommen die Display-Schrift. h3 und h4
-   nicht: das sind Zeilen- und Abschnittstitel bei 14–16px, und Caprasimo ist
-   auf dieser Größe schlecht lesbar — sie bleiben in --font, nur schwerer.
-
-   Die Display-Schrift trägt nie eine Zahl (siehe Kommentar in tokens.css).
-   Wo eine Überschrift eine Zahl enthält, steht die Zahl in `.num`.
-
-   Negatives Tracking und enge Zeilen sind bei dieser Schrift kein Feinschliff:
-   ohne sie fällt die Überschrift optisch auseinander. h1 skaliert mit, weil der
-   Screen-Titel auf dem iPhone sonst dreizeilig umbricht.
-
-   Die zwei Retro-Themes setzen --font-heading auf Orbitron und ihre eigenen
-   Versalien-Regeln — die Struktur ist geteilt, das Erscheinungsbild nicht. */
+   h1 und h2 bekommen die Display-Schrift. h3 und h4 sind Zeilen- und
+   Abschnittstitel bei 14–16px und bleiben in --font, nur schwerer. h1 skaliert
+   mit, weil der Screen-Titel auf dem iPhone sonst umbricht. */
 h1,
 h2 {
   font-family: var(--font-heading);
-  font-weight: var(--weight-regular);
+  font-weight: var(--weight-semibold);
   line-height: var(--leading-heading);
   margin: 0;
   text-wrap: balance;
@@ -131,26 +114,38 @@ h4 {
 
 /* ── Zahlen ──
 
-   Jede Zahl, die sich ändern kann, gehört hierher: Mono, tabular-nums, 500.
+   Jede Zahl, die sich ändern kann, gehört hierher: Condensed 600, tabular-nums.
    Ohne `tabular-nums` sind die Ziffern proportional breit, und ein Punktestand,
-   der von 180 auf 141 springt, verschiebt alles rechts daneben — bei einem
-   Wert, den man beim Werfen im Blick behalten soll, ist das Zappeln der Grund
-   für die Regel, nicht Kosmetik.
+   der von 180 auf 141 springt, verschiebt alles rechts daneben.
 
    `.num-lg` ist derselbe Satz für die großen Zahlen (Live-Score, Kennzahl auf
    der Kachel), wo das enge Tracking den Block zusammenhält. */
 .num,
 .num-lg {
-  font-family: var(--font-mono);
+  font-family: var(--font-display);
   font-variant-numeric: tabular-nums;
-  font-weight: var(--weight-medium);
+  font-weight: var(--weight-semibold);
 }
 .num {
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
 }
 .num-lg {
   letter-spacing: -0.03em;
-  line-height: 0.95;
+  line-height: 0.9;
+}
+
+/* ── Kurze Labels ──
+   „SATZ 1 · LEG 3", „CHECKOUT", „SPIELER": gesperrte Großbuchstaben in Barlow.
+   Nur für kurze Kennzeichnungen über oder neben einem Wert, nie für Sätze. */
+.label-caps {
+  font-family: var(--font);
+  font-size: var(--text-label);
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  white-space: nowrap;
 }
 
 /* ── Icons ──
@@ -188,7 +183,7 @@ h4 {
     transform: translateY(0);
   }
   50% {
-    box-shadow: 0 8px 28px rgba(245, 158, 11, 0.45);
+    box-shadow: 0 8px 28px rgba(var(--accent-primary-rgb), 0.45);
     transform: translateY(-2px);
   }
   100% {
@@ -199,14 +194,14 @@ h4 {
 
 @keyframes checkoutGlow {
   0% {
-    border-color: rgba(16, 185, 129, 0.2);
+    border-color: rgba(99, 196, 138, 0.2);
   }
   50% {
-    border-color: rgba(16, 185, 129, 0.6);
-    box-shadow: 0 0 16px rgba(16, 185, 129, 0.3);
+    border-color: rgba(99, 196, 138, 0.6);
+    box-shadow: 0 0 16px rgba(99, 196, 138, 0.3);
   }
   100% {
-    border-color: rgba(16, 185, 129, 0.2);
+    border-color: rgba(99, 196, 138, 0.2);
   }
 }
 
@@ -1037,7 +1032,7 @@ input:focus {
 
 .stepper-btn:hover:not(:disabled) {
   background: var(--primary);
-  color: #000;
+  color: var(--on-accent-primary);
   border-color: var(--primary);
 }
 
@@ -1098,74 +1093,6 @@ input:focus {
   margin-bottom: var(--space-3);
 }
 
-/* ── Segment Controls (Radio Groups) ───── */
-.radio-group,
-.segment-control {
-  display: flex;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--card-border);
-  border-radius: 14px;
-  padding: 4px;
-  gap: 4px;
-  margin-bottom: 10px;
-}
-.radio-group label,
-.segment-control label {
-  flex: 1;
-  text-align: center;
-  padding: 11px 8px;
-  border: 2px solid transparent;
-  border-radius: 10px;
-  cursor: pointer;
-  transition:
-    background-color 0.2s cubic-bezier(0.2, 0, 0, 1),
-    border-color 0.2s,
-    color 0.2s;
-  background: var(--surface-card);
-  color: var(--text-secondary);
-  font-size: var(--text-body);
-  font-weight: var(--weight-regular);
-  margin: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  min-height: 44px;
-  user-select: none;
-}
-/* Kept in the DOM and tab order — `display: none` also removes a control from
-   the accessibility tree, which took every one of these out of keyboard reach. */
-.radio-group input[type="radio"],
-.segment-control input[type="radio"] {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  border: 0;
-}
-/* Der eine Selected-State aus §5 — 2px --accent-primary auf --bg-accent-muted.
-   Der Rahmen ist im nicht ausgewählten Zustand schon 2px breit und nur
-   transparent, sonst springt die Beschriftung beim Auswählen um einen Pixel. */
-.segment-control label.active,
-.radio-group label:has(input:checked),
-.segment-control label:has(input:checked) {
-  background: var(--bg-accent-muted);
-  color: var(--text-primary);
-  font-weight: var(--weight-medium);
-  border-color: var(--accent-primary);
-}
-.radio-group label:has(input:focus-visible),
-.segment-control label:has(input:focus-visible) {
-  outline: 2px solid var(--primary);
-  outline-offset: 2px;
-}
-.segment-control span {
-  pointer-events: none;
-}
-
 /* ═══════════════════════════════════════════════════════════════════════════
    Slider — segmentierte Auswahl mit gleitendem Thumb
    Markup: components/ui/Slider.tsx, dort steht auch, wo er NICHT hingehört.
@@ -1177,13 +1104,12 @@ input:focus {
    ═══════════════════════════════════════════════════════════════════════════ */
 .slider {
   /* Polster der Schiene UND Bezugsgröße des Thumbs — eine Zahl, kein Paar. */
-  --slider-pad: 5px;
+  --slider-pad: 4px;
   position: relative;
   display: flex;
   width: 100%;
   padding: var(--slider-pad);
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid var(--card-border);
+  background: var(--surface-card);
   border-radius: var(--radius-pill);
   margin-bottom: var(--space-3);
 }
@@ -1205,8 +1131,7 @@ input:focus {
      jedem Schritt weiter aus der Spur. */
   width: calc((100% - 2 * var(--slider-pad)) / var(--slider-count));
   border-radius: var(--radius-pill);
-  background: var(--accent-primary);
-  box-shadow: 0 6px 20px rgba(var(--accent-primary-rgb), 0.3);
+  background: var(--accent-bone);
   pointer-events: none;
   z-index: 0;
   transform: translateX(calc(var(--slider-active) * 100%));
@@ -1235,8 +1160,11 @@ input:focus {
   padding: 0 var(--space-2);
   border-radius: var(--radius-pill);
   cursor: pointer;
-  font-size: var(--text-body);
+  font-family: var(--font);
+  font-size: 12px;
   font-weight: var(--weight-semibold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--text-secondary);
   /* Nur die Farbe wechselt. Ein Gewichtswechsel wäre auch eine Breitenänderung,
      und die Option würde bei jedem Wechsel zappeln. */
@@ -1245,9 +1173,8 @@ input:focus {
   margin: 0;
 }
 
-/* Auf der gefüllten Akzentfläche gilt der Kontrast-Ton aus §5, nie Schwarz. */
 .slider label.active {
-  color: var(--on-accent-primary);
+  color: var(--on-accent-bone);
 }
 
 /* Bleibt im DOM und in der Tab-Reihenfolge — `display: none` nähme das Control
@@ -1284,6 +1211,52 @@ input:focus {
   text-overflow: ellipsis;
 }
 
+/* Variante `tiles`: eine Zahlenreihe (Startpunktzahl, Anzahl). Kantiger, die
+   Ziffern in Condensed und hell, damit man sie auch unausgewählt liest. */
+.slider-tiles {
+  border-radius: var(--radius-tile);
+  box-shadow: inset 0 0 0 1px var(--line-1);
+}
+.slider-tiles .slider-thumb {
+  border-radius: var(--radius-key);
+}
+.slider-tiles label {
+  min-height: 50px;
+  border-radius: var(--radius-key);
+  font-family: var(--font-display);
+  font-size: 24px;
+  letter-spacing: 0;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+.slider-tiles label.active {
+  color: var(--on-accent-bone);
+}
+
+/* Variante `chips`: ein Filter über einer Liste. So breit wie nötig — gleich
+   breite Spalten aus dem längsten Eintrag, damit die Thumb-Rechnung aufgeht —
+   und der Thumb nur umrandet, weil ein Filter nicht wie eine Einstellung
+   aussehen soll. */
+.slider-chips {
+  --slider-pad: 3px;
+  display: inline-grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  width: auto;
+}
+.slider-chips .slider-thumb {
+  background: var(--surface-raised);
+  box-shadow: inset 0 0 0 1px var(--line-3);
+}
+.slider-chips label {
+  min-height: 36px;
+  padding: 0 var(--space-4);
+}
+.slider-chips label.active {
+  color: var(--text-primary);
+}
+
 /* Einzelner Umschalter im selben Selected-State (§5) — für Chips, die keine
    Radio-Gruppe bilden. Markup: components/ui/Choice.tsx. */
 .choice {
@@ -1301,10 +1274,10 @@ input:focus {
     color 0.2s;
 }
 .choice.active {
-  background: var(--bg-accent-muted);
-  border-color: var(--accent-primary);
-  color: var(--text-primary);
-  font-weight: var(--weight-medium);
+  background: var(--accent-bone);
+  border-color: var(--accent-bone);
+  color: var(--on-accent-bone);
+  font-weight: var(--weight-semibold);
 }
 
 /* ── Buttons (DESIGN.md §5) ─────────────────────────────────
@@ -1324,10 +1297,11 @@ button,
   align-items: center;
   justify-content: center;
   padding: 14px 20px;
-  border-radius: var(--radius-sm);
-  font-weight: var(--weight-medium);
-  font-size: var(--text-body-lg);
-  font-family: inherit;
+  border-radius: var(--radius-tile);
+  font-weight: var(--weight-semibold);
+  font-size: 20px;
+  line-height: 1;
+  font-family: var(--font-display);
   border: none;
   cursor: pointer;
   transition:
@@ -1352,25 +1326,30 @@ button:disabled,
   cursor: not-allowed;
 }
 
-/* Gefüllt, genau ein Mal pro Screen (§1). Text ist der dunkelste Ton derselben
-   Farbfamilie, nie Schwarz (§5). */
+/* Orange, genau ein Mal pro Screen (§1). Text in Filz. */
 .btn-primary {
   background: var(--accent-primary);
   color: var(--on-accent-primary);
-  box-shadow: 0 4px 16px var(--primary-glow);
 }
 .btn-primary:hover {
-  box-shadow: 0 6px 20px var(--primary-glow);
+  filter: brightness(1.05);
 }
 
-/* §5: --surface-card, --text-primary, kein farbiger Rand. */
+/* Zweitrangig: nur umrandet. */
 .btn-secondary {
-  background: var(--surface-card);
-  border: 1px solid var(--card-border);
+  background: transparent;
+  border: 1px solid var(--line-3);
   color: var(--text-primary);
 }
 .btn-secondary:hover {
   background: var(--surface-hover);
+}
+
+/* Knochen: der gewählte Zustand und die ruhige Hauptaktion neben einer
+   orangen („Nochmal", „Speichern & verlassen"). */
+.btn-bone {
+  background: var(--accent-bone);
+  color: var(--on-accent-bone);
 }
 
 /* Neutraler Textbutton — Zurück, Schließen, Mehr laden. */
@@ -1378,7 +1357,11 @@ button:disabled,
   background: transparent;
   color: var(--text-secondary);
   width: auto;
-  border: 1px solid var(--card-border);
+  border: 1px solid var(--line-2);
+  font-family: var(--font);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 .btn-ghost:hover {
   color: var(--text-primary);
@@ -1387,9 +1370,8 @@ button:disabled,
 
 /* Die einzige destruktive Fläche: Bestätigung im Dialog. */
 .btn-danger {
-  background: var(--text-danger);
+  background: var(--danger-fill);
   color: var(--on-text-danger);
-  box-shadow: 0 4px 16px var(--red-glow);
 }
 
 /* §5s „Ghost/Destructive-Text" — „Abmelden"-artige Aktionen inline. */
@@ -1406,15 +1388,15 @@ button:disabled,
    Untergrenze. */
 .btn-large {
   padding: var(--space-5) var(--space-5);
-  font-size: var(--text-body-lg);
-  border-radius: var(--radius-card);
+  font-size: 24px;
+  border-radius: 20px;
   min-height: 64px;
 }
 
 /* Schmaler, aber nie unter der 44pt-Grenze aus §4. */
 .btn-compact {
   padding: var(--space-2) var(--space-3);
-  font-size: var(--text-body);
+  font-size: 17px;
   min-height: 44px;
 }
 
@@ -4791,28 +4773,28 @@ body:has(.app-nav-vertical) .app-container {
 @keyframes lockOpenPop {
   0% {
     transform: scale(0.92);
-    background: rgba(90, 200, 250, 0.25);
-    border-color: rgba(90, 200, 250, 0.7);
-    color: #5ac8fa;
+    background: color-mix(in srgb, var(--accent-info) 25%, transparent);
+    border-color: color-mix(in srgb, var(--accent-info) 70%, transparent);
+    color: var(--accent-info);
   }
   40% {
     transform: scale(1.15);
-    background: rgba(48, 209, 88, 0.45);
-    border-color: rgba(48, 209, 88, 0.95);
-    color: #30d158;
-    box-shadow: 0 0 20px rgba(48, 209, 88, 0.85);
+    background: color-mix(in srgb, var(--text-success) 45%, transparent);
+    border-color: var(--text-success);
+    color: var(--text-success);
+    box-shadow: 0 0 20px color-mix(in srgb, var(--text-success) 60%, transparent);
   }
   75% {
     transform: scale(1.03);
-    background: rgba(48, 209, 88, 0.25);
-    border-color: rgba(48, 209, 88, 0.7);
-    color: #30d158;
+    background: color-mix(in srgb, var(--text-success) 25%, transparent);
+    border-color: color-mix(in srgb, var(--text-success) 70%, transparent);
+    color: var(--text-success);
   }
   100% {
     transform: scale(1);
-    background: rgba(48, 209, 88, 0.18);
-    border-color: rgba(48, 209, 88, 0.5);
-    color: #30d158;
+    background: color-mix(in srgb, var(--text-success) 18%, transparent);
+    border-color: color-mix(in srgb, var(--text-success) 50%, transparent);
+    color: var(--text-success);
   }
 }
 @keyframes lockIconShake {
@@ -4913,7 +4895,7 @@ body:has(.app-nav-vertical) .app-container {
 }
 .checkout-pill {
   background: var(--primary);
-  color: #000;
+  color: var(--on-accent-primary);
   border-radius: var(--radius-xs, 6px);
   padding: 4px 10px;
   font-weight: var(--weight-medium);
@@ -4964,9 +4946,8 @@ body:has(.app-nav-vertical) .app-container {
   color: var(--text-danger);
 }
 .lock-badge-bar.must-throw strong {
-  color: #ffffff;
-  font-weight: var(--weight-medium);
-  text-shadow: 0 0 10px #ff3333;
+  color: var(--text-primary);
+  font-weight: var(--weight-semibold);
 }
 .lock-badge-bar.unlocking {
   background: color-mix(in srgb, var(--text-success) 20%, transparent);

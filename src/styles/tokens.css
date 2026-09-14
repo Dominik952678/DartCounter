@@ -2,20 +2,14 @@
    Design-Tokens — die eine Quelle der Wahrheit für Farbe, Typografie und
    Spacing. Umsetzung von DESIGN.md Abschnitt 1–3.
 
+   Ein Look: Filz, Knochen, ein Orange. Die Werte stammen aus dem Entwurf in
+   docs/design-entwurf/lib.mjs (Objekt `F`).
+
    Regeln, die sich aus DESIGN.md ergeben und hier durchgesetzt werden:
    · Jede Farbe hat genau EINE Bedeutung, unabhängig vom Screen (§1).
-   · Pro Screen maximal eine `--accent-primary`-gefüllte Fläche (§1).
+   · Orange heißt „Treffer / wirft gerade / Hauptaktion“ — nichts sonst.
    · Neue Farbwerte gehören in diese Datei, nirgendwo sonst — kein ad-hoc-Hex
      in Komponenten oder in index.css.
-
-   Diese Datei ist das `classic`-Theme. `vaporwave.css` und `cyberpunk.css`
-   überschreiben dieselben Rollen auf `[data-theme="…"]` und regeln als
-   Klassenregel nur noch, was ein Token nicht ausdrückt. Ein neues Token gehört
-   deshalb hierher UND in beide Themes, sonst erbt dort still der classic-Wert.
-
-   DESIGN.md beschreibt classic. Für die zwei anderen ist davon die Struktur
-   verbindlich (Rollen, Komponenten, die Breakpoints aus §6), nicht das
-   Erscheinungsbild — Versalien und schwere Gewichte sind dort das Motiv.
    ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
@@ -23,140 +17,122 @@
      1. Farbsystem — Rollen, nicht Farbnamen (DESIGN.md §1)
      ───────────────────────────────────────────────────────────────────────── */
 
-  /* Grundflächen */
-  --bg-base: #0B1120;                        /* App-Hintergrund, überall identisch */
-  --surface-card: rgba(255, 255, 255, 0.05); /* Karte auf --bg-base. NICHT für vollflächige Screens */
+  /* Filz in drei Stufen. Karten sind deckend: auf dem dunklen Grund liest sich
+     eine transparente Fläche je nach Unterlage verschieden hell. */
+  --bg-base: #0F1613;          /* Grund jeder Seite */
+  --surface-sunken: #141D19;   /* inaktive Score-Karte, Overlays */
+  --surface-card: #17211C;     /* Karte, Taste, Leiste */
+  --surface-raised: #1F2B25;   /* Dart-Kasten, Stepper, Kachel in der Karte */
 
-  /* Akzente. `-rgb` existiert nur, damit Washes wie --bg-accent-muted aus
-     derselben Quelle abgeleitet werden und nicht auseinanderlaufen können. */
-  --accent-primary: #F59E0B;                 /* genau 1 primäre CTA pro Screen */
-  --accent-primary-rgb: 245, 158, 11;
-  --accent-info: #5DCAA5;                    /* kategorisch, z. B. Multiplayer-Icon */
-  --accent-pro: #AFA9EC;                     /* kategorisch, z. B. Statistik-Icon */
+  /* Haarlinien auf Filz — Trenner, Rahmen, gestrichelte Leerstellen. */
+  --line-1: rgba(237, 230, 211, 0.07);
+  --line-2: rgba(237, 230, 211, 0.1);
+  --line-3: rgba(237, 230, 211, 0.25);
 
-  /* 10-%-Wash der Akzentfarbe — Hintergrund des Selected-State (§5). */
-  --bg-accent-muted: rgba(var(--accent-primary-rgb), 0.1);
+  /* Akzente. `-rgb` existiert nur, damit Washes aus derselben Quelle kommen. */
+  --accent-primary: #FF6A3D;                 /* Treffer, Werfer, Hauptaktion */
+  --accent-primary-rgb: 255, 106, 61;
+  --accent-bone: #EDE6D3;                    /* ausgewählter Zustand, Slider-Thumb */
+  --accent-info: #7FB8E8;                    /* kategorisch, z. B. Online */
+  --accent-pro: #E8C46B;                     /* kategorisch, z. B. Statistik */
+
+  --bg-accent-muted: rgba(var(--accent-primary-rgb), 0.12);
 
   /* ─────────────────────────────────────────────────────────────────────────
-     Spielerfarben — bewusste Erweiterung über DESIGN.md §1 hinaus
+     Spielerfarben — bewusste Erweiterung über §1 hinaus
 
-     §1 kennt zwei kategorische Akzente, die App muss aber bis zu vier Spieler
-     auseinanderhalten. Auf dem Scoreboard, den man aus drei Metern abliest,
-     ist das funktional und nicht dekorativ, deshalb bekommen Spieler eine
-     eigene Palette statt geliehener Rollenfarben — --accent-info und
-     --accent-pro behalten so ihre eine Bedeutung.
-
-     Nur für Avatar-Kreise, Randmarkierungen und Namen. Keine dieser Farben
-     wird zur gefüllten Fläche; §1s „eine Akzentfläche pro Screen" bleibt
-     dadurch unberührt. In 2v2 bekommt Team 1 --player-1, Team 2 --player-2.
-     Das optionale `color`-Feld am Profile-Typ überschreibt die Zuordnung.
+     Die App muss bis zu vier Spieler auseinanderhalten. Die Farbe steht nur als
+     Punkt am Namen, nie als Fläche. In 2v2 trägt Team 1 --player-1, Team 2
+     --player-2. Das `color`-Feld am Profil überschreibt die Zuordnung.
+     `PLAYER_COLOR_HEX` in utils/playerColors.ts muss mit diesen Werten
+     übereinstimmen.
      ───────────────────────────────────────────────────────────────────────── */
-  --player-1: #5DA9E9;
-  --player-2: #E9A05D;
-  --player-3: #A9E95D;
-  --player-4: #E95DA9;
+  --player-1: #7FB8E8;
+  --player-2: #E8C46B;
+  --player-3: #6FCFC4;
+  --player-4: #D98FC6;
 
   /* ─────────────────────────────────────────────────────────────────────────
      Diagrammfarben — zweite bewusste Erweiterung über §1 hinaus
 
-     Aus demselben Grund wie die Spielerpalette: eine Tortengrafik mit neun
-     Segmenten braucht neun unterscheidbare Töne, und §1 hat zwei kategorische
-     Rollen. Diese Farben stehen ausschließlich in Diagrammen und in deren
-     Legende; sie werden nie zur Fläche eines Bedienelements, und sie greifen
-     --accent-info und --accent-pro nicht an, die ihre eine Bedeutung behalten.
-
-     Reihenfolge ist Absicht: der erste Ton ist der Akzent der App, danach geht
-     es im Farbkreis weiter, damit benachbarte Segmente sich unterscheiden.
+     Nur in Diagrammen und deren Legende. Der erste Ton ist das Orange, danach
+     die Spielerfarben, dann Knochen und Grün, damit Nachbarn sich abheben.
      --chart-rest ist der Sammeleintrag für alles unter 5 %.
      ───────────────────────────────────────────────────────────────────────── */
-  --chart-1: #F59E0B;
-  --chart-2: #5DCAA5;
-  --chart-3: #AFA9EC;
-  --chart-4: #E9A05D;
-  --chart-5: #5DA9E9;
-  --chart-6: #E95DA9;
-  --chart-7: #A9E95D;
-  --chart-8: #E9E15D;
-  --chart-rest: #64748B;
+  --chart-1: #FF6A3D;
+  --chart-2: #E8C46B;
+  --chart-3: #7FB8E8;
+  --chart-4: #6FCFC4;
+  --chart-5: #D98FC6;
+  --chart-6: #63C48A;
+  --chart-7: #EDE6D3;
+  --chart-8: #B58A6A;
+  --chart-rest: #5B6560;
 
-  /* Semantik — eng gefasst, siehe „NICHT verwenden für" in §1. */
-  --text-success: #10B981;                   /* nur Erfolg, Sieg, positive Deltas */
-  --text-danger: #EF4444;                    /* nur destruktiv, Hotspot-Segmente */
-  --text-danger-rgb: 239, 68, 68;
+  /* Heatmap: eine Rampe im Orange statt Blau–Gelb–Rot. */
+  --heat-none: rgba(237, 230, 211, 0.12);
+  --heat-low: rgba(var(--accent-primary-rgb), 0.3);
+  --heat-mid: rgba(var(--accent-primary-rgb), 0.6);
+  --heat-high: var(--accent-primary);
 
-  /* Zweite, hellere Rolle für Rot — und ausdrücklich KEIN Ersatz für
-     --text-danger. Sie gilt nur für kleinen Hinweistext direkt auf --bg-base,
-     wo #EF4444 bei 12–13px zu dunkel gegen den Grund steht („Diesen Namen gibt
-     es schon."). Flächen, Ränder und Buttons bleiben --text-danger, damit
-     „destruktiv" weiter genau einen Ton hat. */
-  --text-danger-soft: #F87171;
+  /* Semantik — eng gefasst, siehe §1. */
+  --text-success: #63C48A;                   /* Erfolg, Check, positive Deltas */
+  --text-danger: #E0564B;                    /* destruktiv als Text und Rahmen */
+  --text-danger-rgb: 224, 86, 75;
+  --danger-fill: #C4372E;                    /* destruktiv als Fläche */
 
-  /* Text */
-  --text-primary: #F5F5F0;
-  --text-secondary: #8B93A6;
+  /* Hellere Variante für kleinen Hinweistext direkt auf --bg-base. */
+  --text-danger-soft: #EB7A70;
 
-  /* Kontrast auf gefüllten Akzentflächen (§5): nie reines Schwarz, sondern der
-     dunkelste Ton derselben Farbfamilie. --accent-info und --accent-pro brauchen
-     kein Gegenstück, weil §1 sie ausdrücklich auf Icon-/Text-Kennzeichnung
-     begrenzt und nicht als Füllfläche vorsieht. */
-  --on-accent-primary: #4A3A10;
+  /* Text in drei Stufen, alle aus dem Knochen-Ton. */
+  --text-primary: #EDE6D3;
+  --text-secondary: rgba(237, 230, 211, 0.55);
+  --text-tertiary: rgba(237, 230, 211, 0.4);
 
-  /* Für die gefüllte Danger-Variante — die eine destruktive Fläche, die §5
-     nicht vorsieht: die Bestätigung im Dialog. Inline-Aktionen vom Typ
-     „Abmelden" bleiben Text auf transparent, wie in §5 beschrieben. */
-  --on-text-danger: #4A1010;
+  /* Kontrast auf gefüllten Flächen: der Filz selbst. */
+  --on-accent-primary: #0F1613;
+  --on-accent-bone: #0F1613;
+  --on-text-danger: #EDE6D3;
 
   /* ─────────────────────────────────────────────────────────────────────────
      2. Typografie (DESIGN.md §2)
 
-     Skala nach Verwendung benannt, nicht nach Größe — damit ein späterer
-     Wechsel von 20px auf 21px für Card-Titel nicht `--text-20` zur Lüge macht.
-
-     Drei Schriften mit je einer Aufgabe:
-     · --font-heading (Caprasimo) trägt ausschließlich Überschriften und die
-       Wortmarke. Nie eine Zahl: die Ziffern der Schrift sind proportional und
-       eigenwillig, ein mitlaufender Punktestand würde bei jedem Wurf zappeln.
-     · --font (Figtree) trägt jeden Fließ- und Bedientext.
-     · --font-mono (JetBrains Mono) trägt jede Zahl, immer mit tabular-nums
-       (Utility-Klasse `.num` in index.css).
+     Zwei Familien:
+     · --font (Barlow) trägt Fließ- und Bedientext.
+     · --font-display (Barlow Condensed 600) trägt Zahlen, Überschriften und
+       Buttons, Zahlen immer mit tabular-nums (Utility `.num`).
+     --font-heading und --font-mono zeigen darauf; celebration.css und ältere
+     Stellen lesen sie noch unter diesen Namen.
+     Kurze Labels stehen in gesperrten Großbuchstaben (`.label-caps`).
      ───────────────────────────────────────────────────────────────────────── */
-  --text-label: 12px;         /* Label/Meta, u. a. Label über Kennzahlen */
+  --text-label: 11px;         /* Label in Großbuchstaben, Meta */
   --text-body: 14px;
   --text-body-lg: 16px;
   --text-card-title: 20px;
   --text-screen-title: 24px;
-  --text-display: 32px;       /* Live-Score, große Zahlen */
+  --text-display: 32px;
 
-  /* Display-Stufen — nur für --font-heading. Die Größen stehen so im Prototyp:
-     Diagramm-Titel, Abschnittstitel in der Karte, Dialogtitel, Screen-Titel.
-     Der Screen-Titel skaliert mit, weil er auf dem iPhone sonst dreizeilig
-     umbricht und auf dem iPad verloren wirkt. */
-  --text-heading-sm: 21px;
-  --text-heading: 23px;
-  --text-heading-lg: 26px;
-  --text-heading-xl: clamp(26px, 3.1vw, 37px);
+  --text-heading-sm: 22px;
+  --text-heading: 26px;
+  --text-heading-lg: 30px;
+  --text-heading-xl: clamp(34px, 4vw, 44px);
 
-  /* Caprasimo ist eine fette Display-Schrift; ohne negatives Tracking und
-     enge Zeilen stehen die Buchstaben in der Überschrift zu weit auseinander. */
   --tracking-heading: -0.01em;
   --tracking-heading-lg: -0.02em;
-  --leading-heading: 1.1;
+  --tracking-label: 0.16em;
+  --leading-heading: 1;
 
-  /* 400 für Fließtext, 500 für Zahlen, 600 für alles Bedienbare — Labels,
-     Buttons, Namen. Kein 700+: das trägt --font-heading. */
   --weight-regular: 400;
   --weight-medium: 500;
   --weight-semibold: 600;
 
-  --font: 'Figtree', -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
-  --font-heading: 'Caprasimo', Georgia, 'Times New Roman', serif;
-  --font-mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+  --font: 'Barlow', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-display: 'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif;
+  --font-heading: var(--font-display);
+  --font-mono: var(--font-display);
 
   /* ─────────────────────────────────────────────────────────────────────────
-     3. Spacing & Grid (DESIGN.md §3)
-
-     Basis-Einheit 4px; die Skala listet nur die in §3 erlaubten Vielfachen.
-     Ein Abstand, der hier nicht vorkommt, ist im Redesign kein gültiger Wert.
+     3. Spacing & Grid (DESIGN.md §3) — Basis 4px
      ───────────────────────────────────────────────────────────────────────── */
   --space-1: 4px;
   --space-2: 8px;
@@ -167,43 +143,23 @@
   --space-8: 32px;
 
   /* ─────────────────────────────────────────────────────────────────────────
-     Radien — eine Leiter, nach Bauteil benannt
-
-     §3 kannte nur „12px durchgehend". Der Prototyp arbeitet mit einer Leiter,
-     und zwar mit deutlichem Abstand nach oben: die Karte trägt 28px, alles was
-     IN ihr liegt weniger, und alles Runde geht auf 999px. Ein Radius, der hier
-     nicht vorkommt, ist kein gültiger Wert.
-
-     Die Reihenfolge ist keine Skala nach Größe, sondern nach Verschachtelung —
-     eine Zeile in einer Kachel in einer Karte wird nach innen hin flacher,
-     sonst schneiden die Ecken sichtbar aneinander vorbei.
+     Radien — nach Verschachtelung: je weiter innen, desto flacher.
      ───────────────────────────────────────────────────────────────────────── */
-  --radius-pill: 999px;       /* Pills, Thumbs, Avatare, runde Buttons, CTA */
-  --radius-card: 28px;        /* Karte, Section, Modal */
-  --radius-tile: 24px;        /* Kachel innerhalb einer Karte */
-  --radius-row: 22px;         /* Listenzeile, Options-Zeile */
-  --radius-key: 20px;         /* Keypad-Taste, Dart-Kasten, Dock-Eintrag */
-  --radius-key-sm: 18px;      /* kleine Taste, kleine Kennzahl-Kachel */
+  --radius-pill: 999px;       /* Slider, Chips, Avatare */
+  --radius-card: 22px;        /* Karte, Sheet-Innenleben */
+  --radius-tile: 18px;        /* Kennzahl-Kachel, Button */
+  --radius-row: 16px;         /* Listenzeile, Leiste */
+  --radius-key: 14px;         /* Keypad-Taste, Dart-Kasten */
+  --radius-key-sm: 12px;      /* kleine Taste, Kachel im Querformat */
 
   --card-padding: var(--space-4);
 
-  /* Breite der Sidebar ab 900px (§6). Steht hier und nicht am Element, weil
-     `body` den Wert braucht, um den Platz dafür freizuhalten. Unter 900px ist
-     die Navigation der untere Dock und der Wert wird nicht gelesen. */
+  /* Breite der Sidebar ab 900px (§6). */
   --nav-rail: 232px;
 
   /* ─────────────────────────────────────────────────────────────────────────
-     Safe Areas (DESIGN.md §6)
-
-     `viewport-fit=cover` steht in index.html, also reicht der Anzeigebereich
-     unter Dynamic Island, Home-Indicator und die abgerundeten Ecken. Alle vier
-     Insets sind hier einmal benannt, mit `0px` als Rückfall für alles, was
-     env() nicht kennt — sonst wird ein calc() mit einem leeren Wert ungültig
-     und der ganze Deklarationswert fällt weg.
-
-     Wichtig: rechts ist NICHT gleich links. Im Querformat sitzt die Aussparung
-     auf genau einer Seite, und wer beide Seiten aus --safe-left berechnet,
-     schiebt den Inhalt auf der falschen Seite ein.
+     Safe Areas (DESIGN.md §6) — rechts ist NICHT gleich links: im Querformat
+     sitzt die Aussparung auf genau einer Seite.
      ───────────────────────────────────────────────────────────────────────── */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
@@ -211,15 +167,8 @@
   --safe-left: env(safe-area-inset-left, 0px);
 
   /* ─────────────────────────────────────────────────────────────────────────
-     Legacy-Aliasse
-
-     Die Alt-Namen zeigen auf die Rollen, deren Bedeutung sie tragen. Weil sie
-     per `var()` verweisen und `:root` und `html[data-theme="…"]` dasselbe
-     Element sind, folgen sie automatisch dem aktiven Theme — ein Theme muss sie
-     also nicht einzeln überschreiben.
-
-     Der Abbau ist weitgehend erledigt; was noch darauf zeigt, sind die Stellen,
-     die das Redesign nicht angefasst hat.
+     Legacy-Aliasse — zeigen auf Rollen und verschwinden mit den Screens, die
+     noch darauf zeigen.
      ───────────────────────────────────────────────────────────────────────── */
   --bg: var(--bg-base);
   --card: var(--surface-card);
@@ -231,39 +180,19 @@
   --red: var(--text-danger);
   --radius: var(--radius-card);
 
-  /* Bewusst NICHT aliasiert: --blue, --orange, --purple.
+  /* Die Legende der Heatmap liest noch diese drei Namen. */
+  --blue: var(--heat-low);
+  --orange: var(--heat-mid);
+  --purple: var(--accent-pro);
 
-     §1 ersetzt genau diese Screen-abhängigen Farben durch Rollen, und das war
-     semantische Arbeit statt einer Umbenennung — dasselbe `var(--blue)` stand
-     je nach Fundstelle für ein Multiplayer-Icon, einen Auswahl-Zustand oder
-     reine Dekoration. Nach Phase 5 liest sie nur noch die Legende der
-     Dartboard-Heatmap, die als Kernstück der App unverändert bleibt (§7). Weil
-     kein Theme sie überschreibt, trägt die Legende dort in allen drei Themes
-     denselben Ton; das ist bekannt und Teil der Entscheidung, das Widget nicht
-     anzufassen. */
-  --blue: #3B82F6;
-  --orange: #F97316;
-  --purple: #8B5CF6;
-
-  /* Ohne eigene Rolle in DESIGN.md, aber in Gebrauch — und deshalb von beiden
-     Themes überschrieben. */
-  --bg-surface: #111827;                      /* deckend; Modals, Overlays */
-  --card-border: rgba(148, 163, 184, 0.12);
-  --card-border-glow: rgba(251, 191, 36, 0.3);
-  --surface-hover: rgba(148, 163, 184, 0.12);
-  --text-muted: #64748B;
-  --primary-glow: rgba(var(--accent-primary-rgb), 0.3);
+  --bg-surface: var(--surface-sunken);
+  --card-border: var(--line-2);
+  --card-border-glow: rgba(var(--accent-primary-rgb), 0.3);
+  --surface-hover: rgba(237, 230, 211, 0.06);
+  --text-muted: var(--text-tertiary);
+  --primary-glow: rgba(var(--accent-primary-rgb), 0.25);
   --red-glow: rgba(var(--text-danger-rgb), 0.25);
-  /* --card-hover, --primary-dark und die Glows zu blau, orange, violett und
-     grün sind entfallen: nach dem Redesign las sie niemand mehr, und ein Token,
-     das nichts einfärbt, muss auch kein Theme überschreiben. */
 
-  /* Diese vier standen hier, bevor es die Radius-Leiter gab. Zwei fallen genau
-     auf eine Sprosse und zeigen jetzt dorthin. Die zwei kleinen bleiben als
-     Zahl stehen: sie hängen an 24 Stellen in index.css, die dieser Baustein
-     nicht umbaut, und ein Sprung von 6px auf 18px würde dort Balken und
-     Hairlines rundlutschen, die niemand angefasst hat. Sie werden umgehängt,
-     wenn der Screen, dem sie gehören, neu gebaut wird. */
   --radius-xs: 6px;
   --radius-sm: 10px;
   --radius-lg: var(--radius-key);
@@ -271,42 +200,31 @@
 
   /* ─────────────────────────────────────────────────────────────────────────
      Motion
-
-     Drei Dauern, drei Kurven — jede mit einer Aufgabe, damit nicht jedes
-     Bauteil seine eigene Zeit erfindet:
-     · --motion-color für Farbwechsel; linear genug, dass keine Kurve nötig ist.
-     · --motion-slide + --ease-glide für den gleitenden Thumb (Nav-Indikator,
-       Slider). Die Kurve schießt bewusst über 1 hinaus: das Überschwingen ist
-       das, was die Bewegung als „geglitten" statt „gesprungen" lesbar macht.
-     · --motion-switch + --ease-switch für den kleinen Zwei-Positionen-Schalter,
-       etwas kürzer und etwas härter — auf 40px Weg wirkt die lange Kurve träge.
-     · --motion-pop + --ease-pop für Erscheinen (Dart-Kasten, Finish-Pille).
-
-     Der reduced-motion-Block setzt alle Dauern auf 0s und alle Kurven auf
-     linear. Damit endet jede Transition sofort im Zielzustand, ohne dass eine
-     Komponente `prefers-reduced-motion` selbst abfragen muss — sie liest die
-     Tokens, und die Entscheidung steht an einer Stelle.
+     · --motion-color für Farbwechsel.
+     · --motion-slide + --ease-glide für den gleitenden Thumb (Nav, Slider). Die
+       Kurve schießt über 1 hinaus: das Nachfedern macht das Gleiten lesbar.
+     · --motion-switch + --ease-switch für den Zwei-Positionen-Schalter.
+     · --motion-pop + --ease-pop für Erscheinen.
+     Unter reduced motion stehen alle Dauern auf 0s.
      ───────────────────────────────────────────────────────────────────────── */
   --motion-color: 0.2s;
   --motion-switch: 0.26s;
-  --motion-slide: 0.28s;
+  --motion-slide: 0.42s;
   --motion-pop: 0.25s;
 
-  --ease-glide: cubic-bezier(0.34, 1.35, 0.5, 1);
+  --ease-glide: cubic-bezier(0.34, 1.36, 0.5, 1);
   --ease-switch: cubic-bezier(0.34, 1.4, 0.5, 1);
   --ease-pop: cubic-bezier(0.175, 0.885, 0.32, 1.275);
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.6);
+  --shadow-md: 0 12px 30px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 30px 60px rgba(0, 0, 0, 0.5);
   --shadow-glow: 0 0 20px var(--primary-glow);
 
   /* ── Stacking order ──
-     Everything that overlaps draws from this scale. `.modal-overlay` and
-     `.app-nav` both sat on 1000 and the dock is rendered after the routes,
-     so it painted over the bottom of every dialog — which is where the buttons
-     are. Numbers are spaced so a new layer can be slotted between two. */
+     Everything that overlaps draws from this scale. Numbers are spaced so a new
+     layer can be slotted between two. */
   --z-content: 1;
   --z-match-shell: 10;
   --z-sticky: 20;
@@ -316,24 +234,16 @@
   --z-screen-effect: 400;
 }
 
-/* Karten-Padding wächst ab Tablet (§3 i. V. m. §6: die 900px-Stufe ist die
-   iPad-Stufe). Bewusst nur diese eine Änderung — die restlichen Breakpoints
-   sind Phase 4. */
+/* Karten-Padding wächst ab Tablet (§3 i. V. m. §6). */
 @media (min-width: 900px) {
   :root {
     --card-padding: var(--space-5);
   }
 }
 
-/* Wer „Bewegung reduzieren" gesetzt hat, bekommt den Zielzustand sofort.
-
-   Nicht `animation: none` und nicht `transition: none`: beides würde auch die
-   Zustände abschalten, die eine Animation überhaupt erst herstellt (eine
-   Einblend-Keyframe, die von opacity 0 kommt, ließe das Element unsichtbar).
-   Dauer 0 lässt die Regel intakt und überspringt nur den Weg dorthin.
-
-   Steht bewusst NACH dem 900px-Block: es ist eine Präferenz, keine
-   Bildschirmgröße, und darf von keinem Breakpoint überschrieben werden. */
+/* Wer „Bewegung reduzieren" gesetzt hat, bekommt den Zielzustand sofort. Dauer
+   0 lässt die Regeln intakt und überspringt nur den Weg dorthin. Steht NACH dem
+   900px-Block, damit kein Breakpoint die Präferenz überschreibt. */
 @media (prefers-reduced-motion: reduce) {
   :root {
     --motion-color: 0s;

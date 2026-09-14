@@ -3,7 +3,7 @@ import { useModalA11y } from '../hooks/useModalA11y';
 import type { Player, MatchHistory } from '../types';
 import { DartboardHeatmap } from './DartboardHeatmap';
 import { checkoutQuote } from '../utils/stats';
-import { Button, ChoiceGroup, Icons } from './ui';
+import { Button, Icons, Slider } from './ui';
 import { MiniGameStoryExport } from './MiniGameStoryExport';
 import { buildStoryData, hasStoryData, type MiniGameType } from '../utils/storyExport';
 
@@ -195,7 +195,7 @@ export const StatsModal: React.FC<{
             <div className="story-export">
               <span className="section-label">Als Bild teilen</span>
               {exportablePlayers.length > 1 && (
-                <ChoiceGroup
+                <Slider
                   name="storyExportPlayer"
                   value={exportTarget?.name ?? ''}
                   options={exportablePlayers.map(p => ({ value: p.name, label: p.name }))}

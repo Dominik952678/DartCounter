@@ -11,7 +11,6 @@ import { HeatmapPreview } from './profile/HeatmapPreview';
 import { MatchHistoryView } from './profile/MatchHistoryView';
 import { ProfileList } from './profile/ProfileList';
 import { SampleDataCard } from './profile/SampleDataCard';
-import { ThemeSettingsCard } from './profile/ThemeSettingsCard';
 import { useGuestSync } from './profile/useGuestSync';
 import { useAuthStore } from '../store/useAuthStore';
 import { Button, Icons } from './ui';
@@ -140,8 +139,6 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
       )}
 
       <HeatmapPreview profiles={profiles} initialProfile={ownProfileName} />
-
-      <ThemeSettingsCard />
 
       <SampleDataCard
         profiles={profiles}
