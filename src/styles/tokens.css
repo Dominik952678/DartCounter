@@ -75,6 +75,17 @@
   --heat-mid: rgba(var(--accent-primary-rgb), 0.6);
   --heat-high: var(--accent-primary);
 
+  /* Dartboard als Grafik (components/ui/DartboardArt.tsx): gedämpft, damit es
+     Hintergrund bleibt. `hero` auf dem Start-Screen, `quiet` in Leerzuständen. */
+  --board-dark: #1B2520;
+  --board-light: #7C786E;
+  --board-red: #7A2E29;
+  --board-green: #1F5C3E;
+  --board-quiet-dark: #1A241F;
+  --board-quiet-light: #3A4640;
+  --board-quiet-red: #4A5650;
+  --board-quiet-green: #2C3833;
+
   /* Semantik — eng gefasst, siehe §1. */
   --text-success: #63C48A;                   /* Erfolg, Check, positive Deltas */
   --text-danger: #E0564B;                    /* destruktiv als Text und Rahmen */

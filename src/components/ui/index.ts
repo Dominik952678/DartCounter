@@ -17,6 +17,9 @@ export type { ChoiceProps } from './Choice';
 export { Slider } from './Slider';
 export type { SliderProps, SliderOption } from './Slider';
 
+export { DartboardArt } from './DartboardArt';
+export type { DartboardArtProps } from './DartboardArt';
+
 export { CallOut } from './CallOut';
 export type { CallOutTone } from './CallOut';
 

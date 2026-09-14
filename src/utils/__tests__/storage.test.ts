@@ -110,18 +110,19 @@ describe('storage registry', () => {
     expect(localStorage.getItem(StorageKey.schemaVersion)).toBe(String(STORAGE_SCHEMA_VERSION));
   });
 
-  /** v2.0.0 has one look; the old theme picker's settings must not linger. */
-  it('removes the settings of the retired theme picker', () => {
+  /** v2.0.0 has one look and no Offline sub-tabs; those settings must not linger. */
+  it('removes the settings of screens v2.0.0 retired', () => {
     localStorage.setItem(StorageKey.schemaVersion, '1');
     localStorage.setItem('dartcounter_theme', 'cyberpunk');
     localStorage.setItem('dartcounter_scanlines', 'true');
     localStorage.setItem('dartcounter_grid', 'false');
     localStorage.setItem('dartcounter_glitch', 'true');
+    localStorage.setItem('dart_offline_subtab', 'training');
     localStorage.setItem(StorageKey.soundEnabled, 'false');
 
     migrateStorage();
 
-    ['dartcounter_theme', 'dartcounter_scanlines', 'dartcounter_grid', 'dartcounter_glitch']
+    ['dartcounter_theme', 'dartcounter_scanlines', 'dartcounter_grid', 'dartcounter_glitch', 'dart_offline_subtab']
       .forEach(key => expect(localStorage.getItem(key)).toBeNull());
     expect(localStorage.getItem(StorageKey.soundEnabled)).toBe('false');
   });

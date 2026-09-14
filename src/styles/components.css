@@ -1,0 +1,19 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Bausteine aus components/ui, die mit dem Redesign (v2.0.0) dazukamen.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Dartboard als Grafik ── Markup: components/ui/DartboardArt.tsx
+   `hero` für den Start-Screen, `quiet` für Leerzustände. */
+.dartboard-art {
+  display: block;
+}
+
+.dartboard-art-hero .dba-dark { fill: var(--board-dark); }
+.dartboard-art-hero .dba-light { fill: var(--board-light); }
+.dartboard-art-hero .dba-red { fill: var(--board-red); }
+.dartboard-art-hero .dba-green { fill: var(--board-green); }
+
+.dartboard-art-quiet .dba-dark { fill: var(--board-quiet-dark); }
+.dartboard-art-quiet .dba-light { fill: var(--board-quiet-light); }
+.dartboard-art-quiet .dba-red { fill: var(--board-quiet-red); }
+.dartboard-art-quiet .dba-green { fill: var(--board-quiet-green); }

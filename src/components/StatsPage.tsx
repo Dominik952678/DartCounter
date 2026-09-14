@@ -116,7 +116,7 @@ export const StatsPage: React.FC = () => {
            matches={matches}
            profileName={effectiveProfile}
            baseProfile={profiles[effectiveProfile]}
-           onPlay={() => navigate('/offline')}
+           onPlay={() => navigate('/play')}
            playLabel="Offline spielen"
          />
 

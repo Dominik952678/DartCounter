@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { HomeContainer } from '../HomeContainer';
+import { PlayScreen } from '../PlayScreen';
 import { MatchSetup } from '../MatchSetup';
 import { useAuthStore } from '../../store/useAuthStore';
 import type { Profile } from '../../types';
@@ -20,7 +20,7 @@ vi.mock('../../db', async () => {
 });
 
 /**
- * Der „Ein Tap"-Weg von der Weiter-Karte: `/offline?start=1`.
+ * Der „Ein Tap"-Weg von der orangen Karte des Start-Screens: `/play?start=1`.
  *
  * Er führt bewusst DURCH den Setup-Screen und nicht um ihn herum, weil dort die
  * Vorprüfungen liegen — gekoppelte Cloud-Profile, gültige Gast-Tokens, ein noch
@@ -33,14 +33,13 @@ const profiles: Record<string, Profile> = {
   Dominik: { wins: 0, matches: 0, dartsThrown: 0, pointsScored: 0, highestThrow: 0 }
 };
 
-const renderOffline = (search: string, onStartGame = vi.fn()) => {
+const renderPlay = (search: string, onStartGame = vi.fn()) => {
   render(
-    <MemoryRouter initialEntries={[`/offline${search}`]}>
-      <HomeContainer
+    <MemoryRouter initialEntries={[`/play${search}`]}>
+      <PlayScreen
         profiles={profiles}
         setProfiles={vi.fn()}
         onStartGame={onStartGame}
-        onStartMiniGame={vi.fn()}
       />
     </MemoryRouter>
   );
@@ -51,7 +50,7 @@ beforeEach(() => { localStorage.clear(); });
 
 describe('Direktstart über ?start=1', () => {
   it('starts the match without a further tap', async () => {
-    const onStartGame = renderOffline('?start=1');
+    const onStartGame = renderPlay('?start=1');
 
     await waitFor(() => expect(onStartGame).toHaveBeenCalledTimes(1));
 
@@ -62,19 +61,17 @@ describe('Direktstart über ?start=1', () => {
   });
 
   it('starts nothing without the parameter', async () => {
-    const onStartGame = renderOffline('');
+    const onStartGame = renderPlay('');
 
     await waitFor(() => expect(screen.getByText('Neues Spiel')).toBeInTheDocument());
     await new Promise(resolve => setTimeout(resolve, 60));
     expect(onStartGame).not.toHaveBeenCalled();
   });
 
-  /** Ein Direktstart gilt immer dem X01-Match, egal welcher Bereich zuletzt offen war. */
-  it('opens the X01 area even when training was the last one used', async () => {
-    localStorage.setItem('dart_offline_subtab', 'training');
-    const onStartGame = renderOffline('?start=1');
+  it('offers the way to online play above the setup', () => {
+    renderPlay('');
 
-    await waitFor(() => expect(onStartGame).toHaveBeenCalledTimes(1));
+    expect(screen.getByRole('button', { name: /Online spielen/ })).toBeInTheDocument();
   });
 });
 
@@ -123,7 +120,7 @@ describe('Direktstart, während die Profile noch laden', () => {
    * Ein Start im ersten Render träfe eine Aufstellung aus leeren Namen und
    * scheiterte an genau der Prüfung, die dafür da ist — der Nutzer bekäme
    * „Bitte gib für jeden Spielerplatz einen Namen ein" zu sehen, obwohl er nur
-   * einen Tap auf „Weiter wie zuletzt" gemacht hat.
+   * einen Tap auf die orange Karte gemacht hat.
    */
   it('waits for the profiles instead of starting on empty seats', async () => {
     const { onStartGame, show } = renderSetup({});
@@ -152,37 +149,6 @@ describe('Direktstart, während die Profile noch laden', () => {
     show(twoPlayers);
     await new Promise(resolve => setTimeout(resolve, 40));
 
-    expect(onStartGame).toHaveBeenCalledTimes(1);
-  });
-});
-
-/**
- * Der Direktstart gilt für das erste Öffnen und nur dafür.
- *
- * `MatchSetup` wird beim Bereichswechsel ausgehängt. Bliebe das Flag gesetzt,
- * startete beim Zurückwechseln ein Match, das niemand mehr angetippt hat.
- */
-describe('Direktstart nach einem Bereichswechsel', () => {
-  it('is spent once the area is switched', async () => {
-    const onStartGame = vi.fn();
-    render(
-      <MemoryRouter initialEntries={['/offline?start=1']}>
-        <HomeContainer
-          profiles={profiles}
-          setProfiles={vi.fn()}
-          onStartGame={onStartGame}
-          onStartMiniGame={vi.fn()}
-        />
-      </MemoryRouter>
-    );
-
-    await waitFor(() => expect(onStartGame).toHaveBeenCalledTimes(1));
-
-    fireEvent.click(screen.getByRole('radio', { name: 'Training' }));
-    await waitFor(() => expect(screen.getByText('Modus wählen')).toBeInTheDocument());
-    fireEvent.click(screen.getByRole('radio', { name: 'X01 Match' }));
-
-    await new Promise(resolve => setTimeout(resolve, 60));
     expect(onStartGame).toHaveBeenCalledTimes(1);
   });
 });

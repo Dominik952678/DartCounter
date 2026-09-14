@@ -35,33 +35,35 @@ interface NavEntry {
   matches: (pathname: string) => boolean;
 }
 
+/* Online hat keinen eigenen Tab: es ist eine Art zu spielen und liegt deshalb
+   unter „Spielen" — samt Lobby und der alten `/offline`-Adresse. */
 const NAV_ENTRIES: readonly NavEntry[] = [
   {
     path: '/',
     icon: Icons.IconHome,
-    label: 'Home',
-    ariaLabel: 'Home',
+    label: 'Start',
+    ariaLabel: 'Start',
     matches: p => p === '/'
   },
   {
-    path: '/offline',
+    path: '/play',
     icon: Icons.IconTarget,
-    label: 'Offline',
-    ariaLabel: 'Offline Match',
-    matches: p => p.startsWith('/offline') || p.startsWith('/training')
+    label: 'Spielen',
+    ariaLabel: 'Spielen',
+    matches: p => ['/play', '/online', '/lobby', '/offline'].some(prefix => p.startsWith(prefix))
   },
   {
-    path: '/online',
-    icon: Icons.IconGlobe,
-    label: 'Online',
-    ariaLabel: 'Online Multiplayer',
-    matches: p => p.startsWith('/online') || p.startsWith('/lobby')
+    path: '/training',
+    icon: Icons.IconTraining,
+    label: 'Training',
+    ariaLabel: 'Training',
+    matches: p => p.startsWith('/training')
   },
   {
     path: '/stats',
     icon: Icons.IconBars,
-    label: 'Stats',
-    ariaLabel: 'Statistiken',
+    label: 'Statistik',
+    ariaLabel: 'Statistik',
     matches: p => p.startsWith('/stats')
   },
   {

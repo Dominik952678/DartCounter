@@ -35,9 +35,6 @@ export const StorageKey = {
   checkoutRounds: 'dart_checkout_rounds',
   checkoutTargets: 'dart_checkout_targets',
 
-  /** Which tab the offline screen was left on. */
-  offlineSubtab: 'dart_offline_subtab',
-
   /** Identity of this device when it hosts for cloud guests, and the name it plays online under. */
   hostDeviceId: 'dartcounter_host_device_id',
   guestOnlineName: 'dart_guest_online_name',
@@ -51,8 +48,14 @@ export type StorageKeyName = keyof typeof StorageKey;
 /** Bump together with a migration in `migrateStorage`. */
 export const STORAGE_SCHEMA_VERSION = 2;
 
-/** Keys of the three selectable themes, which v2.0.0 replaced by one look. */
-const LEGACY_THEME_KEYS = ['dartcounter_theme', 'dartcounter_scanlines', 'dartcounter_grid', 'dartcounter_glitch'];
+/**
+ * Settings v2.0.0 retired: the theme picker (there is one look now) and the
+ * tab the old Offline screen was left on (match and training are two routes).
+ */
+const RETIRED_KEYS = [
+  'dartcounter_theme', 'dartcounter_scanlines', 'dartcounter_grid', 'dartcounter_glitch',
+  'dart_offline_subtab'
+];
 
 const keyOf = (name: StorageKeyName): string => StorageKey[name];
 
@@ -185,7 +188,7 @@ const PORTABLE_KEYS: readonly StorageKeyName[] = [
   'soundEnabled', 'hapticsEnabled',
   'x01StartScore', 'x01OutMode', 'x01Sets', 'x01Legs', 'x01PlayerCount', 'x01Is2v2',
   'trainingMode', 'trainingPlayerCount', 'powerScoringRounds', 'checkoutRounds', 'checkoutTargets',
-  'offlineSubtab', 'guestOnlineName'
+  'guestOnlineName'
 ];
 
 /** The portable settings, by registry name, for a backup file. */
@@ -232,9 +235,9 @@ export const migrateStorage = (): void => {
   const stored = readNumber('schemaVersion', 0);
   if (stored === STORAGE_SCHEMA_VERSION) return;
 
-  // 2: the theme picker is gone; its settings would otherwise linger forever.
+  // 2: settings of screens v2.0.0 removed would otherwise linger forever.
   if (stored < 2) {
-    LEGACY_THEME_KEYS.forEach(key => {
+    RETIRED_KEYS.forEach(key => {
       try {
         localStorage.removeItem(key);
       } catch (err) {

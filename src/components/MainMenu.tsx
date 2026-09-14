@@ -1,221 +1,290 @@
-import React, { useEffect, useId, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { MatchHistory } from '../types';
 import { useAuthStore } from '../store/useAuthStore';
 import { APP_VERSION, BUILD_TIME } from '../version';
 import { AppReloadPrompt } from './AppReloadPrompt';
-import { Button, Icons } from './ui';
-import type { IconProps } from './ui';
+import { Button, DartboardArt, Icons } from './ui';
 import { readStoredMatchConfig } from './matchSetup/useMatchSetupConfig';
 import { configPills } from './matchSetup/configSummary';
+import type { SavedMatchSummary } from './matchSetup/SavedGameCard';
 import { todayStats } from '../utils/todayStats';
-
-/** Die drei Trainings-Schnellstarts. §4 verlangt für sie mindestens 64pt. */
-const TRAINING_QUICKSTARTS: {
-  mode: string;
-  icon: React.FC<IconProps>;
-  title: string;
-  desc: string;
-  tone: 'primary' | 'info' | 'pro';
-}[] = [
-  { mode: 'checkout', icon: Icons.IconTarget, title: 'Checkout', desc: 'Finishes unter Druck', tone: 'primary' },
-  { mode: 'powerscoring', icon: Icons.IconBars, title: 'Power Scoring', desc: 'Maximale Punkte pro Runde', tone: 'info' },
-  { mode: 'splitscore', icon: Icons.IconSplit, title: 'Split Score', desc: 'Ziel treffen oder halbieren', tone: 'pro' }
-];
+import { has, readJson } from '../utils/storage';
 
 interface MainMenuProps {
-  /** Für die Heute-Kachel. Fehlt sie, zeigt die Kachel Striche statt Nullen. */
+  /** Für die Statistik-Kachel und das letzte Match. */
   matches?: MatchHistory[];
+  /** Ob die Engine ein unterbrochenes Match kennt. */
+  hasSavedGame?: boolean;
+  onResumeGame?: () => void;
+  onDiscardSavedGame?: () => void;
 }
 
+const greeting = (hour: number): string =>
+  hour < 11 ? 'Guten Morgen' : hour < 18 ? 'Guten Tag' : 'Guten Abend';
+
+/** „Montag · 14. September". */
+const dayLabel = (date: Date): string =>
+  date.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' }).replace(', ', ' · ');
+
+/** Wer gegeneinander spielt: im Doppel die Teams, sonst die Spieler. */
+const sidesOf = (match: SavedMatchSummary): { name: string; score: number; legs: number; sets: number }[] => {
+  if (!match.config.is2v2) return match.players;
+  const teams = [...new Set(match.players.map(p => p.team))];
+  return teams.map(team => {
+    const members = match.players.filter(p => p.team === team);
+    return {
+      name: members.map(p => p.name).join(' & '),
+      score: members[0]?.score ?? 0,
+      legs: Math.max(...members.map(p => p.legs)),
+      sets: Math.max(...members.map(p => p.sets))
+    };
+  });
+};
+
+/** Welches Leg — und bei Sätzen welcher Satz — gerade läuft. */
+const progressLabel = (match: SavedMatchSummary): string => {
+  const sides = sidesOf(match);
+  const leg = `Leg ${sides.reduce((sum, s) => sum + s.legs, 0) + 1}`;
+  return match.config.setsToWin > 1
+    ? `Satz ${sides.reduce((sum, s) => sum + s.sets, 0) + 1} · ${leg}`
+    : leg;
+};
+
+const TRAINING_NAMES: Record<string, string> = {
+  powerScoring: 'Power Scoring',
+  splitScore: 'Split Score',
+  checkoutTraining: 'Checkout-Training'
+};
+
+const isTraining = (match: MatchHistory): boolean => Boolean(match.gameType && match.gameType !== 'standard');
+
+const lastMatchTitle = (match: MatchHistory): string =>
+  isTraining(match) ? `${TRAINING_NAMES[match.gameType!] ?? 'Training'} · ${match.winner}` : `${match.winner} gewinnt`;
+
+const lastMatchMeta = (match: MatchHistory): string =>
+  [
+    !isTraining(match) && match.config ? `${match.config.startScore} ${match.config.outMode}` : null,
+    match.isOnline ? 'online' : 'offline',
+    match.date
+  ].filter(Boolean).join(' · ');
+
+interface StartTileProps {
+  mark: React.ReactNode;
+  title: string;
+  sub: string;
+  muted?: boolean;
+  onClick: () => void;
+}
+
+const StartTile: React.FC<StartTileProps> = ({ mark, title, sub, muted = false, onClick }) => (
+  <button type="button" className={`start-tile ${muted ? 'is-muted' : ''}`} onClick={onClick}>
+    {mark}
+    <span>
+      <span className="start-tile-title">{title}</span>
+      <span className="start-tile-sub">{sub}</span>
+    </span>
+  </button>
+);
+
 /**
- * Der Start-Screen — und die eine Stelle, an der ein Match ohne Umweg beginnt.
+ * Der Start-Screen (Entwurf A1–A3).
  *
- * Vorher war das ein Menü: ein „Neues Spiel starten"-Button, der auf den
- * Setup-Screen führte, wo man dann eine Konfiguration bestätigte, die schon
- * gespeichert war. Für den häufigsten Fall — dasselbe wie gestern, nochmal —
- * waren das zwei Screens und drei Taps für null Entscheidungen.
+ * Genau eine orange Karte, und welche es ist, sagt der Zustand:
+ * · ein unterbrochenes Match → Fortsetzen,
+ * · eine gespeicherte Konfiguration → „Weiter wie zuletzt" mit einem Tap,
+ * · nichts von beidem → der allererste Start.
  *
- * Jetzt trägt die große Karte die gespeicherte Konfiguration als Pillen-Reihe
- * und startet sie direkt. Wer etwas anderes will, geht über „Anderes Spiel"
- * genau dorthin, wo vorher jeder hin musste. Das ist die Zusammenführung von
- * Start und Setup: nicht zwei Screens in einen gequetscht, sondern der Weg über
- * das Setup zur Ausnahme gemacht.
- *
- * Der direkte Start läuft trotzdem durch den Setup-Screen (`/offline?start=1`)
- * und damit durch dessen Vorprüfungen: gekoppelte Cloud-Profile, ein noch
- * laufendes Match, Gastprofile, die angelegt werden müssen. Sie hier zu
- * wiederholen hieße, sie zweimal zu pflegen — und sie zu überspringen hieße, den
- * schnellen Weg zum unsicheren zu machen.
+ * Der direkte Start läuft durch den Setup-Screen (`/play?start=1`) und damit
+ * durch dessen Vorprüfungen: gekoppelte Cloud-Profile, gültige Gast-Tokens,
+ * Gastprofile, die angelegt werden müssen. Sie hier zu wiederholen hieße, sie
+ * zweimal zu pflegen.
  */
-export const MainMenu: React.FC<MainMenuProps> = ({ matches }) => {
+export const MainMenu: React.FC<MainMenuProps> = ({
+  matches,
+  hasSavedGame = false,
+  onResumeGame,
+  onDiscardSavedGame
+}) => {
   const [showReloadPrompt, setShowReloadPrompt] = useState(false);
+  const [now] = useState(() => new Date());
   const navigate = useNavigate();
-  const trainingLabelId = useId();
   const { user, initialize, signOut } = useAuthStore();
 
   useEffect(() => {
     initialize();
   }, [initialize]);
 
-  // Beim Rendern gelesen und nicht in State gehalten: der Speicher ändert sich
-  // nur, während der Setup-Screen offen ist, und danach wird dieser hier neu
-  // aufgebaut. Ein Effekt, der denselben Wert nachträglich in State schreibt,
-  // wäre ein Render mehr für dieselbe Zahl.
-  const pills = useMemo(() => configPills(readStoredMatchConfig()), []);
+  // Beim Rendern gelesen: der Speicher ändert sich nur, während der Setup-Screen
+  // offen ist, und danach wird dieser Screen neu aufgebaut.
+  const config = useMemo(() => readStoredMatchConfig(), []);
+  const pills = useMemo(() => configPills(config), [config]);
   const today = useMemo(() => todayStats(matches), [matches]);
+  const savedMatch = useMemo(() => {
+    if (!hasSavedGame) return null;
+    const parsed = readJson<SavedMatchSummary | null>('savedGame', null);
+    return parsed?.players?.length && parsed.config ? parsed : null;
+  }, [hasSavedGame]);
+  const hasPlayed = Boolean(matches && matches.length > 0);
+  const isFirstStart = useMemo(
+    () => !savedMatch && !hasPlayed && !has('x01StartScore'),
+    [savedMatch, hasPlayed]
+  );
+
+  const username: string | undefined = user?.user_metadata?.username || undefined;
+  const last = matches?.[0];
 
   /** `–` statt `0`: eine Null behauptet ein Ergebnis, ein Strich sagt „noch nichts". */
   const figure = (value: number): string => (value > 0 ? String(value) : '–');
 
-  return (
-    <div className="screen active-screen home-screen">
-      {/* Zwei Radial-Gradienten, Amber oben rechts und Grün unten links, als
-          ein Element mit zwei Ebenen statt zwei Kreis-Divs. `pointer-events:
-          none` steckt im CSS — ohne das fängt der Hintergrund jeden Tap ab, der
-          neben eine Karte geht. */}
-      <div className="home-ambient" aria-hidden="true" />
+  const firstTile = savedMatch
+    ? { title: 'Neues Spiel', sub: `${pills[0]} · ${pills[1]} · wie zuletzt`, to: '/play' }
+    : isFirstStart
+      ? { title: 'Profil anlegen', sub: 'Damit Statistiken dir folgen', to: '/profile' }
+      : { title: 'Anderes Spiel', sub: 'Modus, Spieler, Distanz', to: '/play' };
 
-      <div className="home-body">
-        <header className="home-head">
-          <p className="home-greeting">
-            {user
-              ? `Willkommen zurück, ${user.user_metadata?.username || user.email}`
-              : 'Willkommen zurück'}
-          </p>
-          <h1>Bereit für das nächste Leg?</h1>
-        </header>
-
-        <div className="home-top">
-          {/* Die eine gefüllte Akzentfläche dieses Screens (§1). */}
-          <button type="button" className="home-resume" onClick={() => navigate('/offline?start=1')}>
-            <span className="home-resume-head">
-              <span>
-                <span className="home-resume-kicker">Ein Tap</span>
-                <span className="home-resume-title">Weiter wie zuletzt</span>
-              </span>
-              <span className="home-resume-play" aria-hidden="true">
-                <Icons.IconPlayFilled size={26} />
-              </span>
+  const renderHero = () => {
+    if (savedMatch) {
+      const sides = sidesOf(savedMatch);
+      return (
+        <>
+          <button type="button" className="start-hero" onClick={() => onResumeGame?.()}>
+            <span className="start-hero-main">
+              <span className="label-caps">{`Fortsetzen · ${progressLabel(savedMatch)}`}</span>
+              <span className="start-hero-title">{sides.map(s => s.name).join(sides.length === 2 ? ' vs ' : ' · ')}</span>
             </span>
-
-            {/* Was ein Tap startet, in Worten. Ohne diese Reihe wäre „Weiter wie
-                zuletzt" ein Versprechen, das man erst nach dem Tap überprüfen
-                kann. */}
-            <span className="home-resume-pills">
-              {pills.map(pill => (
-                <span key={pill} className="home-resume-pill">{pill}</span>
+            <span className="start-hero-scores num">
+              {sides.map((side, i) => (
+                <React.Fragment key={i}>
+                  {i > 0 && <span className="start-hero-sep" aria-hidden="true">·</span>}
+                  {side.score}
+                </React.Fragment>
               ))}
             </span>
-
-            <span className="home-resume-sub">
-              Startet direkt mit dieser Konfiguration — keine Zwischenschritte.
-            </span>
           </button>
-
-          <div className="home-side">
-            <button type="button" className="home-tile home-tile-action" onClick={() => navigate('/offline')}>
-              <span className="home-tile-icon" aria-hidden="true"><Icons.IconPlus size={21} /></span>
-              <span>
-                <span className="home-tile-title">Anderes Spiel</span>
-                <span className="home-tile-desc">Modus, Spieler und Distanz ändern</span>
-              </span>
-            </button>
-
-            {/* Kennzahlen des Tages, nicht des Spielers: dieses Gerät wird von
-                mehreren Leuten benutzt, deshalb Zählbares statt eines Averages
-                über fremde Darts — siehe utils/todayStats.ts. */}
-            <div className="home-tile home-today">
-              <span className="home-tile-label">Heute</span>
-              <div className="home-today-figures">
-                <span className="home-figure">
-                  <span className="home-figure-label">Matches</span>
-                  <span className="num-lg home-figure-value">{figure(today.matches)}</span>
-                </span>
-                <span className="home-figure">
-                  <span className="home-figure-label">180er</span>
-                  <span className="num-lg home-figure-value is-accent">{figure(today.oneEighty)}</span>
-                </span>
-                <span className="home-figure">
-                  <span className="home-figure-label">Bestes Leg</span>
-                  <span className="num-lg home-figure-value is-success">{figure(today.bestLeg)}</span>
-                </span>
-              </div>
-            </div>
+          <div className="start-hero-actions">
+            <Button variant="ghost" size="compact" onClick={() => onDiscardSavedGame?.()}>
+              Verwerfen
+            </Button>
           </div>
+        </>
+      );
+    }
+
+    if (isFirstStart) {
+      return (
+        <button type="button" className="start-hero" onClick={() => navigate('/play?start=1')}>
+          <span className="start-hero-main">
+            <span className="label-caps">Hier anfangen</span>
+            <span className="start-hero-title is-large">{`${config.startScore} spielen`}</span>
+          </span>
+          <span className="start-hero-aside">{pills[3]}<br />{pills[2]}</span>
+        </button>
+      );
+    }
+
+    return (
+      <button type="button" className="start-hero is-center" onClick={() => navigate('/play?start=1')}>
+        <span className="start-hero-main">
+          <span className="label-caps">Weiter wie zuletzt · ein Tap</span>
+          <span className="start-hero-title is-large">{`${pills[0]} · ${pills[1]}`}</span>
+          <span className="start-hero-sub">{`${pills[2]} · ${pills[3]}`}</span>
+        </span>
+        <span className="start-hero-play" aria-hidden="true">
+          <Icons.IconPlayFilled size={22} />
+        </span>
+      </button>
+    );
+  };
+
+  return (
+    <div className="screen active-screen start-screen">
+      <DartboardArt className="start-board" />
+
+      <div className="start-body">
+        <header className="start-head">
+          <div>
+            <span className="label-caps">{isFirstStart ? 'Willkommen' : dayLabel(now)}</span>
+            <h1 className="start-title">
+              {greeting(now.getHours())}
+              {username ? <>,<br />{username}.</> : '.'}
+            </h1>
+          </div>
+          <button
+            type="button"
+            className={`start-avatar ${username ? '' : 'is-guest'}`}
+            onClick={() => navigate('/profile')}
+            aria-label="Profil"
+          >
+            {username ? username.charAt(0).toUpperCase() : '?'}
+          </button>
+        </header>
+
+        <div className="start-main">{renderHero()}</div>
+
+        <div className="start-tiles">
+          <StartTile
+            mark={<span className="start-mark start-mark-ring" aria-hidden="true" />}
+            title={firstTile.title}
+            sub={firstTile.sub}
+            onClick={() => navigate(firstTile.to)}
+          />
+          <StartTile
+            mark={<span className="start-mark start-mark-solid" aria-hidden="true" />}
+            title="Training"
+            sub={isFirstStart ? '3 Modi zum Üben' : 'Checkout · Power · Split'}
+            onClick={() => navigate('/training')}
+          />
+          <StartTile
+            mark={<span className="start-mark start-mark-ring is-success" aria-hidden="true" />}
+            title="Online"
+            sub="Mit Code beitreten"
+            onClick={() => navigate('/online')}
+          />
+          {/* Kennzahlen des Tages, nicht eines Spielers: dieses Gerät wird von
+              mehreren Leuten benutzt — siehe utils/todayStats.ts. */}
+          <StartTile
+            mark={
+              <span className="start-tile-figure">
+                <span className="num">{figure(today.matches)}</span>
+                <span className="label-caps">heute</span>
+              </span>
+            }
+            title="Statistik"
+            sub={`180er ${figure(today.oneEighty)} · Bestes Leg ${figure(today.bestLeg)}`}
+            muted={!hasPlayed}
+            onClick={() => navigate('/stats')}
+          />
         </div>
 
-        <section className="home-section">
-          <span className="home-tile-label" id={trainingLabelId}>Training</span>
-          <div className="home-training" role="group" aria-labelledby={trainingLabelId}>
-            {TRAINING_QUICKSTARTS.map(({ mode, icon: Icon, title, desc, tone }) => (
-              <button
-                key={mode}
-                type="button"
-                className={`home-tile home-training-tile tone-${tone}`}
-                onClick={() => navigate(`/offline?tab=training&mode=${mode}`)}
-              >
-                <span className="home-tile-icon" aria-hidden="true"><Icon size={20} /></span>
-                <span>
-                  <span className="home-tile-title">{title}</span>
-                  <span className="home-tile-desc">{desc}</span>
-                </span>
-              </button>
-            ))}
+        {last && (
+          <div className="start-last">
+            <div>
+              <span className="label-caps">Letztes Match</span>
+              <span className="start-last-title">{lastMatchTitle(last)}</span>
+            </div>
+            <span className="start-last-meta">{lastMatchMeta(last)}</span>
           </div>
-        </section>
+        )}
 
-        <section className="home-section">
-          <div className="home-links">
-            <button type="button" className="home-tile home-link" onClick={() => navigate('/online')}>
-              <span className="home-tile-icon" aria-hidden="true"><Icons.IconGlobe size={20} /></span>
-              <span>
-                <span className="home-tile-title">Multiplayer</span>
-                <span className="home-tile-desc">Räume &amp; offene Lobbys</span>
-              </span>
-              <Icons.IconArrowRight size={17} className="home-link-arrow" />
-            </button>
-
-            <button
-              type="button"
-              className="home-tile home-link"
-              onClick={() => navigate(user ? '/stats' : '/auth')}
-            >
-              <span className="home-tile-icon" aria-hidden="true">
-                {user ? <Icons.IconBars size={20} /> : <Icons.IconKey size={20} />}
-              </span>
-              <span>
-                <span className="home-tile-title">{user ? 'Statistiken' : 'Account'}</span>
-                <span className="home-tile-desc">{user ? 'Averages & Radar' : 'Login & Cloud'}</span>
-              </span>
-              <Icons.IconArrowRight size={17} className="home-link-arrow" />
-            </button>
-          </div>
-        </section>
-
-        <footer className="home-footer">
-          <div className="home-status">
-            <span className={`home-status-dot ${user ? 'is-online' : ''}`} aria-hidden="true" />
-            <span className="home-status-text">
-              {user ? 'Angemeldet' : 'Gast-Modus'}
-            </span>
-          </div>
-
+        <footer className="start-footer">
+          <span className={`start-status-dot ${user ? 'is-online' : ''}`} aria-hidden="true" />
+          <span className="start-status-text">
+            {user ? 'Angemeldet' : 'Gast-Modus · Daten nur auf diesem Gerät'}
+          </span>
           {user ? (
-            // §5: „Abmelden" ist der Musterfall für Ghost/Destructive-Text.
             <Button variant="dangerText" size="compact" onClick={() => { signOut(); navigate('/'); }}>
               Abmelden
             </Button>
           ) : (
-            <Button variant="secondary" size="compact" onClick={() => navigate('/auth')}>
-              Login
+            <Button variant="ghost" size="compact" onClick={() => navigate('/auth')}>
+              Anmelden
             </Button>
           )}
-
           <Button
             variant="ghost"
             size="compact"
-            className="home-version"
+            className="start-version"
             onClick={() => setShowReloadPrompt(true)}
             title="Klicken zum Neuladen / Cache leeren"
           >

@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Routes, Route, useNavigate, Navigate, useLocation } from 'react-router-dom';
-import { HomeContainer } from './components/HomeContainer';
+import { PlayScreen } from './components/PlayScreen';
+import { TrainingHub, type MiniGameMode } from './components/TrainingHub';
 import { MainMenu } from './components/MainMenu';
 import { AppNav } from './components/AppNav';
 import { AuthScreen } from './components/AuthScreen';
@@ -31,6 +32,7 @@ import { useProfiles } from './hooks/useProfiles';
 import { useGameEngine } from './hooks/useGameEngine';
 import { useAuthStore } from './store/useAuthStore';
 import { Button, Icons } from './components/ui';
+import { legacyOfflineTarget } from './utils/legacyRoutes';
 
 type MiniGameResult = {
   name: string;
@@ -81,6 +83,12 @@ const Toast = ({ type, title, message, onDismiss }: {
     <Button variant="ghost" className="btn-close" onClick={onDismiss} aria-label="Hinweis schließen"><Icons.IconClose size={18} /></Button>
   </div>
 );
+
+/** Alte Adressen auf `/offline` (Lesezeichen, installierte PWAs) landen auf den neuen Routen. */
+const LegacyOfflineRedirect = () => {
+  const { search } = useLocation();
+  return <Navigate to={legacyOfflineTarget(search)} replace />;
+};
 
 export default function App() {
   const navigate = useNavigate();
@@ -133,7 +141,7 @@ export default function App() {
 
   // Bridges the hook's legacy `screen` strings onto the router.
   const setScreen = useCallback((screen: string) => {
-    if (screen === 'start') navigate('/offline');
+    if (screen === 'start') navigate('/play');
     else navigate('/' + screen);
   }, [navigate]);
 
@@ -298,7 +306,14 @@ export default function App() {
       {/* Inside the container, so the dock below stays put while a route loads. */}
       <Suspense fallback={<LoadingScreen message="Wird geladen…" />}>
         <Routes>
-          <Route path="/" element={<MainMenu matches={savedMatches} />} />
+          <Route path="/" element={
+            <MainMenu
+              matches={savedMatches}
+              hasSavedGame={gameEngine.hasSavedGame}
+              onResumeGame={gameEngine.resumeGame}
+              onDiscardSavedGame={gameEngine.discardSavedGame}
+            />
+          } />
           <Route path="/auth" element={<AuthScreen />} />
           <Route path="/auth/reset" element={<PasswordResetScreen />} />
           <Route path="/stats" element={<StatsPage />} />
@@ -306,14 +321,22 @@ export default function App() {
           <Route path="/lobby/:code" element={<LobbyRoom />} />
           <Route path="/online-game" element={<OnlineGameWrapper />} />
 
-          <Route path="/offline" element={
-            <HomeContainer
+          <Route path="/play" element={
+            <PlayScreen
               profiles={profiles}
               setProfiles={setProfiles}
               onStartGame={gameEngine.startGame}
               hasSavedGame={gameEngine.hasSavedGame}
               onResumeGame={gameEngine.resumeGame}
               onDiscardSavedGame={gameEngine.discardSavedGame}
+            />
+          } />
+
+          <Route path="/training" element={
+            <TrainingHub
+              profiles={profiles}
+              setProfiles={setProfiles}
+              initialMode={(new URLSearchParams(location.search).get('mode') as MiniGameMode | null) ?? undefined}
               onStartMiniGame={(mode, players, settings) => {
                 setMiniGameConfig({ players, settings });
                 setMatchSessionId(prev => prev + 1);
@@ -321,6 +344,8 @@ export default function App() {
               }}
             />
           } />
+
+          <Route path="/offline" element={<LegacyOfflineRedirect />} />
 
           <Route path="/game" element={
             <GameScreen
@@ -349,7 +374,7 @@ export default function App() {
               players={effectiveMiniGamePlayers}
               profiles={profiles}
               rounds={(miniGameConfig.settings.rounds as number) || 10}
-              onAbort={() => setScreen('start')}
+              onAbort={() => navigate('/training')}
               onFinish={results => finishMiniGame(results, 'powerScoring')}
             />
           } />
@@ -359,7 +384,7 @@ export default function App() {
               key={matchSessionId}
               players={effectiveMiniGamePlayers}
               profiles={profiles}
-              onAbort={() => setScreen('start')}
+              onAbort={() => navigate('/training')}
               onFinish={results => finishMiniGame(results, 'splitScore')}
             />
           } />
@@ -371,7 +396,7 @@ export default function App() {
               profiles={profiles}
               checkoutRounds={(miniGameConfig.settings.checkoutRounds as number) || 1}
               checkoutTargets={(miniGameConfig.settings.checkoutTargets as number) || 10}
-              onAbort={() => setScreen('start')}
+              onAbort={() => navigate('/training')}
               onFinish={results => finishMiniGame(results, 'checkoutTraining')}
             />
           } />

@@ -173,7 +173,7 @@ export const AuthScreen: React.FC = () => {
             variant="secondary"
             size="large"
             fullWidth
-            onClick={() => navigate('/offline')}
+            onClick={() => navigate('/play')}
           >
             <Icons.IconTarget size={20} /> Als Gast fortfahren
           </Button>

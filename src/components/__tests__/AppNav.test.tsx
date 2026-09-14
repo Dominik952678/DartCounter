@@ -11,31 +11,33 @@ describe('AppNav Component', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText('Home')).toBeInTheDocument();
-    expect(screen.getByText('Offline')).toBeInTheDocument();
-    expect(screen.getByText('Online')).toBeInTheDocument();
-    expect(screen.getByText('Stats')).toBeInTheDocument();
+    expect(screen.getByText('Start')).toBeInTheDocument();
+    expect(screen.getByText('Spielen')).toBeInTheDocument();
+    expect(screen.getByText('Training')).toBeInTheDocument();
+    expect(screen.getByText('Statistik')).toBeInTheDocument();
     expect(screen.getByText('Profil')).toBeInTheDocument();
   });
 
   it('marks active navigation item correctly', () => {
     render(
-      <MemoryRouter initialEntries={['/offline']}>
+      <MemoryRouter initialEntries={['/play']}>
         <AppNav />
       </MemoryRouter>
     );
 
-    const offlineBtn = screen.getByRole('button', { name: /offline match/i });
-    expect(offlineBtn).toHaveClass('active');
-    expect(offlineBtn).toHaveAttribute('aria-current', 'page');
-    expect(screen.getByRole('button', { name: 'Home' })).not.toHaveAttribute('aria-current');
+    const playBtn = screen.getByRole('button', { name: 'Spielen' });
+    expect(playBtn).toHaveClass('active');
+    expect(playBtn).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('button', { name: 'Start' })).not.toHaveAttribute('aria-current');
   });
 
   // Die Einträge matchen auf Pfad-Präfixe, nicht auf Gleichheit — sonst
   // verliert die Navigation ihre Markierung, sobald ein Unter-Screen offen ist.
+  // Online hat keinen eigenen Tab und gehört zu „Spielen".
   it.each([
-    ['/training/checkout', /offline match/i],
-    ['/lobby/AB12', /online multiplayer/i],
+    ['/online', 'Spielen'],
+    ['/lobby/AB12', 'Spielen'],
+    ['/training', 'Training'],
     ['/auth', 'Profil']
   ])('keeps the owning tab marked on %s', (path, name) => {
     render(

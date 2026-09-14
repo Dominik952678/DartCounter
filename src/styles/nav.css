@@ -1,0 +1,195 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Hauptnavigation (DESIGN.md §6) — Start · Spielen · Training · Statistik · Profil
+   Markup: components/AppNav.tsx, der Eintrag: components/ui/NavItem.tsx.
+
+   Ein Markup, zwei Ausrichtungen als Klasse (`.app-nav-horizontal` /
+   `.app-nav-vertical`): die gleitende Markierung braucht eine Achse, und zwei
+   sich ausschließende Klassen können einander nicht überschreiben.
+
+   Die Markierung rechnet ohne Messung: `--nav-count` und `--nav-active` kommen
+   von der Komponente. Die Bedingung dafür sind gleich große Einträge.
+
+   Der Dock ist ein fixes Overlay. `.app-container` in index.css reserviert
+   dafür `--dock-height` plus `--dock-offset` — beide müssen zu den Werten hier
+   passen.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.app-nav {
+  --nav-pad: 5px;
+  position: fixed;
+  display: flex;
+  background: var(--surface-card);
+  z-index: var(--z-dock);
+}
+
+/* Die Markierung ist Knochen, wie der Thumb des Sliders: dieselbe Bewegung für
+   „das ist gewählt". Bewegt nur per `transform`; unter reduced motion steht
+   `--motion-slide` auf 0s. */
+.nav-indicator {
+  position: absolute;
+  background: var(--accent-bone);
+  border-radius: 19px;
+  pointer-events: none;
+  z-index: 0;
+  transition:
+    transform var(--motion-slide) var(--ease-glide),
+    opacity var(--motion-color) ease;
+}
+
+/* Kein Eintrag passt zum Pfad: ausgeblendet statt entfernt, damit sie beim
+   nächsten Wechsel heranfährt statt aus dem Nichts zu erscheinen. */
+.nav-indicator.is-hidden {
+  opacity: 0;
+}
+
+.nav-item {
+  position: relative;
+  /* Über der Markierung, sonst liegt deren Fläche auf Icon und Label. */
+  z-index: 1;
+  min-height: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 19px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font);
+  font-size: 10px;
+  /* Kein Gewichtswechsel im aktiven Zustand: ein schwereres Label ist breiter,
+     und der Eintrag würde bei jedem Wechsel zappeln. */
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color var(--motion-color) ease;
+}
+
+.nav-item .nav-icon {
+  display: flex;
+  line-height: 1;
+}
+
+.nav-item:hover {
+  background: transparent;
+  color: var(--text-primary);
+}
+
+.nav-item.active,
+.nav-item.active:hover {
+  color: var(--on-accent-bone);
+}
+
+/* ── Waagerecht: der schwebende Dock ── */
+.app-nav-horizontal {
+  --dock-height: 64px;
+  left: max(12px, var(--safe-left));
+  right: max(12px, var(--safe-right));
+  bottom: calc(var(--safe-bottom) + 10px);
+  /* Die Obergrenze sitzt an der Schiene und nicht am Eintrag — sonst wären die
+     Einträge nicht mehr gleich breit, und die Division oben ginge nicht auf. */
+  max-width: 600px;
+  height: var(--dock-height);
+  margin: 0 auto;
+  padding: var(--nav-pad);
+  border: 1px solid var(--line-2);
+  border-radius: 24px;
+  box-shadow: var(--shadow-md);
+}
+
+.app-nav-horizontal .nav-item {
+  flex: 1 1 0;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.app-nav-horizontal .nav-indicator {
+  top: var(--nav-pad);
+  bottom: var(--nav-pad);
+  left: var(--nav-pad);
+  /* Prozente eines absolut positionierten Kindes beziehen sich auf die
+     Padding-Box, das ist exakt ein Eintrag — und der Schritt in `translateX`
+     rechnet gegen die eigene Breite. */
+  width: calc((100% - 2 * var(--nav-pad)) / var(--nav-count));
+  transform: translateX(calc(var(--nav-active) * 100%));
+}
+
+/* Telefon quer: flacher, Icon und Label nebeneinander. Doppelte Klasse, weil
+   eine Media-Query keine Spezifität verleiht. Die Reservierung dazu steht in
+   index.css. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .app-nav.app-nav-horizontal {
+    --dock-height: 50px;
+    --nav-pad: 4px;
+    bottom: calc(var(--safe-bottom) + 6px);
+    border-radius: 20px;
+  }
+  .app-nav.app-nav-horizontal .nav-item {
+    flex-direction: row;
+    gap: 6px;
+    border-radius: 16px;
+  }
+  .app-nav.app-nav-horizontal .nav-indicator {
+    border-radius: 16px;
+  }
+}
+
+/* ── Senkrecht: die Leiste links (§6) ──
+   Den Platz schafft `body { padding-left }`, nicht ein Margin am Container: so
+   bleibt `.app-container` in der Restbreite zentriert. */
+.app-nav-vertical {
+  --nav-pad: var(--space-3);
+  /* Eintragshöhe und Schrittweite der Markierung aus derselben Zahl, sonst
+     laufen sie nach dem dritten Eintrag sichtbar auseinander. */
+  --nav-step: 54px;
+  --nav-inset: 3px;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: auto;
+  width: calc(var(--nav-rail) + var(--safe-left));
+  height: 100%;
+  margin: 0;
+  flex-direction: column;
+  justify-content: flex-start;
+  padding: calc(var(--safe-top) + var(--space-6)) var(--nav-pad)
+    calc(var(--safe-bottom) + var(--space-4))
+    calc(var(--safe-left) + var(--nav-pad));
+  background: var(--surface-sunken);
+  border-right: 1px solid var(--line-1);
+}
+
+.app-nav-vertical .nav-item {
+  flex: 0 0 var(--nav-step);
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: var(--space-3);
+  width: 100%;
+  height: var(--nav-step);
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-row);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+}
+
+.app-nav-vertical .nav-indicator {
+  top: calc(var(--safe-top) + var(--space-6) + var(--nav-inset));
+  left: calc(var(--safe-left) + var(--nav-pad));
+  right: var(--nav-pad);
+  height: calc(var(--nav-step) - 2 * var(--nav-inset));
+  border-radius: var(--radius-row);
+  transform: translateY(calc(var(--nav-active) * var(--nav-step)));
+}
+
+/* Reservieren nur, wenn die Leiste wirklich steht: im Match und in der Lobby
+   rendert App.tsx keine Navigation. */
+body:has(.app-nav-vertical) {
+  padding-left: calc(var(--nav-rail) + var(--safe-left));
+}
+
+/* Kein Dock am unteren Rand, also braucht auch niemand Platz dafür. */
+body:has(.app-nav-vertical) .app-container {
+  --shell-pad-bottom: calc(var(--safe-bottom) + var(--space-6));
+}
