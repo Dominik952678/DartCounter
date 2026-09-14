@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import type { RealtimeChannel } from '@supabase/supabase-js';
-import type { Profile, Dart } from '../types';
+import type { Profile, Dart, Celebration, CelebrationType } from '../types';
 import { Keypad } from './Keypad';
 import { getCheckoutSuggestion } from '../utils/checkouts';
 import { getBotDart } from '../utils/bot';
 import { playDartHitSound, playSciFiHitSound, speak, isSoundEnabled, setSoundEnabled } from '../utils/audio';
 import { ConfirmModal } from './ConfirmModal';
-import { Button, CallOut, StatStrip, Icons } from './ui';
+import { Button, StatStrip, Icons } from './ui';
 import { withDartRecorded } from '../utils/segmentStats';
 import { liveStats } from '../utils/storyExport';
 import { playerColorBySeat } from '../utils/playerColors';
 import { botAverage } from '../utils/botProfiles';
+import { celebrationTypeFor, isCelebration } from '../utils/celebration';
+import { nextCheckoutPlayer } from '../utils/checkoutTurns';
+import { CelebrationStage } from './celebration/CelebrationStage';
+import { CelebrationBoard } from './celebration/CelebrationBoard';
 
 interface CheckoutTrainingProps {
   players: string[];
@@ -127,23 +131,27 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
   const [roundBust, setRoundBust] = useState(false);
   const [history, setHistory] = useState<HistorySnapshot[]>([]);
   /**
-   * Der große Zuruf über dem Board. `n` zählt hoch, damit derselbe Ruf zweimal
-   * hintereinander auch zweimal erscheint.
+   * Dieselben Feier-Animationen wie im Match: Check, High Finish ab 100 und
+   * „Verpasst". Sie ersetzen den großen Zuruf. Die id zählt hoch, damit
+   * dieselbe Feier zweimal hintereinander auch zweimal abläuft.
    */
-  const [callOut, setCallOut] = useState<{ n: number; text: string; detail: string; tone: 'good' | 'bad' }>(
-    { n: 0, text: '', detail: '', tone: 'good' }
-  );
+  const [celebration, setCelebration] = useState<Celebration | null>(null);
+  const celebrationIdRef = React.useRef(0);
+
+  const celebrate = React.useCallback((type: CelebrationType, playerIndex: number, total: number, darts: Dart[], targetIndex: number) => {
+    setCelebration({ id: ++celebrationIdRef.current, type, playerIndex, total, darts, matchWin: false, targetIndex });
+  }, []);
 
   const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const activeP = gameState[activePlayer] || gameState[0];
   const isMyTurn = isOnline ? (activeP.name === myUsername) : true;
 
-  const stateRef = React.useRef({ gameState, activePlayer, currentRoundDarts, isProcessing, currentMultiplier, roundBust });
+  const stateRef = React.useRef({ gameState, activePlayer, currentRoundDarts, isProcessing, currentMultiplier, roundBust, celebration });
 
   useEffect(() => {
-    stateRef.current = { gameState, activePlayer, currentRoundDarts, isProcessing, currentMultiplier, roundBust };
-  }, [gameState, activePlayer, currentRoundDarts, isProcessing, currentMultiplier, roundBust]);
+    stateRef.current = { gameState, activePlayer, currentRoundDarts, isProcessing, currentMultiplier, roundBust, celebration };
+  }, [gameState, activePlayer, currentRoundDarts, isProcessing, currentMultiplier, roundBust, celebration]);
 
   const advanceToNextPlayerOrFinish = React.useCallback((latestGameState: PlayerState[]) => {
     const allFinished = latestGameState.every(p => p.attempts >= checkoutTargets);
@@ -167,19 +175,14 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
       return;
     }
 
-    const st = stateRef.current;
-    let nextIdx = (st.activePlayer + 1) % players.length;
-    for (let i = 0; i < players.length; i++) {
-      if (latestGameState[nextIdx].attempts < checkoutTargets) {
-        break;
-      }
-      nextIdx = (nextIdx + 1) % players.length;
-    }
+    // Alle spielen dasselbe Ziel gleichzeitig: dran ist nur, wer es noch offen
+    // hat. Wer gecheckt hat, setzt die restlichen Runden aus.
+    const nextIdx = nextCheckoutPlayer(latestGameState.map(p => p.attempts), stateRef.current.activePlayer);
 
     setActivePlayer(nextIdx);
     setCurrentRoundDarts([]);
     setIsProcessing(false);
-  }, [checkoutTargets, onFinish, players.length]);
+  }, [checkoutTargets, onFinish]);
 
   const processCheckout = React.useCallback((dartsInThisTurn: number) => {
     speak('Game Shot');
@@ -187,12 +190,6 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
     const st = stateRef.current;
     const p = st.gameState[st.activePlayer];
     const totalDartsForThisTarget = p.dartsOnCurrentTarget + dartsInThisTurn;
-    setCallOut(c => ({
-      n: c.n + 1,
-      text: 'CHECKOUT!',
-      detail: `${p.targetScore} mit ${totalDartsForThisTarget} Darts`,
-      tone: 'good'
-    }));
     const newAttempts = p.attempts + 1;
     const newCompleted = p.roundsCompleted + 1;
     const newBestCheckout = Math.max(p.bestCheckout, p.targetScore);
@@ -234,7 +231,7 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
 
     if (nextRoundOnTarget >= checkoutRounds) {
       // All allowed rounds on this target used -> target failed
-      setCallOut(c => ({ n: c.n + 1, text: 'VERPASST', detail: `${p.targetScore} nicht gefinisht`, tone: 'bad' }));
+      celebrate('missed', st.activePlayer, p.targetScore, [], p.attempts);
       const newAttempts = p.attempts + 1;
       const totalDartsForThisTarget = p.dartsOnCurrentTarget + dartsInThisTurn;
       const nextTarget = targets[newAttempts] ?? p.targetScore;
@@ -265,7 +262,7 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
     setGameState(nextGameState);
 
     advanceToNextPlayerOrFinish(nextGameState);
-  }, [checkoutRounds, targets, advanceToNextPlayerOrFinish]);
+  }, [checkoutRounds, targets, advanceToNextPlayerOrFinish, celebrate]);
 
   const processEndTurn = React.useCallback((darts: Dart[]) => {
     const roundScore = darts.reduce((s, d) => s + d.value, 0);
@@ -287,7 +284,7 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
       // noch das Ziel protokolliert — das Raster und das Story-Bild verloren
       // damit genau die Ziele, die man nicht geschafft hat, und `attempts`
       // lief dem Log davon.
-      setCallOut(c => ({ n: c.n + 1, text: 'VERPASST', detail: `${p.targetScore} nicht gefinisht`, tone: 'bad' }));
+      celebrate('missed', st.activePlayer, p.targetScore, [], p.attempts);
       const newAttempts = p.attempts + 1;
       const totalDartsForThisTarget = p.dartsOnCurrentTarget + darts.length;
       const nextTarget = targets[newAttempts] ?? p.targetScore;
@@ -319,7 +316,7 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
     setGameState(nextGameState);
 
     advanceToNextPlayerOrFinish(nextGameState);
-  }, [checkoutRounds, targets, advanceToNextPlayerOrFinish]);
+  }, [checkoutRounds, targets, advanceToNextPlayerOrFinish, celebrate]);
 
   const handleDart = React.useCallback((base: number, overrideMult?: number) => {
     if (stateRef.current.isProcessing) return;
@@ -328,6 +325,9 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
        roomChannel?.send({ type: 'broadcast', event: 'ct_throw', payload: { base, overrideMult } });
        return;
     }
+
+    // Der erste Dart einer neuen Aufnahme räumt die letzte Feier ab.
+    if (stateRef.current.currentRoundDarts.length === 0) setCelebration(null);
 
     // Save snapshot before dart
     setHistory(prev => [...prev, {
@@ -382,7 +382,11 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
     });
 
     if (newScore === 0 && mult === 2) {
-      // Successful Checkout!
+      // Successful Checkout! Gefeiert wird der Wert dieser Aufnahme, wie im
+      // Match — ab 100 mit der großen Animation.
+      const visitTotal = newDarts.reduce((sum, d) => sum + d.value, 0);
+      const type = celebrationTypeFor({ bust: false, isWin: true, total: visitTotal });
+      if (type) celebrate(type, st.activePlayer, visitTotal, newDarts, currentP.attempts);
       setIsProcessing(true);
       timeoutRef.current = setTimeout(() => processCheckout(newDarts.length), 700);
     } else if (newScore <= 1) {
@@ -395,7 +399,7 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
       setIsProcessing(true);
       timeoutRef.current = setTimeout(() => processEndTurn(newDarts), 700);
     }
-  }, [isOnline, isHost, roomChannel, processCheckout, processBust, processEndTurn]);
+  }, [isOnline, isHost, roomChannel, processCheckout, processBust, processEndTurn, celebrate]);
 
   useEffect(() => {
     if (isOnline && roomChannel) {
@@ -416,6 +420,7 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
             if (data?.currentRoundDarts) setCurrentRoundDarts(data.currentRoundDarts as Dart[]);
             if (data?.isProcessing !== undefined) setIsProcessing(data.isProcessing as boolean);
             if (data?.currentMultiplier !== undefined) setCurrentMultiplier(data.currentMultiplier as number);
+            if (data?.celebration !== undefined) setCelebration(isCelebration(data.celebration) ? data.celebration : null);
          });
          return () => { sub.unsubscribe(); };
       }
@@ -426,7 +431,7 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
     if (isOnline && isHost && roomChannel) {
        roomChannel.send({ type: 'broadcast', event: 'ct_state', payload: stateRef.current });
     }
-  }, [gameState, activePlayer, currentRoundDarts, isProcessing, currentMultiplier, isOnline, isHost, roomChannel]);
+  }, [gameState, activePlayer, currentRoundDarts, isProcessing, currentMultiplier, celebration, isOnline, isHost, roomChannel]);
 
   useEffect(() => {
     if (activeP && activeP.isBot && !isProcessing && (!isOnline || isHost)) {
@@ -446,6 +451,7 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
     }
     setRoundBust(false);
     setIsProcessing(false);
+    setCelebration(null);
 
     setHistory(prevHistory => {
       if (prevHistory.length === 0) {
@@ -481,7 +487,6 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
 
   return (
     <div className="screen active-screen game-screen-layout">
-      <CallOut trigger={callOut.n} text={callOut.text} detail={callOut.detail} tone={callOut.tone} />
       {isOnline && !isMyTurn && (
          <div className="bust-flash">
             Warte auf {activeP.name}...
@@ -525,6 +530,15 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
 
         <div className="game-screen-body">
           <div className="game-screen-left">
+            {celebration && gameState[celebration.playerIndex] && (
+              <CelebrationStage
+                key={celebration.id}
+                celebration={celebration}
+                playerName={gameState[celebration.playerIndex].name}
+                playerColor={gameState[celebration.playerIndex].color || playerColorBySeat(celebration.playerIndex)}
+                flyTarget={`.co-target[data-co-target="${celebration.targetIndex ?? 0}"]`}
+              />
+            )}
             {/* Wie in den anderen beiden Modi: der Werfende groß, die
                 Mitspieler als Zeile. Vorher stand hier je Spieler eine Karte
                 mit 3em-Zahl und `minWidth: 140px` — auf einem Telefon passte
@@ -587,7 +601,12 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
                     return (
                       <li
                         key={idx}
+                        data-co-target={idx}
                         className={`co-target ${isCurrent ? 'is-current' : ''} ${
+                          celebration?.targetIndex === idx && celebration.type !== 'bust'
+                            ? `cel-tile-pop${celebration.type === 'highFinish' ? ' is-late' : ''}`
+                            : ''
+                        } ${
                           done ? (done.darts === null ? 'is-missed' : 'is-hit') : ''
                         }`}
                       >
@@ -629,6 +648,7 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
               toggleMultiplier={(m) => setCurrentMultiplier(m)}
               undoSingleDart={undoSingleDart}
               canUndo={(history.length > 0 || currentRoundDarts.length > 0) && !isProcessing}
+              overlay={celebration ? <CelebrationBoard key={celebration.id} celebration={celebration} /> : null}
             />
           </div>
         </div>

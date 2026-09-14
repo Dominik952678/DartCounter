@@ -1,12 +1,18 @@
 import React, { useLayoutEffect, useRef } from 'react';
-import type { Celebration, GameConfig, Player } from '../../types';
+import type { Celebration } from '../../types';
 import { celebrationHeadline, dartLabel } from '../../utils/celebration';
-import { playerColorBySeat, teamColor } from '../../utils/playerColors';
 
 interface CelebrationStageProps {
   celebration: Celebration;
-  players: Player[];
-  config: GameConfig;
+  playerName: string;
+  playerColor: string;
+  /** Who is named as the winner of the match — the player, or their team in 2v2. */
+  winnerLabel?: string;
+  /**
+   * Where the big number ends its run, as a selector inside the same column.
+   * Defaults to the thrower's score on the match scoreboard.
+   */
+  flyTarget?: string;
 }
 
 const SLASHES = [
@@ -46,44 +52,58 @@ const Odometer = ({ value, ref }: { value: number; ref: React.Ref<HTMLDivElement
 
 /**
  * The top half of a celebration, laid over the scoreboard column: the big
- * number for a high score or high finish, or the quiet "Check" / "Match" panel.
- * The board half lives in CelebrationBoard, inside the keypad.
+ * number for a high score or high finish, or the quiet panel — green for
+ * "Check" / "Match", red for "Verpasst". The board half lives in
+ * CelebrationBoard, inside the keypad.
  */
-export const CelebrationStage: React.FC<CelebrationStageProps> = ({ celebration, players, config }) => {
+export const CelebrationStage: React.FC<CelebrationStageProps> = ({
+  celebration,
+  playerName,
+  playerColor,
+  winnerLabel,
+  flyTarget
+}) => {
   const numberRef = useRef<HTMLDivElement>(null);
   const { id, type, playerIndex, total, darts, matchWin, matchScore } = celebration;
+  const target = flyTarget ?? `[data-player-card="${playerIndex}"] .score-display`;
 
-  // The number ends its run in the thrower's card. Where that card sits depends
-  // on player count and orientation, so the distance is measured, not assumed.
+  // Where the number lands depends on player count, mode and orientation, so
+  // the distance is measured, not assumed.
   useLayoutEffect(() => {
     const number = numberRef.current;
     const column = number?.closest('.cel-stage')?.parentElement;
-    const score = column?.querySelector(`[data-player-card="${playerIndex}"] .score-display`);
-    if (!number || !score) return;
+    const landing = column?.querySelector(target);
+    if (!number || !landing) return;
     const from = number.getBoundingClientRect();
-    const to = score.getBoundingClientRect();
+    const to = landing.getBoundingClientRect();
     number.style.setProperty('--cel-fly-x', `${Math.round(to.left + to.width / 2 - (from.left + from.width / 2))}px`);
     number.style.setProperty('--cel-fly-y', `${Math.round(to.top + to.height / 2 - (from.top + from.height / 2))}px`);
-  }, [id, playerIndex]);
+  }, [id, target]);
 
-  const player = players[playerIndex];
-  if (type === 'bust' || !player) return null;
+  if (type === 'bust') return null;
 
-  const is2v2 = !!config.is2v2 && players.length === 4;
-  const team = player.team || (playerIndex % 2 === 0 ? 1 : 2);
-  const color = player.color || (is2v2 ? teamColor(team) : playerColorBySeat(playerIndex));
   const headline = celebrationHeadline(celebration);
-  const name = <span style={{ color }}>{player.name}</span>;
+  const name = <span style={{ color: playerColor }}>{playerName}</span>;
 
-  if (type === 'check') {
+  if (type === 'check' || type === 'missed' || type === 'split') {
     return (
       <div className="cel-stage is-quiet" aria-hidden="true">
-        <div className="cel-panel">
+        <div className={`cel-panel${type === 'check' ? '' : ' is-danger'}`}>
           <div className="cel-panel-word">{headline}</div>
           <div className="cel-sub">
-            {matchWin && matchScore ? (
+            {type === 'split' ? (
               <>
-                {is2v2 ? <span style={{ color }}>Team {team}</span> : name}
+                <span>Halbiert auf</span>
+                <span className="cel-sub-score">{total}</span>
+              </>
+            ) : type === 'missed' ? (
+              <>
+                <span className="cel-sub-score">{total}</span>
+                <span>nicht gefinisht</span>
+              </>
+            ) : matchWin && matchScore ? (
+              <>
+                <span style={{ color: playerColor }}>{winnerLabel ?? playerName}</span>
                 <span>gewinnt</span>
                 <span className="cel-sub-score">{matchScore[0]} : {matchScore[1]}</span>
               </>

@@ -4,6 +4,10 @@ import type { Profile, Dart } from '../types';
 import { Keypad } from './Keypad';
 import { getBotDart } from '../utils/bot';
 import { playDartHitSound, playSciFiHitSound, speak, play180Sound, isSoundEnabled, setSoundEnabled } from '../utils/audio';
+import type { Celebration } from '../types';
+import { HIGH_SCORE_MIN, isCelebration } from '../utils/celebration';
+import { CelebrationStage } from './celebration/CelebrationStage';
+import { CelebrationBoard } from './celebration/CelebrationBoard';
 import { ConfirmModal } from './ConfirmModal';
 import { Button, StatStrip, Icons } from './ui';
 import { withDartRecorded } from '../utils/segmentStats';
@@ -61,6 +65,8 @@ interface PlayerCardProps {
   currentRound: number;
   /** Punkte der laufenden Runde, noch nicht gebucht. */
   liveRoundScore: number;
+  /** Runde, deren Feld nach einem High Score aufleuchtet. */
+  celebratedRound?: number | null;
 }
 
 /**
@@ -75,7 +81,8 @@ const PowerScoringPlayerCard: React.FC<PlayerCardProps> = ({
   player,
   seat,
   currentRound,
-  liveRoundScore
+  liveRoundScore,
+  celebratedRound
 }) => {
   const accent = player.color || playerColorBySeat(seat);
 
@@ -108,7 +115,8 @@ const PowerScoringPlayerCard: React.FC<PlayerCardProps> = ({
           return (
             <li
               key={idx}
-              className={`ps-round ${isCurrent ? 'is-current' : ''} ${shown !== null ? 'is-filled' : ''}`}
+              data-round={idx}
+              className={`ps-round ${isCurrent ? 'is-current' : ''} ${shown !== null ? 'is-filled' : ''} ${celebratedRound === idx ? 'cel-tile-pop is-late' : ''}`}
             >
               <span className="ps-round-no">{idx + 1}</span>
               <span className="ps-round-value">{shown ?? '–'}</span>
@@ -143,6 +151,9 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
   const [currentMultiplier, setCurrentMultiplier] = useState<number>(1);
   const [isProcessing, setIsProcessing] = useState(false);
   const [history, setHistory] = useState<HistorySnapshot[]>([]);
+  /** Ab 170 dieselbe große Animation wie im Match; die id zählt hoch, damit sie erneut abläuft. */
+  const [celebration, setCelebration] = useState<Celebration | null>(null);
+  const celebrationIdRef = React.useRef(0);
 
   const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const finishTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -151,13 +162,13 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
   const liveRoundScore = currentRoundDarts.reduce((sum, d) => sum + d.value, 0);
   const isMyTurn = isOnline ? (activeP.name === myUsername) : true;
 
-  const stateRef = React.useRef({ gameState, activePlayer, currentRound, currentRoundDarts, isProcessing, currentMultiplier });
+  const stateRef = React.useRef({ gameState, activePlayer, currentRound, currentRoundDarts, isProcessing, currentMultiplier, celebration });
 
   // Before paint, so the `isProcessing` guard in `handleDart` cannot be passed
   // twice by two taps inside one frame.
   useLayoutEffect(() => {
-    stateRef.current = { gameState, activePlayer, currentRound, currentRoundDarts, isProcessing, currentMultiplier };
-  }, [gameState, activePlayer, currentRound, currentRoundDarts, isProcessing, currentMultiplier]);
+    stateRef.current = { gameState, activePlayer, currentRound, currentRoundDarts, isProcessing, currentMultiplier, celebration };
+  }, [gameState, activePlayer, currentRound, currentRoundDarts, isProcessing, currentMultiplier, celebration]);
 
   // Aborting inside the 500 ms result delay must not still book the session.
   useEffect(() => () => {
@@ -235,6 +246,9 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
        return;
     }
 
+    // Der erste Dart einer neuen Aufnahme räumt die letzte Feier ab.
+    if (stateRef.current.currentRoundDarts.length === 0) setCelebration(null);
+
     // Save snapshot before dart
     setHistory(prev => [...prev, {
       gameState: stateRef.current.gameState.map(p => ({ ...p })),
@@ -264,6 +278,18 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
     else playDartHitSound();
 
     if (newDarts.length === 3) {
+      const visitTotal = newDarts.reduce((sum, d) => sum + d.value, 0);
+      if (visitTotal >= HIGH_SCORE_MIN) {
+        setCelebration({
+          id: ++celebrationIdRef.current,
+          type: 'highScore',
+          playerIndex: stateRef.current.activePlayer,
+          total: visitTotal,
+          darts: newDarts,
+          matchWin: false,
+          targetIndex: stateRef.current.currentRound - 1
+        });
+      }
       setIsProcessing(true);
       timeoutRef.current = setTimeout(() => {
         processRoundEnd(newDarts);
@@ -291,6 +317,7 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
             if (data?.currentRoundDarts) setCurrentRoundDarts(data.currentRoundDarts as Dart[]);
             if (data?.isProcessing !== undefined) setIsProcessing(data.isProcessing as boolean);
             if (data?.currentMultiplier !== undefined) setCurrentMultiplier(data.currentMultiplier as number);
+            if (data?.celebration !== undefined) setCelebration(isCelebration(data.celebration) ? data.celebration : null);
          });
          return () => { sub.unsubscribe(); };
       }
@@ -301,7 +328,7 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
     if (isOnline && isHost && roomChannel) {
        roomChannel.send({ type: 'broadcast', event: 'ps_state', payload: stateRef.current });
     }
-  }, [gameState, activePlayer, currentRound, currentRoundDarts, isProcessing, currentMultiplier, isOnline, isHost, roomChannel]);
+  }, [gameState, activePlayer, currentRound, currentRoundDarts, isProcessing, currentMultiplier, celebration, isOnline, isHost, roomChannel]);
 
   // `currentRoundDarts.length` is what makes the bot throw more than once:
   // nothing else in this list changes between darts of the same visit, so the
@@ -323,6 +350,7 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
       timeoutRef.current = null;
     }
     setIsProcessing(false);
+    setCelebration(null);
 
     setHistory(prevHistory => {
       if (prevHistory.length === 0) {
@@ -390,12 +418,22 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
 
         <div className="game-screen-body">
           <div className="game-screen-left">
+            {celebration && gameState[celebration.playerIndex] && (
+              <CelebrationStage
+                key={celebration.id}
+                celebration={celebration}
+                playerName={gameState[celebration.playerIndex].name}
+                playerColor={gameState[celebration.playerIndex].color || playerColorBySeat(celebration.playerIndex)}
+                flyTarget={`.ps-round[data-round="${celebration.targetIndex ?? 0}"]`}
+              />
+            )}
             <div className="ps-board">
               <PowerScoringPlayerCard
                 player={activeP}
                 seat={activePlayer}
                 currentRound={currentRound}
                 liveRoundScore={liveRoundScore}
+                celebratedRound={celebration?.playerIndex === activePlayer ? celebration.targetIndex : null}
               />
 
               {gameState.length > 1 && (
@@ -426,6 +464,7 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
               toggleMultiplier={(m) => setCurrentMultiplier(m)}
               undoSingleDart={undoSingleDart}
               canUndo={(history.length > 0 || currentRoundDarts.length > 0) && !isProcessing}
+              overlay={celebration ? <CelebrationBoard key={celebration.id} celebration={celebration} /> : null}
             />
           </div>
         </div>

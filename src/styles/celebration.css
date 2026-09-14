@@ -268,6 +268,19 @@
   100% { opacity: 0; transform: scale(0.98); }
 }
 
+/* Dieselbe Tafel in Rot, für „Verpasst" im Checkout-Training. */
+.cel-panel.is-danger {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--text-danger) 24%, transparent), color-mix(in srgb, var(--text-danger) 10%, transparent)),
+    color-mix(in srgb, var(--bg-base) 62%, transparent);
+  border-color: color-mix(in srgb, var(--text-danger) 65%, transparent);
+  box-shadow:
+    0 0 0 4px color-mix(in srgb, var(--text-danger) 8%, transparent),
+    0 0 28px color-mix(in srgb, var(--text-danger) 25%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--text-primary) 10%, transparent),
+    0 16px 40px rgba(0, 0, 0, 0.35);
+}
+
 .cel-panel-word {
   font-family: var(--font-heading);
   font-size: clamp(32px, 16cqh, 52px);
@@ -648,6 +661,85 @@
   0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--cel-hit) 60%, transparent); }
   35% { box-shadow: 0 0 30px 6px color-mix(in srgb, var(--cel-hit) 60%, transparent); }
   100% { box-shadow: 0 0 20px color-mix(in srgb, var(--cel-hit) 20%, transparent); }
+}
+
+/* Trainings: das Feld der Runde bzw. des Ziels leuchtet auf, sobald es gebucht
+   ist — grün getroffen, rot verpasst oder gesplittet. Ohne fill-mode, der
+   Zustand steht im Feld selbst. Gebucht wird im Checkout-Training nach 0,7 s,
+   im Split Score nach 1 s, nach einer großen Animation erst, wenn sie weg ist. */
+.cel-tile-pop {
+  --cel-tile: var(--text-success);
+  animation: cel-tile-pop 0.6s ease-out;
+  animation-delay: 0.75s;
+}
+.cel-tile-pop.is-missed,
+.cel-tile-pop.is-split {
+  --cel-tile: var(--text-danger);
+}
+.cel-tile-pop.is-booked {
+  animation-delay: 1.05s;
+}
+.cel-tile-pop.is-late {
+  animation-delay: 2.35s;
+}
+
+/* Split Score: ein Treffer bekommt keine Einblendung, nur den Wert, der kurz
+   aufsteigt — vorbei, bevor die Runde nach 1 s gebucht wird. */
+.cel-float {
+  position: absolute;
+  top: 64px;
+  right: var(--space-5);
+  z-index: 5;
+  pointer-events: none;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-card-title);
+  font-weight: var(--weight-medium);
+  color: var(--text-success);
+  text-shadow: 0 0 16px color-mix(in srgb, var(--text-success) 50%, transparent);
+  opacity: 0;
+  animation: cel-float 0.85s ease-out both;
+  animation-delay: 0.1s;
+}
+
+@keyframes cel-float {
+  0% { opacity: 0; transform: translateY(8px) scale(0.8); }
+  20% { opacity: 1; transform: none; }
+  70% { opacity: 1; transform: translateY(-18px); }
+  100% { opacity: 0; transform: translateY(-30px); }
+}
+
+/* Split: was hätte getroffen werden müssen, rot auf der leisen Scheibe. */
+.cel-outline-area {
+  fill: color-mix(in srgb, var(--text-danger) 18%, transparent);
+  stroke: var(--text-danger);
+  stroke-width: 3;
+  opacity: 0;
+  filter: drop-shadow(0 0 10px var(--text-danger));
+  animation: cel-hit-quiet 0.45s ease-out both;
+  animation-delay: 0.3s;
+}
+
+.cel-outline-ring {
+  fill: none;
+  stroke: var(--text-danger);
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-dasharray: 1100;
+  stroke-dashoffset: 1100;
+  filter: drop-shadow(0 0 10px var(--text-danger));
+  animation: cel-outline-draw 0.8s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation-delay: 0.3s;
+}
+
+@keyframes cel-outline-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes cel-tile-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.12); box-shadow: 0 0 0 3px color-mix(in srgb, var(--cel-tile) 50%, transparent); }
+  100% { transform: scale(1); }
 }
 
 .cel-check-pill {

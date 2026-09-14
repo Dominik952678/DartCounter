@@ -189,7 +189,8 @@ describe('SplitScore scoring', () => {
 /**
  * Der namensgebende Moment des Modus: verfehlt man das Ziel, wird der Punkte-
  * stand halbiert. Vorher rief der Caller „Halbiert" und optisch passierte
- * nichts — jetzt sagt er „Split" und der Zuruf steht groß über dem Board.
+ * nichts; danach stand ein großer Zuruf über dem Board. Jetzt sagt der Caller
+ * „Split", und die rote Tafel der Feier-Animationen zeigt den neuen Stand.
  */
 describe('Split Score: der Split', () => {
   beforeEach(() => { vi.useFakeTimers(); });
@@ -214,17 +215,17 @@ describe('Split Score: der Split', () => {
     await advance(1200);
 
     expect(speak).toHaveBeenCalledWith('Split');
-    // Der große Zuruf über dem Board. Der erledigte Ziel-Kasten im Raster
-    // zeigt ebenfalls „SPLIT", deshalb wird hier gezielt der Zuruf geprüft.
-    const flash = document.querySelector('.callout-flash');
-    expect(flash).not.toBeNull();
-    expect(flash).toHaveClass('tone-bad');
-    expect(flash?.textContent).toContain('SPLIT');
+    // Die rote Tafel. Der erledigte Ziel-Kasten im Raster zeigt ebenfalls
+    // „SPLIT", deshalb wird hier gezielt die Tafel geprüft.
+    const panel = document.querySelector('.cel-panel');
+    expect(panel).not.toBeNull();
+    expect(panel).toHaveClass('is-danger');
+    expect(panel?.textContent).toContain('Split');
     // Startpunktzahl 40, halbiert auf 20.
-    expect(flash?.textContent).toContain('Halbiert auf 20');
+    expect(panel?.textContent).toContain('Halbiert auf20');
   });
 
-  it('does not call SPLIT when the target is hit', async () => {
+  it('does not call SPLIT when the target is hit, and only lets the points rise', async () => {
     const audio = await import('../../utils/audio');
     const speak = vi.spyOn(audio, 'speak').mockImplementation(() => {});
 
@@ -235,9 +236,65 @@ describe('Split Score: der Split', () => {
     );
 
     press('Single (15)'); press('Single (15)'); press('Single (15)');
+    // A hit is quiet: no panel, no board, just the value rising in the card.
+    expect(document.querySelector('.cel-float')?.textContent).toBe('+45');
     await advance(1200);
 
     expect(speak).not.toHaveBeenCalledWith('Split');
-    expect(document.querySelector('.callout-flash')).toBeNull();
+    expect(document.querySelector('.cel-panel')).toBeNull();
+    expect(document.querySelector('.cel-stage')).toBeNull();
+  });
+});
+
+/** Ab 170 in einer Runde dieselbe große Animation wie im Match. */
+describe('Trainings: High Score', () => {
+  beforeEach(() => { vi.useFakeTimers(); });
+  afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); });
+
+  const advance = async (ms: number) => {
+    await act(async () => { await vi.advanceTimersByTimeAsync(ms); });
+  };
+
+  it('celebrates a Power Scoring round of 180 and leaves 168 alone', async () => {
+    render(
+      <StrictMode>
+        <PowerScoring players={['Tester']} profiles={profiles} rounds={3} onFinish={vi.fn()} onAbort={vi.fn()} />
+      </StrictMode>
+    );
+
+    // 169 cannot be thrown with three darts; 168 (T20 T20 T16) is the highest
+    // visit below the threshold.
+    press('Triple'); press('Triple 20');
+    press('Triple'); press('Triple 20');
+    press('Triple'); press('Triple 16');
+    expect(document.querySelector('.cel-stage')).toBeNull();
+    await advance(1100);
+
+    press('Triple'); press('Triple 20');
+    press('Triple'); press('Triple 20');
+    press('Triple'); press('Triple 20');
+    const stage = document.querySelector('.cel-stage');
+    expect(stage).toHaveClass('is-big');
+    expect(stage?.textContent).toContain('Maximum');
+  });
+
+  it('celebrates 180 in the Split Score treble round as a high score, not a split', async () => {
+    render(
+      <StrictMode>
+        <SplitScore players={['Tester']} profiles={profiles} onFinish={vi.fn()} onAbort={vi.fn()} />
+      </StrictMode>
+    );
+
+    // Targets 15, 16, Double, 17, 18 missed, then the treble round.
+    for (const miss of ['Miss (0)', 'Miss (0)', 'MISS', 'Miss (0)', 'Miss (0)']) {
+      press(miss); press(miss); press(miss);
+      await advance(1100);
+    }
+
+    press('20'); press('20'); press('20');
+    const stage = document.querySelector('.cel-stage');
+    expect(stage).toHaveClass('is-big');
+    expect(stage?.textContent).toContain('Maximum');
+    expect(document.querySelector('.cel-panel')).toBeNull();
   });
 });

@@ -4,6 +4,7 @@ import { Keypad } from './Keypad';
 import type { Player, GameConfig, Dart, Celebration } from '../types';
 import { CelebrationStage } from './celebration/CelebrationStage';
 import { CelebrationBoard } from './celebration/CelebrationBoard';
+import { celebrationPlayer } from '../utils/celebration';
 import { isSoundEnabled, setSoundEnabled } from '../utils/audio';
 import { ConfirmModal } from './ConfirmModal';
 import { useModalA11y } from '../hooks/useModalA11y';
@@ -35,6 +36,9 @@ export const GameScreen: React.FC<GameScreenProps> = (props) => {
   // No `onClose`: the match cannot continue until this is answered, so Escape
   // does nothing rather than silently discarding the prompt.
   const checkoutDialogRef = useModalA11y<HTMLDivElement>({ isOpen: !!props.checkoutPrompt });
+  const celebrant = props.celebration
+    ? celebrationPlayer(props.players, props.config, props.celebration.playerIndex)
+    : null;
 
   return (
     <div className="screen active-screen game-screen-layout" style={{ position: 'relative' }}>
@@ -84,12 +88,13 @@ export const GameScreen: React.FC<GameScreenProps> = (props) => {
             currentRoundDarts={props.currentRoundDarts}
             celebration={props.celebration}
           />
-          {props.celebration && (
+          {props.celebration && celebrant && (
             <CelebrationStage
               key={props.celebration.id}
               celebration={props.celebration}
-              players={props.players}
-              config={props.config}
+              playerName={celebrant.name}
+              playerColor={celebrant.color}
+              winnerLabel={celebrant.winnerLabel}
             />
           )}
         </div>

@@ -1,4 +1,5 @@
 import type { Celebration, CelebrationType, Dart, GameConfig, Player } from '../types';
+import { playerColorBySeat, teamColor } from './playerColors';
 
 /** A visit of at least this many points, without a checkout, gets the big animation. */
 export const HIGH_SCORE_MIN = 170;
@@ -20,7 +21,7 @@ export const MATCH_STATS_DELAY_MS = 2000;
  */
 export const CHECKOUT_PROMPT_DELAY_MS = 1000;
 
-const TYPES: readonly CelebrationType[] = ['bust', 'highScore', 'highFinish', 'check'];
+const TYPES: readonly CelebrationType[] = ['bust', 'highScore', 'highFinish', 'check', 'missed', 'split'];
 
 export const celebrationTypeFor = (visit: { bust: boolean; isWin: boolean; total: number }): CelebrationType | null => {
   if (visit.bust) return 'bust';
@@ -50,8 +51,23 @@ export const celebrationHeadline = (celebration: Celebration): string => {
     case 'highScore': return celebration.total === 180 ? 'Maximum' : 'High Score';
     case 'highFinish': return 'High Finish';
     case 'check': return celebration.matchWin ? 'Match' : 'Check';
+    case 'missed': return 'Verpasst';
+    case 'split': return 'Split';
     default: return '';
   }
+};
+
+/** Name, colour and winner line for the match screen's celebration. */
+export const celebrationPlayer = (players: Player[], config: GameConfig, index: number) => {
+  const player = players[index];
+  if (!player) return null;
+  const is2v2 = !!config.is2v2 && players.length === 4;
+  const team = teamOf(players, index) as 1 | 2;
+  return {
+    name: player.name,
+    color: player.color || (is2v2 ? teamColor(team) : playerColorBySeat(index)),
+    winnerLabel: is2v2 ? `Team ${team}` : player.name
+  };
 };
 
 export const dartLabel = (dart: Dart | undefined): string => {

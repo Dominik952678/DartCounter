@@ -46,10 +46,11 @@ describe('Checkout Training: Ziele', () => {
     press('Miss'); press('Miss'); press('Miss');
     await advance(1500);
 
-    const flash = document.querySelector('.callout-flash');
-    expect(flash).not.toBeNull();
-    expect(flash).toHaveClass('tone-bad');
-    expect(flash?.textContent).toContain('VERPASST');
+    // Die rote Tafel hat den großen Zuruf abgelöst.
+    const panel = document.querySelector('.cel-panel');
+    expect(panel).not.toBeNull();
+    expect(panel).toHaveClass('is-danger');
+    expect(panel?.textContent).toContain('Verpasst');
 
     await advance(1000);
     const result = onFinish.mock.calls[0][0][0];

@@ -46,6 +46,12 @@ export const segmentPath = (number: number, ring: Ring): string => {
   return annularSector(inner, outer, centre - 9, centre + 9);
 };
 
+/** A number's whole wedge, from the bull to the outer edge — what a number target asks for. */
+export const wedgePath = (number: number): string => {
+  const centre = segmentAngle(number);
+  return annularSector(BOARD_RADII.bullOut, BOARD_RADII.doubleOut, centre - 9, centre + 9);
+};
+
 /**
  * The area a dart landed in, or null for a miss. A single lights the outer
  * single, the larger of the two; the single bull is a ring and needs

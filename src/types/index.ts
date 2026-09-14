@@ -113,7 +113,7 @@ export interface Dart {
 }
 
 /** What the match screen celebrates after a visit. Thresholds live in utils/celebration. */
-export type CelebrationType = 'bust' | 'highScore' | 'highFinish' | 'check';
+export type CelebrationType = 'bust' | 'highScore' | 'highFinish' | 'check' | 'missed' | 'split';
 
 export interface Celebration {
   /** Counts up per visit, so the same kind twice in a row still replays. */
@@ -125,6 +125,10 @@ export interface Celebration {
   matchWin: boolean;
   /** Winner first. Legs, or sets when the match is played over sets. */
   matchScore?: [number, number];
+  /** Training: which round or target of the session the celebration belongs to. */
+  targetIndex?: number;
+  /** Split score: the target that was missed ('15', 'Double', 'BULL', …). */
+  splitTarget?: string;
 }
 
 export interface PlayerStats {

@@ -11,6 +11,24 @@ import {
   matchScoreFor
 } from '../celebration';
 import { dartPath, segmentAngle } from '../dartboardGeometry';
+import { nextCheckoutPlayer } from '../checkoutTurns';
+
+describe('checkout training turn order', () => {
+  it('skips players who already finished the target the group is on', () => {
+    // Player 0 checked target 1; players 1 and 2 are still on it.
+    expect(nextCheckoutPlayer([1, 0, 0], 1)).toBe(2);
+    expect(nextCheckoutPlayer([1, 0, 0], 2)).toBe(1);
+  });
+
+  it('keeps the same player when they are the last one on the target', () => {
+    expect(nextCheckoutPlayer([1, 0], 1)).toBe(1);
+  });
+
+  it('moves on in seat order once everyone is on the next target', () => {
+    expect(nextCheckoutPlayer([1, 1, 1], 1)).toBe(2);
+    expect(nextCheckoutPlayer([1, 1, 1], 2)).toBe(0);
+  });
+});
 
 const player = (over: Partial<Player> = {}): Player => ({
   name: 'P', score: 501, legs: 0, sets: 0, legPts: 0, legDarts: 0, matchPts: 0, matchDarts: 0,

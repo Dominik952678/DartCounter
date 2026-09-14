@@ -3,7 +3,11 @@ import type { RealtimeChannel } from '@supabase/supabase-js';
 import type { Profile, Dart } from '../types';
 import { playDartHitSound, playSciFiHitSound, speak, play180Sound, isSoundEnabled, setSoundEnabled } from '../utils/audio';
 import { ConfirmModal } from './ConfirmModal';
-import { Button, CallOut, StatStrip, Icons } from './ui';
+import { Button, StatStrip, Icons } from './ui';
+import type { Celebration } from '../types';
+import { HIGH_SCORE_MIN, isCelebration } from '../utils/celebration';
+import { CelebrationStage } from './celebration/CelebrationStage';
+import { CelebrationBoard } from './celebration/CelebrationBoard';
 import { withDartRecorded } from '../utils/segmentStats';
 import { liveStats } from '../utils/storyExport';
 import { playerColorBySeat } from '../utils/playerColors';
@@ -56,6 +60,26 @@ const TARGETS = [
   { label: 'BULL', type: 'number', val: 25 },
 ];
 
+/**
+ * Punkte und Treffer einer Runde auf das Ziel. Getroffene Darts, nicht Punkte:
+ * für die Trefferquote zählt jeder Dart im Ziel einfach, ob Single, Double oder
+ * Triple. Gebraucht beim dritten Dart (für die Feier) und beim Buchen.
+ */
+const scoreSplitRound = (darts: Dart[], target: typeof TARGETS[number]) => {
+  let roundScore = 0;
+  let hits = 0;
+  for (const d of darts) {
+    const onTarget = target.type === 'number'
+      ? d.base === target.val
+      : d.mult === target.val && d.base !== 0;
+    if (onTarget) {
+      roundScore += d.value;
+      hits += 1;
+    }
+  }
+  return { roundScore, hits };
+};
+
 interface HistorySnapshot {
   gameState: PlayerState[];
   activePlayer: number;
@@ -86,8 +110,15 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
   const [currentMultiplier, setCurrentMultiplier] = useState<number>(1);
   const [isProcessing, setIsProcessing] = useState(false);
   const [history, setHistory] = useState<HistorySnapshot[]>([]);
-  /** Zählt hoch, wenn halbiert wurde — löst die SPLIT-Einblendung neu aus. */
-  const [splitFlash, setSplitFlash] = useState(0);
+  /**
+   * Split und High Score als Feier wie im Match; sie ersetzen den großen
+   * „SPLIT"-Zuruf. Ein gewöhnlicher Treffer bekommt keine Einblendung, nur den
+   * aufsteigenden Wert (`hitFlash`). Die ids zählen hoch, damit dasselbe
+   * Ereignis zweimal hintereinander auch zweimal abläuft.
+   */
+  const [celebration, setCelebration] = useState<Celebration | null>(null);
+  const [hitFlash, setHitFlash] = useState<{ n: number; index: number; gained: number; playerIndex: number } | null>(null);
+  const celebrationIdRef = React.useRef(0);
 
   const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const finishTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -96,13 +127,13 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
   const currentTarget = TARGETS[currentRoundIndex];
   const isMyTurn = isOnline ? (activeP.name === myUsername) : true;
 
-  const stateRef = React.useRef({ gameState, activePlayer, currentRoundIndex, currentRoundDarts, isProcessing, currentMultiplier });
+  const stateRef = React.useRef({ gameState, activePlayer, currentRoundIndex, currentRoundDarts, isProcessing, currentMultiplier, celebration });
 
   // Before paint, so two taps inside one frame cannot both pass the
   // `isProcessing` guard in `handleDart`.
   useLayoutEffect(() => {
-    stateRef.current = { gameState, activePlayer, currentRoundIndex, currentRoundDarts, isProcessing, currentMultiplier };
-  }, [gameState, activePlayer, currentRoundIndex, currentRoundDarts, isProcessing, currentMultiplier]);
+    stateRef.current = { gameState, activePlayer, currentRoundIndex, currentRoundDarts, isProcessing, currentMultiplier, celebration };
+  }, [gameState, activePlayer, currentRoundIndex, currentRoundDarts, isProcessing, currentMultiplier, celebration]);
 
   // Aborting inside the 500 ms result delay must not still book the session.
   useEffect(() => () => {
@@ -111,25 +142,7 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
   }, []);
 
   const processRoundEnd = React.useCallback((darts: Dart[]) => {
-    let roundScore = 0;
-    // Getroffene Darts, nicht Punkte: für die Trefferquote zählt jeder Dart im
-    // Ziel einfach, ob Single, Double oder Triple.
-    let hits = 0;
-    const cTarget = TARGETS[stateRef.current.currentRoundIndex];
-
-    for (const d of darts) {
-      if (cTarget.type === 'number') {
-        if (d.base === cTarget.val) {
-          roundScore += d.value;
-          hits += 1;
-        }
-      } else if (cTarget.type === 'modifier') {
-        if (d.mult === cTarget.val && d.base !== 0) {
-          roundScore += d.value;
-          hits += 1;
-        }
-      }
-    }
+    const { roundScore, hits } = scoreSplitRound(darts, TARGETS[stateRef.current.currentRoundIndex]);
     const hitAny = hits > 0;
     
     if (hitAny) {
@@ -139,7 +152,6 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
       // Der Modus heißt Split Score, und „Split" ist auch das, was am Board
       // gerufen wird — vorher sagte der Caller „Halbiert".
       speak('Split');
-      setSplitFlash(st => st + 1);
     }
 
     const st = stateRef.current;
@@ -212,6 +224,12 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
        return;
     }
 
+    // Der erste Dart einer neuen Aufnahme räumt die letzte Feier ab.
+    if (stateRef.current.currentRoundDarts.length === 0) {
+      setCelebration(null);
+      setHitFlash(null);
+    }
+
     // Save snapshot before dart
     setHistory(prev => [...prev, {
       gameState: stateRef.current.gameState.map(p => ({ ...p })),
@@ -241,6 +259,26 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
     else playDartHitSound();
 
     if (newDarts.length === 3) {
+      // Mit dem dritten Dart steht fest, was die Runde war — gefeiert wird ab
+      // hier, gebucht nach der Pause wie bisher.
+      const st = stateRef.current;
+      const target = TARGETS[st.currentRoundIndex];
+      const { roundScore, hits } = scoreSplitRound(newDarts, target);
+      const common = {
+        id: ++celebrationIdRef.current,
+        playerIndex: st.activePlayer,
+        darts: newDarts,
+        matchWin: false,
+        targetIndex: st.currentRoundIndex,
+        splitTarget: target.label
+      };
+      if (hits === 0) {
+        setCelebration({ ...common, type: 'split', total: Math.floor(st.gameState[st.activePlayer].score / 2) });
+      } else if (roundScore >= HIGH_SCORE_MIN) {
+        setCelebration({ ...common, type: 'highScore', total: roundScore });
+      } else {
+        setHitFlash({ n: common.id, index: st.currentRoundIndex, gained: roundScore, playerIndex: st.activePlayer });
+      }
       setIsProcessing(true);
       timeoutRef.current = setTimeout(() => {
         processRoundEnd(newDarts);
@@ -268,6 +306,7 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
             if (data?.currentRoundDarts) setCurrentRoundDarts(data.currentRoundDarts as Dart[]);
             if (data?.isProcessing !== undefined) setIsProcessing(data.isProcessing as boolean);
             if (data?.currentMultiplier !== undefined) setCurrentMultiplier(data.currentMultiplier as number);
+            if (data?.celebration !== undefined) setCelebration(isCelebration(data.celebration) ? data.celebration : null);
          });
          return () => { sub.unsubscribe(); };
       }
@@ -278,7 +317,7 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
     if (isOnline && isHost && roomChannel) {
        roomChannel.send({ type: 'broadcast', event: 'ss_state', payload: stateRef.current });
     }
-  }, [gameState, activePlayer, currentRoundIndex, currentRoundDarts, isProcessing, currentMultiplier, isOnline, isHost, roomChannel]);
+  }, [gameState, activePlayer, currentRoundIndex, currentRoundDarts, isProcessing, currentMultiplier, celebration, isOnline, isHost, roomChannel]);
 
   useEffect(() => {
     if (activeP.isBot && !isProcessing && currentRoundIndex < TARGETS.length && (!isOnline || isHost)) {
@@ -323,6 +362,8 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
       timeoutRef.current = null;
     }
     setIsProcessing(false);
+    setCelebration(null);
+    setHitFlash(null);
 
     setHistory(prevHistory => {
       if (prevHistory.length === 0) {
@@ -357,17 +398,10 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
     return activeP.score + rs;
   };
 
-  const activeSplitScore = gameState[activePlayer]?.score ?? 0;
   const activeSplitLog = gameState[activePlayer]?.splitLog ?? [];
 
   return (
     <div className="screen active-screen game-screen-layout">
-      <CallOut
-        trigger={splitFlash}
-        text="SPLIT"
-        detail={`Halbiert auf ${activeSplitScore}`}
-        tone="bad"
-      />
       {isOnline && !isMyTurn && (
          <div className="bust-flash">
             Warte auf {activeP.name}...
@@ -411,14 +445,26 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
 
         <div className="game-screen-body">
           <div className="game-screen-left">
+            {celebration && gameState[celebration.playerIndex] && (
+              <CelebrationStage
+                key={celebration.id}
+                celebration={celebration}
+                playerName={gameState[celebration.playerIndex].name}
+                playerColor={gameState[celebration.playerIndex].color || playerColorBySeat(celebration.playerIndex)}
+                flyTarget={`.split-target[data-split-target="${celebration.targetIndex ?? 0}"]`}
+              />
+            )}
             {/* Wie im Power Scoring: der Werfende groß, die Mitspieler als
                 Zeile. Vorher stand hier eine Karte je Spieler mit einer
                 3em-Zahl — auf einem Telefon füllte das die halbe Spalte. */}
             <div className="ps-board">
               <div
                 className="ps-card"
-                style={{ '--player-color': activeP?.color || playerColorBySeat(activePlayer) } as React.CSSProperties}
+                style={{ '--player-color': activeP?.color || playerColorBySeat(activePlayer), position: 'relative' } as React.CSSProperties}
               >
+                {hitFlash && hitFlash.playerIndex === activePlayer && (
+                  <div key={hitFlash.n} className="cel-float" aria-hidden="true">+{hitFlash.gained}</div>
+                )}
                 <div className="ps-card-head">
                   <span className="ps-card-name">{activeP?.isBot && <Icons.IconBot size={15} className="icon-inline" />}{activeP?.name}</span>
                   <span className="ps-card-total">{getLiveScore()}</span>
@@ -463,7 +509,14 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
                  {activeSplitLog.map((entry, idx) => (
                    <li
                      key={entry.target}
+                     data-split-target={idx}
                      className={`split-target ${idx === currentRoundIndex ? 'is-current' : ''} ${
+                       hitFlash?.playerIndex === activePlayer && hitFlash.index === idx
+                         ? 'cel-tile-pop is-booked'
+                         : celebration?.playerIndex === activePlayer && celebration.targetIndex === idx
+                           ? (celebration.type === 'highScore' ? 'cel-tile-pop is-late' : 'cel-tile-pop is-booked')
+                           : ''
+                     } ${
                        idx < currentRoundIndex ? (entry.gained === null ? 'is-split' : 'is-hit') : ''
                      }`}
                    >
@@ -496,6 +549,7 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
 
           <div className="game-screen-right" style={{ pointerEvents: (!isOnline || isMyTurn) ? 'auto' : 'none' }}>
             <div className="keypad" style={{ padding: '10px 0' }}>
+              {celebration && <CelebrationBoard key={celebration.id} celebration={celebration} />}
               {currentTarget?.type === 'number' && currentTarget?.val !== 25 && (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                   <button onClick={() => handleDart(0, 1)} className="num-btn is-miss" style={{ gridColumn: 'span 2' }}>Miss (0)</button>
