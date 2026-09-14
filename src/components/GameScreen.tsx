@@ -1,7 +1,9 @@
 import React, { useId, useState } from 'react';
 import { Scoreboard } from './Scoreboard';
 import { Keypad } from './Keypad';
-import type { Player, GameConfig, Dart } from '../types';
+import type { Player, GameConfig, Dart, Celebration } from '../types';
+import { CelebrationStage } from './celebration/CelebrationStage';
+import { CelebrationBoard } from './celebration/CelebrationBoard';
 import { isSoundEnabled, setSoundEnabled } from '../utils/audio';
 import { ConfirmModal } from './ConfirmModal';
 import { useModalA11y } from '../hooks/useModalA11y';
@@ -22,7 +24,7 @@ interface GameScreenProps {
   abortGame: () => void;
   checkoutPrompt: { maxDarts: number; autoDarts: number; isWin: boolean } | null;
   submitCheckoutPrompt: (darts: number) => void;
-  celebration?: { type: string, playerIndex: number } | null;
+  celebration?: Celebration | null;
   canUndo?: boolean;
 }
 
@@ -82,6 +84,14 @@ export const GameScreen: React.FC<GameScreenProps> = (props) => {
             currentRoundDarts={props.currentRoundDarts}
             celebration={props.celebration}
           />
+          {props.celebration && (
+            <CelebrationStage
+              key={props.celebration.id}
+              celebration={props.celebration}
+              players={props.players}
+              config={props.config}
+            />
+          )}
         </div>
         
         <div className="game-screen-right">
@@ -94,6 +104,9 @@ export const GameScreen: React.FC<GameScreenProps> = (props) => {
             toggleMultiplier={props.toggleMultiplier}
             undoSingleDart={props.undoSingleDart}
             canUndo={props.canUndo}
+            overlay={props.celebration
+              ? <CelebrationBoard key={props.celebration.id} celebration={props.celebration} />
+              : null}
           />
         </div>
       </div>

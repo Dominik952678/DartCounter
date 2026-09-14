@@ -1,0 +1,683 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Feier-Animationen im Match-Screen
+
+   Zwei Stufen, beide aus dem Claude-Design-Canvas „Dartcounter
+   Feier-Animationen":
+
+   · Laut — High Score (ab 170) und High Finish (ab 100). Oben über dem
+     Scoreboard schlägt die Zahl ein bzw. rollt hoch und fliegt in die Karte,
+     unten spielt die Scheibe die Treffer nach. Rund 2,4 s.
+   · Leise — Check (unter 100) und Matchgewinn. Eine grüne Tafel über die
+     Breite, eine Scheibe ohne Drehung und Ring, Lichtkante in der Karte.
+     Rund 1,8 s.
+
+   Farben kommen nur aus Tokens, damit Vaporwave und Cyberpunk mitziehen.
+   Nichts hier fängt Taps ab (pointer-events: none), und der globale
+   `prefers-reduced-motion`-Block in index.css kürzt alles auf den Endzustand —
+   der ist bei den Überlagerungen unsichtbar.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Die Spalten sind der Bezugsrahmen der Überlagerungen. */
+.game-screen-left,
+.game-screen-right {
+  position: relative;
+}
+
+/* Modifikatoren und Ziffernfeld in einem Rahmen, damit die Scheibe genau diese
+   Fläche deckt und die Dart-Kästen darüber hell bleiben. */
+.keypad-input {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: inherit;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── Obere Hälfte: Bühne ─────────────────────────────────────────────────── */
+
+.cel-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  container-type: size;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.cel-dim {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--bg-base) 94%, transparent);
+  animation: cel-dim 2.4s ease both;
+}
+
+@keyframes cel-dim {
+  0% { opacity: 0; }
+  7% { opacity: 1; }
+  84% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.cel-center {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.cel-slash {
+  position: absolute;
+  left: -20%;
+  width: 140%;
+  height: 6px;
+  background: linear-gradient(90deg, transparent, var(--accent-primary) 38%, color-mix(in srgb, var(--accent-primary) 40%, var(--text-primary)) 50%, var(--accent-primary) 62%, transparent);
+  transform: rotate(-16deg) translateX(-120%);
+  animation: cel-slash 0.42s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes cel-slash {
+  from { transform: rotate(-16deg) translateX(-120%); }
+  to { transform: rotate(-16deg) translateX(120%); }
+}
+
+.cel-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 180px;
+  height: 180px;
+  margin: -90px 0 0 -90px;
+  border-radius: 50%;
+  border: 3px solid var(--accent-primary);
+  box-sizing: border-box;
+  opacity: 0;
+  animation: cel-ring 0.9s ease-out both;
+}
+
+@keyframes cel-ring {
+  0% { opacity: 0; transform: scale(0.5); }
+  2% { opacity: 0.9; transform: scale(0.52); }
+  100% { opacity: 0; transform: scale(3.4); border-width: 1px; }
+}
+
+.cel-finish-ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 50%;
+  border: 2px solid;
+  box-sizing: border-box;
+  opacity: 0;
+  animation: cel-finish-ring 1.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes cel-finish-ring {
+  0% { opacity: 0; transform: scale(0.15); }
+  25% { opacity: 1; }
+  70% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.25); }
+}
+
+.cel-word {
+  position: relative;
+  font-family: var(--font-heading);
+  font-size: clamp(18px, 8cqh, 24px);
+  line-height: var(--leading-heading);
+  color: var(--text-primary);
+}
+
+.cel-word.is-success {
+  color: var(--text-success);
+}
+
+.cel-sub {
+  position: relative;
+  display: flex;
+  gap: 6px;
+  font-size: var(--text-body);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.cel-sub-score {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.cel-rise {
+  animation: cel-rise 1.35s ease both;
+  animation-delay: 0.95s;
+}
+
+@keyframes cel-rise {
+  0% { opacity: 0; transform: translateY(10px); }
+  18% { opacity: 1; transform: none; }
+  78% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-6px); }
+}
+
+.cel-number {
+  position: relative;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--weight-medium);
+  font-size: clamp(56px, min(34cqh, 30cqw), 124px);
+  line-height: 1;
+  letter-spacing: -0.05em;
+  color: var(--accent-primary);
+  text-shadow: 0 0 48px color-mix(in srgb, var(--accent-primary) 45%, transparent);
+  animation: cel-slam 1.68s cubic-bezier(0.2, 0.9, 0.25, 1) both;
+  animation-delay: 0.72s;
+}
+
+@keyframes cel-slam {
+  0% { opacity: 0; transform: scale(1.9); filter: blur(10px); }
+  14% { opacity: 1; transform: scale(0.94); filter: blur(0); }
+  22% { transform: scale(1.03); }
+  28% { transform: scale(1); }
+  80% { opacity: 1; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(var(--cel-fly-x, 0px), var(--cel-fly-y, 0px)) scale(0.3); }
+}
+
+.cel-odometer {
+  position: relative;
+  display: flex;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--weight-medium);
+  font-size: clamp(52px, min(32cqh, 28cqw), 112px);
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: var(--text-primary);
+  text-shadow: 0 0 44px color-mix(in srgb, var(--text-success) 55%, transparent);
+  animation: cel-odometer 1.7s ease both;
+  animation-delay: 0.7s;
+}
+
+@keyframes cel-odometer {
+  0% { opacity: 0; transform: scale(0.85); }
+  12% { opacity: 1; transform: none; }
+  80% { opacity: 1; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(var(--cel-fly-x, 0px), var(--cel-fly-y, 0px)) scale(0.3); }
+}
+
+.cel-odo-col {
+  display: block;
+  height: 1em;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(transparent, #000 14%, #000 86%, transparent);
+  mask-image: linear-gradient(transparent, #000 14%, #000 86%, transparent);
+}
+
+.cel-odo-strip {
+  display: flex;
+  flex-direction: column;
+  animation: cel-odo-roll 0.95s cubic-bezier(0.15, 0.85, 0.25, 1) both;
+}
+
+.cel-odo-strip > span {
+  height: 1em;
+  line-height: 1em;
+}
+
+@keyframes cel-odo-roll {
+  from { transform: translateY(0); }
+  to { transform: translateY(var(--cel-odo-end)); }
+}
+
+/* Die leise Tafel: halbtransparentes Grün mit Umrandung, kein Abdunkeln. */
+.cel-stage.is-quiet {
+  padding: 0 var(--space-4);
+  overflow: visible;
+}
+
+.cel-panel {
+  width: 100%;
+  max-width: 520px;
+  box-sizing: border-box;
+  padding: var(--space-4) var(--space-5) 14px;
+  border-radius: var(--radius-tile);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--text-success) 24%, transparent), color-mix(in srgb, var(--text-success) 10%, transparent)),
+    color-mix(in srgb, var(--bg-base) 62%, transparent);
+  border: 1.5px solid color-mix(in srgb, var(--text-success) 65%, transparent);
+  box-shadow:
+    0 0 0 4px color-mix(in srgb, var(--text-success) 8%, transparent),
+    0 0 28px color-mix(in srgb, var(--text-success) 25%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--text-primary) 10%, transparent),
+    0 16px 40px rgba(0, 0, 0, 0.35);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  animation: cel-panel 1.8s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+@keyframes cel-panel {
+  0% { opacity: 0; transform: scale(0.92); }
+  14% { opacity: 1; transform: none; }
+  80% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: scale(0.98); }
+}
+
+.cel-panel-word {
+  font-family: var(--font-heading);
+  font-size: clamp(32px, 16cqh, 52px);
+  line-height: 1.05;
+  color: var(--text-primary);
+  clip-path: inset(-10% 100% -10% 0);
+  animation: cel-wipe 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation-delay: 0.15s;
+}
+
+@keyframes cel-wipe {
+  to { clip-path: inset(-10% 0 -10% 0); }
+}
+
+.cel-panel .cel-sub {
+  animation: cel-fade-up 0.4s ease-out both;
+  animation-delay: 0.45s;
+}
+
+@keyframes cel-fade-up {
+  0% { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: none; }
+}
+
+/* ── Untere Hälfte: Scheibe ──────────────────────────────────────────────── */
+
+.cel-board-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  container-type: size;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-key);
+}
+
+.cel-board-layer.is-big {
+  background: color-mix(in srgb, var(--bg-base) 94%, transparent);
+  animation: cel-dim 2.4s ease both;
+}
+
+.cel-board-layer.is-quiet {
+  background: color-mix(in srgb, var(--bg-base) 88%, transparent);
+  animation: cel-quiet-layer 1.8s ease both;
+}
+
+@keyframes cel-quiet-layer {
+  0% { opacity: 0; }
+  12% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.cel-board {
+  position: relative;
+  aspect-ratio: 1;
+  width: min(330px, 88cqw, 92cqh);
+}
+
+.is-quiet .cel-board {
+  width: min(300px, 80cqw, 86cqh);
+}
+
+.cel-board > svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.is-big .cel-board {
+  animation: cel-board-in 2.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.is-quiet .cel-board {
+  animation: cel-board-settle 1.8s ease both;
+}
+
+@keyframes cel-board-in {
+  0% { transform: scale(0.7) rotate(-24deg); }
+  12% { transform: none; }
+  84% { transform: none; }
+  100% { transform: scale(0.96); }
+}
+
+@keyframes cel-board-settle {
+  0% { transform: scale(0.96); }
+  12% { transform: none; }
+  100% { transform: none; }
+}
+
+/* Die leise Scheibe steht auf einer eigenen Grundscheibe und bekommt mehr
+   Kontrast: ohne Abdunkeln scheinen sonst die Tasten durch. */
+.cel-board-rim {
+  fill: color-mix(in srgb, var(--text-primary) 3%, transparent);
+  stroke: color-mix(in srgb, var(--text-secondary) 25%, transparent);
+  stroke-width: 1;
+}
+.is-quiet .cel-board-rim {
+  fill: var(--bg-base);
+  stroke: color-mix(in srgb, var(--text-secondary) 45%, transparent);
+}
+
+.cel-seg { stroke: var(--bg-base); stroke-width: 1.2; }
+.cel-seg.is-single-a { fill: color-mix(in srgb, var(--text-primary) 9%, transparent); }
+.cel-seg.is-single-b { fill: color-mix(in srgb, var(--text-primary) 4%, transparent); }
+.cel-seg.is-ring-a { fill: color-mix(in srgb, var(--text-primary) 20%, transparent); }
+.cel-seg.is-ring-b { fill: color-mix(in srgb, var(--text-primary) 11%, transparent); }
+.cel-seg.is-bull-out { fill: color-mix(in srgb, var(--text-primary) 12%, transparent); }
+.cel-seg.is-bull-in { fill: color-mix(in srgb, var(--text-primary) 22%, transparent); stroke: none; }
+.is-quiet .cel-seg.is-single-a { fill: color-mix(in srgb, var(--text-primary) 17%, transparent); }
+.is-quiet .cel-seg.is-single-b { fill: color-mix(in srgb, var(--text-primary) 8%, transparent); }
+.is-quiet .cel-seg.is-ring-a { fill: color-mix(in srgb, var(--text-primary) 36%, transparent); }
+.is-quiet .cel-seg.is-ring-b { fill: color-mix(in srgb, var(--text-primary) 22%, transparent); }
+.is-quiet .cel-seg.is-bull-out { fill: color-mix(in srgb, var(--text-primary) 24%, transparent); }
+.is-quiet .cel-seg.is-bull-in { fill: color-mix(in srgb, var(--text-primary) 42%, transparent); }
+
+.cel-hit {
+  opacity: 0;
+  animation: cel-hit 0.5s ease-out both;
+}
+.cel-hit.is-accent { fill: var(--accent-primary); filter: drop-shadow(0 0 10px var(--accent-primary)); }
+.cel-hit.is-success { fill: var(--text-success); filter: drop-shadow(0 0 10px var(--text-success)); }
+.cel-hit.is-flash { animation-name: cel-flash; animation-duration: 0.36s; }
+.is-quiet .cel-hit { animation: cel-hit-quiet 0.45s ease-out both; }
+.is-quiet .cel-hit.is-accent { filter: drop-shadow(0 0 12px var(--accent-primary)); }
+.is-quiet .cel-hit.is-success { filter: drop-shadow(0 0 12px var(--text-success)); }
+
+@keyframes cel-hit {
+  0% { opacity: 0; transform: scale(1.08); }
+  30% { opacity: 1; }
+  100% { opacity: 0.9; transform: none; }
+}
+
+@keyframes cel-flash {
+  0% { opacity: 0; }
+  30% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes cel-hit-quiet {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.cel-halo {
+  fill: none;
+  stroke: var(--accent-primary);
+  stroke-width: 3;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: cel-halo 0.8s ease-out both;
+  animation-delay: 0.7s;
+}
+
+@keyframes cel-halo {
+  0% { opacity: 0; transform: scale(0.9); }
+  2% { opacity: 0.9; transform: scale(0.91); }
+  100% { opacity: 0; transform: scale(1.35); }
+}
+
+.cel-double-sweep {
+  fill: none;
+  stroke: var(--text-success);
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-dasharray: 1043;
+  stroke-dashoffset: 1043;
+  animation: cel-sweep 0.7s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation-delay: 0.8s;
+}
+
+@keyframes cel-sweep {
+  to { stroke-dashoffset: 0; }
+}
+
+/* Die Dart-Kästen leuchten im Takt der Scheibe mit. `:has` statt einer Prop,
+   damit das Keypad nichts von der Feier wissen muss. Der letzte Dart eines
+   Checks ist grün (`data-finish` = sein Index). */
+.keypad:has(.cel-board-layer.is-big) .dart-box.dart-filled {
+  --cel-dart: var(--accent-primary);
+  animation: cel-dart 0.45s ease-out both;
+}
+.keypad:has(.cel-board-layer.is-big) .dart-box:nth-child(1) { animation-delay: 0.18s; }
+.keypad:has(.cel-board-layer.is-big) .dart-box:nth-child(2) { animation-delay: 0.4s; }
+.keypad:has(.cel-board-layer.is-big) .dart-box:nth-child(3) { animation-delay: 0.62s; }
+
+.keypad:has(.cel-board-layer[data-finish="0"]) .dart-box:nth-child(1),
+.keypad:has(.cel-board-layer[data-finish="1"]) .dart-box:nth-child(2),
+.keypad:has(.cel-board-layer[data-finish="2"]) .dart-box:nth-child(3) {
+  --cel-dart: var(--text-success);
+}
+
+.keypad:has(.cel-board-layer.is-quiet[data-finish="0"]) .dart-box:nth-child(1),
+.keypad:has(.cel-board-layer.is-quiet[data-finish="1"]) .dart-box:nth-child(2),
+.keypad:has(.cel-board-layer.is-quiet[data-finish="2"]) .dart-box:nth-child(3) {
+  animation: cel-dart 0.45s ease-out both;
+  animation-delay: 0.02s;
+}
+
+@keyframes cel-dart {
+  0% { transform: scale(1); }
+  35% {
+    transform: scale(1.16);
+    border-color: var(--cel-dart);
+    background: color-mix(in srgb, var(--cel-dart) 25%, transparent);
+  }
+  100% { transform: scale(1); }
+}
+
+.keypad:has(.cel-board-layer.is-big) .round-total {
+  animation: cel-total 1.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+  animation-delay: 0.68s;
+}
+
+@keyframes cel-total {
+  0% { transform: scale(1); }
+  22% { transform: scale(1.7); }
+  80% { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+
+/* ── In der Karte ────────────────────────────────────────────────────────── */
+
+@property --cel-sweep {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+/* Inhalt über Schein und Funken, Lichtkante und Stempel darüber. */
+.player-card.cel-card-check > :not(.cel-card-fx),
+.player-card.cel-card-match > :not(.cel-card-fx) {
+  position: relative;
+  z-index: 2;
+}
+
+.cel-card-fx {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.cel-card-wash {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: radial-gradient(circle at 50% 48%, color-mix(in srgb, var(--text-success) 70%, transparent) 0%, transparent 68%);
+  animation: cel-wash 1.7s ease-out both;
+}
+
+@keyframes cel-wash {
+  0% { opacity: 0; }
+  14% { opacity: 0.32; }
+  100% { opacity: 0; }
+}
+
+.cel-card-sweep {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(from var(--cel-sweep), transparent 0deg, transparent 230deg, var(--text-success) 320deg, color-mix(in srgb, var(--text-success) 30%, var(--text-primary)) 348deg, transparent 360deg);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: cel-sweep-around 1.3s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes cel-sweep-around {
+  0% { --cel-sweep: 0deg; opacity: 0; }
+  10% { opacity: 1; }
+  78% { opacity: 1; }
+  100% { --cel-sweep: 720deg; opacity: 0; }
+}
+
+.cel-spark {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  z-index: 3;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 50%;
+  opacity: 0;
+  animation: cel-spark 0.75s cubic-bezier(0.1, 0.7, 0.3, 1) both;
+}
+.cel-spark.is-success { background: var(--text-success); }
+.cel-spark.is-accent { background: var(--accent-primary); }
+
+@keyframes cel-spark {
+  0% { opacity: 0; transform: translate(0, 0) scale(1); }
+  2% { opacity: 1; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(var(--cel-dx), var(--cel-dy)) scale(0.2); }
+}
+
+.cel-card-stamp {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+}
+
+.cel-card-stamp > * {
+  animation: cel-pop-in 0.5s cubic-bezier(0.2, 1.5, 0.4, 1) both;
+}
+
+.cel-stamp-word {
+  font-family: var(--font-heading);
+  font-size: var(--text-screen-title);
+  line-height: 1;
+  color: var(--text-success);
+  animation-delay: 1.75s;
+}
+
+.cel-stamp-score {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-card-title);
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+  animation-delay: 1.85s;
+}
+
+.cel-card-stamp.is-late .cel-stamp-word { animation-delay: 2.45s; }
+.cel-card-stamp.is-late .cel-stamp-score { animation-delay: 2.55s; }
+
+@keyframes cel-pop-in {
+  0% { opacity: 0; transform: translateY(20px) scale(0.5); }
+  100% { opacity: 1; transform: none; }
+}
+
+/* Unter dem Stempel tritt der Punktestand zurück. */
+.cel-card-match .score-display {
+  animation: cel-fade-score 0.4s ease both;
+  animation-delay: 1.65s;
+}
+.cel-card-match.is-late .score-display {
+  animation-delay: 2.35s;
+}
+
+@keyframes cel-fade-score {
+  to { opacity: 0.06; transform: scale(0.9); }
+}
+
+.cel-card-lose {
+  animation: cel-card-lose 0.6s ease both;
+  animation-delay: 0.5s;
+}
+
+@keyframes cel-card-lose {
+  to { opacity: 0.5; }
+}
+
+/* Nach der großen Animation glüht die Karte des Werfers einmal auf. Ohne
+   fill-mode, damit der Schein der aktiven Karte vorher und nachher bleibt. */
+.cel-card-hit {
+  --cel-hit: var(--accent-primary);
+  animation: cel-card-hit 0.7s ease-out;
+  animation-delay: 2.3s;
+}
+.cel-card-hit.is-success {
+  --cel-hit: var(--text-success);
+}
+
+@keyframes cel-card-hit {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--cel-hit) 60%, transparent); }
+  35% { box-shadow: 0 0 30px 6px color-mix(in srgb, var(--cel-hit) 60%, transparent); }
+  100% { box-shadow: 0 0 20px color-mix(in srgb, var(--cel-hit) 20%, transparent); }
+}
+
+.cel-check-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 auto;
+  padding: 4px 10px;
+  border-radius: var(--radius-xs);
+  background: color-mix(in srgb, var(--text-success) 14%, transparent);
+  color: var(--text-success);
+  font-size: var(--text-label);
+  font-weight: var(--weight-medium);
+  animation: cel-pop-in 0.4s cubic-bezier(0.2, 1.3, 0.4, 1) both;
+  animation-delay: 0.15s;
+}
+
+.cel-leg-pop {
+  animation: cel-leg-pop 0.7s ease-out;
+  animation-delay: 0.85s;
+}
+.cel-leg-pop.is-late {
+  animation-delay: 2.35s;
+}
+
+@keyframes cel-leg-pop {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--text-success) 0%, transparent); }
+  40% {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--text-success) 35%, transparent);
+    background: color-mix(in srgb, var(--text-success) 25%, transparent);
+  }
+  100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--text-success) 0%, transparent); }
+}

@@ -112,6 +112,21 @@ export interface Dart {
   label: string;
 }
 
+/** What the match screen celebrates after a visit. Thresholds live in utils/celebration. */
+export type CelebrationType = 'bust' | 'highScore' | 'highFinish' | 'check';
+
+export interface Celebration {
+  /** Counts up per visit, so the same kind twice in a row still replays. */
+  id: number;
+  type: CelebrationType;
+  playerIndex: number;
+  total: number;
+  darts: Dart[];
+  matchWin: boolean;
+  /** Winner first. Legs, or sets when the match is played over sets. */
+  matchScore?: [number, number];
+}
+
 export interface PlayerStats {
   name: string;
   sets: number;

@@ -8,6 +8,7 @@
 @import "./styles/tokens.css";
 @import "./styles/vaporwave.css";
 @import "./styles/cyberpunk.css";
+@import "./styles/celebration.css";
 
 /* ── Breakpoint-Skala ──
    Media-Queries können keine Custom-Properties lesen, die Zahlen stehen also

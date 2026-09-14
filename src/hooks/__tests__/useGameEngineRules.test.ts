@@ -206,6 +206,82 @@ describe('legs, sets and match end', () => {
   });
 });
 
+describe('celebrations', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    vi.useFakeTimers();
+  });
+  afterEach(() => { vi.useRealTimers(); });
+
+  it('celebrates a visit of 170 or more, and nothing just below', () => {
+    const { result } = renderHook(() => useGameEngine(makeProps()));
+    act(() => { result.current.startGame(['Dominik', 'Gegner'], config()); });
+
+    // 168: T20 T20 T16.
+    throwDarts(result, [[20, 3], [20, 3], [16, 3]]);
+    expect(result.current.celebration).toBeNull();
+
+    // 171 by the next player: T19 T19 T19.
+    throwDarts(result, [[19, 3], [19, 3], [19, 3]]);
+    expect(result.current.celebration).toMatchObject({ type: 'highScore', total: 171, playerIndex: 1 });
+    expect(result.current.celebration?.darts.map(d => d.label)).toEqual(['T19', 'T19', 'T19']);
+  });
+
+  it('calls a finish of 100 a high finish and one below it a check', () => {
+    const { result } = renderHook(() => useGameEngine(makeProps()));
+    act(() => { result.current.startGame(['Dominik', 'Gegner'], config()); });
+
+    setUp(result, 0, 100);
+    throwDarts(result, [[20, 3], [20, 2]]);
+    expect(result.current.celebration).toMatchObject({ type: 'highFinish', total: 100, matchWin: false });
+
+    setUp(result, 0, 40);
+    throwDarts(result, [[20, 2]]);
+    expect(result.current.celebration).toMatchObject({ type: 'check', total: 40, matchWin: false });
+  });
+
+  it('gives the same kind twice in a row a new id, so it replays', () => {
+    const { result } = renderHook(() => useGameEngine(makeProps()));
+    act(() => { result.current.startGame(['Dominik', 'Gegner'], config()); });
+
+    throwDarts(result, [[20, 3], [20, 3], [20, 3]]);
+    const first = result.current.celebration?.id;
+    throwDarts(result, [[20, 3], [20, 3], [20, 3]]);
+    expect(result.current.celebration?.id).not.toBe(first);
+  });
+
+  it('flags the match-winning check and holds the stats sheet until it has played', () => {
+    const props = makeProps();
+    const { result } = renderHook(() => useGameEngine(props));
+    act(() => { result.current.startGame(['Dominik', 'Gegner'], config({ legsToWin: 1 })); });
+
+    setUp(result, 0, 40);
+    act(() => { result.current.addDart(20, 2); });
+    expect(result.current.celebration).toMatchObject({ type: 'check', matchWin: true, matchScore: [1, 0] });
+
+    // The round is booked after 800 ms, the sheet only after the delay.
+    act(() => { vi.advanceTimersByTime(800); });
+    expect(props.setStatsModalData).not.toHaveBeenCalled();
+    act(() => { vi.advanceTimersByTime(2000); });
+    expect(props.setStatsModalData).toHaveBeenCalledWith(expect.objectContaining({ isOpen: true }));
+  });
+
+  it('never opens the stats sheet when the winning dart is undone in time', () => {
+    const props = makeProps();
+    const { result } = renderHook(() => useGameEngine(props));
+    act(() => { result.current.startGame(['Dominik', 'Gegner'], config({ legsToWin: 1 })); });
+
+    setUp(result, 0, 40);
+    act(() => { result.current.addDart(20, 2); });
+    act(() => { vi.advanceTimersByTime(900); });
+    act(() => { result.current.undoSingleDart(); });
+    act(() => { vi.advanceTimersByTime(5000); });
+
+    const opened = props.setStatsModalData.mock.calls.some(([arg]) => typeof arg === 'object' && arg?.isOpen);
+    expect(opened).toBe(false);
+  });
+});
+
 describe('profile bests written by the match-winning visit', () => {
   beforeEach(() => {
     localStorage.clear();

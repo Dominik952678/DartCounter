@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
-import type { GameState, Profile, MatchHistory, GameConfig, Player, StatsModalData, Dart } from '../types';
+import type { GameState, Profile, MatchHistory, GameConfig, Player, StatsModalData, Dart, Celebration } from '../types';
 import { saveProfiles, setGuestLiveMatchStatus, getGuestSyncStatus, PersistenceError } from '../db';
 import { getBotDart, type TeamContext } from '../utils/bot';
 import { playSciFiHitSound, play180Sound, playBustSound, playHighFinishSound, speak, playDartHitSound, announceScore, announceGameShot } from '../utils/audio';
@@ -8,6 +8,7 @@ import { threeDartAverage } from '../utils/stats';
 import { reportPersistenceError } from '../store/useNotificationStore';
 import { has as hasStored, readJson, remove as removeStored, writeJson } from '../utils/storage';
 import { botAverage } from '../utils/botProfiles';
+import { celebrationTypeFor, isMatchWinningLeg, matchScoreFor, MATCH_STATS_DELAY_MS, prefersReducedMotion } from '../utils/celebration';
 
 export const get2v2FreezeStatus = (players: Player[], activePlayerIndex: number): {
   is2v2: boolean;
@@ -80,7 +81,7 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
 
   const [hasSavedGame, setHasSavedGame] = useState(() => typeof window !== 'undefined' && hasStored('savedGame'));
   const [roundBust, setRoundBust] = useState(false);
-  const [celebration, setCelebration] = useState<{ type: string, playerIndex: number } | null>(null);
+  const [celebration, setCelebration] = useState<Celebration | null>(null);
   /** Set when a linked cloud guest revokes the session from their own device. */
   const [remoteAbortNotice, setRemoteAbortNotice] = useState<string | null>(null);
 
@@ -96,6 +97,9 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
 
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const callerTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Holds the stats sheet back while the match-winning celebration plays. */
+  const statsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const celebrationIdRef = useRef(0);
   /** Ensures a guest revocation is announced once per match, not once per poll. */
   const remoteAbortLatch = useRef(false);
 
@@ -134,6 +138,10 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
     if (callerTimeoutRef.current) {
       clearTimeout(callerTimeoutRef.current);
       callerTimeoutRef.current = null;
+    }
+    if (statsTimeoutRef.current) {
+      clearTimeout(statsTimeoutRef.current);
+      statsTimeoutRef.current = null;
     }
   }, []);
 
@@ -467,14 +475,21 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
       }))
     };
 
-    setStatsModalData({
-      isOpen: true,
-      winnerIndex,
-      players: finalPlayers,
-      matchData,
-      pendingProfiles: newProfiles,
-      pendingMatchData: matchData
-    });
+    // Everything above is computed in the same call stack as the winning visit;
+    // only opening the sheet waits, so it does not cover the "Match" moment.
+    // Undo cancels it through `clearTimers`.
+    if (statsTimeoutRef.current) clearTimeout(statsTimeoutRef.current);
+    statsTimeoutRef.current = setTimeout(() => {
+      statsTimeoutRef.current = null;
+      setStatsModalData({
+        isOpen: true,
+        winnerIndex,
+        players: finalPlayers,
+        matchData,
+        pendingProfiles: newProfiles,
+        pendingMatchData: matchData
+      });
+    }, prefersReducedMotion() ? 0 : MATCH_STATS_DELAY_MS);
   }, [isOnline, setStatsModalData]);
 
   const handleLegWin = useCallback((currentState: GameState, winnerIndex: number, newHighestThrow: number): GameState => {
@@ -533,7 +548,10 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
       // as `0 legs`: with the default one-set match that is every match ever
       // played, and the scoreline is not recoverable from anything else.
       if (newPlayers[winnerIndex].sets >= currentState.config.setsToWin) {
-        const finalState: GameState = { ...currentState, players: newPlayers, isProcessing: true };
+        // The visit is booked, so its darts go, as at the end of any leg. Left in
+        // place they were subtracted from the reset score again and the card read
+        // "469 -32" for as long as the match-win celebration plays.
+        const finalState: GameState = { ...currentState, players: newPlayers, currentRoundDarts: [], isProcessing: true };
         removeStored('savedGame');
         setHasSavedGame(false);
         showMatchStats(finalState, winnerIndex, newPlayers);
@@ -728,18 +746,29 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
 
     if (!bust && !isWin && state.currentRoundDarts.length < 3) return;
 
+    const celebrationType = celebrationTypeFor({ bust, isWin, total: roundTotal });
+    if (celebrationType) {
+      const matchWin = isWin && isMatchWinningLeg(p, state.config);
+      setCelebration({
+        id: ++celebrationIdRef.current,
+        type: celebrationType,
+        playerIndex: state.activePlayer,
+        total: roundTotal,
+        darts: state.currentRoundDarts,
+        matchWin,
+        matchScore: matchWin ? matchScoreFor(state.players, state.activePlayer, state.config) : undefined
+      });
+    }
+
     if (bust) {
-      setCelebration({ type: 'bust', playerIndex: state.activePlayer });
       triggerHaptic('bust');
       playBustSound();
       if (newScore === 0 && state.config.is2v2) speak('Frozen!');
     } else if (isWin) {
-      setCelebration({ type: 'checkout', playerIndex: state.activePlayer });
       triggerHaptic('victory');
       if (roundTotal >= 100) playHighFinishSound();
       announceGameShot(false);
     } else if (roundTotal === 180) {
-      setCelebration({ type: '180', playerIndex: state.activePlayer });
       triggerHaptic('180');
       play180Sound();
     } else {

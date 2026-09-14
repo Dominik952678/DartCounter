@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import type { Player, GameConfig } from '../types';
+import type { Player, GameConfig, Celebration } from '../types';
 import { getCheckoutSuggestion, checkoutRange } from '../utils/checkouts';
+import { cardCelebrationClass, legPopClass } from '../utils/celebration';
+import { CardCelebration } from './celebration/CardCelebration';
 import { playerColorBySeat, teamColor } from '../utils/playerColors';
 import { Icons } from './ui';
 
@@ -10,7 +12,7 @@ interface ScoreboardProps {
   startingPlayerOfLeg: number;
   config: GameConfig;
   currentRoundDarts: import('../types').Dart[];
-  celebration?: { type: string, playerIndex: number } | null;
+  celebration?: Celebration | null;
 }
 
 /** Dauer der „Entblockt"-Einblendung. */
@@ -174,12 +176,8 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
           const { min: checkoutMin, max: checkoutMax } = checkoutRange(config.outMode);
           const isCheckoutRange = liveScore >= checkoutMin && liveScore <= checkoutMax;
           
-          let celebrationClass = '';
-          if (celebration && celebration.playerIndex === i) {
-            if (celebration.type === '180') celebrationClass = 'celebration-180';
-            else if (celebration.type === 'checkout') celebrationClass = 'celebration-checkout';
-            else if (celebration.type === 'bust') celebrationClass = 'shake-bust';
-          }
+          const ownCelebration = celebration?.playerIndex === i ? celebration : null;
+          const celebrationClass = cardCelebrationClass(celebration, i, players, is2v2);
 
           const coPercent = p.checkoutAttempts > 0 
             ? ((p.checkoutSuccesses / p.checkoutAttempts) * 100).toFixed(0) 
@@ -212,12 +210,14 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
           return (
             <div 
               key={i} 
+              data-player-card={i}
               className={`player-card ${isActive ? 'is-active' : 'is-inactive'} ${isStarter ? 'is-starter' : ''} ${celebrationClass} ${isCheckoutRange ? 'checkout-range' : ''}`}
               style={{ 
                 '--player-color': playerColor,
                 borderLeftColor: isActive ? playerColor : undefined
               } as React.CSSProperties}
             >
+              {ownCelebration && <CardCelebration key={ownCelebration.id} celebration={ownCelebration} />}
               <div className="player-card-head">
                 <div className="player-card-ident">
                   <span className={`starter-dot ${isStarter ? 'is-starter' : ''}`} />
@@ -242,7 +242,7 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
                   {config.setsToWin > 1 && (
                     <span className="badge-count">S: <strong>{p.sets}</strong></span>
                   )}
-                  <span className="badge-count">L: <strong>{p.legs}</strong></span>
+                  <span className={`badge-count ${legPopClass(celebration, i)}`}>L: <strong>{p.legs}</strong></span>
                 </div>
               </div>
 
@@ -283,7 +283,11 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
                 {/* A frozen player still gets to see the finish, marked as blocked:
                     hiding it looked like there was none, and `.checkout-pill-frozen`
                     had been styled for this since the freeze rule was written. */}
-                {checkoutSuggestion ? (
+                {ownCelebration?.type === 'check' && !ownCelebration.matchWin ? (
+                  <span className="cel-check-pill">
+                    <Icons.IconCheck size={14} /> Check · {ownCelebration.total}
+                  </span>
+                ) : checkoutSuggestion ? (
                   <div
                     className={isThisPlayerBlockedFromFinishing ? 'checkout-pill-frozen' : 'checkout-pill'}
                     title={isThisPlayerBlockedFromFinishing ? 'Freeze: Dein Team darf noch nicht auschecken' : undefined}

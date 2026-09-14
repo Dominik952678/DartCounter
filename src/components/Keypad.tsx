@@ -11,6 +11,8 @@ interface KeypadProps {
   toggleMultiplier: (mult: number) => void;
   undoSingleDart: () => void;
   canUndo?: boolean;
+  /** Laid over the modifier row and number pad; the dart boxes stay visible. */
+  overlay?: React.ReactNode;
 }
 
 export const Keypad: React.FC<KeypadProps> = ({
@@ -21,7 +23,8 @@ export const Keypad: React.FC<KeypadProps> = ({
   addDart,
   toggleMultiplier,
   undoSingleDart,
-  canUndo
+  canUndo,
+  overlay
 }) => {
   const handleAddDartClick = (baseValue: number) => {
     if (baseValue === 0) {
@@ -81,6 +84,7 @@ export const Keypad: React.FC<KeypadProps> = ({
         </div>
       </div>
 
+      <div className="keypad-input">
       {/* Modifier Row */}
       <div className="modifier-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
         <button 
@@ -141,6 +145,9 @@ export const Keypad: React.FC<KeypadProps> = ({
           <span className="btn-undo-icon" aria-hidden="true">⟲</span>
           <span className="btn-undo-label">Zurück</span>
         </button>
+      </div>
+
+      {overlay}
       </div>
     </div>
   );

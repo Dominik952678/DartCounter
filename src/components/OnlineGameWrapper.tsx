@@ -9,11 +9,12 @@ import type { RoomEventPayload } from '../store/useOnlineStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { useProfiles } from '../hooks/useProfiles';
 import { useGameEngine } from '../hooks/useGameEngine';
-import type { GameState, MatchHistory, Profile, StatsModalData } from '../types';
+import type { Celebration, GameState, MatchHistory, Profile, StatsModalData } from '../types';
 import { StatsModal } from './Modals';
 import { DisconnectOverlay } from './DisconnectOverlay';
 import { LoadingScreen } from './LoadingScreen';
 import { readString } from '../utils/storage';
+import { isCelebration } from '../utils/celebration';
 import { recordMatchForSelf } from '../db';
 import { reportPersistenceError } from '../store/useNotificationStore';
 import { Button } from './ui';
@@ -54,7 +55,7 @@ export const OnlineGameWrapper: React.FC = () => {
   });
   const [clientMultiplier, setClientMultiplier] = useState(1);
   const [clientCheckoutPrompt, setClientCheckoutPrompt] = useState<{ maxDarts: number; autoDarts: number; isWin: boolean } | null>(null);
-  const [clientCelebration, setClientCelebration] = useState<{ type: string; playerIndex: number } | null>(null);
+  const [clientCelebration, setClientCelebration] = useState<Celebration | null>(null);
   const [clientRoundBust, setClientRoundBust] = useState(false);
 
   const savedMatchRef = useRef<string | null>(null);
@@ -281,7 +282,9 @@ export const OnlineGameWrapper: React.FC = () => {
         }
 
         if (payload.state) setSyncedState(payload.state as GameState & { historyLength?: number });
-        if (payload.celebration !== undefined) setClientCelebration(payload.celebration as { type: string; playerIndex: number } | null);
+        if (payload.celebration !== undefined) {
+          setClientCelebration(isCelebration(payload.celebration) ? payload.celebration : null);
+        }
         if (payload.roundBust !== undefined) setClientRoundBust(!!payload.roundBust);
         if (payload.checkoutPrompt !== undefined) {
           setClientCheckoutPrompt(payload.checkoutPrompt as { maxDarts: number; autoDarts: number; isWin: boolean } | null);
