@@ -365,6 +365,11 @@ export default function App() {
               submitCheckoutPrompt={gameEngine.submitCheckoutPrompt}
               celebration={gameEngine.celebration}
               canUndo={gameEngine.gameState.history.length > 0 || gameEngine.gameState.currentRoundDarts.length > 0}
+              onSuspend={() => {
+                // Nichts geworfen, nichts zu behalten: dann endet das Match wie abgebrochen.
+                if (gameEngine.suspendGame()) navigate('/');
+                else gameEngine.abortGame();
+              }}
             />
           } />
 

@@ -211,6 +211,26 @@ export function checkoutRange(outMode: 'SO' | 'DO' | 'MO'): { min: number; max: 
   };
 }
 
+/**
+ * A score inside the checkout band that no three darts can finish — in Double
+ * Out 169, 168, 166, 165, 163, 162 and 159. Read from the suggestion table, so
+ * the match screen's BOGEY and its checkout route can never disagree.
+ *
+ * Only meaningful at the start of a visit: with darts already thrown, "no route"
+ * means "not with the darts that are left", not "no finish".
+ */
+export function isBogey(score: number, outMode: 'SO' | 'DO' | 'MO'): boolean {
+  const { min, max } = checkoutRange(outMode);
+  if (score < min || score > max) return false;
+  // The table answers a Double Out bogey with its setup shot ("Setup: T20"),
+  // which is advice, not a finish.
+  const suggestion = getCheckoutSuggestion(score, outMode, 0);
+  return suggestion === null || isSetupShot(suggestion);
+}
+
+/** Whether a suggestion is a setup for a later visit rather than a finish. */
+export const isSetupShot = (suggestion: string): boolean => suggestion.startsWith('Setup');
+
 export function getCheckoutSuggestion(score: number, outMode: 'SO' | 'DO' | 'MO', dartsThrown: number = 0): string | null {
   const { min, max } = checkoutRange(outMode);
   if (score < min || score > max) {

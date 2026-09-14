@@ -60,3 +60,10 @@ export const isHexColor = (value: string | undefined): value is string =>
 
 /** In 2v2 tragen die beiden Teams die ersten zwei Töne der Palette. */
 export const teamColor = (team: 1 | 2): string => playerColorBySeat(team - 1);
+
+/**
+ * Die Farbe eines Spielers im Match: die eigene aus dem Profil, sonst in 2v2
+ * die seines Teams, sonst die seines Sitzplatzes.
+ */
+export const matchPlayerColor = (player: { color?: string }, seat: number, is2v2: boolean): string =>
+  player.color || (is2v2 ? teamColor(seat % 2 === 0 ? 1 : 2) : playerColorBySeat(seat));

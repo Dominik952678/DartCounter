@@ -17,3 +17,170 @@
 .dartboard-art-quiet .dba-light { fill: var(--board-quiet-light); }
 .dartboard-art-quiet .dba-red { fill: var(--board-quiet-red); }
 .dartboard-art-quiet .dba-green { fill: var(--board-quiet-green); }
+
+/* ── Heatmap in Form des Boards ── Markup: components/charts/HeatBoard.tsx
+   Die Deckkraft einer getroffenen Fläche kommt als Inline-Style. */
+.heat-board {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.heat-board .hb-back {
+  fill: var(--surface-sunken);
+}
+.heat-board .hb-seg {
+  fill: var(--line-1);
+  stroke: var(--bg-base);
+  stroke-width: 1.4;
+}
+.heat-board .hb-seg.is-hit {
+  fill: var(--accent-primary);
+}
+.heat-board .hb-seg.is-off {
+  fill: transparent;
+}
+.heat-board .hb-focus {
+  fill: none;
+  stroke: var(--accent-bone);
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+.heat-board .hb-number {
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: var(--weight-semibold);
+  fill: var(--text-secondary);
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+/* ── Blatt von unten ── Markup: components/ui/Sheet.tsx */
+.sheet-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  background: color-mix(in srgb, var(--bg-base) 72%, transparent);
+  animation: overlayIn var(--motion-color) ease both;
+}
+
+.sheet {
+  width: 100%;
+  max-width: 600px;
+  max-height: min(88dvh, 760px);
+  margin: 0 auto;
+  padding: 10px 18px calc(var(--safe-bottom) + 24px);
+  box-sizing: border-box;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: 28px 28px 0 0;
+  border-top: 1px solid var(--line-2);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  outline: none;
+  animation: sheetIn var(--motion-slide) var(--ease-glide) both;
+}
+
+.sheet-handle {
+  display: block;
+  width: 40px;
+  height: 5px;
+  margin: 0 auto var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--line-3);
+}
+
+.sheet-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.sheet-title {
+  color: var(--text-primary);
+}
+
+.sheet-close {
+  min-height: 44px;
+  padding: 0 var(--space-2);
+  border: none;
+  background: transparent;
+  font-family: var(--font);
+  font-size: var(--text-label);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+/* ── Dialog ── Markup: components/ui/Dialog.tsx */
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: color-mix(in srgb, var(--bg-base) 72%, transparent);
+  animation: overlayIn var(--motion-color) ease both;
+}
+
+.dialog {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: 24px 22px;
+  box-sizing: border-box;
+  border-radius: 26px;
+  border: 1px solid var(--line-2);
+  background: var(--surface-card);
+  box-shadow: var(--shadow-lg);
+  color: var(--text-primary);
+  outline: none;
+  animation: dialogIn var(--motion-pop) var(--ease-pop) both;
+}
+
+.dialog-label.is-success {
+  color: var(--text-success);
+}
+.dialog-label.is-danger {
+  color: var(--text-danger);
+}
+
+.dialog-title {
+  font-size: 30px;
+  line-height: 1;
+}
+
+.dialog-text {
+  margin: 0;
+  font-size: var(--text-body);
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+.dialog-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: var(--space-1);
+}
+.dialog-actions .btn-danger-text {
+  border: 1.5px solid var(--text-danger);
+}
+
+@keyframes overlayIn {
+  from { opacity: 0; }
+}
+@keyframes sheetIn {
+  from { transform: translateY(100%); }
+}
+@keyframes dialogIn {
+  from { opacity: 0; transform: scale(0.96); }
+}

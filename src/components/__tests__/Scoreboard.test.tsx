@@ -1,7 +1,8 @@
+import type { ComponentProps } from 'react';
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { Scoreboard } from '../Scoreboard';
-import type { Player, GameConfig } from '../../types';
+import type { Player, GameConfig, Dart } from '../../types';
 
 describe('Scoreboard Component', () => {
   const dummyPlayers: Player[] = [
@@ -57,16 +58,20 @@ describe('Scoreboard Component', () => {
     legsToWin: 3
   };
 
-  it('renders all player names, scores, sets, and legs', () => {
+  const renderBoard = (props: Partial<ComponentProps<typeof Scoreboard>> = {}) =>
     render(
-      <Scoreboard 
+      <Scoreboard
         players={dummyPlayers}
         activePlayer={0}
         startingPlayerOfLeg={0}
         config={dummyConfig}
         currentRoundDarts={[]}
+        {...props}
       />
     );
+
+  it('renders all player names and scores', () => {
+    renderBoard();
 
     expect(screen.getByText('Dominik')).toBeInTheDocument();
     // Der Bot-Kopf ist ein Icon neben dem Namen, kein Zeichen im Namen.
@@ -75,132 +80,81 @@ describe('Scoreboard Component', () => {
     expect(screen.getByText('380')).toBeInTheDocument();
   });
 
-  it('shows checkout suggestion when active player is in checkout range', () => {
-    const playersInCheckout: Player[] = [
-      {
-        ...dummyPlayers[0],
-        score: 40
-      }
-    ];
+  it('marks the card of the player on throw', () => {
+    renderBoard();
 
-    render(
-      <Scoreboard 
-        players={playersInCheckout}
-        activePlayer={0}
-        startingPlayerOfLeg={0}
-        config={dummyConfig}
-        currentRoundDarts={[]}
-      />
-    );
+    expect(screen.getByText('wirft').closest('.player-card')).toHaveClass('is-active');
+  });
+
+  it('shows the match average on the card', () => {
+    renderBoard();
+
+    // (501 / 15) · 3
+    expect(screen.getByText('100.2')).toBeInTheDocument();
+  });
+
+  it('shows the checkout route in the bar when the thrower can finish', () => {
+    const { container } = renderBoard({ players: [{ ...dummyPlayers[0], score: 40 }] });
 
     expect(screen.getByText('D20')).toBeInTheDocument();
+    expect(container.querySelector('.status-bar.is-checkout')).not.toBeNull();
   });
 
   /**
-   * The scoreboard gated the pill on a hard `<= 170`, so the Master Out
-   * finishes from 171 to 180 — which the suggestion table knows — were never
-   * shown to the player they applied to.
+   * The scoreboard used to gate the finish on a hard `<= 170`, so the Master
+   * Out finishes from 171 to 180 were never shown to the player they applied to.
    */
   it('shows a Master Out finish above 170', () => {
-    render(
-      <Scoreboard
-        players={[{ ...dummyPlayers[0], score: 171 }]}
-        activePlayer={0}
-        startingPlayerOfLeg={0}
-        config={{ ...dummyConfig, outMode: 'MO' }}
-        currentRoundDarts={[]}
-      />
-    );
+    renderBoard({ players: [{ ...dummyPlayers[0], score: 171 }], config: { ...dummyConfig, outMode: 'MO' } });
 
-    expect(screen.getByText('T20 T20 T17')).toBeInTheDocument();
+    expect(screen.getByText('T20 · T20 · T17')).toBeInTheDocument();
   });
 
-  it('shows no finish above 170 in Double Out, where none exists', () => {
-    render(
-      <Scoreboard
-        players={[{ ...dummyPlayers[0], score: 171 }]}
-        activePlayer={0}
-        startingPlayerOfLeg={0}
-        config={dummyConfig}
-        currentRoundDarts={[]}
-      />
-    );
+  it('keeps the bar empty above 170 in Double Out, where no finish exists', () => {
+    const { container } = renderBoard({ players: [{ ...dummyPlayers[0], score: 171 }] });
 
-    expect(screen.queryByText(/T20 T20/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/T20 · T20/)).not.toBeInTheDocument();
+    expect(container.querySelector('.status-bar.is-empty')).not.toBeNull();
   });
 
-  it('renders 2v2 team header and indicators when in 2v2 mode', () => {
+  it('calls a bogey at the start of a visit', () => {
+    renderBoard({ players: [{ ...dummyPlayers[0], score: 169 }] });
+
+    expect(screen.getByText('Bogey')).toBeInTheDocument();
+  });
+
+  /** Mit geworfenen Darts heißt „kein Weg" nur „nicht mit den Darts, die übrig sind". */
+  it('does not call a bogey in the middle of a visit', () => {
+    const single: Dart = { base: 1, mult: 1, value: 1, label: 'S1' };
+    renderBoard({ players: [{ ...dummyPlayers[0], score: 170 }], currentRoundDarts: [single] });
+
+    expect(screen.queryByText('Bogey')).not.toBeInTheDocument();
+  });
+
+  it('shows BUST for a busted visit', () => {
+    renderBoard({ roundBust: true });
+
+    expect(screen.getByText('Bust')).toBeInTheDocument();
+  });
+
+  it('hides the routes when checkout hints are switched off', () => {
+    renderBoard({ players: [{ ...dummyPlayers[0], score: 40 }], showCheckoutHints: false });
+
+    expect(screen.queryByText('D20')).not.toBeInTheDocument();
+  });
+
+  it('names the team on every card that is not on throw in 2v2', () => {
     const teamPlayers: Player[] = [
-      { ...dummyPlayers[0], name: 'Dominik', score: 300, team: 1 },
+      { ...dummyPlayers[0], name: 'Dominik', score: 100, team: 1 },
       { ...dummyPlayers[1], name: 'Opponent 1', score: 100, team: 2 },
-      { ...dummyPlayers[0], name: 'Partner', score: 150, team: 1 },
+      { ...dummyPlayers[0], name: 'Partner', score: 100, team: 1 },
       { ...dummyPlayers[1], name: 'Opponent 2', score: 100, team: 2 }
     ];
 
-    const teamConfig: GameConfig = {
-      ...dummyConfig,
-      is2v2: true
-    };
+    renderBoard({ players: teamPlayers, config: { ...dummyConfig, is2v2: true } });
 
-    render(
-      <Scoreboard 
-        players={teamPlayers}
-        activePlayer={0}
-        startingPlayerOfLeg={0}
-        config={teamConfig}
-        currentRoundDarts={[]}
-      />
-    );
-
-    expect(screen.getByText('Team 1:')).toBeInTheDocument();
-    expect(screen.getByText('Team 2:')).toBeInTheDocument();
-    // Team 1 score = 300 + 150 = 450 Pkt
-    expect(screen.getByText('450 Pkt')).toBeInTheDocument();
-    // Team 2 score = 100 + 100 = 200 Pkt
-    expect(screen.getByText('200 Pkt')).toBeInTheDocument();
-  });
-
-  it('shows Frozen warning badge when active player team is behind in 2v2', () => {
-    const teamPlayers: Player[] = [
-      { ...dummyPlayers[0], name: 'Dominik', score: 40, team: 1 },
-      { ...dummyPlayers[1], name: 'Opponent 1', score: 50, team: 2 },
-      { ...dummyPlayers[0], name: 'Partner', score: 200, team: 1 },
-      { ...dummyPlayers[1], name: 'Opponent 2', score: 50, team: 2 }
-    ];
-
-    const teamConfig: GameConfig = {
-      ...dummyConfig,
-      is2v2: true
-    };
-
-    render(
-      <Scoreboard 
-        players={teamPlayers}
-        activePlayer={0}
-        startingPlayerOfLeg={0}
-        config={teamConfig}
-        currentRoundDarts={[]}
-      />
-    );
-
-    // Partner has 200, opponents have 100. Diff = +100 Pkt -> Team 1 is geblockt! Partner must throw 100 Pkt!
-    expect(screen.getByText(/Team 1 geblockt \(Partner muss mind. 100 Pkt werfen\)/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/Muss mind./i).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText(/Geblockt/i).length).toBeGreaterThanOrEqual(1);
-  });
-
-  it('displays compact stats correctly (Leg, Match, CO, 100+, 180)', () => {
-    render(
-      <Scoreboard 
-        players={dummyPlayers}
-        activePlayer={0}
-        startingPlayerOfLeg={0}
-        config={dummyConfig}
-        currentRoundDarts={[]}
-      />
-    );
-
-    expect(screen.getByText('100.2')).toBeInTheDocument(); // Match Avg: (501/15)*3 = 100.2
-    expect(screen.getByText('50%')).toBeInTheDocument(); // CO: 1/2 = 50%
+    expect(screen.getByText('wirft')).toBeInTheDocument();
+    expect(screen.getAllByText('Team 1')).toHaveLength(1);
+    expect(screen.getAllByText('Team 2')).toHaveLength(2);
   });
 });

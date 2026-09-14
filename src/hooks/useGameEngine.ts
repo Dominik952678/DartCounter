@@ -319,6 +319,30 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
   }, [applyState, clearTimers, setScreen]);
 
   /**
+   * Leaves a running match without ending it. The snapshot is written right away
+   * rather than by the debounced auto-save, so the Start screen can offer it the
+   * moment the player lands there, and the board is paused so a bot on throw
+   * does not play on in the background. Answers whether anything was kept: a
+   * match without a single dart thrown is not worth resuming.
+   */
+  const suspendGame = useCallback((): boolean => {
+    const state = stateRef.current;
+    const played = state.currentRoundDarts.length > 0
+      || state.players.some(p => p.legs > 0 || p.sets > 0 || p.matchDarts > 0);
+    if (isOnline || state.players.length === 0 || !played) return false;
+
+    clearTimers();
+    const saved = writeJson('savedGame', {
+      ...state,
+      isProcessing: false,
+      history: state.history.slice(-PERSISTED_HISTORY_LIMIT)
+    });
+    setHasSavedGame(saved);
+    applyState({ ...state, isProcessing: true });
+    return saved;
+  }, [applyState, clearTimers, isOnline]);
+
+  /**
    * Drops a cloud guest's borrowed profile from this device. Once they revoke
    * the link their stats are no longer ours to keep or show, so the entry has
    * to leave the player list rather than linger as a dead option.
@@ -524,6 +548,7 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
       p.legHistory = [...p.legHistory, p.legDarts > 0 ? ((p.legPts / p.legDarts) * 3).toFixed(1) : '0.0'];
       p.legPts = 0;
       p.legDarts = 0;
+      p.legVisits = [];
       p.score = currentState.config.startScore;
     });
 
@@ -681,6 +706,14 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
       else if (roundTotal >= 100) updatedPlayer.hundredPlus += 1;
       else if (roundTotal >= 60) updatedPlayer.sixtyPlus += 1;
     }
+
+    // The visits of the running leg, for the live statistics. They live on the
+    // player so undo and the saved game carry them; the match history, which
+    // copies its fields one by one, never sees them.
+    updatedPlayer.legVisits = [
+      ...(updatedPlayer.legVisits ?? []),
+      { darts: roundDarts.map(d => d.label), points: bust ? 0 : roundTotal, remaining: updatedPlayer.score, bust }
+    ];
 
     const stateAfterDart: GameState = { ...prevState, players: newPlayers };
 
@@ -936,7 +969,7 @@ export function useGameEngine({ profiles, setProfiles, setSavedMatches: _setSave
 
   return {
     gameState, setGameState, roundBust, celebration, setCelebration,
-    checkoutPrompt, startGame, abortGame, resumeGame, discardSavedGame, undoSingleDart,
+    checkoutPrompt, startGame, abortGame, suspendGame, resumeGame, discardSavedGame, undoSingleDart,
     toggleMultiplier, submitCheckoutPrompt, hasSavedGame, setHasSavedGame,
     addDart, timeoutRef,
     remoteAbortNotice, dismissRemoteAbortNotice: () => setRemoteAbortNotice(null)

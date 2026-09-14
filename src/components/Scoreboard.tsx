@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import type { Player, GameConfig, Celebration } from '../types';
-import { getCheckoutSuggestion, checkoutRange } from '../utils/checkouts';
+import type { Player, GameConfig, Celebration, Dart } from '../types';
+import { getCheckoutSuggestion, checkoutRange, isBogey, isSetupShot } from '../utils/checkouts';
 import { cardCelebrationClass, legPopClass } from '../utils/celebration';
+import { matchPlayerColor } from '../utils/playerColors';
 import { CardCelebration } from './celebration/CardCelebration';
-import { playerColorBySeat, teamColor } from '../utils/playerColors';
+import { StatusBar, type MatchStatus } from './match/StatusBar';
 import { Icons } from './ui';
 
 interface ScoreboardProps {
@@ -11,26 +12,23 @@ interface ScoreboardProps {
   activePlayer: number;
   startingPlayerOfLeg: number;
   config: GameConfig;
-  currentRoundDarts: import('../types').Dart[];
+  currentRoundDarts: Dart[];
   celebration?: Celebration | null;
+  /** Die laufende Aufnahme ist überworfen. */
+  roundBust?: boolean;
+  /** Checkout-Wege und Bogey anzeigen. */
+  showCheckoutHints?: boolean;
 }
 
-/** Dauer der „Entblockt"-Einblendung. */
+/** Dauer der „Frei"-Anzeige, nachdem ein Team entsperrt wurde. */
 const UNLOCK_NOTICE_MS = 2200;
 
 /**
  * True für einen Moment, nachdem `isBlocked` von true auf false gewechselt ist.
  *
- * Stand vorher zweimal ausgeschrieben, einmal je Team, und hatte zwei Fehler:
- * der Zweig, der die Einblendung auslöste, aktualisierte `wasBlocked` nicht —
- * und wurde das Team innerhalb der Einblendung wieder gesperrt, räumte React
- * den Timer ab, ohne dass der neue Lauf das Flag zurücksetzte. Es blieb dann
- * dauerhaft true.
- *
- * Das war nicht nur eine hängende Animation: die Einblendung unterdrückt im
- * Markup die „Geblockt"- und die „Muss mind. X Pkt werfen"-Zeile. Ein Team,
- * das kurz frei war und wieder gesperrt wurde, sah für den Rest des Legs
- * unblockiert aus, obwohl die Engine das Auschecken weiter verweigerte.
+ * Abgeleitet statt im Effekt zurückgesetzt: wird das Team innerhalb der Anzeige
+ * wieder gesperrt, räumt React den Timer ab — und eine hängende Anzeige darf die
+ * Sperre nicht verdecken, weil die Engine das Auschecken weiter verweigert.
  */
 const useJustUnlocked = (isBlocked: boolean): boolean => {
   const [justUnlocked, setJustUnlocked] = useState(false);
@@ -46,40 +44,27 @@ const useJustUnlocked = (isBlocked: boolean): boolean => {
     return () => clearTimeout(timer);
   }, [isBlocked]);
 
-  // Abgeleitet statt im Effekt zurückgesetzt: wird das Team wieder gesperrt,
-  // räumt React zwar den Timer ab, aber der Zustand ist damit ohnehin überholt.
-  // Die Verknüpfung hier sorgt dafür, dass eine hängende Einblendung die
-  // Block-Anzeige nicht verdecken kann — und spart ein setState im Effekt.
   return justUnlocked && !isBlocked;
 };
 
-interface TeamSideProps {
-  team: 1 | 2;
-  total: number;
-  justUnlocked: boolean;
-  /** Vorher zwei Zweige mit identischem Markup: `isBothBlocked` und `isTXBlocked`. */
-  blocked: boolean;
-}
+/** „T20 T11 D14" → „T20 · T11 · D14". */
+const routeLabel = (route: string): string => route.split(' ').join(' · ');
 
-/** Eine Seite der 2v2-Leiste: Punkt, Name, Punktzahl und Sperrzustand. */
-const TeamSide: React.FC<TeamSideProps> = ({ team, total, justUnlocked, blocked }) => (
-  <div
-    className="team-bar-side"
-    style={{ '--player-color': teamColor(team) } as React.CSSProperties}
-  >
-    <span className="team-dot" />
-    <strong className="team-name">Team {team}:</strong>
-    <span className="team-total">{total} Pkt</span>
-    {justUnlocked ? (
-      <span className="lock-badge-bar unlocking" style={{ padding: '2px 8px', margin: 0 }}>
-        <Icons.IconUnlock size={14} /> Entblockt!
-      </span>
-    ) : blocked ? (
-      <span className="lock-chip"><Icons.IconLock size={13} /> Geblockt</span>
-    ) : null}
-  </div>
-);
-
+/**
+ * Die werfende Karte bekommt mehr Platz (Entwurf C1/C2). Hochformat verteilt die
+ * Spalten, Querformat die Zeilen; bei vier Spielern teilt das Stylesheet gleich
+ * auf.
+ */
+const gridFor = (count: number, active: number): React.CSSProperties => {
+  const weights = Array.from({ length: count }, (_, i) =>
+    i === active ? (count === 2 ? '1.55fr' : '1.4fr') : '1fr'
+  );
+  if (count > 3) return {};
+  return {
+    '--sb-cols': weights.join(' '),
+    '--sb-rows': count === 2 ? (active === 0 ? '1.2fr 1fr' : '1fr 1.2fr') : weights.join(' ')
+  } as React.CSSProperties;
+};
 
 export const Scoreboard: React.FC<ScoreboardProps> = ({
   players,
@@ -87,233 +72,154 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
   startingPlayerOfLeg,
   config,
   currentRoundDarts,
-  celebration
+  celebration,
+  roundBust = false,
+  showCheckoutHints = true
 }) => {
-  const is2v2 = Boolean(config?.is2v2 || (players.length === 4 && (players[0]?.team !== undefined || players.some(p => p.team !== undefined))));
+  const is2v2 = Boolean(config?.is2v2 || (players.length === 4 && players.some(p => p.team !== undefined)));
 
-  // Live effective scores including current round darts of active player
+  // Punktestand inklusive der Darts, die der Werfer in dieser Aufnahme schon geworfen hat.
   const liveScores = players.map((p, idx) => {
     const roundTotal = idx === activePlayer ? currentRoundDarts.reduce((sum, d) => sum + d.value, 0) : 0;
     return Math.max(0, p.score - roundTotal);
   });
 
-  const t1Total = is2v2 ? (liveScores[0] + liveScores[2]) : 0;
-  const t2Total = is2v2 ? (liveScores[1] + liveScores[3]) : 0;
-
-  // Team 1 is blocked if Partner score > Opponents Team total
-  const t1DiffP0 = is2v2 ? liveScores[2] - t2Total : 0;
-  const t1DiffP2 = is2v2 ? liveScores[0] - t2Total : 0;
-  const t1Diff = Math.max(t1DiffP0, t1DiffP2);
+  // ── 2v2-Freeze ──
+  // Ein Team darf erst auschecken, wenn keiner seiner Spieler mehr Punkte hat
+  // als das gegnerische Team zusammen.
+  const t1Total = is2v2 ? liveScores[0] + liveScores[2] : 0;
+  const t2Total = is2v2 ? liveScores[1] + liveScores[3] : 0;
+  const t1Diff = is2v2 ? Math.max(liveScores[2] - t2Total, liveScores[0] - t2Total) : 0;
+  const t2Diff = is2v2 ? Math.max(liveScores[3] - t1Total, liveScores[1] - t1Total) : 0;
   const isT1Blocked = is2v2 && t1Diff > 0;
-
-  // Team 2 is blocked if Partner score > Opponents Team total
-  const t2DiffP1 = is2v2 ? liveScores[3] - t1Total : 0;
-  const t2DiffP3 = is2v2 ? liveScores[1] - t1Total : 0;
-  const t2Diff = Math.max(t2DiffP1, t2DiffP3);
   const isT2Blocked = is2v2 && t2Diff > 0;
-
   const isBothBlocked = isT1Blocked && isT2Blocked;
-  const isAnyBlocked = isT1Blocked || isT2Blocked;
 
-  // Strict check: find which individual players in the whole match have score > opposing team total
+  // Wer zu viele Punkte hat und sie herunterwerfen muss. Nur wenn es genau einer
+  // ist, gibt es eine eindeutige Zahl zu nennen.
   const throwerIndices = is2v2
     ? [0, 1, 2, 3].filter(idx => (idx % 2 === 0 ? liveScores[idx] > t2Total : liveScores[idx] > t1Total))
     : [];
-  const isOnlySinglePersonBlocking = is2v2 && (throwerIndices.length === 1);
-  const singleThrowerIndex = isOnlySinglePersonBlocking ? throwerIndices[0] : -1;
+  const singleThrowerIndex = throwerIndices.length === 1 ? throwerIndices[0] : -1;
 
   const t1JustUnlocked = useJustUnlocked(isT1Blocked);
   const t2JustUnlocked = useJustUnlocked(isT2Blocked);
 
+  // ── Die Leiste ──
+  const activeScore = liveScores[activePlayer] ?? 0;
+  const range = checkoutRange(config.outMode);
+  const suggestion = showCheckoutHints && activeScore >= range.min && activeScore <= range.max
+    ? getCheckoutSuggestion(activeScore, config.outMode, currentRoundDarts.length)
+    : null;
+  // Ein Setup-Wurf („Setup: T20") ist kein Finish — der Zustand dazu heißt BOGEY.
+  const activeRoute = suggestion && !isSetupShot(suggestion) ? suggestion : null;
+
+  const status: MatchStatus = (() => {
+    if (roundBust) return { kind: 'bust' };
+    if (is2v2) {
+      const team: 1 | 2 = activePlayer % 2 === 0 ? 1 : 2;
+      if (team === 1 ? isT1Blocked : isT2Blocked) {
+        const throwerTeam = singleThrowerIndex % 2 === 0 ? 1 : 2;
+        return {
+          kind: 'freeze',
+          team: isBothBlocked ? 'both' : team,
+          route: activeRoute ? routeLabel(activeRoute) : undefined,
+          needed: singleThrowerIndex !== -1 && throwerTeam === team ? (team === 1 ? t1Diff : t2Diff) : undefined
+        };
+      }
+      if (t1JustUnlocked || t2JustUnlocked) return { kind: 'unlocked', team: t1JustUnlocked ? 1 : 2 };
+    }
+    if (activeRoute) return { kind: 'checkout', route: routeLabel(activeRoute) };
+    if (showCheckoutHints && currentRoundDarts.length === 0 && isBogey(activeScore, config.outMode)) {
+      return { kind: 'bogey' };
+    }
+    return { kind: 'empty' };
+  })();
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%', gap: '6px' }}>
-      {is2v2 && (
-        <div className="team-bar">
-          <TeamSide
-            team={1}
-            total={t1Total}
-            justUnlocked={t1JustUnlocked}
-            blocked={isBothBlocked || isT1Blocked}
-          />
-
-          <div className={`team-status ${
-            (t1JustUnlocked || t2JustUnlocked) ? 'is-unlocked' : isAnyBlocked ? 'is-blocked' : ''
-          }`}>
-            {t1JustUnlocked ? (
-              <span><Icons.IconUnlock size={15} /> Team 1 wurde entblockt!</span>
-            ) : t2JustUnlocked ? (
-              <span><Icons.IconUnlock size={15} /> Team 2 wurde entblockt!</span>
-            ) : isOnlySinglePersonBlocking && singleThrowerIndex !== -1 ? (
-              <span><Icons.IconLock size={15} /> {singleThrowerIndex % 2 === 0 ? 'Team 1' : 'Team 2'} geblockt (Partner muss mind. {singleThrowerIndex % 2 === 0 ? t1Diff : t2Diff} Pkt werfen)</span>
-            ) : isAnyBlocked ? (
-              <span><Icons.IconLock size={15} /> Beide Teams gegenseitig geblockt</span>
-            ) : (
-              <span><Icons.IconUsers size={15} /> 2v2 Doppel Modus (Freeze)</span>
-            )}
-          </div>
-
-          <TeamSide
-            team={2}
-            total={t2Total}
-            justUnlocked={t2JustUnlocked}
-            blocked={isBothBlocked || isT2Blocked}
-          />
-        </div>
-      )}
-
-      {/* The column count is a layout decision, so it lives in CSS: in landscape
-          the board sits in a tall, narrow column where stacked rows read far
-          better than squeezed side-by-side cards. */}
-      <div className="scoreboard" data-players={players.length} style={{ flex: 1, height: '100%', width: '100%', minWidth: 0, minHeight: 0 }}>
+    <div className="scoreboard-wrap">
+      <div className="scoreboard" data-players={players.length} style={gridFor(players.length, activePlayer)}>
         {players.map((p, i) => {
-          const legAvg = p.legDarts > 0 ? ((p.legPts / p.legDarts) * 3).toFixed(1) : "–";
-          const matchAvg = p.matchDarts > 0 ? ((p.matchPts / p.matchDarts) * 3).toFixed(1) : "–";
           const isActive = i === activePlayer;
           const isStarter = i === startingPlayerOfLeg;
-          
-          const currentRoundTotal = isActive ? currentRoundDarts.reduce((sum, d) => sum + d.value, 0) : 0;
           const liveScore = liveScores[i];
-          const { min: checkoutMin, max: checkoutMax } = checkoutRange(config.outMode);
-          const isCheckoutRange = liveScore >= checkoutMin && liveScore <= checkoutMax;
-          
+          const currentRoundTotal = isActive ? currentRoundDarts.reduce((sum, d) => sum + d.value, 0) : 0;
+
           const ownCelebration = celebration?.playerIndex === i ? celebration : null;
           const celebrationClass = cardCelebrationClass(celebration, i, players, is2v2);
+          const matchAvg = p.matchDarts > 0 ? ((p.matchPts / p.matchDarts) * 3).toFixed(1) : '–';
+          const legDarts = p.legDarts + (isActive ? currentRoundDarts.length : 0);
 
-          const coPercent = p.checkoutAttempts > 0 
-            ? ((p.checkoutSuccesses / p.checkoutAttempts) * 100).toFixed(0) 
-            : "–";
+          const teamNumber = p.team || (i % 2 === 0 ? 1 : 2);
+          const partnerIdx = (i + 2) % 4;
+          const oppTeamTotal = is2v2
+            ? liveScores[i % 2 === 0 ? 1 : 0] + liveScores[i % 2 === 0 ? 3 : 2]
+            : 0;
+          const blockedFromFinishing = is2v2 && liveScores[partnerIdx] - oppTeamTotal > 0;
+          const pointsToThrowDown = is2v2 ? liveScores[i] - oppTeamTotal : 0;
+          const involvedInLock = blockedFromFinishing || (is2v2 && pointsToThrowDown > 0);
+          const teamJustUnlocked = is2v2 && (teamNumber === 1 ? t1JustUnlocked : t2JustUnlocked);
+          const mustThrowDown = i === singleThrowerIndex && !teamJustUnlocked;
 
-          // Eigene Farbe des Profils schlägt alles; sonst die Palette — in 2v2
-          // nach Team, sonst nach Sitzplatz.
-          const playerColor = p.color
-            || (is2v2 ? teamColor(i % 2 === 0 ? 1 : 2) : playerColorBySeat(i));
-          const playerTeamNumber = p.team || (i % 2 === 0 ? 1 : 2);
-
-          const partnerIdx = is2v2 ? (i + 2) % 4 : 0;
-          const opp1Idx = is2v2 ? (i % 2 === 0 ? 1 : 0) : 0;
-          const opp2Idx = is2v2 ? (i % 2 === 0 ? 3 : 2) : 0;
-          const oppTeamTotal = is2v2 ? (liveScores[opp1Idx] + liveScores[opp2Idx]) : 0;
-
-          // If partner's score > opponents total, this player is blocked from checking out
-          const pointsToUnblockMe = is2v2 ? liveScores[partnerIdx] - oppTeamTotal : 0;
-          const isThisPlayerBlockedFromFinishing = pointsToUnblockMe > 0;
-
-          // If this player's score > opponents total, this player is the one whose score is too high and must throw points down
-          const pointsINeedToThrow = is2v2 ? liveScores[i] - oppTeamTotal : 0;
-          const isThisPlayerTheThrower = pointsINeedToThrow > 0;
-
-          const isCardInvolvedInLock = isThisPlayerBlockedFromFinishing || isThisPlayerTheThrower;
-          const isMyTeamJustUnlocked = playerTeamNumber === 1 ? t1JustUnlocked : t2JustUnlocked;
-
-          const checkoutSuggestion = isActive && isCheckoutRange ? getCheckoutSuggestion(liveScore, config.outMode, currentRoundDarts.length) : null;
+          const tag = mustThrowDown
+            ? `noch ${pointsToThrowDown}`
+            : isActive
+              ? 'wirft'
+              : is2v2
+                ? `Team ${teamNumber}`
+                : isStarter ? 'Anwurf' : '';
 
           return (
-            <div 
-              key={i} 
+            <div
+              key={i}
               data-player-card={i}
-              className={`player-card ${isActive ? 'is-active' : 'is-inactive'} ${isStarter ? 'is-starter' : ''} ${celebrationClass} ${isCheckoutRange ? 'checkout-range' : ''}`}
-              style={{ 
-                '--player-color': playerColor,
-                borderLeftColor: isActive ? playerColor : undefined
-              } as React.CSSProperties}
+              className={`player-card ${isActive ? 'is-active' : 'is-inactive'} ${isStarter ? 'is-starter' : ''} ${celebrationClass}`}
+              style={{ '--player-color': matchPlayerColor(p, i, is2v2) } as React.CSSProperties}
             >
               {ownCelebration && <CardCelebration key={ownCelebration.id} celebration={ownCelebration} />}
+
               <div className="player-card-head">
-                <div className="player-card-ident">
-                  <span className={`starter-dot ${isStarter ? 'is-starter' : ''}`} />
-                  <h3
-                    className={`player-name ${isActive ? 'is-active' : ''}`}
-                    style={isActive ? { color: playerColor } : undefined}
-                  >
-                    {p.isBot && <Icons.IconBot size={16} className="icon-inline" />}{p.name}
+                <span className="player-card-ident">
+                  <span className="player-dot" aria-hidden="true" />
+                  <h3 className="player-name">
+                    {p.isBot && <Icons.IconBot size={13} className="icon-inline" />}{p.name}
                   </h3>
-                </div>
-                <div className="badge-container">
-                  {is2v2 && (
-                    <span className={`badge-team ${isCardInvolvedInLock ? 'is-locked' : ''}`}>
-                      {isMyTeamJustUnlocked ? (
-                        <Icons.IconUnlock size={13} />
-                      ) : isCardInvolvedInLock ? (
-                        <Icons.IconLock size={13} />
-                      ) : null}
-                      <span>T{playerTeamNumber}</span>
-                    </span>
-                  )}
-                  {config.setsToWin > 1 && (
-                    <span className="badge-count">S: <strong>{p.sets}</strong></span>
-                  )}
-                  <span className={`badge-count ${legPopClass(celebration, i)}`}>L: <strong>{p.legs}</strong></span>
-                </div>
+                  {teamJustUnlocked ? (
+                    <span className="card-lock is-open" aria-label="Frei"><Icons.IconUnlock size={13} /></span>
+                  ) : involvedInLock ? (
+                    <span className="card-lock" aria-label="Freeze"><Icons.IconLock size={13} /></span>
+                  ) : null}
+                </span>
+                {tag && <span className={`player-card-tag ${mustThrowDown ? 'is-warning' : ''}`}>{tag}</span>}
               </div>
-
-              {/* 2v2 Lock Status Bar */}
-              {is2v2 && isMyTeamJustUnlocked && (
-                <div className="lock-badge-bar unlocking">
-                  <span className="lock-icon-opening"><Icons.IconUnlock size={16} /></span>
-                  <span><strong>Schloss geöffnet!</strong> Entblockt</span>
-                </div>
-              )}
-
-              {is2v2 && !isMyTeamJustUnlocked && isOnlySinglePersonBlocking && i === singleThrowerIndex && (
-                <div className="lock-badge-bar must-throw">
-                  <Icons.IconLock size={15} />
-                  <span>Muss mind. <strong>{pointsINeedToThrow} Pkt</strong> werfen</span>
-                </div>
-              )}
-
-              {is2v2 && !isMyTeamJustUnlocked && (!isOnlySinglePersonBlocking || i !== singleThrowerIndex) && isCardInvolvedInLock && (
-                <div className="lock-badge-bar locked">
-                  <Icons.IconLock size={15} />
-                  <span><strong>Geblockt</strong></span>
-                </div>
-              )}
 
               <div className="score-display">
-                <span className="score-anim-pulse" key={liveScore}>
-                  {liveScore}
-                </span>
+                <span className="score-anim-pulse" key={liveScore}>{liveScore}</span>
                 {isActive && currentRoundTotal > 0 && (
-                  <span className="live-preview-darts">
-                    -{currentRoundTotal}
-                  </span>
+                  <span className="live-preview-darts">-{currentRoundTotal}</span>
                 )}
               </div>
-              
-              <div className="checkout-slot">
-                {/* A frozen player still gets to see the finish, marked as blocked:
-                    hiding it looked like there was none, and `.checkout-pill-frozen`
-                    had been styled for this since the freeze rule was written. */}
+
+              <div className="player-card-foot">
                 {ownCelebration?.type === 'check' && !ownCelebration.matchWin ? (
                   <span className="cel-check-pill">
                     <Icons.IconCheck size={14} /> Check · {ownCelebration.total}
                   </span>
-                ) : checkoutSuggestion ? (
-                  <div
-                    className={isThisPlayerBlockedFromFinishing ? 'checkout-pill-frozen' : 'checkout-pill'}
-                    title={isThisPlayerBlockedFromFinishing ? 'Freeze: Dein Team darf noch nicht auschecken' : undefined}
-                  >
-                    {isThisPlayerBlockedFromFinishing
-                      ? <><Icons.IconFrozen size={14} /> {checkoutSuggestion}</>
-                      : checkoutSuggestion}
-                  </div>
                 ) : (
-                  <span className="player-darts-note">
-                    {p.legDarts + (isActive ? currentRoundDarts.length : 0)} Darts im Leg
-                  </span>
+                  <dl className="player-card-stats">
+                    <div><dt>Ø</dt><dd>{matchAvg}</dd></div>
+                    {isActive && <div><dt>Darts</dt><dd>{legDarts}</dd></div>}
+                    {config.setsToWin > 1 && <div><dt>Sets</dt><dd>{p.sets}</dd></div>}
+                    <div className={`badge-count ${legPopClass(celebration, i)}`}><dt>Legs</dt><dd>{p.legs}</dd></div>
+                  </dl>
                 )}
-              </div>
-
-              <div className="compact-stats">
-                <span>Leg <strong>{legAvg}</strong></span>
-                <span>Match <strong>{matchAvg}</strong></span>
-                <span>CO <strong>{coPercent}%</strong></span>
-                <span className="stat-secondary">100+: <strong>{p.hundredPlus}</strong></span>
-                <span className="stat-secondary">180: <strong>{p.oneEighty}</strong></span>
               </div>
             </div>
           );
         })}
       </div>
+
+      <StatusBar status={status} />
     </div>
   );
 };

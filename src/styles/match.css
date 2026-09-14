@@ -1,0 +1,944 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Match-Screen (Entwurf C1–C8, D1–D2)
+   Markup: components/match/MatchShell.tsx, components/Scoreboard.tsx,
+   components/match/StatusBar.tsx, components/Keypad.tsx,
+   components/match/LiveStats.tsx.
+
+   Die drei Trainings nutzen bis zu ihrem Umbau dieselben Klassen für
+   Kopfzeile, Spalten und Tasten — die Regeln hier gelten für sie mit.
+
+   Der Screen ist die eine Ausnahme von der Breiten-Kette aus DESIGN.md §6:
+   im Querformat stehen Board und Eingabe nebeneinander, auf dem iPad quer
+   zusätzlich die Live-Statistik. Querformat fragt nach der Orientierung plus
+   einer Höhe, nicht nach der Breite.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Hülle ── */
+.game-screen-layout {
+  /* `vh` zuerst als Rückfall, `dvh` zuletzt: umgekehrt stand das Board auf iOS
+     höher als der sichtbare Bereich, und die unterste Tastenreihe lag hinter
+     der Safari-Leiste. */
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: max(calc(var(--safe-top) + 6px), 10px)
+    max(calc(var(--safe-right) + 14px), 14px)
+    max(calc(var(--safe-bottom) + 8px), 10px)
+    max(calc(var(--safe-left) + 14px), 14px);
+  box-sizing: border-box;
+  user-select: none;
+  touch-action: manipulation;
+
+  /* Was die Eingabe mindestens braucht, damit jede Taste die 44pt aus §4 hält:
+     Dart-Zeile, Double/Triple, vier Zahlenreihen, Bull/Miss und die Abstände. */
+  --keypad-min: calc(56px + 44px + 4 * 44px + 44px + 6 * var(--space-2));
+}
+
+/* ── Kopfzeile ── */
+/* Der Titel nimmt, was er braucht, der Stand steht in der Mitte des Rests,
+   die Knöpfe rechts — bei gleich breiten Außenspalten wurde „501 · Double Out"
+   am Telefon abgeschnitten. */
+.match-top-header {
+  display: grid;
+  grid-template-columns: minmax(0, max-content) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: 0 4px;
+  flex: none;
+}
+
+.match-title,
+.match-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-family: var(--font);
+  font-size: var(--text-label);
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.match-meta {
+  justify-content: center;
+}
+
+.match-header-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 2px;
+}
+
+.match-icon-btn,
+.btn-sound-toggle {
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-primary);
+}
+.match-icon-btn:hover,
+.btn-sound-toggle:hover {
+  background: var(--surface-hover);
+}
+.btn-sound-off {
+  color: var(--text-tertiary);
+}
+
+.match-menu-btn {
+  min-height: 44px;
+  padding: 0 var(--space-2);
+  background: transparent;
+  border: none;
+  font-family: var(--font);
+  font-size: var(--text-label);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+/* Die Trainings haben noch ihren „Beenden"-Knopf. */
+.match-header-actions .btn-danger-text {
+  min-height: 44px;
+}
+@media (max-width: 440px) {
+  .btn-abort-text {
+    display: none;
+  }
+}
+
+/* ── Spalten ──
+   Die Eingabe bekommt ihren Platz zuerst, das Board gibt nach und scrollt —
+   eine Punktzahl, die man wegwischen kann, ist erreichbar; eine halbe Taste
+   nicht. */
+.game-screen-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: var(--space-2);
+  overflow: hidden;
+}
+
+.game-screen-left {
+  flex: 1 1 42%;
+  min-height: 0;
+  max-height: 48%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.game-screen-right {
+  flex: 1.25 1 58%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: min(var(--keypad-min), 100%);
+}
+
+.game-screen-stats {
+  display: none;
+}
+
+/* ── Score-Karten ── */
+.scoreboard-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  flex: 1;
+  min-height: 0;
+}
+
+.scoreboard {
+  display: grid;
+  grid-template-columns: var(--sb-cols, 1fr);
+  gap: var(--space-2);
+  flex: 1;
+  min-height: 0;
+}
+.scoreboard[data-players="4"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.player-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: 14px 16px 12px;
+  border-radius: var(--radius-card);
+  border: 1.5px solid transparent;
+  background: var(--surface-sunken);
+  box-sizing: border-box;
+  overflow: hidden;
+  transition:
+    background-color var(--motion-color) ease,
+    border-color var(--motion-color) ease;
+}
+.player-card.is-active {
+  background: var(--surface-card);
+  border-color: var(--accent-primary);
+}
+
+.player-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.player-card-ident {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.player-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  flex: none;
+  border-radius: var(--radius-pill);
+  background: var(--player-color);
+}
+
+.player-card .player-name,
+.player-card-tag {
+  font-family: var(--font);
+  font-size: var(--text-label);
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.player-card .player-name {
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-secondary);
+}
+
+.player-card-tag {
+  flex: none;
+  color: var(--text-tertiary);
+}
+
+.player-card.is-active .player-name,
+.player-card.is-active .player-card-tag {
+  color: var(--accent-primary);
+}
+
+.player-card-tag.is-warning,
+.player-card.is-active .player-card-tag.is-warning {
+  color: var(--text-danger);
+}
+
+.card-lock {
+  display: inline-flex;
+  flex: none;
+  color: var(--text-danger);
+}
+.card-lock.is-open {
+  color: var(--text-success);
+}
+
+/* Die eine Zahl, die aus drei Metern lesbar sein muss. */
+.score-display {
+  display: flex;
+  align-items: baseline;
+  gap: 0.12em;
+  font-family: var(--font-display);
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+  font-size: clamp(36px, min(12vw, 8vh), 64px);
+  color: color-mix(in srgb, var(--text-primary) 85%, transparent);
+}
+.player-card.is-active .score-display {
+  font-size: clamp(56px, min(26vw, 13vh), 112px);
+  color: var(--text-primary);
+}
+.scoreboard[data-players="3"] .player-card.is-active .score-display {
+  font-size: clamp(40px, min(15vw, 9vh), 76px);
+}
+.scoreboard[data-players="3"] .player-card.is-inactive .score-display {
+  font-size: clamp(28px, min(10vw, 6vh), 48px);
+}
+.scoreboard[data-players="4"] .score-display {
+  font-size: clamp(28px, min(10vw, 5.5vh), 44px);
+}
+.scoreboard[data-players="4"] .player-card.is-active .score-display {
+  font-size: clamp(32px, min(13vw, 7vh), 64px);
+}
+
+.score-anim-pulse {
+  display: inline-block;
+  animation: scorePulse 0.25s var(--ease-pop);
+  will-change: transform;
+}
+
+.live-preview-darts {
+  font-size: 0.32em;
+  letter-spacing: 0;
+  color: var(--text-secondary);
+  animation: previewIn 0.2s ease-out both;
+}
+
+.player-card-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 0;
+}
+
+.player-card-stats > div,
+.player-card-stats > .badge-count {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+  color: var(--text-secondary);
+}
+
+.player-card-stats dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+.player-card.is-inactive .player-card-stats dd {
+  color: var(--text-secondary);
+}
+
+@keyframes scorePulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+@keyframes previewIn {
+  from { opacity: 0; transform: translateX(-6px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ── Die Leiste unter den Karten ── */
+.status-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 50px;
+  padding: 0 16px;
+  flex: none;
+  border-radius: var(--radius-row);
+  box-sizing: border-box;
+}
+.status-bar.is-empty {
+  visibility: hidden;
+}
+.status-bar:not(.is-empty) {
+  animation: statusIn var(--motion-pop) var(--ease-pop) both;
+}
+
+.status-route,
+.status-word {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+  white-space: nowrap;
+}
+.status-route {
+  letter-spacing: 0.02em;
+}
+.status-word {
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.status-bar.is-checkout {
+  background: var(--accent-primary);
+  color: var(--on-accent-primary);
+}
+.status-bar.is-checkout .label-caps {
+  color: color-mix(in srgb, var(--on-accent-primary) 75%, transparent);
+}
+
+.status-bar.is-bust {
+  justify-content: center;
+  background: var(--accent-bone);
+  color: var(--on-accent-bone);
+}
+
+.status-bar.is-bogey {
+  justify-content: center;
+  background: var(--surface-card);
+  box-shadow: inset 0 0 0 1px var(--line-3);
+  color: var(--text-primary);
+}
+
+.status-bar.is-freeze {
+  background: var(--surface-card);
+  box-shadow: inset 0 0 0 1px var(--line-3);
+  color: var(--text-primary);
+}
+.status-bar.is-freeze .label-caps {
+  color: var(--text-primary);
+}
+.status-bar.is-freeze .status-route {
+  font-size: 20px;
+  color: var(--text-tertiary);
+}
+.status-needed {
+  margin-left: auto;
+  font-size: 20px;
+  color: var(--text-danger);
+}
+
+.status-bar.is-unlocked {
+  background: color-mix(in srgb, var(--text-success) 14%, transparent);
+  color: var(--text-success);
+}
+.status-bar.is-unlocked .label-caps {
+  color: var(--text-success);
+}
+
+@keyframes statusIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ── Eingabe ── */
+.keypad {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+  max-width: 560px;
+  height: 100%;
+  margin: 0 auto;
+}
+
+.dart-display {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) 64px;
+  gap: var(--space-2);
+  flex: none;
+}
+
+.dart-box {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  border-radius: var(--radius-key);
+  border: 1.5px dashed var(--line-3);
+  box-sizing: border-box;
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+  color: var(--text-primary);
+}
+.dart-empty {
+  font-size: 20px;
+  color: var(--text-tertiary);
+}
+.dart-box.dart-filled {
+  border: none;
+  background: var(--surface-raised);
+  animation: dartIn 0.25s var(--ease-pop) both;
+}
+.dart-value {
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: var(--weight-medium);
+  color: var(--text-secondary);
+}
+.dart-box.is-struck .dart-label {
+  color: var(--text-secondary);
+  text-decoration: line-through;
+}
+
+.btn-undo {
+  height: 56px;
+  min-height: 56px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border-radius: var(--radius-key);
+  border: 1px solid var(--line-3);
+  background: transparent;
+  color: var(--text-primary);
+}
+.btn-undo-label {
+  font-family: var(--font);
+  font-size: 9px;
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.btn-undo:disabled {
+  opacity: 0.35;
+}
+
+.modifier-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+  flex: none;
+}
+
+.mod-btn {
+  height: 52px;
+  min-height: 44px;
+  padding: 0;
+  border-radius: var(--radius-key);
+  border: 1px solid var(--line-1);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: var(--weight-semibold);
+}
+.mod-btn.mod-active-double,
+.mod-btn.mod-active-triple {
+  background: var(--accent-bone);
+  border-color: var(--accent-bone);
+  color: var(--on-accent-bone);
+}
+
+/* §4 verlangt für die Score-Eingabe 64pt und 12px Abstand; auf einem Telefon
+   quer passt beides nicht gleichzeitig. Die Tasten füllen über `1fr` die Höhe,
+   die übrig bleibt, und die Spalte hält über `--keypad-min` ihre 44pt. */
+.numpad-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-auto-rows: minmax(0, 1fr);
+  gap: var(--space-2);
+  flex: 1;
+  min-height: 0;
+}
+
+.numpad-extra {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+  flex: none;
+  height: clamp(44px, 7vh, 56px);
+}
+
+.num-btn {
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-key);
+  border: 1px solid var(--line-1);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: clamp(24px, 7vw, 30px);
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+.num-btn:active {
+  background: var(--surface-raised);
+}
+.num-btn:disabled {
+  opacity: 0.35;
+}
+.mod-special {
+  font-size: 28px;
+}
+.mod-miss {
+  font-size: 24px;
+  color: var(--text-secondary);
+}
+
+.keypad button {
+  transition:
+    transform 0.05s ease-out,
+    background-color 0.15s;
+}
+.keypad button:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+@keyframes dartIn {
+  from { opacity: 0.4; transform: scale(0.85); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ── Live-Statistik ── als Blatt oder Spalte */
+.live-stats {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.live-stats .slider {
+  margin-bottom: 0;
+}
+
+.live-stats-who {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.live-stats-top {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: center;
+}
+
+.live-stats-kpis {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+}
+.live-stats-kpis > div {
+  padding: 10px 12px;
+  border-radius: var(--radius-key);
+  background: var(--surface-raised);
+}
+.live-stats-kpis dt {
+  font-family: var(--font);
+  font-size: 10px;
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.live-stats-kpis dd {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: var(--weight-semibold);
+  line-height: 0.9;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+.live-stats-kpis small {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.live-stats-visits ol {
+  list-style: none;
+  margin: var(--space-2) 0 0;
+  padding: 0;
+}
+.live-stats-visits li {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) 48px 48px;
+  gap: var(--space-2);
+  padding: 11px 0;
+  border-bottom: 1px solid var(--line-2);
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: var(--weight-medium);
+  line-height: 1;
+}
+.live-stats-visits li > :nth-child(3),
+.live-stats-visits li > :nth-child(4) {
+  text-align: right;
+}
+.live-stats-visits li > :first-child,
+.live-stats-visits li > :nth-child(4) {
+  color: var(--text-secondary);
+}
+.live-stats-visits li:last-child {
+  color: var(--accent-primary);
+}
+.live-stats-visits li.is-bust > :nth-child(3) {
+  color: var(--text-danger);
+}
+.live-stats-empty {
+  margin: var(--space-2) 0 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* ── Online: wer gerade am Board steht ── */
+.turn-banner {
+  background: var(--surface-card);
+  border: 1px solid var(--line-2);
+  font-family: var(--font);
+  font-size: var(--text-label);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* ═══ Querformat ═══════════════════════════════════════════════════════════ */
+
+/* Stufe 1 — Board und Eingabe nebeneinander. Der zweite Zweig fängt große
+   Fenster ab, die hochkant stehen, aber Platz für zwei Spalten haben. */
+@media (orientation: landscape), (min-width: 1200px) and (min-height: 800px) {
+  .game-screen-layout {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    max-width: 100vw;
+    margin: 0;
+  }
+
+  .game-screen-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) clamp(340px, 42vw, 480px);
+    gap: var(--space-3);
+  }
+
+  .game-screen-left {
+    max-height: none;
+    overflow: hidden;
+  }
+
+  .game-screen-right {
+    min-height: 0;
+    justify-content: center;
+  }
+
+  /* Die Karten stehen als Zeilen untereinander, die werfende höher. */
+  .scoreboard {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: var(--sb-rows, auto);
+  }
+  .scoreboard[data-players="4"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+  }
+
+  .keypad {
+    max-width: none;
+  }
+}
+
+/* Stufe 2 — Telefon quer: rund 400pt Höhe für Kopfzeile, Board und Eingabe. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .game-screen-layout {
+    gap: 4px;
+    padding: max(calc(var(--safe-top) + 4px), 6px)
+      max(calc(var(--safe-right) + 12px), 16px)
+      max(calc(var(--safe-bottom) + 4px), 6px)
+      max(calc(var(--safe-left) + 12px), 16px);
+  }
+
+  .match-top-header {
+    min-height: 32px;
+  }
+  .match-icon-btn,
+  .btn-sound-toggle,
+  .match-menu-btn {
+    width: auto;
+    min-width: 36px;
+    height: 32px;
+    min-height: 32px;
+  }
+
+  .game-screen-body {
+    grid-template-columns: minmax(0, 1fr) min(380px, 46vw);
+    gap: var(--space-3);
+  }
+
+  .scoreboard-wrap,
+  .scoreboard {
+    gap: 6px;
+  }
+
+  .player-card {
+    padding: 8px 14px;
+    border-radius: 18px;
+    gap: 2px;
+  }
+  .score-display {
+    font-size: clamp(24px, 11vh, 48px);
+  }
+  .player-card.is-active .score-display {
+    font-size: clamp(36px, 20vh, 96px);
+  }
+  .player-card.is-inactive .player-card-foot {
+    display: none;
+  }
+
+  .status-bar {
+    min-height: 38px;
+    padding: 0 12px;
+  }
+  .status-route,
+  .status-word {
+    font-size: 20px;
+  }
+
+  .keypad,
+  .numpad-grid,
+  .modifier-grid,
+  .numpad-extra,
+  .dart-display {
+    gap: 5px;
+  }
+  .dart-display {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) 54px;
+  }
+  .dart-box,
+  .btn-undo {
+    height: 36px;
+    min-height: 36px;
+    border-radius: 10px;
+    font-size: 16px;
+  }
+  .dart-empty {
+    font-size: 15px;
+  }
+  .dart-value,
+  .btn-undo-label {
+    display: none;
+  }
+  .mod-btn {
+    height: 34px;
+    min-height: 34px;
+    border-radius: 10px;
+    font-size: 18px;
+  }
+  .num-btn {
+    border-radius: 10px;
+    font-size: 22px;
+  }
+  .numpad-extra {
+    height: 34px;
+  }
+  .mod-special,
+  .mod-miss {
+    font-size: 18px;
+  }
+}
+
+/* Stufe 3 — Tablet quer und große Fenster: großzügige Maße, und die
+   Live-Statistik steht als Spalte daneben. */
+@media (min-width: 768px) and (orientation: landscape) and (min-height: 521px),
+  (min-width: 1200px) and (min-height: 800px) {
+  .game-screen-layout {
+    gap: var(--space-3);
+    padding: max(calc(var(--safe-top) + 16px), 20px)
+      max(calc(var(--safe-right) + 24px), 28px)
+      max(calc(var(--safe-bottom) + 16px), 20px)
+      max(calc(var(--safe-left) + 24px), 28px);
+  }
+
+  .player-card {
+    padding: 18px 22px;
+    border-radius: 24px;
+  }
+  .player-card.is-active .score-display {
+    font-size: clamp(80px, 16vh, 150px);
+  }
+  .score-display {
+    font-size: clamp(48px, 10vh, 96px);
+  }
+
+  .dart-box,
+  .btn-undo {
+    height: 60px;
+    font-size: 26px;
+  }
+  .mod-btn {
+    font-size: 26px;
+  }
+  .num-btn {
+    font-size: 32px;
+  }
+
+  /* Mit Statistik: links Karten über Eingabe, rechts die Statistik (D1). */
+  .has-stats-aside .game-screen-body {
+    grid-template-columns: minmax(0, 1fr) 340px;
+    grid-template-rows: minmax(0, 0.9fr) minmax(0, 1fr);
+    grid-template-areas:
+      "left stats"
+      "right stats";
+  }
+  .has-stats-aside .game-screen-left {
+    grid-area: left;
+  }
+  .has-stats-aside .game-screen-right {
+    grid-area: right;
+  }
+  .has-stats-aside .scoreboard {
+    grid-template-columns: var(--sb-cols, 1fr);
+    grid-template-rows: none;
+  }
+  .has-stats-aside .scoreboard[data-players="4"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+  }
+
+  .game-screen-stats {
+    display: block;
+    grid-area: stats;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 18px;
+    border-radius: 24px;
+    background: var(--surface-card);
+  }
+  .game-screen-stats .live-stats-top {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .game-screen-stats .live-stats-board {
+    width: 210px;
+    margin: 0 auto;
+  }
+}
+
+/* Sehr große Displays — deckelt die Breite, damit das Board nicht über die
+   halbe Wand läuft. */
+@media (min-width: 1400px) and (orientation: landscape) {
+  .game-screen-layout {
+    max-width: 1500px;
+    margin: 0 auto;
+  }
+}

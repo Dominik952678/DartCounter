@@ -103,6 +103,17 @@ export interface Player {
   linkedUsername?: string;
   isLinkedCloudGuest?: boolean;
   syncAuthToken?: string;
+  /** The visits of the running leg, for the live statistics. Reset with every leg. */
+  legVisits?: Visit[];
+}
+
+/** One visit at the board: the darts as labelled, what it scored and what is left. */
+export interface Visit {
+  darts: string[];
+  /** 0 for a bust. */
+  points: number;
+  remaining: number;
+  bust: boolean;
 }
 
 export interface Dart {

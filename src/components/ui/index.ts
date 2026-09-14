@@ -20,6 +20,12 @@ export type { SliderProps, SliderOption } from './Slider';
 export { DartboardArt } from './DartboardArt';
 export type { DartboardArtProps } from './DartboardArt';
 
+export { Sheet } from './Sheet';
+export type { SheetProps } from './Sheet';
+
+export { Dialog } from './Dialog';
+export type { DialogProps } from './Dialog';
+
 export { CallOut } from './CallOut';
 export type { CallOutTone } from './CallOut';
 

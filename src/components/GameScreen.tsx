@@ -1,14 +1,29 @@
-import React, { useId, useState } from 'react';
+import React, { useState } from 'react';
 import { Scoreboard } from './Scoreboard';
 import { Keypad } from './Keypad';
 import type { Player, GameConfig, Dart, Celebration } from '../types';
 import { CelebrationStage } from './celebration/CelebrationStage';
 import { CelebrationBoard } from './celebration/CelebrationBoard';
 import { celebrationPlayer } from '../utils/celebration';
-import { isSoundEnabled, setSoundEnabled } from '../utils/audio';
-import { ConfirmModal } from './ConfirmModal';
-import { useModalA11y } from '../hooks/useModalA11y';
-import { Button, Icons } from './ui';
+import { matchProgressLabel, matchTitle } from '../utils/matchProgress';
+import { useMediaQuery } from '../hooks/useBreakpoint';
+import { MatchShell } from './match/MatchShell';
+import { LiveStats } from './match/LiveStats';
+import { Button, Dialog, Sheet, Slider } from './ui';
+
+/**
+ * Ab hier steht die Live-Statistik als Spalte neben dem Board statt hinter
+ * einem Knopf (DESIGN.md §6): iPad quer und große Fenster. Ein Telefon quer hat
+ * dafür keine Höhe.
+ */
+const STATS_BESIDE_QUERY =
+  '(orientation: landscape) and (min-width: 900px) and (min-height: 521px), (min-width: 1200px) and (min-height: 800px)';
+
+interface CheckoutPrompt {
+  maxDarts: number;
+  autoDarts: number;
+  isWin: boolean;
+}
 
 interface GameScreenProps {
   players: Player[];
@@ -23,70 +38,71 @@ interface GameScreenProps {
   toggleMultiplier: (mult: number) => void;
   undoSingleDart: () => void;
   abortGame: () => void;
-  checkoutPrompt: { maxDarts: number; autoDarts: number; isWin: boolean } | null;
+  /** Verlässt das Match, ohne es zu beenden. Fehlt online — dort gibt es nichts zu speichern. */
+  onSuspend?: () => void;
+  checkoutPrompt: CheckoutPrompt | null;
   submitCheckoutPrompt: (darts: number) => void;
   celebration?: Celebration | null;
   canUndo?: boolean;
 }
 
+/** Wie viele Darts aufs Doppel gingen — die Engine fragt, wenn sie es nicht sicher weiß (Entwurf C7). */
+const CheckoutDartsDialog: React.FC<{ prompt: CheckoutPrompt; onSubmit: (darts: number) => void }> = ({ prompt, onSubmit }) => {
+  const [darts, setDarts] = useState(prompt.autoDarts);
+
+  return (
+    <Dialog
+      label={prompt.isWin ? 'Check' : 'Verpasst'}
+      labelTone={prompt.isWin ? 'success' : 'danger'}
+      title="Wie viele Darts gingen aufs Doppel?"
+    >
+      <Slider
+        name="checkoutDarts"
+        variant="tiles"
+        value={darts}
+        options={Array.from({ length: prompt.maxDarts + 1 }, (_, n) => ({
+          value: n,
+          label: String(n),
+          ariaLabel: n === 1 ? '1 Dart' : `${n} Darts`
+        }))}
+        onChange={setDarts}
+        ariaLabel="Darts aufs Doppel"
+      />
+      <Button variant="primary" size="large" fullWidth onClick={() => onSubmit(darts)}>
+        Bestätigen
+      </Button>
+    </Dialog>
+  );
+};
+
 export const GameScreen: React.FC<GameScreenProps> = (props) => {
-  const [showAbortConfirm, setShowAbortConfirm] = useState(false);
-  const [soundOn, setSoundOn] = useState(isSoundEnabled());
-  const checkoutTitleId = useId();
-  // No `onClose`: the match cannot continue until this is answered, so Escape
-  // does nothing rather than silently discarding the prompt.
-  const checkoutDialogRef = useModalA11y<HTMLDivElement>({ isOpen: !!props.checkoutPrompt });
+  const [showLeave, setShowLeave] = useState(false);
+  const [showStats, setShowStats] = useState(false);
+  const statsBeside = useMediaQuery(STATS_BESIDE_QUERY);
+
   const celebrant = props.celebration
     ? celebrationPlayer(props.players, props.config, props.celebration.playerIndex)
     : null;
+  const prompt = props.checkoutPrompt;
+  const liveStats = <LiveStats players={props.players} activePlayer={props.activePlayer} config={props.config} />;
 
   return (
-    <div className="screen active-screen game-screen-layout" style={{ position: 'relative' }}>
-      {/* Top Match Header */}
-      <div className="match-top-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden', minWidth: 0 }}>
-          <span className="match-title">
-            <Icons.IconTarget size={17} /> {props.config.startScore} {props.config.outMode}
-          </span>
-          <span className="match-meta">
-            Bis {props.config.legsToWin} Legs {props.config.setsToWin > 1 ? `· ${props.config.setsToWin} Sätze` : ''}
-          </span>
-        </div>
-
-        <div className="match-header-actions">
-          <button 
-            onClick={() => {
-              const next = !soundOn;
-              setSoundEnabled(next);
-              setSoundOn(next);
-            }}
-            className={`btn-sound-toggle ${soundOn ? 'btn-sound-on' : 'btn-sound-off'}`}
-            title={soundOn ? 'Caller An (klicken zum Stummschalten)' : 'Caller Aus (klicken zum Einschalten)'}
-            aria-label={soundOn ? 'Caller stummschalten' : 'Caller aktivieren'}
-          >
-            {soundOn ? <Icons.IconSoundOn size={18} /> : <Icons.IconSoundOff size={18} />}
-          </button>
-
-          <Button
-            variant="dangerText"
-            size="compact"
-            onClick={() => setShowAbortConfirm(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}
-          >
-            <Icons.IconClose size={16} /> <span className="btn-abort-text">Beenden</span>
-          </Button>
-        </div>
-      </div>
-
-      <div className="game-screen-body">
-        <div className="game-screen-left">
-          <Scoreboard 
-            players={props.players} 
-            activePlayer={props.activePlayer} 
-            startingPlayerOfLeg={props.startingPlayerOfLeg} 
-            config={props.config} 
+    <MatchShell
+      title={matchTitle(props.config)}
+      meta={matchProgressLabel(props.players, props.config)}
+      onMenu={() => setShowLeave(true)}
+      onStats={statsBeside ? undefined : () => setShowStats(true)}
+      aside={statsBeside ? liveStats : undefined}
+      left={
+        <>
+          <Scoreboard
+            players={props.players}
+            activePlayer={props.activePlayer}
+            startingPlayerOfLeg={props.startingPlayerOfLeg}
+            config={props.config}
             currentRoundDarts={props.currentRoundDarts}
             celebration={props.celebration}
+            roundBust={props.roundBust}
           />
           {props.celebration && celebrant && (
             <CelebrationStage
@@ -97,83 +113,58 @@ export const GameScreen: React.FC<GameScreenProps> = (props) => {
               winnerLabel={celebrant.winnerLabel}
             />
           )}
-        </div>
-        
-        <div className="game-screen-right">
-          <Keypad 
-            currentRoundDarts={props.currentRoundDarts}
-            currentMultiplier={props.currentMultiplier}
-            isProcessing={props.isProcessing}
-            roundBust={props.roundBust}
-            addDart={props.addDart}
-            toggleMultiplier={props.toggleMultiplier}
-            undoSingleDart={props.undoSingleDart}
-            canUndo={props.canUndo}
-            overlay={props.celebration
-              ? <CelebrationBoard key={props.celebration.id} celebration={props.celebration} />
-              : null}
-          />
-        </div>
-      </div>
+        </>
+      }
+      right={
+        <Keypad
+          currentRoundDarts={props.currentRoundDarts}
+          currentMultiplier={props.currentMultiplier}
+          isProcessing={props.isProcessing}
+          roundBust={props.roundBust}
+          addDart={props.addDart}
+          toggleMultiplier={props.toggleMultiplier}
+          undoSingleDart={props.undoSingleDart}
+          canUndo={props.canUndo}
+          overlay={props.celebration
+            ? <CelebrationBoard key={props.celebration.id} celebration={props.celebration} />
+            : null}
+        />
+      }
+    >
+      {showStats && !statsBeside && (
+        <Sheet title="Live-Statistik · dieses Leg" onClose={() => setShowStats(false)}>
+          {liveStats}
+        </Sheet>
+      )}
 
-      {showAbortConfirm && (
-        <ConfirmModal
-          title="Spiel beenden?"
-          message="Möchtest du das aktuelle Match wirklich abbrechen?"
-          confirmLabel="Beenden"
-          cancelLabel="Weiterspielen"
-          destructive
-          onConfirm={() => {
-            setShowAbortConfirm(false);
-            props.abortGame();
-          }}
-          onCancel={() => setShowAbortConfirm(false)}
+      {showLeave && (
+        <Dialog title="Match verlassen?" onClose={() => setShowLeave(false)}>
+          {props.onSuspend && (
+            <p className="dialog-text">Das Match bleibt gespeichert und lässt sich auf der Startseite fortsetzen.</p>
+          )}
+          <div className="dialog-actions">
+            {props.onSuspend && (
+              <Button variant="bone" size="large" onClick={() => { setShowLeave(false); props.onSuspend!(); }}>
+                Speichern &amp; verlassen
+              </Button>
+            )}
+            <Button variant="dangerText" size="large" onClick={() => { setShowLeave(false); props.abortGame(); }}>
+              Match abbrechen
+            </Button>
+            <Button variant="ghost" onClick={() => setShowLeave(false)}>
+              Weiterspielen
+            </Button>
+          </div>
+        </Dialog>
+      )}
+
+      {prompt && (
+        <CheckoutDartsDialog
+          key={`${prompt.maxDarts}-${prompt.autoDarts}-${prompt.isWin}`}
+          prompt={prompt}
+          onSubmit={props.submitCheckoutPrompt}
         />
       )}
-
-      {props.checkoutPrompt && (
-        <div className="modal-overlay">
-          <div
-            ref={checkoutDialogRef}
-            className="modal-content checkout-prompt"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={checkoutTitleId}
-            tabIndex={-1}
-            style={{ textAlign: 'center' }}
-          >
-            <div className="checkout-icon">
-              {props.checkoutPrompt.isWin ? <Icons.IconTrophy size={54} /> : <Icons.IconTarget size={54} />}
-            </div>
-            <h2 id={checkoutTitleId}>{props.checkoutPrompt.isWin ? 'Check!' : 'Verpasst'}</h2>
-            <p style={{ color: '#999', marginBottom: '15px' }}>
-              Erkannte Darts auf Doppel: <strong style={{ color: '#fff' }}>{props.checkoutPrompt.autoDarts}</strong>
-            </p>
-            
-            <Button
-              variant="primary"
-              onClick={() => props.submitCheckoutPrompt(props.checkoutPrompt!.autoDarts)}
-              style={{ marginBottom: '20px' }}
-            >
-              <Icons.IconCheck size={18} /> {props.checkoutPrompt.autoDarts} Dart(s) bestätigen
-            </Button>
-
-            <p className="stat-label" style={{ marginBottom: 'var(--space-2)' }}>Manuell korrigieren</p>
-            <div className="checkout-darts-select" style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-              {[0, 1, 2, 3].slice(0, props.checkoutPrompt.maxDarts + 1).map(num => (
-                <button 
-                  key={num} 
-                  className={`btn ${num === props.checkoutPrompt!.autoDarts ? 'btn-primary' : 'btn-secondary'}`}
-                  onClick={() => props.submitCheckoutPrompt(num)}
-                  style={{ flex: 1, padding: '12px', fontSize: '1em' }}
-                >
-                  {num}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+    </MatchShell>
   );
 };

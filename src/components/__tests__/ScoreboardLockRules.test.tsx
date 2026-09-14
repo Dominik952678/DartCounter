@@ -3,6 +3,14 @@ import { render, screen } from '@testing-library/react';
 import { Scoreboard } from '../Scoreboard';
 import type { Player, GameConfig, Dart } from '../../types';
 
+/**
+ * Der 2v2-Freeze auf dem Board: ein Team darf erst auschecken, wenn keiner
+ * seiner Spieler mehr Punkte hat als das gegnerische Team zusammen.
+ *
+ * Seit v2.0.0 steht der Zustand als Wort in der Leiste unter den Karten
+ * („Freeze · Team 1"), ein Schloss markiert die betroffenen Karten, und wer
+ * herunterwerfen muss, trägt „noch X" — ohne erklärenden Satz.
+ */
 describe('2v2 Freeze Lock & Block Display Rules', () => {
   const baseConfig: GameConfig = {
     startScore: 501,
@@ -12,159 +20,92 @@ describe('2v2 Freeze Lock & Block Display Rules', () => {
     is2v2: true
   };
 
-  const createPlayers = (scores: [number, number, number, number]): Player[] => [
-    { name: 'P0 (T1)', score: scores[0], legs: 0, sets: 0, legPts: 0, legDarts: 0, matchPts: 0, matchDarts: 0, legHistory: [], matchFirst9Pts: 0, matchFirst9Darts: 0, sixtyPlus: 0, hundredPlus: 0, oneFortyPlus: 0, oneEighty: 0, highestCheckout: 0, checkoutAttempts: 0, checkoutSuccesses: 0, segmentHits: {}, team: 1 },
-    { name: 'P1 (T2)', score: scores[1], legs: 0, sets: 0, legPts: 0, legDarts: 0, matchPts: 0, matchDarts: 0, legHistory: [], matchFirst9Pts: 0, matchFirst9Darts: 0, sixtyPlus: 0, hundredPlus: 0, oneFortyPlus: 0, oneEighty: 0, highestCheckout: 0, checkoutAttempts: 0, checkoutSuccesses: 0, segmentHits: {}, team: 2 },
-    { name: 'P2 (T1)', score: scores[2], legs: 0, sets: 0, legPts: 0, legDarts: 0, matchPts: 0, matchDarts: 0, legHistory: [], matchFirst9Pts: 0, matchFirst9Darts: 0, sixtyPlus: 0, hundredPlus: 0, oneFortyPlus: 0, oneEighty: 0, highestCheckout: 0, checkoutAttempts: 0, checkoutSuccesses: 0, segmentHits: {}, team: 1 },
-    { name: 'P3 (T2)', score: scores[3], legs: 0, sets: 0, legPts: 0, legDarts: 0, matchPts: 0, matchDarts: 0, legHistory: [], matchFirst9Pts: 0, matchFirst9Darts: 0, sixtyPlus: 0, hundredPlus: 0, oneFortyPlus: 0, oneEighty: 0, highestCheckout: 0, checkoutAttempts: 0, checkoutSuccesses: 0, segmentHits: {}, team: 2 }
-  ];
+  const createPlayers = (scores: [number, number, number, number]): Player[] =>
+    scores.map((score, i) => ({
+      name: `P${i} (T${i % 2 === 0 ? 1 : 2})`, score, legs: 0, sets: 0, legPts: 0, legDarts: 0, matchPts: 0,
+      matchDarts: 0, legHistory: [], matchFirst9Pts: 0, matchFirst9Darts: 0, sixtyPlus: 0, hundredPlus: 0,
+      oneFortyPlus: 0, oneEighty: 0, highestCheckout: 0, checkoutAttempts: 0, checkoutSuccesses: 0,
+      segmentHits: {}, team: (i % 2 === 0 ? 1 : 2) as 1 | 2
+    }));
 
-  it('RULE 1: Does NOT show any lock bars when neither team is blocked', () => {
-    // Both teams at 501 (501 <= 501 + 501 = 1002). Neither is blocked.
-    const players = createPlayers([501, 501, 501, 501]);
-    const { container } = render(
-      <Scoreboard 
-        players={players}
-        activePlayer={0}
-        startingPlayerOfLeg={0}
-        config={baseConfig}
-        currentRoundDarts={[]}
-      />
-    );
+  const board = (scores: [number, number, number, number], activePlayer = 0, currentRoundDarts: Dart[] = []) => (
+    <Scoreboard
+      players={createPlayers(scores)}
+      activePlayer={activePlayer}
+      startingPlayerOfLeg={0}
+      config={baseConfig}
+      currentRoundDarts={currentRoundDarts}
+    />
+  );
 
-    // No lock badges in the cards
-    expect(container.querySelectorAll('.lock-badge-bar')).toHaveLength(0);
-    expect(screen.queryByText(/Geblockt/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/Blockt mit/i)).not.toBeInTheDocument();
+  it('RULE 1: shows no freeze when neither team is blocked', () => {
+    const { container } = render(board([501, 501, 501, 501]));
+
+    expect(container.querySelectorAll('.card-lock')).toHaveLength(0);
+    expect(container.querySelector('.status-bar.is-freeze')).toBeNull();
+    expect(screen.queryByText(/noch/)).not.toBeInTheDocument();
   });
 
   /**
-   * The finish used to be hidden outright while a player was frozen, which
-   * reads as "there is no checkout from here". `.checkout-pill-frozen` had been
-   * styled for exactly this case and used nowhere.
+   * A frozen player still sees the finish, marked as frozen: hiding it read as
+   * "there is no checkout from here".
    */
-  it('RULE 2b: A frozen player still sees the finish, marked as blocked', () => {
-    // T1 is at 40 + 400, T2 at 2 + 2: P0's partner is far above the opponents,
-    // so P0 may not check out yet.
-    const players = createPlayers([40, 2, 400, 2]);
-    const { container } = render(
-      <Scoreboard
-        players={players}
-        activePlayer={0}
-        startingPlayerOfLeg={0}
-        config={baseConfig}
-        currentRoundDarts={[]}
-      />
-    );
+  it('RULE 2: a frozen thrower still sees the finish, in the freeze bar', () => {
+    // T1 is at 40 + 400, T2 at 2 + 2: P0's partner is far above the opponents.
+    const { container } = render(board([40, 2, 400, 2]));
 
-    const frozen = container.querySelector('.checkout-pill-frozen');
-    expect(frozen).not.toBeNull();
-    expect(frozen?.textContent).toContain('D20');
-    expect(container.querySelector('.checkout-pill')).toBeNull();
+    const freeze = container.querySelector('.status-bar.is-freeze');
+    expect(freeze).not.toBeNull();
+    expect(freeze?.textContent).toContain('D20');
+    expect(container.querySelector('.status-bar.is-checkout')).toBeNull();
   });
 
-  it('RULE 3: Only the person who must throw points has a number display, blocked player shows Geblockt, opponents clean', () => {
-    // Team 1: P0 (40), P2 (200). Partner P2 has 200.
-    // Team 2: P1 (50), P3 (50). Total = 100.
-    // P2 (200) > T2 (100) -> Team 1 is geblockt! P2 needs to throw 100 pts!
-    const players = createPlayers([40, 50, 200, 50]);
-    const { container } = render(
-      <Scoreboard 
-        players={players}
-        activePlayer={0}
-        startingPlayerOfLeg={0}
-        config={baseConfig}
-        currentRoundDarts={[]}
-      />
-    );
+  it('RULE 3: marks both cards of the blocked team and names the points to throw down', () => {
+    // Team 1: P0 (40), P2 (200). Team 2: P1 (50), P3 (50) = 100.
+    // P2 is 100 above the opponents: team 1 is frozen, P2 must throw 100.
+    const { container } = render(board([40, 50, 200, 50]));
 
-    // Blocked player (P0) shows Geblockt (exactly 1 on the whole card, no duplicate bottom pill!)
-    // Am Text allein lässt sich das nicht mehr abzählen: der Chip in der
-    // Teamleiste sagt seit dem Icon-Set ebenfalls nur noch „Geblockt", vorher
-    // stand ein Schloss-Emoji davor. Gemeint war immer die Leiste auf der
-    // Spielerkarte.
-    expect(container.querySelectorAll('.lock-badge-bar.locked').length).toBe(1);
-
-    // Thrower player (P2) shows the required points
-    expect(screen.getAllByText(/Muss mind./i).length).toBe(2); // 1 on top banner + 1 on thrower card
-    expect(screen.getByText(/Team 1 geblockt \(Partner muss mind. 100 Pkt werfen\)/i)).toBeInTheDocument();
+    expect(container.querySelectorAll('.card-lock')).toHaveLength(2);
+    expect(screen.getByText('Freeze · Team 1')).toBeInTheDocument();
+    // On P2's card and in the bar of P0, who is on throw.
+    expect(screen.getAllByText('noch 100')).toHaveLength(2);
   });
 
-  it('RULE 4: Updates required points live after each dart thrown by the thrower', () => {
-    // Team 1: P0 (40), P2 (200). Partner P2 has 200.
-    // Team 2: P1 (50), P3 (50). Total = 100. (Block diff = 100).
-    const players = createPlayers([40, 50, 200, 50]);
-    
-    // Active player is P2 (The thrower in Team 1). Throws T20 (60 pts).
-    // Live score of P2 becomes 200 - 60 = 140.
-    // Points P2 needs to throw becomes 140 - 100 = 40!
-    const roundDarts: Dart[] = [
-      { base: 20, mult: 3, value: 60, label: 'T20' }
-    ];
+  it('RULE 4: updates the points live with every dart of the thrower', () => {
+    // P2 throws T20: 200 → 140, still 40 above the opponents' 100.
+    render(board([40, 50, 200, 50], 2, [{ base: 20, mult: 3, value: 60, label: 'T20' }]));
 
-    render(
-      <Scoreboard 
-        players={players}
-        activePlayer={2}
-        startingPlayerOfLeg={0}
-        config={baseConfig}
-        currentRoundDarts={roundDarts}
-      />
-    );
-
-    // Should update live to 40 Pkt!
-    expect(screen.getAllByText(/Muss mind./i).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText(/40 Pkt/i).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText(/Team 1 geblockt \(Partner muss mind. 40 Pkt werfen\)/i)).toBeInTheDocument();
+    expect(screen.getAllByText('noch 40').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Freeze · Team 1')).toBeInTheDocument();
   });
 
-  it('RULE 5: Does NOT show any point numbers if multiple players are blocking (only Geblockt)', () => {
-    // Both P0 (200) and P2 (200) have scores > Opponents total (100)
-    const players = createPlayers([200, 50, 200, 50]);
-    render(
-      <Scoreboard 
-        players={players}
-        activePlayer={0}
-        startingPlayerOfLeg={0}
-        config={baseConfig}
-        currentRoundDarts={[]}
-      />
-    );
+  it('RULE 5: names no number when more than one player is too high', () => {
+    // P0 (200) and P2 (200) are both above the opponents' 100.
+    render(board([200, 50, 200, 50]));
 
-    // No "Muss mind." numbers anywhere
-    expect(screen.queryByText(/Muss mind./i)).not.toBeInTheDocument();
-    // Cards show clean Geblockt
-    expect(screen.getAllByText('Geblockt').length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText(/Beide Teams gegenseitig geblockt/i)).toBeInTheDocument();
+    expect(screen.queryByText(/noch/)).not.toBeInTheDocument();
+    expect(screen.getByText('Freeze · Team 1')).toBeInTheDocument();
   });
+
   /**
-   * Der Sperrzustand geht im Leg mehrfach hin und her: sobald ein Gegner
-   * punktet, steigt die Gegnersumme und das eigene Team ist frei — trifft er
-   * daneben, ist es wieder gesperrt. Die "Entblockt"-Einblendung darf danach
-   * nicht hängenbleiben, denn sie unterdrückt die Block-Anzeige.
+   * The freeze flips back and forth within a leg. The short "Frei" notice must
+   * not stick afterwards, because it would hide a freeze the engine still
+   * enforces.
    */
-  it('RULE 6: shows the block again after a short unblock', async () => {
-    const blocked = createPlayers([2, 50, 200, 50]);   // T1 gesperrt: P2=200 > 100
-    const free = createPlayers([2, 150, 200, 100]);    // T1 frei:     P2=200 < 250
+  it('RULE 6: shows the freeze again after a short release', () => {
+    const blocked: [number, number, number, number] = [2, 50, 200, 50];   // T1 frozen: P2 = 200 > 100
+    const free: [number, number, number, number] = [2, 150, 200, 100];    // T1 free:   P2 = 200 < 250
 
-    const { rerender } = render(
-      <Scoreboard players={blocked} activePlayer={0} startingPlayerOfLeg={0} config={baseConfig} currentRoundDarts={[]} />
-    );
-    expect(screen.getAllByText('Geblockt').length).toBeGreaterThanOrEqual(1);
+    const { rerender } = render(board(blocked));
+    expect(screen.getByText('Freeze · Team 1')).toBeInTheDocument();
 
-    // Gegner punktet -> kurz frei
-    rerender(
-      <Scoreboard players={free} activePlayer={0} startingPlayerOfLeg={0} config={baseConfig} currentRoundDarts={[]} />
-    );
-    expect(screen.getByText(/wurde entblockt/i)).toBeInTheDocument();
+    rerender(board(free));
+    expect(screen.getByText('Frei · Team 1')).toBeInTheDocument();
 
-    // Gegner wirft daneben, Stand wie vorher -> wieder gesperrt, noch innerhalb
-    // der 2,2 Sekunden der Einblendung.
-    rerender(
-      <Scoreboard players={blocked} activePlayer={0} startingPlayerOfLeg={0} config={baseConfig} currentRoundDarts={[]} />
-    );
-
-    expect(screen.queryByText(/wurde entblockt/i)).not.toBeInTheDocument();
-    expect(screen.getAllByText('Geblockt').length).toBeGreaterThanOrEqual(1);
+    // Opponent misses, the score is as before — frozen again, still within the
+    // 2.2 seconds of the notice.
+    rerender(board(blocked));
+    expect(screen.queryByText('Frei · Team 1')).not.toBeInTheDocument();
+    expect(screen.getByText('Freeze · Team 1')).toBeInTheDocument();
   });
 });

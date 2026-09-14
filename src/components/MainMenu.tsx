@@ -10,6 +10,7 @@ import { configPills } from './matchSetup/configSummary';
 import type { SavedMatchSummary } from './matchSetup/SavedGameCard';
 import { todayStats } from '../utils/todayStats';
 import { has, readJson } from '../utils/storage';
+import { matchProgressLabel, matchSides } from '../utils/matchProgress';
 
 interface MainMenuProps {
   /** Für die Statistik-Kachel und das letzte Match. */
@@ -26,30 +27,6 @@ const greeting = (hour: number): string =>
 /** „Montag · 14. September". */
 const dayLabel = (date: Date): string =>
   date.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' }).replace(', ', ' · ');
-
-/** Wer gegeneinander spielt: im Doppel die Teams, sonst die Spieler. */
-const sidesOf = (match: SavedMatchSummary): { name: string; score: number; legs: number; sets: number }[] => {
-  if (!match.config.is2v2) return match.players;
-  const teams = [...new Set(match.players.map(p => p.team))];
-  return teams.map(team => {
-    const members = match.players.filter(p => p.team === team);
-    return {
-      name: members.map(p => p.name).join(' & '),
-      score: members[0]?.score ?? 0,
-      legs: Math.max(...members.map(p => p.legs)),
-      sets: Math.max(...members.map(p => p.sets))
-    };
-  });
-};
-
-/** Welches Leg — und bei Sätzen welcher Satz — gerade läuft. */
-const progressLabel = (match: SavedMatchSummary): string => {
-  const sides = sidesOf(match);
-  const leg = `Leg ${sides.reduce((sum, s) => sum + s.legs, 0) + 1}`;
-  return match.config.setsToWin > 1
-    ? `Satz ${sides.reduce((sum, s) => sum + s.sets, 0) + 1} · ${leg}`
-    : leg;
-};
 
 const TRAINING_NAMES: Record<string, string> = {
   powerScoring: 'Power Scoring',
@@ -145,12 +122,12 @@ export const MainMenu: React.FC<MainMenuProps> = ({
 
   const renderHero = () => {
     if (savedMatch) {
-      const sides = sidesOf(savedMatch);
+      const sides = matchSides(savedMatch.players, savedMatch.config);
       return (
         <>
           <button type="button" className="start-hero" onClick={() => onResumeGame?.()}>
             <span className="start-hero-main">
-              <span className="label-caps">{`Fortsetzen · ${progressLabel(savedMatch)}`}</span>
+              <span className="label-caps">{`Fortsetzen · ${matchProgressLabel(savedMatch.players, savedMatch.config)}`}</span>
               <span className="start-hero-title">{sides.map(s => s.name).join(sides.length === 2 ? ' vs ' : ' · ')}</span>
             </span>
             <span className="start-hero-scores num">
