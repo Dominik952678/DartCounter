@@ -10,6 +10,7 @@
 @import "./styles/online.css";
 @import "./styles/stats.css";
 @import "./styles/profile.css";
+@import "./styles/auth.css";
 @import "./styles/celebration.css";
 
 /* ── Breakpoint-Skala ──
@@ -1705,67 +1706,6 @@ button:disabled,
   to {
     transform: translateY(-10px);
   }
-}
-
-/* ── Anmeldung ──
-   Auth- und Passwort-Screen bauten ihr Icon-Feld, ihre Meldungen und ihre
-   Trennlinie selbst, inklusive eines literalen #16161a hinter dem Wort „Oder". */
-.auth-card {
-  max-width: 420px;
-  width: 100%;
-  padding: var(--space-8) var(--space-6);
-  position: relative;
-  z-index: 1;
-  text-align: center;
-}
-.auth-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 56px;
-  height: 56px;
-  border-radius: var(--radius-card);
-  background: var(--surface-card);
-  border: 1px solid var(--card-border);
-  margin-bottom: var(--space-3);
-  font-size: 1.8rem;
-}
-.auth-title {
-  margin-bottom: var(--space-2);
-  font-size: var(--text-heading-lg);
-}
-.auth-subtitle {
-  color: var(--text-secondary);
-  font-size: var(--text-body);
-  margin-bottom: var(--space-6);
-}
-.auth-alt {
-  margin-top: var(--space-6);
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-/* Trennlinie mit Beschriftung. Bewusst OHNE Hintergrund-Maske hinter dem
-   Label: die Karte liegt auf --surface-card, einem durchscheinenden Weiß über
-   --bg-base, und deren Mischfarbe gibt es als Token gar nicht. Ein
-   deckendes --bg-base hätte einen dunklen Fleck auf der helleren Karte
-   hinterlassen — derselbe Fehler wie das #16161a davor, nur mit Variable.
-   Zwei wachsende Linien links und rechts brauchen keine Maske. */
-.auth-divider {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-  margin: var(--space-2) 0;
-  color: var(--text-secondary);
-  font-size: var(--text-body);
-}
-.auth-divider::before,
-.auth-divider::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: var(--card-border);
 }
 
 /* ── Gast-Sync ──

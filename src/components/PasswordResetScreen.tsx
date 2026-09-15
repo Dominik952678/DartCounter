@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
-import { Button, Card, Icons } from './ui';
+import { Button, Icons } from './ui';
 
 /**
  * Where the reset mail lands.
@@ -17,6 +17,8 @@ export const PasswordResetScreen: React.FC = () => {
   const [repeat, setRepeat] = useState('');
   const [localError, setLocalError] = useState('');
   const [done, setDone] = useState(false);
+  const passwordId = useId();
+  const repeatId = useId();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,64 +41,67 @@ export const PasswordResetScreen: React.FC = () => {
   const displayError = localError || error;
 
   return (
-    <div className="screen active-screen" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100dvh', padding: '20px' }}>
-      <Card style={{ maxWidth: '420px', width: '100%', padding: '36px 24px', textAlign: 'center' }}>
-        <Icons.IconLock size={34} style={{ margin: '0 auto 10px' }} />
-        <h2 className="auth-title">Neues Passwort</h2>
+    <div className="screen active-screen auth-screen">
+      <button type="button" className="stats-back" onClick={() => navigate('/auth')}>
+        <Icons.IconArrowLeft size={16} />
+        <span className="label-caps">Anmelden</span>
+      </button>
 
-        {done ? (
-          <>
-            <p style={{ color: 'var(--text-dim)', fontSize: '0.9em', marginBottom: '24px' }}>
-              Passwort geändert. Du bist angemeldet.
-            </p>
-            <Button variant="primary" size="large" onClick={() => navigate('/')}>
-              Weiter zum Hauptmenü
-            </Button>
-          </>
-        ) : (
-          <>
-            <p style={{ color: 'var(--text-dim)', fontSize: '0.9em', marginBottom: '24px' }}>
-              {user
-                ? 'Wähle ein neues Passwort für dein Konto.'
-                : 'Öffne diesen Bildschirm über den Link aus der E-Mail, damit wir wissen, um wessen Konto es geht.'}
-            </p>
+      <header className="auth-head">
+        <h1 className="auth-title">Neues Passwort</h1>
+        <p className="auth-lead">
+          {done
+            ? 'Passwort geändert. Du bist angemeldet.'
+            : user
+              ? 'Wähle ein neues Passwort für dein Konto.'
+              : 'Öffne diesen Bildschirm über den Link aus der E-Mail, damit wir wissen, um wessen Konto es geht.'}
+        </p>
+      </header>
 
-            {displayError && (
-              <div className="alert alert-error" role="alert">
-                <Icons.IconAlert size={18} /> <span>{displayError}</span>
-              </div>
-            )}
+      {done ? (
+        <div className="auth-actions">
+          <Button variant="primary" size="large" fullWidth onClick={() => navigate('/')}>
+            Weiter zu Start
+          </Button>
+        </div>
+      ) : (
+        <>
+          {displayError && <p className="auth-message is-error" role="alert">{displayError}</p>}
 
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <form className="auth-form" onSubmit={handleSubmit}>
+            <div className="auth-field">
+              <label className="label-caps" htmlFor={passwordId}>Neues Passwort</label>
               <input
+                id={passwordId}
+                className="auth-input"
                 type="password"
-                placeholder="Neues Passwort"
-                aria-label="Neues Passwort"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 autoComplete="new-password"
                 required
               />
+              <span className="auth-hint">Mindestens 6 Zeichen</span>
+            </div>
+            <div className="auth-field">
+              <label className="label-caps" htmlFor={repeatId}>Wiederholen</label>
               <input
+                id={repeatId}
+                className="auth-input"
                 type="password"
-                placeholder="Neues Passwort wiederholen"
-                aria-label="Neues Passwort wiederholen"
                 value={repeat}
                 onChange={e => setRepeat(e.target.value)}
                 autoComplete="new-password"
                 required
               />
-              <Button type="submit" variant="primary" size="large" disabled={loading || !user}>
-                {loading ? 'Speichere…' : 'Passwort speichern'}
+            </div>
+            <div className="auth-actions">
+              <Button type="submit" variant="primary" size="large" fullWidth disabled={loading || !user}>
+                {loading ? 'Speichere …' : 'Passwort speichern'}
               </Button>
-            </form>
-
-            <Button type="button" variant="ghost" onClick={() => navigate('/auth')} style={{ marginTop: '16px' }}>
-              Zurück zum Login
-            </Button>
-          </>
-        )}
-      </Card>
+            </div>
+          </form>
+        </>
+      )}
     </div>
   );
 };

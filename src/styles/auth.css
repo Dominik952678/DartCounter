@@ -1,0 +1,129 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Anmelden (Entwurf H5)
+   Markup: components/AuthScreen.tsx, components/PasswordResetScreen.tsx.
+   Der Zurück-Link kommt aus stats.css.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.auth-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  max-width: 460px;
+  margin-inline: auto;
+}
+
+.auth-head {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: var(--space-2);
+}
+
+.auth-title {
+  margin: 0;
+  font-size: 48px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.auth-lead {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+.auth-message {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--line-2);
+  background: var(--surface-card);
+  font-size: 14px;
+  line-height: 1.4;
+}
+.auth-message.is-error {
+  border-color: color-mix(in srgb, var(--text-danger) 60%, transparent);
+  color: var(--text-danger);
+}
+.auth-message.is-success {
+  border-color: color-mix(in srgb, var(--text-success) 60%, transparent);
+  color: var(--text-success);
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.auth-field .label-caps {
+  color: var(--text-secondary);
+}
+
+.auth-screen .auth-input {
+  min-height: 56px;
+  padding: 0 16px;
+  border: 1.5px solid var(--line-1);
+  border-radius: 16px;
+  background: var(--surface-card);
+  box-shadow: none;
+  font-family: var(--font);
+  font-size: 16px;
+  color: var(--text-primary);
+}
+.auth-screen .auth-input:focus {
+  border-color: var(--accent-bone);
+  background: var(--surface-card);
+  box-shadow: none;
+  outline: none;
+}
+
+.auth-hint {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.auth-forgot {
+  align-self: flex-end;
+  color: var(--text-secondary);
+}
+
+.auth-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: 6px;
+}
+
+.auth-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: var(--space-4);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+.auth-note svg {
+  flex: none;
+  margin-top: 1px;
+}
+
+.auth-guest {
+  min-height: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
