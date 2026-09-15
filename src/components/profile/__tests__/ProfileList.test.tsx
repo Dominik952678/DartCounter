@@ -8,7 +8,7 @@ const profile = (over: Partial<Profile> = {}): Profile => ({
 });
 
 const profiles: Record<string, Profile> = {
-  Dominik: profile(),
+  Dominik: profile({ matches: 12, dartsThrown: 300, pointsScored: 6000 }),
   Bot: profile({ isBot: true }),
   Leon: profile({ isLinkedCloudGuest: true })
 };
@@ -20,7 +20,6 @@ const renderList = (overrides: Partial<React.ComponentProps<typeof ProfileList>>
     onUpdateProfile: vi.fn(),
     onDeleteProfile: vi.fn(),
     onImportGuest: vi.fn(),
-    onShowHistory: vi.fn(),
     ...overrides
   };
   render(<ProfileList {...props} />);
@@ -30,20 +29,30 @@ const renderList = (overrides: Partial<React.ComponentProps<typeof ProfileList>>
 describe('ProfileList', () => {
   afterEach(() => vi.restoreAllMocks());
 
-  it('lists every profile and counts them', () => {
+  it('lists every profile with a line of context and counts them', () => {
     renderList();
 
-    expect(screen.getByText(/Dominik/)).toBeInTheDocument();
-    expect(screen.getByText(/Leon/)).toBeInTheDocument();
-    expect(screen.getByText('3')).toBeInTheDocument();
+    expect(screen.getByText('Profile · 3')).toBeInTheDocument();
+    expect(screen.getByText('Lokal · 12 Matches · Ø 60.0')).toBeInTheDocument();
+    expect(screen.getByText('Cloud-Gast · synchronisiert')).toBeInTheDocument();
   });
 
   it('opens the profile that was clicked', () => {
     const { onOpenProfile } = renderList();
 
-    fireEvent.click(screen.getByText(/Dominik/));
+    fireEvent.click(screen.getByText('Dominik'));
 
     expect(onOpenProfile).toHaveBeenCalledWith('Dominik');
+  });
+
+  it('changes a bot’s strength and a player’s colour on the row', () => {
+    const { onUpdateProfile } = renderList();
+
+    fireEvent.change(screen.getByLabelText('Spielstärke von Bot'), { target: { value: '80' } });
+    fireEvent.change(screen.getByLabelText('Farbe von Dominik'), { target: { value: '#aabbcc' } });
+
+    expect(onUpdateProfile).toHaveBeenCalledWith('Bot', { targetAverage: 80 });
+    expect(onUpdateProfile).toHaveBeenCalledWith('Dominik', { color: '#aabbcc' });
   });
 
   it('asks before deleting, and does not open the profile behind the button', () => {
@@ -68,11 +77,21 @@ describe('ProfileList', () => {
   });
 
   /** A cloud guest's profile belongs to their account; the link is cut instead. */
-  it('offers no delete button for a linked cloud guest', () => {
-    renderList();
+  it('offers to unlink a cloud guest instead of deleting it', () => {
+    const { onDeleteProfile } = renderList();
 
     expect(screen.queryByTitle('Profil „Leon“ löschen')).not.toBeInTheDocument();
-    expect(screen.getByText('Cloud')).toBeInTheDocument();
+    fireEvent.click(screen.getByTitle('Verknüpfung zu „Leon“ trennen'));
+    fireEvent.click(screen.getByText('Trennen'));
+
+    expect(onDeleteProfile).toHaveBeenCalledWith('Leon');
+  });
+
+  it('marks the own profile and offers no delete for it', () => {
+    renderList({ ownName: 'Dominik' });
+
+    expect(screen.getByText('Du')).toBeInTheDocument();
+    expect(screen.queryByTitle('Profil „Dominik“ löschen')).not.toBeInTheDocument();
   });
 
   it('says so when there is nothing to list', () => {

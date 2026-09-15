@@ -1,3 +1,4 @@
+import { readCheckoutHints } from '../utils/deviceSettings';
 import React, { useState, useEffect, useRef } from 'react';
 import type { Player, GameConfig, Celebration, Dart } from '../types';
 import { getCheckoutSuggestion, checkoutRange, isBogey, isSetupShot } from '../utils/checkouts';
@@ -74,7 +75,7 @@ export const Scoreboard: React.FC<ScoreboardProps> = ({
   currentRoundDarts,
   celebration,
   roundBust = false,
-  showCheckoutHints = true
+  showCheckoutHints = readCheckoutHints()
 }) => {
   const is2v2 = Boolean(config?.is2v2 || (players.length === 4 && players.some(p => p.team !== undefined)));
 

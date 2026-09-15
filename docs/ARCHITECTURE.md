@@ -144,16 +144,19 @@ the guest can cut the link — or abort the running match — from their own dev
 
 ## State that is not React state
 
-Four zustand stores, each with one job: `useAuthStore` (session),
-`useThemeStore` (skin and its effects), `useOnlineStore` (room channel, roster,
-event registry) and `useNotificationStore` (what the user is told about
-failures).
+Three zustand stores, each with one job: `useAuthStore` (session),
+`useOnlineStore` (room channel, roster, event registry) and
+`useNotificationStore` (what the user is told about failures). The theme store
+went with the themes in v2.0.0; device settings (Standardspiel, checkout hints,
+wake lock) are plain storage reads in `utils/deviceSettings.ts`.
 
 ## Rendering and the bundle
 
-`StatsPage` and `ProfileTab` are lazy: they are the only routes that reach
-recharts, and through the profile screen html2canvas. That keeps roughly 400 kB
-of charting and 200 kB of image export off the first paint. recharts is
-deliberately *not* given a named chunk — naming one made the bundler park Vite's
-preload helper inside it, and the entry's import of that helper pulled the whole
-library back into the initial load.
+`StatsPage` and `ProfileTab` are lazy: they reach html2canvas (match image,
+backup) and carry the chart components, which keeps roughly 200 kB of image
+export off the first paint. Since v2.0.0 the charts are small SVG components in
+`src/components/charts/` (line, donut, radar, comparison table, heat board), and
+recharts is gone. Lazily loaded libraries are deliberately *not* given a named
+chunk — naming one made the bundler park Vite's preload helper inside it, and
+the entry's import of that helper pulled the whole library back into the
+initial load.

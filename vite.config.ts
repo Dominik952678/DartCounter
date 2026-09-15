@@ -51,17 +51,16 @@ export default defineConfig({
       output: {
         /**
          * Only the libraries every screen needs are pinned to a stable chunk,
-         * so they stay cached across deploys. recharts is deliberately absent:
-         * naming a chunk for it made rolldown park Vite's preload helper inside
-         * it, and the entry's import of that helper pulled all 400 kB of
-         * charting into the first paint — the very thing the lazy stats and
-         * profile routes exist to avoid. Unnamed, it rides along with them.
+         * so they stay cached across deploys. Lazily loaded libraries (html2canvas)
+         * are deliberately left unnamed: naming a chunk for one made rolldown park
+         * Vite's preload helper inside it, and the entry's import of that helper
+         * pulled the whole library into the first paint.
          */
         manualChunks(id: string) {
           if (!id.includes('node_modules')) return;
           // Matched on the package directory rather than anywhere in the path:
-          // `id.includes('react')` also caught recharts' react-smooth and hauled
-          // it into the eager chunk.
+          // `id.includes('react')` also caught unrelated packages with "react"
+          // in their name and hauled them into the eager chunk.
           if (/node_modules\/(react|react-dom|react-router|react-router-dom|scheduler)\//.test(id)) {
             return 'vendor-react';
           }

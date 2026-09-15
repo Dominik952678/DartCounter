@@ -1,3 +1,5 @@
+import { readKeepAwake } from '../utils/deviceSettings';
+import { useWakeLock } from '../hooks/useWakeLock';
 import React, { useState, useEffect, useLayoutEffect } from 'react';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import type { Profile, Dart } from '../types';
@@ -131,6 +133,8 @@ const PowerScoringPlayerCard: React.FC<PlayerCardProps> = ({
 export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, rounds, onFinish, onAbort, isOnline, isHost, roomChannel, myUsername }) => {
   const [showAbortConfirm, setShowAbortConfirm] = useState(false);
   const [soundOn, setSoundOn] = useState(isSoundEnabled());
+  const [keepAwake] = useState(readKeepAwake);
+  useWakeLock(keepAwake);
   const [gameState, setGameState] = useState<PlayerState[]>(() => 
     players.map(p => ({
       name: p,

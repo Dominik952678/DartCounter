@@ -1,3 +1,5 @@
+import { readCheckoutHints, readKeepAwake } from '../utils/deviceSettings';
+import { useWakeLock } from '../hooks/useWakeLock';
 import React, { useState, useEffect } from 'react';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import type { Profile, Dart, Celebration, CelebrationType } from '../types';
@@ -94,6 +96,9 @@ const drawTargets = (count: number): number[] =>
 export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, profiles, checkoutRounds, checkoutTargets, onFinish, onAbort, isOnline, isHost, roomChannel, myUsername }) => {
   const [showAbortConfirm, setShowAbortConfirm] = useState(false);
   const [soundOn, setSoundOn] = useState(isSoundEnabled());
+  const [keepAwake] = useState(readKeepAwake);
+  const [showHints] = useState(readCheckoutHints);
+  useWakeLock(keepAwake);
   /* Konstant für die Sitzung: `useState` ohne Setter, damit ein Re-Render nicht
      neu würfelt. Die Komponente wird pro Sitzung neu gemountet (`key` in
      App.tsx), ein Effekt zum Nachziehen wäre also nur eine Fehlerquelle. */
@@ -557,13 +562,15 @@ export const CheckoutTraining: React.FC<CheckoutTrainingProps> = ({ players, pro
                     an erster Stelle — vorher war er eine kleine Pille unter
                     den Kennzahlen, die man übersah. Double Out ist hier per
                     Definition der Modus: ein Ziel zählt nur auf ein Doppel. */}
-                <div className="co-route">
-                  <span className="stat-label">Zu checken</span>
-                  <span className="co-route-way">
-                    {getCheckoutSuggestion(activeP?.currentScore ?? 0, 'DO', currentRoundDarts.length)
-                      ?? 'Kein Finish möglich'}
-                  </span>
-                </div>
+                {showHints && (
+                  <div className="co-route">
+                    <span className="stat-label">Zu checken</span>
+                    <span className="co-route-way">
+                      {getCheckoutSuggestion(activeP?.currentScore ?? 0, 'DO', currentRoundDarts.length)
+                        ?? 'Kein Finish möglich'}
+                    </span>
+                  </div>
+                )}
 
                 <div className="co-now">
                   <span className="co-chip">

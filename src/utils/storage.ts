@@ -35,6 +35,11 @@ export const StorageKey = {
   checkoutRounds: 'dart_checkout_rounds',
   checkoutTargets: 'dart_checkout_targets',
 
+  /** Settings from „Mein Profil": the one-tap default match, checkout hints, screen wake lock. */
+  defaultGame: 'dart_default_game',
+  checkoutHints: 'dart_checkout_hints',
+  keepAwake: 'dart_keep_awake',
+
   /** Identity of this device when it hosts for cloud guests, and the name it plays online under. */
   hostDeviceId: 'dartcounter_host_device_id',
   guestOnlineName: 'dart_guest_online_name',
@@ -188,7 +193,8 @@ const PORTABLE_KEYS: readonly StorageKeyName[] = [
   'soundEnabled', 'hapticsEnabled',
   'x01StartScore', 'x01OutMode', 'x01Sets', 'x01Legs', 'x01PlayerCount', 'x01Is2v2',
   'trainingMode', 'trainingPlayerCount', 'powerScoringRounds', 'checkoutRounds', 'checkoutTargets',
-  'guestOnlineName'
+  'guestOnlineName',
+  'defaultGame', 'checkoutHints', 'keepAwake'
 ];
 
 /** The portable settings, by registry name, for a backup file. */
@@ -209,6 +215,21 @@ export const importSettings = (settings: unknown): void => {
     if (!PORTABLE_KEYS.includes(name as StorageKeyName)) return;
     writeRaw(name as StorageKeyName, value);
   });
+};
+
+/**
+ * Wipes everything this app keeps in the browser and starts over (Daten & Konto,
+ * „Gefahrenzone"). Cloud data of a signed-in account is untouched; the session
+ * itself lives in localStorage too, so the reload lands signed out.
+ */
+export const clearDeviceData = (): void => {
+  try {
+    localStorage.clear();
+    sessionStorage.clear();
+  } catch (err) {
+    console.warn('Could not clear storage', err);
+  }
+  window.location.assign('/');
 };
 
 /**

@@ -1,166 +1,138 @@
 import React, { useState } from 'react';
 import type { Profile } from '../../types';
 import { ConfirmModal } from '../ConfirmModal';
-import { Button, Card, CardHeader, Icons } from '../ui';
+import { Icons } from '../ui';
 import { botAverage, botAverageOptions } from '../../utils/botProfiles';
+import { DEFAULT_PLAYER_COLOR_HEX, isHexColor, playerColorByName } from '../../utils/playerColors';
 
 interface ProfileListProps {
   profiles: Record<string, Profile>;
+  /** Das eigene Profil bekommt „Du" statt des Löschknopfs nicht — nur die Kennzeichnung. */
+  ownName?: string;
+  /** Öffnet die Statistik dieses Spielers. */
   onOpenProfile: (name: string) => void;
-  /** Nur für die Spielstärke der Bots — sie steht direkt auf ihrer Zeile. */
+  /** Spielstärke der Bots und Farbe — beides direkt auf der Zeile. */
   onUpdateProfile: (name: string, updates: Partial<Profile>) => void;
+  /** Löscht ein Profil, bei einem Cloud-Gast trennt es die Verknüpfung. */
   onDeleteProfile: (name: string) => void;
   onImportGuest: () => void;
-  onShowHistory: () => void;
 }
 
-/** Every profile on this device, and the way into one of them. */
+const subline = (name: string, p: Profile, ownName?: string) => {
+  if (p.isLinkedCloudGuest) return 'Cloud-Gast · synchronisiert';
+  if (p.isBot) return 'Bot';
+  const average = p.dartsThrown ? ` · Ø ${((p.pointsScored / p.dartsThrown) * 3).toFixed(1)}` : '';
+  return `${name === ownName ? 'Eigenes Profil' : 'Lokal'} · ${p.matches} Matches${average}`;
+};
+
+/** Spieler & Bots (Entwurf H2): jede Person eine Zeile, Farbe, Stärke und Löschen direkt daran. */
 export const ProfileList: React.FC<ProfileListProps> = ({
   profiles,
+  ownName,
   onOpenProfile,
   onUpdateProfile,
   onDeleteProfile,
-  onImportGuest,
-  onShowHistory
+  onImportGuest
 }) => {
-  const profileNames = Object.keys(profiles);
-  const [pendingDeletion, setPendingDeletion] = useState<string | null>(null);
+  const names = Object.keys(profiles);
+  const [pending, setPending] = useState<string | null>(null);
+  const pendingIsGuest = pending ? !!profiles[pending]?.isLinkedCloudGuest : false;
 
   return (
-    <Card>
-      <CardHeader heading="Vorhandene Profile" action={
-        <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }}>
-          <Button
-            type="button"
-            variant="primary"
-            onClick={onImportGuest}
-            title="Gastspieler via Sync-Code importieren"
-          >
-            <Icons.IconCloud size={17} /> Gast importieren
-          </Button>
-          <span className="card-badge">{profileNames.length}</span>
-        </div>
-      } />
+    <section className="setup-section">
+      <div className="setup-section-head">
+        <h2 className="setup-section-title">Profile · {names.length}</h2>
+        <button type="button" className="setup-link" onClick={onImportGuest}>
+          <Icons.IconCloud size={16} /> Gast importieren
+        </button>
+      </div>
 
-      {profileNames.length > 0 ? (
-        <div className="profile-chips">
-          {profileNames.map(name => {
-            const isCloudGuest = profiles[name]?.isLinkedCloudGuest;
-            const isBot = profiles[name]?.isBot;
+      {names.length === 0 ? (
+        <p className="online-hint">Noch keine Profile vorhanden.</p>
+      ) : (
+        <ul className="person-list">
+          {names.map(name => {
+            const p = profiles[name];
+            const color = p.color || playerColorByName(name);
             return (
-              <div
-                key={name}
-                className="profile-chip"
-                style={{
-                  borderLeftColor: profiles[name]?.color || 'var(--card-border)',
-                  position: 'relative',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}
-              >
-                <button
-                  type="button"
-                  onClick={() => onOpenProfile(name)}
-                  style={{
-                    background: 'transparent',
-                    border: 'none',
-                    color: 'inherit',
-                    font: 'inherit',
-                    cursor: 'pointer',
-                    padding: 0,
-                    minHeight: 'auto'
-                  }}
-                >
-                  {isCloudGuest
-                    ? <Icons.IconLink size={16} className="icon-inline" />
-                    : profiles[name]?.isBot
-                      ? <Icons.IconBot size={16} className="icon-inline" />
-                      : <Icons.IconUser size={16} className="icon-inline" />}{name}
+              <li key={name} className="person-row">
+                <label className="person-color" title={`Farbe von ${name}`}>
+                  <span className="seat-avatar" style={{ '--player-color': color } as React.CSSProperties} aria-hidden="true">
+                    {p.isBot ? <Icons.IconBot size={18} /> : name.charAt(0).toUpperCase()}
+                  </span>
+                  <input
+                    type="color"
+                    className="person-color-input"
+                    value={isHexColor(p.color) ? p.color : DEFAULT_PLAYER_COLOR_HEX}
+                    onChange={e => onUpdateProfile(name, { color: e.target.value })}
+                    aria-label={`Farbe von ${name}`}
+                  />
+                </label>
+
+                <button type="button" className="person-main" onClick={() => onOpenProfile(name)}>
+                  <span className="person-name">{name}</span>
+                  <span className="person-sub">{subline(name, p, ownName)}</span>
                 </button>
-                {/* Die Stärke gehört auf die Zeile des Bots, nicht zwei Klicks
-                    tiefer im Dashboard: bei mehreren Bots in der Liste ist sie
-                    das Einzige, was sie unterscheidet. */}
-                {isBot && (
+
+                {/* Bei mehreren Bots ist die Stärke das Einzige, was sie unterscheidet. */}
+                {p.isBot && (
                   <select
-                    className="profile-chip-avg"
-                    value={botAverage(profiles[name])}
+                    className="person-avg"
+                    value={botAverage(p)}
                     onChange={e => onUpdateProfile(name, { targetAverage: parseInt(e.target.value, 10) })}
                     aria-label={`Spielstärke von ${name}`}
-                    onClick={e => e.stopPropagation()}
                   >
-                    {botAverageOptions(botAverage(profiles[name])).map(avg => (
+                    {botAverageOptions(botAverage(p)).map(avg => (
                       <option key={avg} value={avg}>Ø {avg}</option>
                     ))}
                   </select>
                 )}
-                {isCloudGuest && (
-                  <span style={{
-                    fontSize: '0.7em',
-                    marginLeft: '4px',
-                    background: 'var(--surface-hover)',
-                    color: 'var(--text-secondary)',
-                    padding: '1px 5px',
-                    borderRadius: '4px',
-                    fontWeight: 'var(--weight-medium)'
-                  }}>
-                    Cloud
-                  </span>
-                )}
-                {/* A cloud guest's profile is not ours to delete; the link is cut instead. */}
-                {!isCloudGuest && (
+
+                {name === ownName && <span className="label-caps person-you">Du</span>}
+
+                {p.isLinkedCloudGuest ? (
                   <button
                     type="button"
-                    onClick={() => setPendingDeletion(name)}
+                    className="person-action"
+                    onClick={() => setPending(name)}
+                    title={`Verknüpfung zu „${name}“ trennen`}
+                    aria-label={`Verknüpfung zu „${name}“ trennen`}
+                  >
+                    <Icons.IconLink size={17} />
+                  </button>
+                ) : name !== ownName && (
+                  <button
+                    type="button"
+                    className="person-action"
+                    onClick={() => setPending(name)}
                     title={`Profil „${name}“ löschen`}
                     aria-label={`Profil „${name}“ löschen`}
-                    style={{
-                      background: 'transparent',
-                      border: 'none',
-                      color: 'var(--text-dim)',
-                      fontSize: '0.85rem',
-                      cursor: 'pointer',
-                      marginLeft: '4px',
-                      padding: '0 4px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      borderRadius: '4px',
-                      lineHeight: 1
-                    }}
-                    onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-danger)')}
-                    onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-dim)')}
                   >
                     <Icons.IconClose size={16} />
                   </button>
                 )}
-              </div>
+              </li>
             );
           })}
-        </div>
-      ) : (
-        <p style={{ color: 'var(--text-dim)', fontSize: '0.9em', textAlign: 'center', padding: '20px 0' }}>
-          Noch keine Profile vorhanden. Erstelle jetzt dein erstes Profil!
-        </p>
+        </ul>
       )}
 
-      <Button variant="secondary" onClick={onShowHistory} style={{ marginTop: '16px' }}>
-        <Icons.IconHistory size={18} /> Match Historie ansehen
-      </Button>
-
-      {pendingDeletion && (
+      {pending && (
         <ConfirmModal
-          title="Profil löschen?"
-          message={`„${pendingDeletion}“ wird mit allen Statistiken entfernt.\nDie gespielten Matches bleiben in der Historie.`}
-          confirmLabel="Löschen"
+          title={pendingIsGuest ? 'Verknüpfung trennen?' : 'Profil löschen?'}
+          message={pendingIsGuest
+            ? `„${pending}“ verschwindet von diesem Gerät. Das Cloud-Profil selbst bleibt bestehen.`
+            : `„${pending}“ wird mit allen Statistiken entfernt.\nDie gespielten Matches bleiben in der Historie.`}
+          confirmLabel={pendingIsGuest ? 'Trennen' : 'Löschen'}
           destructive
-          icon={<Icons.IconTrash size={40} />}
+          icon={pendingIsGuest ? <Icons.IconLink size={40} /> : <Icons.IconTrash size={40} />}
           onConfirm={() => {
-            onDeleteProfile(pendingDeletion);
-            setPendingDeletion(null);
+            onDeleteProfile(pending);
+            setPending(null);
           }}
-          onCancel={() => setPendingDeletion(null)}
+          onCancel={() => setPending(null)}
         />
       )}
-    </Card>
+    </section>
   );
 };

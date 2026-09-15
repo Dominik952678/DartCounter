@@ -17,10 +17,9 @@ import { StatsModal } from './components/Modals';
 import { LoadingScreen } from './components/LoadingScreen';
 
 /**
- * The two screens that pull recharts — the only route to it in the whole app —
- * and, through the profile screen, html2canvas. Loading them eagerly meant a
- * player who just wanted to start a leg downloaded the entire charting library
- * first. They are fetched when their route is opened instead.
+ * Statistik und Profil werden erst geladen, wenn ihre Route aufgeht. Beide
+ * reichen an html2canvas (Match-Bild, Sicherung) und bringen eigene Diagramme
+ * mit; wer nur ein Leg starten will, braucht davon nichts.
  */
 const StatsPage = lazy(() => import('./components/StatsPage').then(m => ({ default: m.StatsPage })));
 const ProfileTab = lazy(() => import('./components/ProfileTab').then(m => ({ default: m.ProfileTab })));

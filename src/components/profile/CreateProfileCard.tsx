@@ -1,6 +1,6 @@
 import React, { useId, useState } from 'react';
 import type { Profile } from '../../types';
-import { Button, Card, CardHeader, Icons } from '../ui';
+import { Icons, Toggle } from '../ui';
 import { BOT_AVERAGES, NEW_BOT_AVERAGE } from '../../utils/botProfiles';
 
 interface CreateProfileCardProps {
@@ -8,9 +8,9 @@ interface CreateProfileCardProps {
   onCreateProfile: (name: string, isBot?: boolean, targetAverage?: number) => void;
 }
 
+/** „Neuer Spieler" (Entwurf H2): Name, Plus, als Bot mit Zielschnitt. */
 export const CreateProfileCard: React.FC<CreateProfileCardProps> = ({ profiles, onCreateProfile }) => {
   const nameInputId = useId();
-  const botAvgId = useId();
   const [name, setName] = useState('');
   const [isBot, setIsBot] = useState(false);
   const [botAvg, setBotAvg] = useState<number>(NEW_BOT_AVERAGE);
@@ -34,13 +34,14 @@ export const CreateProfileCard: React.FC<CreateProfileCardProps> = ({ profiles, 
   };
 
   return (
-    <Card>
-      <CardHeader heading={"Neues Profil erstellen"} />
-      <div style={{ display: 'flex', gap: '8px', marginBottom: error ? '6px' : '12px' }}>
+    <section className="profile-card">
+      <h2 className="label-caps">Neuer Spieler</h2>
+      <div className="profile-create-row">
         <label htmlFor={nameInputId} className="sr-only">Spielername</label>
         <input
           id={nameInputId}
           type="text"
+          className="profile-create-input"
           placeholder="Spielername"
           value={name}
           onChange={e => {
@@ -49,44 +50,28 @@ export const CreateProfileCard: React.FC<CreateProfileCardProps> = ({ profiles, 
           }}
           onKeyDown={e => e.key === 'Enter' && handleCreate()}
         />
-        <Button variant="primary" onClick={handleCreate} aria-label="Profil erstellen">+</Button>
+        <button type="button" className="profile-create-btn" onClick={handleCreate} aria-label="Profil erstellen">
+          <Icons.IconPlus size={22} />
+        </button>
       </div>
 
-      {error && (
-        <div className="alert alert-error" role="alert">
-          <Icons.IconAlert size={18} />
-          <span>{error}</span>
-        </div>
-      )}
+      {error && <p className="setup-error-text" role="alert">{error}</p>}
 
-      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', fontSize: '0.9em', color: 'var(--text-dim)' }}>
-        <input
-          type="checkbox"
-          checked={isBot}
-          onChange={e => setIsBot(e.target.checked)}
-          style={{ width: 'auto', accentColor: 'var(--accent-primary)' }}
-        />
-        Als Bot (Computergegner) erstellen
-      </label>
+      <Toggle checked={isBot} onChange={setIsBot} label="Als Bot anlegen" />
 
-      {/* Hier stand ein „Bot Level 1–10" mit `level * 10 + 20` dahinter. Die
-          Stufe war eine Erfindung: gespeichert wurde ohnehin der Average, und
-          der ist auch die Zahl, die nach dem Spiel im Profil steht. */}
+      {/* Gespeichert wird der Average, und der steht nach dem Spiel auch im Profil —
+          eine erfundene „Stufe 1–10" davor gibt es nicht mehr. */}
       {isBot && (
-        <div style={{ marginTop: '10px' }}>
-          <label className="section-label" htmlFor={botAvgId}>Spielstärke des Bots</label>
-          <select
-            id={botAvgId}
-            value={botAvg}
-            onChange={e => setBotAvg(parseInt(e.target.value, 10))}
-            style={{ width: '100%', marginTop: '5px' }}
-          >
+        <label className="profile-select">
+          <span className="label-caps">Spielstärke</span>
+          <select value={botAvg} onChange={e => setBotAvg(parseInt(e.target.value, 10))} aria-label="Spielstärke des Bots">
             {BOT_AVERAGES.map(avg => (
               <option key={avg} value={avg}>Ø {avg} pro Aufnahme</option>
             ))}
           </select>
-        </div>
+          <Icons.IconChevronDown size={16} />
+        </label>
       )}
-    </Card>
+    </section>
   );
 };

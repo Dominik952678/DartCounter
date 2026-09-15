@@ -9,13 +9,14 @@ describe('CreateProfileCard', () => {
   const type = (name: string) => {
     fireEvent.change(screen.getByPlaceholderText('Spielername'), { target: { value: name } });
   };
+  const create = () => fireEvent.click(screen.getByRole('button', { name: 'Profil erstellen' }));
 
   it('creates a human profile and clears the field', () => {
     const onCreateProfile = vi.fn();
     render(<CreateProfileCard profiles={{}} onCreateProfile={onCreateProfile} />);
 
     type('  Dominik  ');
-    fireEvent.click(screen.getByText('+'));
+    create();
 
     expect(onCreateProfile).toHaveBeenCalledWith('Dominik', false, undefined);
     expect(screen.getByPlaceholderText('Spielername')).toHaveValue('');
@@ -26,7 +27,7 @@ describe('CreateProfileCard', () => {
     render(<CreateProfileCard profiles={{ Dominik: profile() }} onCreateProfile={onCreateProfile} />);
 
     type('Dominik');
-    fireEvent.click(screen.getByText('+'));
+    create();
 
     expect(onCreateProfile).not.toHaveBeenCalled();
     expect(screen.getByText(/existiert bereits/)).toBeInTheDocument();
@@ -37,7 +38,7 @@ describe('CreateProfileCard', () => {
     render(<CreateProfileCard profiles={{}} onCreateProfile={onCreateProfile} />);
 
     type('   ');
-    fireEvent.click(screen.getByText('+'));
+    create();
 
     expect(onCreateProfile).not.toHaveBeenCalled();
     expect(screen.getByText(/Bitte gib einen Namen ein/)).toBeInTheDocument();
@@ -52,11 +53,11 @@ describe('CreateProfileCard', () => {
     const onCreateProfile = vi.fn();
     render(<CreateProfileCard profiles={{}} onCreateProfile={onCreateProfile} />);
 
-    fireEvent.click(screen.getByLabelText(/Als Bot/));
+    fireEvent.click(screen.getByRole('switch', { name: /Als Bot/ }));
     fireEvent.change(screen.getByLabelText('Spielstärke des Bots'), { target: { value: '90' } });
 
     type('Bot 7');
-    fireEvent.click(screen.getByText('+'));
+    create();
 
     expect(onCreateProfile).toHaveBeenCalledWith('Bot 7', true, 90);
   });
@@ -66,7 +67,7 @@ describe('CreateProfileCard', () => {
     render(<CreateProfileCard profiles={{}} onCreateProfile={vi.fn()} />);
 
     expect(screen.queryByLabelText('Spielstärke des Bots')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByLabelText(/Als Bot/));
+    fireEvent.click(screen.getByRole('switch', { name: /Als Bot/ }));
     expect(screen.getByLabelText('Spielstärke des Bots')).toBeInTheDocument();
   });
 });

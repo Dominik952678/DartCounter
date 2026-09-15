@@ -1,0 +1,396 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Profil (Entwurf H1–H3)
+   Markup: components/ProfileTab.tsx, components/profile/*.
+   Zurück-Link, KPI-Kachel und Abschnittstitel kommen aus stats.css und setup.css.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.profile-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  max-width: 640px;
+  margin-inline: auto;
+}
+.profile-screen .slider {
+  margin-bottom: 0;
+}
+
+/* ── Kopf ── */
+.profile-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-top: var(--space-2);
+}
+
+.profile-avatar {
+  width: 72px;
+  height: 72px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  border-radius: var(--radius-pill);
+  border: 3px solid var(--player-color);
+  background: var(--surface-card);
+  box-shadow: 0 0 0 6px var(--surface-sunken);
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: var(--weight-semibold);
+}
+
+.profile-head-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.profile-head-text .setup-title {
+  padding-top: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.profile-sub {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.profile-kpis {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+.profile-kpis .num {
+  font-size: 34px;
+  line-height: 1;
+}
+.profile-kpis .num.is-accent {
+  color: var(--accent-primary);
+}
+
+/* ── Zeilen ── */
+.profile-rows {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+}
+.profile-rows > * + * {
+  border-top: 1px solid var(--line-1);
+}
+.profile-rows .toggle-row {
+  border-radius: 0;
+  background: transparent;
+  min-height: 64px;
+  padding: 10px 16px;
+}
+
+.profile-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 60px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: var(--font);
+  text-align: left;
+}
+.profile-row:hover {
+  background: var(--surface-raised);
+}
+.profile-row > svg {
+  flex: none;
+  color: var(--text-tertiary);
+}
+
+.profile-row-icon {
+  display: flex;
+  color: var(--text-secondary);
+}
+.profile-row-title {
+  flex: 1;
+  font-size: 16px;
+  font-weight: var(--weight-medium);
+}
+.profile-row-value {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.profile-toggle-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.profile-toggle-text > span:first-child {
+  font-size: 16px;
+}
+.profile-toggle-sub {
+  font-size: 12px;
+  font-weight: var(--weight-regular);
+  color: var(--text-secondary);
+}
+
+/* ── Karten ── */
+.profile-card,
+.profile-screen .card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  margin: 0;
+  padding: 16px 18px;
+  border: none;
+  border-radius: var(--radius-card);
+  background: var(--surface-card);
+}
+.profile-card > h2.label-caps {
+  margin: 0;
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+.profile-card .toggle-row {
+  min-height: 44px;
+  padding: 0;
+  background: transparent;
+}
+
+.profile-card-title {
+  font-size: 18px;
+  font-weight: var(--weight-medium);
+}
+
+/* Sicherung, Testdaten und Gast-Sync bringen noch ihren CardHeader mit; hier
+   wird er auf die Größe der neuen Karten gebracht. */
+.profile-screen .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+}
+.profile-screen .card-header-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.profile-screen .card-header-heading h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: var(--weight-semibold);
+  line-height: 1.05;
+}
+.profile-screen .card-header-icon {
+  display: flex;
+  color: var(--text-secondary);
+}
+.profile-screen .card-header .stat-label {
+  flex: none;
+  font-size: 10px;
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.profile-screen .card p {
+  margin: 0;
+}
+
+.profile-danger-title {
+  color: var(--text-danger);
+}
+
+/* ── Neuer Spieler ── */
+.profile-create-row {
+  display: flex;
+  gap: var(--space-2);
+}
+.profile-create-row .profile-create-input {
+  flex: 1;
+  min-width: 0;
+  min-height: 52px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 14px;
+  background: var(--bg-base);
+  box-shadow: none;
+  font-size: 16px;
+}
+
+.profile-create-btn {
+  width: 52px;
+  height: 52px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: none;
+  border-radius: 14px;
+  background: var(--accent-bone);
+  color: var(--on-accent-bone);
+}
+
+.profile-select {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  row-gap: 6px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: var(--bg-base);
+}
+.profile-select .label-caps {
+  font-size: 9px;
+  color: var(--text-tertiary);
+}
+.profile-select select {
+  grid-column: 1;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  appearance: none;
+  font-family: var(--font);
+  font-size: 15px;
+  font-weight: var(--weight-medium);
+  color: var(--text-primary);
+}
+.profile-select svg {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  color: var(--text-secondary);
+}
+
+/* ── Personen ── */
+.person-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.person-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line-1);
+}
+
+.person-color {
+  position: relative;
+  flex: none;
+  cursor: pointer;
+}
+.person-color .person-color-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  opacity: 0;
+  cursor: pointer;
+}
+.person-color:focus-within .seat-avatar {
+  outline: 2px solid var(--accent-bone);
+  outline-offset: 2px;
+}
+
+.person-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 3px;
+  min-height: 44px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: var(--font);
+  text-align: left;
+}
+.person-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 16px;
+  font-weight: var(--weight-medium);
+}
+.person-sub {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.person-row .person-avg {
+  width: auto;
+  min-height: 36px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 10px;
+  background: var(--surface-card);
+  box-shadow: none;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: var(--weight-semibold);
+  color: var(--text-primary);
+}
+
+.person-you {
+  color: var(--accent-primary);
+}
+
+.person-action {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+}
+.person-action:hover {
+  color: var(--text-danger);
+}
+
+/* ── Fuß ── */
+.profile-footer {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-2) 0 var(--space-4);
+}
+.profile-version {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+.profile-version .num {
+  font-size: 13px;
+}

@@ -46,7 +46,7 @@ export const SampleDataCard: React.FC<SampleDataCardProps> = ({ profiles, onUpda
   };
 
   return (
-    <Card style={{ marginTop: '20px' }}>
+    <Card className="profile-card">
       <CardHeader
         icon={<Icons.IconFlask size={20} />}
         heading="Testdaten & Demospiele"
@@ -74,7 +74,7 @@ export const SampleDataCard: React.FC<SampleDataCardProps> = ({ profiles, onUpda
       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
         <Button
           type="button"
-          variant="primary"
+          variant="secondary"
           onClick={handleLoad}
         >
           <Icons.IconFlask size={18} /> Testprofile &amp; Demospiele laden

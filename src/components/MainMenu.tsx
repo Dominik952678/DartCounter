@@ -11,6 +11,7 @@ import type { SavedMatchSummary } from './matchSetup/SavedGameCard';
 import { todayStats } from '../utils/todayStats';
 import { has, readJson } from '../utils/storage';
 import { matchProgressLabel, matchSides } from '../utils/matchProgress';
+import { applyDefaultGame, defaultGameDistance, defaultGameTitle, readDefaultGame } from '../utils/deviceSettings';
 
 interface MainMenuProps {
   /** Für die Statistik-Kachel und das letzte Match. */
@@ -96,6 +97,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   // offen ist, und danach wird dieser Screen neu aufgebaut.
   const config = useMemo(() => readStoredMatchConfig(), []);
   const pills = useMemo(() => configPills(config), [config]);
+  const defaultGame = useMemo(() => readDefaultGame(), []);
   const today = useMemo(() => todayStats(matches), [matches]);
   const savedMatch = useMemo(() => {
     if (!hasSavedGame) return null;
@@ -104,8 +106,8 @@ export const MainMenu: React.FC<MainMenuProps> = ({
   }, [hasSavedGame]);
   const hasPlayed = Boolean(matches && matches.length > 0);
   const isFirstStart = useMemo(
-    () => !savedMatch && !hasPlayed && !has('x01StartScore'),
-    [savedMatch, hasPlayed]
+    () => !savedMatch && !defaultGame && !hasPlayed && !has('x01StartScore'),
+    [savedMatch, defaultGame, hasPlayed]
   );
 
   const username: string | undefined = user?.user_metadata?.username || undefined;
@@ -145,6 +147,25 @@ export const MainMenu: React.FC<MainMenuProps> = ({
             </Button>
           </div>
         </>
+      );
+    }
+
+    if (defaultGame) {
+      return (
+        <button
+          type="button"
+          className="start-hero is-center"
+          onClick={() => { applyDefaultGame(defaultGame); navigate('/play?start=1'); }}
+        >
+          <span className="start-hero-main">
+            <span className="label-caps">Standardspiel · ein Tap</span>
+            <span className="start-hero-title is-large">{defaultGameTitle(defaultGame)}</span>
+            <span className="start-hero-sub">{defaultGameDistance(defaultGame)}</span>
+          </span>
+          <span className="start-hero-play" aria-hidden="true">
+            <Icons.IconPlayFilled size={22} />
+          </span>
+        </button>
       );
     }
 

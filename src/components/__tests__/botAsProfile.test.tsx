@@ -85,7 +85,7 @@ describe('Aufstellung', () => {
 describe('Profilliste', () => {
   const renderTab = (onUpdateProfile = vi.fn()) => {
     render(
-      <MemoryRouter>
+      <MemoryRouter initialEntries={['/profile?view=players']}>
         <ProfileTab
           profiles={roster}
           matches={[]}
@@ -119,7 +119,7 @@ describe('Profilliste', () => {
   /** Ein Zwischenwert wird eingereiht, nicht gerundet — sonst stünde er leer da. */
   it('keeps an off-step value selectable', () => {
     render(
-      <MemoryRouter>
+      <MemoryRouter initialEntries={['/profile?view=players']}>
         <ProfileTab
           profiles={{ Bot: profile({ isBot: true, targetAverage: 45 }) }}
           matches={[]}

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { isSoundEnabled, setSoundEnabled } from '../../utils/audio';
+import { readKeepAwake } from '../../utils/deviceSettings';
+import { useWakeLock } from '../../hooks/useWakeLock';
 import { Icons } from '../ui';
 
 interface MatchShellProps {
@@ -28,6 +30,8 @@ interface MatchShellProps {
  */
 export const MatchShell: React.FC<MatchShellProps> = ({ title, meta, onMenu, onStats, left, right, aside, children }) => {
   const [soundOn, setSoundOn] = useState(isSoundEnabled());
+  const [keepAwake] = useState(readKeepAwake);
+  useWakeLock(keepAwake);
 
   const toggleSound = () => {
     const next = !soundOn;

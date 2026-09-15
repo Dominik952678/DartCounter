@@ -32,7 +32,7 @@ export const GuestSyncCard: React.FC<GuestSyncCardProps> = ({ sync }) => {
   const hasLiveCode = !!info?.code && new Date(info.expiresAt) > new Date();
 
   return (
-    <Card style={{ marginTop: '20px' }}>
+    <Card className="profile-card">
       <CardHeader
         icon={<Icons.IconDevice size={20} />}
         heading="Gast-Sync & Geräte-Freigaben"

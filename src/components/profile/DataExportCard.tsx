@@ -124,7 +124,7 @@ export const DataExportCard: React.FC<DataExportCardProps> = ({
   const previewMatches = preview ? newMatchesFrom(preview, known).length : 0;
 
   return (
-    <Card style={{ marginTop: '20px' }}>
+    <Card className="profile-card">
       <CardHeader icon={<Icons.IconDownload size={20} />} heading="Daten sichern & wiederherstellen" />
 
       <p style={{ fontSize: '0.86rem', color: 'var(--text-dim)', margin: '0 0 14px 0', lineHeight: 1.5 }}>
@@ -191,7 +191,7 @@ export const DataExportCard: React.FC<DataExportCardProps> = ({
       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
         <Button
           type="button"
-          variant="primary"
+          variant="secondary"
           onClick={handleExport}
           disabled={busy}
         >
