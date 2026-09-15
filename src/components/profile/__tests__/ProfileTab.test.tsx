@@ -49,18 +49,6 @@ describe('ProfileTab', () => {
     expect(screen.queryByText('Gast-Sync & Geräte-Freigaben')).not.toBeInTheDocument();
   });
 
-  it('switches to the history and back', () => {
-    renderTab();
-
-    fireEvent.click(screen.getByText(/Match Historie ansehen/));
-    expect(screen.getByText('Match Historie')).toBeInTheDocument();
-    // Der Pokal ist ein Icon neben dem Namen; der Sieger steht in seiner Zeile.
-    expect(document.querySelector('.history-winner')?.textContent).toContain('Dominik');
-
-    fireEvent.click(screen.getByText(/Zurück/));
-    expect(screen.getByText('Vorhandene Profile')).toBeInTheDocument();
-  });
-
   it('opens a player dashboard from the list', () => {
     renderTab();
 
@@ -69,28 +57,5 @@ describe('ProfileTab', () => {
     // The dashboard replaces the list; its own header carries the name.
     expect(screen.queryByText('Neues Profil erstellen')).not.toBeInTheDocument();
     expect(screen.getAllByText(/Dominik/).length).toBeGreaterThan(0);
-  });
-
-  it('offers "Mehr laden" in the history only when more matches exist', () => {
-    const { unmount } = renderTab();
-    fireEvent.click(screen.getByText(/Match Historie ansehen/));
-    expect(screen.queryByText('Mehr laden')).not.toBeInTheDocument();
-    unmount();
-
-    renderTab({ hasMoreMatches: true, onLoadMoreMatches: vi.fn() });
-    fireEvent.click(screen.getByText(/Match Historie ansehen/));
-    expect(screen.getByText('Mehr laden')).toBeInTheDocument();
-  });
-
-  /** Mini games record no per-leg averages, so there is nothing to plot. */
-  it('offers the leg chart only for matches that recorded legs', () => {
-    const { unmount } = renderTab();
-    fireEvent.click(screen.getByText(/Match Historie ansehen/));
-    expect(screen.queryByText(/Leg-Verlauf/)).not.toBeInTheDocument();
-    unmount();
-
-    renderTab({ matches: [match('Dominik', ['60.1', '58.4'])] });
-    fireEvent.click(screen.getByText(/Match Historie ansehen/));
-    expect(screen.getByText('Leg-Verlauf')).toBeInTheDocument();
   });
 });

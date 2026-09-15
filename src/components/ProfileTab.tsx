@@ -8,7 +8,6 @@ import { CreateProfileCard } from './profile/CreateProfileCard';
 import { DataExportCard } from './profile/DataExportCard';
 import { GuestSyncCard } from './profile/GuestSyncCard';
 import { HeatmapPreview } from './profile/HeatmapPreview';
-import { MatchHistoryView } from './profile/MatchHistoryView';
 import { ProfileList } from './profile/ProfileList';
 import { SampleDataCard } from './profile/SampleDataCard';
 import { useGuestSync } from './profile/useGuestSync';
@@ -36,8 +35,6 @@ interface ProfileTabProps {
 export const ProfileTab: React.FC<ProfileTabProps> = ({
   profiles,
   matches,
-  hasMoreMatches = false,
-  onLoadMoreMatches,
   onCreateProfile,
   onUpdateProfile,
   onDeleteProfile,
@@ -49,20 +46,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
   const guestSync = useGuestSync(user, profiles, matches);
 
   const [viewProfile, setViewProfile] = useState<string | null>(null);
-  const [showHistory, setShowHistory] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
-
-  if (showHistory) {
-    return (
-      <MatchHistoryView
-        matches={matches}
-        profiles={profiles}
-        hasMoreMatches={hasMoreMatches}
-        onLoadMoreMatches={onLoadMoreMatches}
-        onBack={() => setShowHistory(false)}
-      />
-    );
-  }
 
   if (viewProfile && profiles[viewProfile]) {
     return (
@@ -123,7 +107,7 @@ export const ProfileTab: React.FC<ProfileTabProps> = ({
           onUpdateProfile={onUpdateProfile}
           onDeleteProfile={onDeleteProfile}
           onImportGuest={() => setShowImportModal(true)}
-          onShowHistory={() => setShowHistory(true)}
+          onShowHistory={() => navigate('/stats?view=matches')}
         />
       </div>
 

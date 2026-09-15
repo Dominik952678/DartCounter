@@ -316,7 +316,14 @@ export default function App() {
           } />
           <Route path="/auth" element={<AuthScreen />} />
           <Route path="/auth/reset" element={<PasswordResetScreen />} />
-          <Route path="/stats" element={<StatsPage />} />
+          <Route path="/stats" element={
+            <StatsPage
+              profiles={profiles}
+              matches={savedMatches}
+              hasMoreMatches={savedMatches.length < totalMatches}
+              onLoadMoreMatches={() => setMatchWindow(w => w + MATCH_PAGE_SIZE)}
+            />
+          } />
           <Route path="/online" element={<LobbyBrowser />} />
           <Route path="/lobby/:code" element={<LobbyRoom />} />
           <Route path="/online-game" element={<OnlineGameWrapper />} />

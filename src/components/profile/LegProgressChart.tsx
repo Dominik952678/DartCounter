@@ -1,7 +1,7 @@
 import React from 'react';
-import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import type { MatchHistory, Profile } from '../../types';
 import { playerColorBySeat } from '../../utils/playerColors';
+import { LineChart } from '../charts/LineChart';
 
 interface LegProgressChartProps {
   match: MatchHistory;
@@ -11,58 +11,35 @@ interface LegProgressChartProps {
 /**
  * How each player's average moved from leg to leg within one match.
  *
- * `legHistory` has been recorded on every standard match, online and offline,
- * and was only ever shown as a row of text badges. Mini games have none, so the
- * caller checks `hasLegProgress` before offering this.
+ * `legHistory` has been recorded on every standard match, online and offline.
+ * Mini games have none, so the caller checks `hasLegProgress` before offering this.
  */
 export const LegProgressChart: React.FC<LegProgressChartProps> = ({ match, profiles }) => {
   const players = match.players.filter(p => p.legHistory && p.legHistory.length > 0);
-  const legCount = Math.max(...players.map(p => p.legHistory!.length));
-
-  const data = Array.from({ length: legCount }, (_, i) => {
-    const row: Record<string, number | string> = { leg: `L${i + 1}` };
-    players.forEach(p => {
-      const value = parseFloat(String(p.legHistory![i] ?? ''));
-      if (!Number.isNaN(value)) row[p.name] = value;
-    });
-    return row;
-  });
+  const series = players.map((p, i) => ({
+    name: p.name,
+    color: profiles[p.name]?.color || playerColorBySeat(match.players.indexOf(p) >= 0 ? match.players.indexOf(p) : i),
+    values: p.legHistory!.map(value => {
+      const n = parseFloat(String(value));
+      return Number.isNaN(n) ? null : n;
+    })
+  }));
+  const legs = Math.max(0, ...series.map(s => s.values.length));
 
   return (
-    <div className="chart-container" style={{ marginTop: '10px' }}>
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} margin={{ top: 8, right: 12, bottom: 0, left: -18 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--card-border)" />
-          <XAxis dataKey="leg" stroke="var(--text-dim)" tick={{ fontSize: 11 }} />
-          <YAxis stroke="var(--text-dim)" tick={{ fontSize: 11 }} domain={['dataMin - 5', 'dataMax + 5']} />
-          <Tooltip
-            contentStyle={{
-              backgroundColor: 'var(--bg-surface)',
-              border: '1px solid var(--card-border)',
-              borderRadius: '8px'
-            }}
-            labelStyle={{ color: 'var(--text-dim)' }}
-            formatter={(value: unknown, name: unknown) => [`Ø ${value}`, name as string]}
-          />
-          <Legend wrapperStyle={{ fontSize: '0.78rem' }} />
-          {players.map((p, i) => {
-            const color = profiles[p.name]?.color || playerColorBySeat(i);
-            return (
-              <Line
-                key={p.name}
-                type="monotone"
-                dataKey={p.name}
-                name={p.name}
-                stroke={color}
-                strokeWidth={2.5}
-                dot={{ fill: color, r: 3, strokeWidth: 0 }}
-                activeDot={{ r: 5, fill: color }}
-                connectNulls
-              />
-            );
-          })}
-        </LineChart>
-      </ResponsiveContainer>
+    <div className="leg-chart">
+      <LineChart series={series} height={110} label={`Average je Leg über ${legs} Legs`} />
+      <div className="leg-chart-axis" aria-hidden="true">
+        {Array.from({ length: legs }, (_, i) => <span key={i}>L{i + 1}</span>)}
+      </div>
+      <ul className="leg-chart-legend">
+        {series.map(s => (
+          <li key={s.name}>
+            <i style={{ background: s.color }} aria-hidden="true" />
+            {s.name}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };
