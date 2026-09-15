@@ -1,7 +1,7 @@
 {
   "name": "dart-app",
   "private": true,
-  "version": "1.17.1",
+  "version": "2.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite --host",

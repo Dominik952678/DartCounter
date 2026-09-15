@@ -187,47 +187,6 @@ h4 {
 }
 
 /* ── Tungsten Micro-Animations & Interactions ── */
-@keyframes ctaPulse {
-  0% {
-    box-shadow: 0 4px 16px var(--primary-glow);
-    transform: translateY(0);
-  }
-  50% {
-    box-shadow: 0 8px 28px rgba(var(--accent-primary-rgb), 0.45);
-    transform: translateY(-2px);
-  }
-  100% {
-    box-shadow: 0 4px 16px var(--primary-glow);
-    transform: translateY(0);
-  }
-}
-
-@keyframes checkoutGlow {
-  0% {
-    border-color: rgba(99, 196, 138, 0.2);
-  }
-  50% {
-    border-color: rgba(99, 196, 138, 0.6);
-    box-shadow: 0 0 16px rgba(99, 196, 138, 0.3);
-  }
-  100% {
-    border-color: rgba(99, 196, 138, 0.2);
-  }
-}
-
-.animate-cta-pulse {
-  animation: ctaPulse 3s infinite ease-in-out;
-}
-
-.interactive-card {
-  transition:
-    transform 0.15s cubic-bezier(0.2, 0, 0, 1),
-    box-shadow 0.2s ease,
-    border-color 0.2s ease;
-}
-.interactive-card:active {
-  transform: scale(0.98);
-}
 
 /* Visually hidden but present for screen readers — for labels a compact
    layout has no room to show, e.g. next to a placeholder-only input. */
@@ -291,11 +250,6 @@ h4 {
   min-height: 100vh;
   min-height: 100dvh;
   position: relative;
-}
-
-/** Fills exactly the space between the safe areas and the bottom dock. */
-.shell-fill {
-  min-height: calc(100dvh - var(--shell-pad-top) - var(--shell-pad-bottom));
 }
 
 /* ── Shell-Breiten: die Leiter aus DESIGN.md §6 ──
@@ -412,17 +366,6 @@ h4 {
     transform 0.15s ease;
 }
 
-/* Karten in einer Reihe sind gleich hoch (§3). Die Höhe kommt vom Grid, die
-   Karte füllt sie — kürzerer Inhalt wird zentriert statt den Container zu
-   strecken, deshalb `justify-content: center` und nicht `stretch`. */
-.card-equal-height {
-  height: 100%;
-  margin-bottom: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
 .card-flush {
   padding: 0;
 }
@@ -458,32 +401,6 @@ h4 {
   line-height: 1;
   flex-shrink: 0;
 }
-.card-badge {
-  background: var(--surface);
-  border: 1px solid var(--card-border);
-  padding: 3px 10px;
-  border-radius: 20px;
-  font-size: 0.8em;
-  color: var(--text-dim);
-  font-weight: var(--weight-medium);
-}
-.stat-card {
-  text-align: center;
-  min-height: 84px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  background: var(--surface);
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius-sm);
-  padding: 12px;
-}
-.stat-value {
-  font-size: 1.45em;
-  font-weight: var(--weight-medium);
-  margin-top: 4px;
-}
 
 /* ── Form Elements & Modern Inputs ─────────────────────── */
 select,
@@ -510,75 +427,11 @@ input:focus {
   background: rgba(148, 163, 184, 0.08);
   box-shadow: 0 0 0 3px var(--primary-glow);
 }
-/* §2 regelt dieses Label-Pattern wörtlich: 12px, --text-secondary, Sentence
-   case, keine Caps. Vorher standen hier uppercase + letter-spacing + 700 —
-   §7 nennt das Muster zwar „Caps-Label", §2 hält es aber ausdrücklich bei und
-   nimmt ihm die Caps, und §2 ist der Abschnitt, der Typografie entscheidet. */
-.section-label {
-  display: block;
-  font-size: var(--text-label);
-  color: var(--text-secondary);
-  font-weight: var(--weight-regular);
-  margin-bottom: var(--space-2);
-  margin-top: var(--space-3);
-}
-
-/* Erklärtext unter einem Eingabefeld oder einer Auswahl. */
-.form-hint {
-  font-size: var(--text-label);
-  color: var(--text-secondary);
-  margin-top: var(--space-2);
-}
-
-.input-row {
-  display: flex;
-  gap: 12px;
-}
-.input-row > div {
-  flex: 1;
-  text-align: left;
-}
-.input-row label {
-  font-size: 0.85em;
-  color: var(--text-dim);
-  margin-bottom: 6px;
-  display: block;
-}
-
-/* .hero-glow-bg-profile stand hier ein zweites Mal und wurde von der
-   zusammengelegten Glow-Regel weiter unten ohnehin überschrieben. */
-
-.profile-tab-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-4);
-}
 /* Wie die übrigen Formular-Grids auf der 900px-Stufe aus §6, nicht auf 768. */
-@media (min-width: 900px) {
-  .profile-tab-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space-5);
-    align-items: start;
-  }
-}
 
 /* ── Hinweisfeld ──
    Erklärtext ohne eigene Farbrolle. §1 lässt --accent-info nur für
    kategorische Kennzeichnung zu, nicht für Meldungen, also bleibt es neutral. */
-.callout {
-  background: var(--surface-card);
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius-card);
-  padding: var(--space-3);
-  font-size: var(--text-body);
-  line-height: 1.4;
-  color: var(--text-secondary);
-  margin-bottom: var(--space-3);
-}
-.callout strong {
-  color: var(--text-primary);
-  font-weight: var(--weight-medium);
-}
 /* Hinweis mit einer Aktion daneben. */
 .callout-action {
   display: flex;
@@ -587,10 +440,6 @@ input:focus {
   gap: var(--space-3);
   flex-wrap: wrap;
   margin-bottom: var(--space-4);
-}
-
-.stats-filter-bar {
-  margin-bottom: var(--space-5);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -911,27 +760,6 @@ button:disabled,
 .btn-full {
   width: 100%;
 }
-/* ── App Header ──
-   Der Screen-Titel aus §2: 24px, unabhängig davon ob der Screen ihn als h1
-   oder h2 auszeichnet. */
-.app-header {
-  text-align: center;
-  padding: var(--space-4) 0 var(--space-5);
-}
-/* Hier stand eine feste Größe aus der alten 24/20-Skala plus `letter-spacing:
-   normal` — beides hat die Display-Schrift wieder ausgehebelt, kaum dass sie
-   gesetzt war. Der Screen-Titel folgt jetzt der Überschriften-Skala; die
-   Ausrichtung ist alles, was diese Regel noch regelt. */
-.app-header h1,
-.app-header h2 {
-  text-wrap: balance;
-}
-.subtitle {
-  color: var(--text-secondary);
-  font-size: var(--text-body);
-  margin-top: var(--space-1);
-  font-weight: var(--weight-regular);
-}
 
 /* ── Scoreboard ────────────────────────── */
 /* `.scoreboard`'s real layout rule lives further down (the orientation-aware
@@ -959,52 +787,8 @@ button:disabled,
   margin: 6px 0;
   letter-spacing: -0.03em;
 }
-.stats-preview {
-  display: flex;
-  gap: 16px;
-  font-size: 0.85em;
-  color: var(--text-dim);
-}
-/* Sitzt als normales Flex-Element in der Kopfzeile der Karte. Vorher stand es
-   `absolute` bei top/right — ein Rest aus einem älteren Kartenlayout, durch den
-   die Zähler über einen langen Spielernamen liefen, statt ihn zu kürzen.
-
-   `.badge` und `.badge-legs` sind entfallen: die eine trug ein eigenes Weiß-
-   Wash mit Gewicht 700, die andere ein violettes (#c4b5fd), und Violett ist
-   seit §1 die Statistik-Kennzeichnung. Beide Zähler nutzen jetzt .badge-count. */
-.badge-container {
-  display: flex;
-  align-items: center;
-  gap: var(--space-1);
-  flex-shrink: 0;
-}
-
-/* Abort button, less prominent. */
-.text-only {
-  background: rgba(255, 255, 255, 0.04) !important;
-  border: 1px solid var(--card-border) !important;
-  color: var(--text-dim) !important;
-  box-shadow: none !important;
-}
 
 /* ── Modals & Dialogs ───────────────────── */
-/* Titel und Fließtext eines Dialogs, damit nicht jedes Modal seine eigene
-   Größe und Farbe mitbringt. */
-.modal-title {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-size: var(--text-card-title);
-  font-weight: var(--weight-medium);
-  color: var(--text-primary);
-  margin: 0 0 var(--space-2) 0;
-}
-.modal-text {
-  font-size: var(--text-body);
-  color: var(--text-secondary);
-  line-height: 1.5;
-  margin-bottom: var(--space-5);
-}
 
 .modal-overlay,
 .modal {
@@ -1066,28 +850,6 @@ button:disabled,
 }
 
 /* ── Profile Dashboard & Stats Styles ──── */
-.profile-dashboard-inline {
-  width: 100%;
-  padding-bottom: 20px;
-}
-.dash-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-.dash-header h2 {
-  font-size: 1.6em;
-  margin: 0;
-  font-weight: var(--weight-medium);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.dash-subtitle {
-  font-size: 0.85em;
-  color: var(--text-dim);
-}
 /* §4 nimmt Icon-only-Buttons ausdrücklich nicht von der 44×44-Regel aus —
    das hier waren 36×36. */
 .btn-close {
@@ -1113,233 +875,6 @@ button:disabled,
   transform: scale(1.05);
 }
 
-.dash-stats-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  margin-bottom: 16px;
-}
-.dash-stats-grid-2 {
-  grid-template-columns: repeat(2, 1fr);
-}
-.dash-stats-grid-3 {
-  grid-template-columns: repeat(3, 1fr);
-}
-.dash-stats-grid-4 {
-  grid-template-columns: repeat(2, 1fr);
-}
-.dash-stats-grid-6 {
-  grid-template-columns: repeat(2, 1fr);
-}
-
-@media (min-width: 600px) {
-  .dash-stats-grid-4 {
-    grid-template-columns: repeat(4, 1fr);
-  }
-  .dash-stats-grid-6 {
-    grid-template-columns: repeat(3, 1fr);
-  }
-  .dash-stats-grid-3 {
-    grid-template-columns: repeat(3, 1fr);
-  }
-  .dash-stats-grid-2 {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 420px) {
-  .dash-stats-grid-3 {
-    grid-template-columns: repeat(1, 1fr);
-  }
-}
-.dash-stat-card {
-  background: var(--surface);
-  border: 1px solid var(--card-border);
-  border-radius: 14px;
-  padding: 16px 12px;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-.dash-stat-card:hover {
-  border-color: rgba(255, 255, 255, 0.15);
-  background: rgba(255, 255, 255, 0.06);
-}
-/* Das Stats-Karten-Muster aus §7 — kleines Label, große Zahl. Das Muster
-   bleibt, §2 gibt ihm die Werte: 12px, --text-secondary, Sentence case statt
-   uppercase, und Gewichte von 700/900 herunter auf 400/500. */
-.dash-stat-label {
-  font-size: var(--text-label);
-  color: var(--text-secondary);
-  font-weight: var(--weight-regular);
-}
-.dash-stat-value {
-  display: block;
-  font-size: var(--text-screen-title);
-  font-weight: var(--weight-medium);
-  margin: var(--space-1) 0 2px;
-  color: var(--text-primary);
-  font-variant-numeric: tabular-nums;
-}
-.dash-stat-detail {
-  font-size: 0.78em;
-  color: var(--text-dim);
-}
-
-.dash-section {
-  background: var(--card);
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius);
-  padding: 20px;
-  margin-bottom: 18px;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-}
-.dash-section h3 {
-  font-size: 1.05em;
-  margin: 0 0 14px 0;
-  color: var(--text);
-  font-weight: var(--weight-medium);
-}
-
-.form-curve-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  text-align: center;
-}
-.form-curve-item {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  background: var(--surface);
-  padding: 12px 8px;
-  border-radius: 12px;
-  border: 1px solid var(--card-border);
-}
-.curve-label {
-  font-size: var(--text-label);
-  color: var(--text-secondary);
-  font-weight: var(--weight-regular);
-}
-.curve-value {
-  font-size: var(--text-card-title);
-  font-weight: var(--weight-medium);
-  color: var(--text-primary);
-}
-.curve-recent {
-  font-size: var(--text-label);
-  color: var(--text-secondary);
-  font-weight: var(--weight-regular);
-}
-
-.chart-container {
-  height: 220px;
-  width: 100%;
-}
-
-.btn-delete-profile {
-  background: rgba(255, 69, 58, 0.08);
-  border: 1px solid rgba(255, 69, 58, 0.25);
-  color: var(--red);
-  width: 100%;
-  padding: 14px;
-  border-radius: 12px;
-  font-size: 0.9em;
-  font-weight: var(--weight-medium);
-  cursor: pointer;
-  margin-top: 20px;
-  transition: all 0.2s ease;
-}
-.btn-delete-profile:hover {
-  background: rgba(255, 69, 58, 0.18);
-  border-color: var(--red);
-}
-
-.profile-chips {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.profile-chip {
-  background: var(--surface);
-  border: 1px solid var(--card-border);
-  border-left: 4px solid var(--accent-primary);
-  border-radius: 12px;
-  padding: 14px 16px;
-  font-size: 1.05em;
-  font-weight: var(--weight-medium);
-  color: var(--text);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
-  text-align: left;
-  width: 100%;
-}
-.profile-chip:hover {
-  background: rgba(255, 255, 255, 0.08);
-  transform: translateX(4px);
-}
-
-/* Die Spielstärke eines Bots, direkt auf seiner Zeile. Sie steht rechts und
-   schiebt sich per `margin-left: auto` vor die Lösch-Schaltfläche — bei mehreren
-   Bots in der Liste ist sie das Einzige, was sie unterscheidet.
-
-   Die Zahl in Mono mit tabular-nums: Ø 40 und Ø 100 sollen gleich breit
-   ansetzen, sonst wandert das Feld von Zeile zu Zeile. */
-.profile-chip-avg {
-  margin-left: auto;
-  flex: 0 0 auto;
-  width: auto;
-  min-height: 40px;
-  padding: 0 var(--space-3);
-  border-radius: var(--radius-pill);
-  background: var(--surface-card);
-  border: 1px solid var(--card-border);
-  color: var(--text-primary);
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  font-size: var(--text-body);
-  font-weight: var(--weight-medium);
-  cursor: pointer;
-}
-
-.history-item {
-  margin-bottom: 12px;
-}
-.history-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-.history-winner {
-  font-weight: var(--weight-medium);
-  font-size: 1.05em;
-}
-.history-date {
-  color: var(--text-dim);
-  font-size: 0.85em;
-}
-.history-player-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 6px 0;
-}
-
-/* .accent-orange ist entfallen, weil Orange seit §1 keine Rolle mehr hat. Die
-   Klasse wurde dabei auch aus ProfileDashboard entfernt — die 180er-Zahl liest
-   sich jetzt wie jede andere Kennzahl. */
-.accent-green {
-  color: var(--text-success) !important;
-}
-
 /* Der Dock in seiner letzten Ausbaustufe, bevor die Schiene übernimmt.
 
    Hier stand `and (max-width: 899px)`, und die obere Grenze war zwingend: ohne
@@ -1348,15 +883,6 @@ button:disabled,
    kann das nicht mehr passieren — `.app-nav-horizontal` und
    `.app-nav-vertical` schließen sich aus. Die Grenze ist damit weg, und die
    Regel sagt nur noch, was sie meint: ein breiter Dock ab 768px. */
-@media (min-width: 768px) {
-  .app-nav-horizontal {
-    max-width: 520px;
-    bottom: 20px;
-    border-radius: var(--radius-pill);
-    border: 1px solid var(--card-border);
-    box-shadow: var(--shadow-md);
-  }
-}
 
 /* ── Responsive Optimizations: iPad Air & Tablet (>= 768px) ── */
 @media (min-width: 768px) {
@@ -1365,9 +891,6 @@ button:disabled,
   }
   .modal-overlay {
     padding: 32px;
-  }
-  .form-curve-grid {
-    grid-template-columns: repeat(3, 1fr) !important;
   }
 }
 
@@ -1387,77 +910,6 @@ button:disabled,
 /* ═══════════════════════════════════════════════════════════════════════════
    SHARED PAGE FURNITURE
    ═══════════════════════════════════════════════════════════════════════════ */
-
-.ambient-glow {
-  position: absolute;
-  top: -90px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(520px, 92vw);
-  height: 300px;
-  background: radial-gradient(
-    circle,
-    var(--bg-accent-muted) 0%,
-    transparent 70%
-  );
-  pointer-events: none;
-  z-index: 0;
-}
-/* .ambient-glow-blue ist entfallen: es färbte den Schein blau-grün, und beide
-   Farben haben seit §1 keine Rolle mehr. Der Screen nutzt jetzt denselben
-   Schein wie alle anderen. */
-
-/* Equal side columns keep the title optically centred no matter how long the
-   back label is, and the label itself never wraps. */
-.page-header {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 20px;
-  min-height: 44px;
-}
-/* Steht zwischen Zurück-Button und Spacer und muss auf einer Zeile bleiben —
-   deshalb die feste Stufe statt des mitwachsenden --text-heading-xl. */
-.page-title {
-  margin: 0;
-  font-size: var(--text-heading);
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.page-header-spacer {
-  min-width: 1px;
-}
-.btn-back {
-  justify-self: start;
-  width: auto;
-  padding: var(--space-2) var(--space-3);
-  font-size: var(--text-body);
-  min-height: 44px;
-  white-space: nowrap;
-}
-
-.text-dim {
-  color: var(--text-dim);
-}
-.hint-text {
-  margin-top: var(--space-3);
-  font-size: var(--text-label);
-  color: var(--text-secondary);
-  line-height: 1.45;
-}
-.settings-summary {
-  font-size: var(--text-body-lg);
-  font-weight: var(--weight-medium);
-  color: var(--text-primary);
-}
-.full-width {
-  width: 100%;
-}
 /* .btn-compact stand hier ein zweites Mal und gewann als spätere Regel — mit
    min-height: 40px, also unter der 44pt-Grenze aus §4. Die eine gültige
    Definition steht jetzt oben bei den übrigen Button-Klassen. */
@@ -1472,17 +924,6 @@ button:disabled,
   border: 1px solid var(--card-border);
   background: var(--surface-card);
   color: var(--text-secondary);
-}
-/* §1: --text-success trägt Erfolg, und zwar als Rolle statt als eigener
-   Hellgrünton (#34D399). */
-.pill-success {
-  background: color-mix(in srgb, var(--text-success) 14%, transparent);
-  border-color: color-mix(in srgb, var(--text-success) 35%, transparent);
-  color: var(--text-success);
-}
-.pill-muted {
-  font-family: var(--font-mono);
-  letter-spacing: 0.12em;
 }
 
 .alert {
@@ -1509,29 +950,6 @@ button:disabled,
   background: color-mix(in srgb, var(--text-danger) 12%, transparent);
   border: 1px solid color-mix(in srgb, var(--text-danger) 32%, transparent);
   color: var(--text-danger);
-}
-
-/* Icon + Headline + Erklärung + CTA — das Muster bleibt (§7), nur die
-   Typografie folgt jetzt der Skala aus §2. */
-.empty-state {
-  text-align: center;
-  padding: var(--space-8) var(--space-3);
-}
-.empty-state-icon {
-  font-size: 2.2rem;
-  display: block;
-  margin-bottom: var(--space-3);
-}
-.empty-state-title {
-  font-size: var(--text-body-lg);
-  font-weight: var(--weight-medium);
-  color: var(--text-primary);
-  margin-bottom: var(--space-1);
-}
-.empty-state-text {
-  font-size: var(--text-body);
-  color: var(--text-secondary);
-  line-height: 1.5;
 }
 
 .center-stage {
@@ -1564,140 +982,7 @@ button:disabled,
   animation: orbSpin 2.4s linear infinite;
 }
 
-/* Config grids used by the lobby and room settings (previously unstyled). */
-.config-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-/* Einspaltig bis zur ersten §6-Stufe statt ab einer eigenen 360er-Grenze —
-   zwei Zahlenfelder nebeneinander sind auf einem 402px-Telefon ohnehin eng. */
-.config-grid {
-  grid-template-columns: 1fr;
-}
-@media (min-width: 600px) {
-  .config-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-.config-item {
-  min-width: 0;
-}
-.config-item .section-label {
-  margin-top: 0;
-}
-
-/* Select in einer engen Zeile — die globale select-Regel ist volle Breite mit
-   13px Padding und sprengt die Kopfzeile des Dashboards. */
-.select-compact {
-  width: auto;
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-body);
-  min-height: 44px;
-}
-.room-code-card .section-label {
-  margin-top: 0;
-}
-
 /* ── Bottom Sheet (results dialog) ───────── */
-.bottom-sheet-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.88);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  z-index: var(--z-overlay);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  animation: fadeIn 0.3s ease-out;
-}
-
-.bottom-sheet-content {
-  background-color: var(--bg-surface);
-  border: 1px solid var(--card-border);
-  border-radius: var(--radius, 16px);
-  width: 92%;
-  max-width: 520px;
-  max-height: 90vh;
-  overflow-y: auto;
-  padding: 26px 22px;
-  box-shadow: var(--shadow-lg, 0 24px 80px rgba(0, 0, 0, 0.95));
-  position: relative;
-  animation: scaleUp 0.3s ease-out;
-  color: var(--text);
-}
-
-@media (max-width: 767px) {
-  .bottom-sheet-overlay {
-    align-items: flex-end;
-  }
-  .bottom-sheet-content {
-    width: 100%;
-    max-width: 100%;
-    border-radius: 24px 24px 0 0;
-    padding: 32px 20px 24px;
-    animation: slideUp 0.3s ease-out forwards;
-    transform: translateY(100%);
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes slideUp {
-  from {
-    transform: translateY(100%);
-  }
-  to {
-    transform: translateY(0);
-  }
-}
-
-@keyframes scaleUp {
-  from {
-    transform: scale(0.95);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-.drag-handle {
-  display: none;
-  width: 40px;
-  height: 4px;
-  background-color: rgba(255, 255, 255, 0.3);
-  border-radius: 2px;
-  position: absolute;
-  top: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-@media (max-width: 767px) {
-  .drag-handle {
-    display: block;
-  }
-}
-
-.confetti {
-  font-size: 2.5rem;
-  animation: bounce 1s infinite alternate;
-  display: inline-block;
-}
 
 @keyframes bounce {
   from {
@@ -1757,139 +1042,15 @@ button:disabled,
   font-weight: var(--weight-medium);
 }
 
-/* ── Direktvergleich zweier Profile ──
-   Lag als `styles`-Objekt am Dateiende, inklusive eigenem Overlay, eigenem
-   12px-Radius und `fontWeight: 'bold'`. Der bessere Wert ist grün — das ist
-   ein positiver Vergleichswert und damit --text-success (§1). */
-.h2h-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-3);
-  margin-bottom: var(--space-5);
-  border-bottom: 1px solid var(--card-border);
-  padding-bottom: var(--space-3);
-}
-.h2h-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-}
-.h2h-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: var(--space-3);
-  border-radius: var(--radius-xs);
-}
-.h2h-row.is-striped {
-  background: var(--surface-card);
-}
-.h2h-value {
-  flex: 1;
-  text-align: center;
-  font-weight: var(--weight-regular);
-  font-size: var(--text-body-lg);
-  color: var(--text-primary);
-  font-variant-numeric: tabular-nums;
-}
-.h2h-value.h2h-winner {
-  color: var(--text-success);
-  font-weight: var(--weight-medium);
-}
-.h2h-label {
-  flex: 2;
-  text-align: center;
-  font-size: var(--text-body);
-  color: var(--text-secondary);
-}
-
 /* ── Statistik-Screen (§6, 1200px-Stufe) ──
    §6 zur breitesten Stufe: „Statistik-Screen kann Offline/Online-Stats echt
    nebeneinander mit mehr Detail zeigen statt der aktuellen sehr leeren rechten
    Spalte." Umgesetzt als Layout, nicht als neues Diagramm: die Kennzahlen
    gehen von zwei auf drei Spalten, Torte und Radar rücken nebeneinander, und
    beide Spalten stehen auf gleicher Höhe (§3). */
-.stats-columns {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-5);
-  align-items: stretch;
-}
-@media (min-width: 900px) {
-  .stats-columns {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-.stats-widget {
-  display: flex;
-  flex-direction: column;
-  /* §3: Karten einer Reihe sind gleich hoch. */
-  height: 100%;
-  margin-bottom: 0;
-}
-.stats-widget-body {
-  flex: 1;
-}
-
-/* Offline trägt den Akzent der App, Online die kategorische Kennzeichnung, die
-   §1 dem Multiplayer zuweist — vorher Grün gegen Blau, beides ohne Rolle. */
-.stats-widget-title {
-  margin-bottom: var(--space-4);
-  color: var(--accent-primary);
-}
-.stats-widget-title.is-online {
-  color: var(--accent-info);
-}
-
-.chart-panel {
-  flex: 1 1 200px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: var(--surface-card);
-  padding: var(--space-3);
-  border-radius: var(--radius-card);
-  border: 1px solid var(--card-border);
-}
-.chart-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-4);
-}
-
-.chart-legend-item {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  background: var(--surface-hover);
-  padding: 3px 7px;
-  border-radius: var(--radius-xs);
-  font-size: var(--text-label);
-  color: var(--text-primary);
-}
-.chart-legend-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  display: inline-block;
-  flex-shrink: 0;
-}
-.chart-legend-pct {
-  color: var(--text-secondary);
-}
 
 /* Ab der breitesten Stufe passt das Kennzahlen-Raster dreispaltig, und die
    beiden Diagramme stehen sicher nebeneinander statt umzubrechen. */
-@media (min-width: 1200px) {
-  .stats-widget .dash-stats-grid-6 {
-    grid-template-columns: repeat(3, 1fr);
-  }
-  .stats-widget .chart-row {
-    flex-wrap: nowrap;
-  }
-}
 
 /* ── Stats-Karten-Muster (§7) ──
    „Kleines graues Label + große Zahl" — das Muster bleibt, §2 nimmt ihm nur
@@ -1900,30 +1061,6 @@ button:disabled,
   font-size: var(--text-label);
   color: var(--text-secondary);
   margin-bottom: 2px;
-}
-.stat-value {
-  font-size: var(--text-card-title);
-  font-weight: var(--weight-medium);
-  color: var(--text-primary);
-  font-variant-numeric: tabular-nums;
-}
-.stat-value-sm {
-  font-size: var(--text-body-lg);
-}
-/* Nur wo die Zahl wirklich einen Erfolg meldet — §1 hält --text-success für
-   Erfolgsmeldungen, Sieg-Screen und positive Deltas frei. */
-.stat-value.is-success {
-  color: var(--text-success);
-}
-
-/* Der Bild-Export im Ergebnis-Dialog. */
-.story-export {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  margin-top: var(--space-4);
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--card-border);
 }
 
 /* ── Split Score ── */
@@ -2193,88 +1330,6 @@ button:disabled,
   }
 }
 
-/* ── Der große Zuruf ──
-   „SPLIT", „GAME SHOT", „BUST": kurz, mittig, über allem. Markup:
-   components/ui/CallOut.tsx. */
-@keyframes calloutIn {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(0.6);
-  }
-  55% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1.08);
-  }
-  70% {
-    transform: translate(-50%, -50%) scale(1);
-  }
-  100% {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-  }
-}
-@keyframes calloutShake {
-  0%,
-  100% {
-    margin-left: 0;
-  }
-  25% {
-    margin-left: -10px;
-  }
-  75% {
-    margin-left: 10px;
-  }
-}
-
-.callout-flash {
-  position: fixed;
-  top: 42%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: var(--z-screen-effect);
-  pointer-events: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-2);
-  text-align: center;
-  animation: calloutIn 0.35s cubic-bezier(0.2, 1.4, 0.4, 1) both;
-}
-
-.callout-flash-text {
-  font-family: var(--font-mono);
-  font-size: clamp(3rem, 18vw, 8rem);
-  font-weight: var(--weight-medium);
-  letter-spacing: 0.08em;
-  line-height: 1;
-}
-.callout-flash-detail {
-  font-size: var(--text-body-lg);
-  color: var(--text-secondary);
-}
-
-.callout-flash.tone-accent .callout-flash-text {
-  color: var(--accent-primary);
-  text-shadow: 0 0 40px var(--primary-glow);
-}
-.callout-flash.tone-good .callout-flash-text {
-  color: var(--text-success);
-  text-shadow: 0 0 40px color-mix(in srgb, var(--text-success) 45%, transparent);
-}
-/* Der schlechte Fall rüttelt zusätzlich — man soll ihn nicht übersehen. */
-.callout-flash.tone-bad .callout-flash-text {
-  color: var(--text-danger);
-  text-shadow: 0 0 40px color-mix(in srgb, var(--text-danger) 45%, transparent);
-  animation: calloutShake 0.3s ease-in-out 0.2s 2;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .callout-flash,
-  .callout-flash.tone-bad .callout-flash-text {
-    animation: none;
-  }
-}
-
 /* ═══ Power Scoring ═══
    Der aktive Spieler bekommt die volle Karte mit dem Runden-Raster, die
    Mitspieler nur eine Zeile. Bei bis zu vier Spielern und zwanzig Runden ist
@@ -2503,61 +1558,6 @@ button:disabled,
    Titel und Meta standen in GameScreen, PowerScoring, SplitScore und
    CheckoutTraining vier Mal identisch inline, mit font-weight 800 und einem
    rgba(255,255,255,0.06)-Wash. */
-/* Der Überwurf-Hinweis. Ein Bust ist eine Fehlermeldung, --text-danger ist
-   dafür die Rolle (§1) — vorher ein rohes rgba(255,0,0,0.8) in drei Dateien. */
-.bust-flash {
-  position: absolute;
-  top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--text-danger);
-  color: var(--on-text-danger);
-  font-weight: var(--weight-medium);
-  font-size: var(--text-body);
-  padding: var(--space-1) var(--space-4);
-  border-radius: 999px;
-  z-index: var(--z-sticky);
-}
-
-/* Kleine Kennzahl-Kacheln in den Trainingsmodi — §7s Muster: Label oben,
-   Zahl darunter. */
-.mini-stat {
-  background: var(--surface-card);
-  padding: var(--space-2);
-  border-radius: var(--radius-xs);
-  text-align: center;
-}
-
-/* Die Rundenwertung im Training. Grün nur für echte Verbesserung, rot nur für
-   Verschlechterung — das sind die „positiven Deltas" aus §1. */
-.round-delta {
-  font-weight: var(--weight-medium);
-}
-.round-delta.is-up {
-  color: var(--text-success);
-}
-.round-delta.is-down {
-  color: var(--text-danger);
-}
-.round-delta.is-idle {
-  color: var(--text-secondary);
-}
-
-/* Große Zahl in den Trainingsmodi, gleiche Stufe wie der Live-Score. */
-.training-score-panel {
-  text-align: center;
-  padding: var(--space-4);
-  background: var(--surface-card);
-  border-radius: var(--radius-card);
-  margin-top: var(--space-3);
-}
-.training-score-value {
-  font-size: var(--text-display);
-  font-weight: var(--weight-medium);
-  color: var(--text-primary);
-  font-variant-numeric: tabular-nums;
-  margin: var(--space-1) 0;
-}
 
 /* Sets- und Legs-Zähler. §7s Muster: kleines Label, die Zahl hervorgehoben. */
 .badge-count {
@@ -2604,88 +1604,4 @@ button:disabled,
   to {
     opacity: 1;
   }
-}
-
-/* Wo ein Screen einen eigenen Inhalts-Container hat, darf der zusätzlich
-   aufsteigen: dort liegt kein `position: fixed`-Nachfahre, das Modal ist ein
-   Geschwister davon. */
-.home-body,
-.match-setup-grid,
-.training-hub-grid {
-  animation: contentRise var(--motion-slide) var(--ease-glide);
-}
-
-@keyframes contentRise {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Der Wechsel X01 ↔ Training. Der Schlüssel am Container in HomeContainer.tsx
-   wechselt mit dem Bereich, React tauscht also den Knoten aus — und genau
-   deshalb läuft die Keyframe erneut. Ohne den Schlüssel bliebe der Wechsel
-   ein harter Schnitt, während der Slider daneben gleitet. */
-.home-content {
-  animation: contentRise var(--motion-slide) var(--ease-glide);
-}
-
-/* ── Ergebnis-Dialog ── */
-/* §1 nennt den Sieg-Screen ausdrücklich als Ort für --text-success — das ist
-   hier also keine Ausnahme, sondern die Regel. */
-.result-winner {
-  color: var(--text-success);
-  font-size: var(--text-heading-lg);
-  margin: var(--space-2) 0;
-}
-.result-subtitle {
-  color: var(--text-secondary);
-  font-size: var(--text-body);
-  margin: 0;
-}
-.result-player {
-  font-size: var(--text-body-lg);
-  font-weight: var(--weight-medium);
-  color: var(--text-primary);
-}
-.result-player.is-winner {
-  color: var(--text-success);
-}
-.result-rank {
-  font-size: var(--text-body-lg);
-  font-weight: var(--weight-medium);
-  padding: var(--space-1) var(--space-3);
-}
-
-/* ── Results dialog stat cards & actions ─── */
-/* The result dialog's stat tiles and its three action buttons used to
-   hardcode their own colors (#111827, rgba(15,23,42,...), a fixed green/
-   orange) instead of the theme tokens every other button already follows —
-   so the dialog every match ends on looked identical in all three themes. */
-.result-stat-card {
-  background: var(--bg-surface);
-  border: 1px solid var(--card-border);
-  border-radius: 8px;
-}
-.result-btn-rematch {
-  padding: 15px 20px;
-  font-size: 1.08em;
-  gap: 8px;
-}
-.result-btn-undo {
-  background: var(--surface-card);
-  border: 1px solid var(--card-border);
-  color: var(--text-secondary);
-  padding: 13px 12px;
-  font-size: 0.95em;
-  gap: 6px;
-}
-.result-btn-home {
-  padding: 13px 12px;
-  font-size: 0.95em;
-  gap: 6px;
 }

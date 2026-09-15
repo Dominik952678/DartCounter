@@ -32,9 +32,6 @@ export type { StepperProps } from './Stepper';
 export { Toggle } from './Toggle';
 export type { ToggleProps } from './Toggle';
 
-export { CallOut } from './CallOut';
-export type { CallOutTone } from './CallOut';
-
 export { StatStrip } from './StatStrip';
 export type { StatStripItem } from './StatStrip';
 

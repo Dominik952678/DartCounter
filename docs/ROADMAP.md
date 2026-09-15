@@ -94,6 +94,50 @@ keypad instead of a blocking dialog, as sketched in design draft F4).
 **Open.** How long a room stays open after the host leaves (the draft suggests
 30 minutes), and what a guest sees while the host is the one reconnecting.
 
+### Eight players
+**Problem.** Pub nights and club evenings have more than four people at a board;
+today the setup stops at four, and 2v2 is the only team format.
+**Touches.** `useMatchSetupConfig` (player count bound), `PlayerSelection`,
+`Scoreboard` grid (`--sb-cols`/`--sb-rows`), `playerColors` (four colours),
+bull-off order, online roster limit (`MAX_ONLINE_PLAYERS` in `LobbyRoom`).
+**Exists.** The engine loops over `players` without a fixed count; only the UI
+and the palette assume four.
+**Effort.** 2 days, most of it the score cards at phone width.
+**Open.** Four more player colours that stay distinct on felt, and whether 4v4 is
+wanted or only free-for-all.
+
+### Six-character room codes
+**Problem.** Four characters from a 32-letter alphabet (no I, O, 0, 1) give about
+a million codes, fine today, but short enough to guess a public room by trying.
+**Touches.** `generateRoomCode` and `isRoomCodeFree` in `useOnlineStore`,
+`CodeInput` (`ROOM_CODE_LENGTH`), the share text in `LobbyRoom`.
+**Exists.** Code length is one constant on the input side; the store already
+retries on collision.
+**Effort.** Half a day.
+**Open.** Whether rooms opened by an older client (four characters) must stay
+joinable during the switch.
+
+### Throwing hand
+**Problem.** Heatmap and radar read differently for left- and right-handed
+players (the natural miss drifts to the other side), and nothing records it.
+**Touches.** `Profile` (a `hand` field), `CreateProfileCard`, `ProfileList`,
+optionally the heatmap caption.
+**Exists.** Profiles already carry optional per-player settings (`color`,
+`targetAverage`) and sync through backups.
+**Effort.** Half a day for the field, more if the statistics should use it.
+**Open.** Whether it changes anything beyond a label.
+
+### New training drills
+**Problem.** Three drills cover scoring, splitting and finishing; doubles-only
+practice (Round the Clock on doubles, Bob’s 27) and a timed 121 are missing.
+**Touches.** A component per drill like `CheckoutTraining`, `TrainingHub`
+(`MODE_CARDS`), `MatchHistory.gameType`, `playerStats` (`TRAINING_LABELS`),
+the story export.
+**Exists.** Since v2.0.0 every drill runs inside `MatchShell` with the shared
+keypad and celebration stage, and statistics filter by `gameType`.
+**Effort.** 1–2 days per drill.
+**Open.** Which drills first; whether they share the Cricket work above.
+
 ---
 
 ## Long term
@@ -148,12 +192,12 @@ named scale, and the 601px outlier was folded into 600px. Four widths are still
 off it — 360, 420, 500 and 560 — and each one moves a layout at a real device
 width. They need a browser and an eye, not a search-and-replace.
 
-**Reducing the 120 `!important` declarations.** They are concentrated in the two
-theme stylesheets, which override the base sheet by design. Removing them means
-restructuring specificity across three files; worth doing when the theme layer
-is next touched, not on its own.
+**Reducing the remaining `!important` declarations.** Most of the 120 lived in the
+two theme stylesheets, which v2.0.0 removed together with the themes. 25 are left
+in `src/index.css`; look at them when that file is split further, not on their
+own.
 
-**A generic `Modal` component.** `ConfirmModal` and the bottom-sheet result
-dialog share `useModalA11y` but nothing else: one is a question, the other a
-sheet with its own animation and layout. A common wrapper would be an
-abstraction over two things that differ in everything but their focus trap.
+**A generic `Modal` component.** v2.0.0 settled on two shapes, `Sheet` (from the
+bottom) and `Dialog` (a question in the middle), both on `useModalA11y`.
+`ConfirmModal` remains for a few older confirmations; folding it into `Dialog`
+is a small follow-up, not a reason for a third wrapper.

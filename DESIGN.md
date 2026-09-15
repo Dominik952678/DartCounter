@@ -94,6 +94,30 @@ Die App geht davon aus, dass man Darts kennt. Bust, Bogey, Freeze, Finish-Modi u
 
 ### Statistik
 Alle Kennzahlen bleiben erhalten — am Matchende und auf der Statistikseite (Average, Erste 9, Checkout- und Triple-Quote mit L5, Rekorde, Head-to-Head, Verläufe, Segmente, Radar, Heatmap).
+- Oben Offline/Online als Slider, darunter Spieler und Modus als Filterkacheln, bei X01 die Bereiche Überblick · Treffer · Rekorde.
+- Gerechnet wird ausschließlich in `utils/playerStats.ts`; die Screens formatieren nur.
+- Die Match-Historie liegt unter `/stats?view=matches`, nach Monat gruppiert, jede Zeile aufklappbar (Spieler, Leg-Verlauf, Bild teilen).
+- Diagramme sind eigene SVG-Komponenten in `components/charts/` (Linie, Ring, Radar, Vergleichstabelle, Board). Keine Chart-Library.
+
+### Blätter und Dialoge
+- **Sheet** (`ui/Sheet.tsx`): fährt von unten herein, für alles, was den Screen darunter nicht verlässt — Einstellungen, Live-Statistik, Raum erstellen, Standardspiel, Ausbullen.
+- **Dialog** (`ui/Dialog.tsx`): eine Frage in der Mitte, Knöpfe untereinander. Optionales Label darüber in Grün (Check) oder Rot (Verpasst, Gefahrenzone). Ohne `onClose` muss er beantwortet werden.
+- `ConfirmModal` bleibt nur, wo er bis v1.17 stand und keine neue Gestaltung nötig war (Profil löschen, Sicherung einspielen, Gast-Sync).
+
+### Online
+- Raumcode als vier Kästchen über einem einzigen Textfeld (Einfügen und Autokorrektur funktionieren wie überall).
+- Verbindungsstatus oben rechts: Punkt plus Label, Grün verbunden, Orange verbindet, Rot offline. Ohne Netz eine Leiste über dem Screen und der Weg zum lokalen Match.
+- Im Warteraum stellt der Gastgeber die Regeln live mit denselben Slidern und Steppern wie beim neuen Spiel ein; Gäste sehen sie als Bausteine, der erste in Knochen.
+
+### Profil und Einstellungen
+- „Mein Profil" ist eine Liste aus Zeilen (Wert rechts, Pfeil) und Schaltern (`ui/Toggle.tsx`, Knochen wenn an). Unter dem Titel darf eine kurze Zeile stehen, was der Schalter tut.
+- Geräte-Einstellungen stehen in `utils/deviceSettings.ts` und ziehen mit der Sicherung um: Standardspiel, Checkout-Hinweise (Standard an), Bildschirm wach halten (Standard an, `hooks/useWakeLock.ts`).
+- Das Standardspiel steht auf Start als orange Karte vor „Weiter wie zuletzt" und startet über denselben Setup-Weg (`/play?start=1`).
+- Spieler & Bots: eine Zeile pro Person; Farbe, Bot-Stärke und Löschen sitzen direkt auf der Zeile, der Tipp auf den Namen öffnet die Statistik.
+- Destruktives steht unter „Gefahrenzone" in Rot und fragt immer nach.
+
+### Stylesheets
+Ein Bereich, eine Datei in `src/styles/`: `tokens`, `components`, `nav`, `start`, `match`, `setup`, `result`, `online`, `stats`, `profile`, `auth`, `celebration`. `src/index.css` hält nur noch Basis, Utilities und die noch nicht umgezogenen Trainings-Bausteine.
 
 ---
 
