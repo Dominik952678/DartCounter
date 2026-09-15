@@ -1,11 +1,9 @@
-import { readKeepAwake } from '../utils/deviceSettings';
-import { useWakeLock } from '../hooks/useWakeLock';
 import React, { useState, useEffect, useLayoutEffect } from 'react';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import type { Profile, Dart } from '../types';
-import { playDartHitSound, playSciFiHitSound, speak, play180Sound, isSoundEnabled, setSoundEnabled } from '../utils/audio';
-import { ConfirmModal } from './ConfirmModal';
-import { Button, StatStrip, Icons } from './ui';
+import { playDartHitSound, playSciFiHitSound, speak, play180Sound } from '../utils/audio';
+import { Button, StatStrip, Icons, Dialog } from './ui';
+import { MatchShell } from './match/MatchShell';
 import type { Celebration } from '../types';
 import { HIGH_SCORE_MIN, isCelebration } from '../utils/celebration';
 import { CelebrationStage } from './celebration/CelebrationStage';
@@ -91,9 +89,6 @@ interface HistorySnapshot {
 
 export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFinish, onAbort, isOnline, isHost, roomChannel, myUsername }) => {
   const [showAbortConfirm, setShowAbortConfirm] = useState(false);
-  const [soundOn, setSoundOn] = useState(isSoundEnabled());
-  const [keepAwake] = useState(readKeepAwake);
-  useWakeLock(keepAwake);
   const [gameState, setGameState] = useState<PlayerState[]>(() => 
     players.map(p => ({
       name: p,
@@ -405,50 +400,14 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
   const activeSplitLog = gameState[activePlayer]?.splitLog ?? [];
 
   return (
-    <div className="screen active-screen game-screen-layout">
-      {isOnline && !isMyTurn && (
-         <div className="bust-flash">
-            Warte auf {activeP.name}...
-         </div>
-      )}
-      <div style={{ opacity: (!isOnline || isMyTurn) ? 1 : 0.6, height: '100%', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-        <div className="match-top-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden', minWidth: 0 }}>
-            <span className="match-title">
-              <Icons.IconSplit size={17} /> Split Score
-            </span>
-            <span className="match-meta">
-              Ziel: {currentTarget?.label} ({currentRoundIndex + 1}/{TARGETS.length})
-            </span>
-          </div>
+    <MatchShell
+      title="Split Score"
+      meta={`Ziel ${currentTarget?.label} · ${currentRoundIndex + 1} / ${TARGETS.length}`}
+      onMenu={() => setShowAbortConfirm(true)}
+      rightDisabled={Boolean(isOnline) && !isMyTurn}
+      left={
+        <>
 
-          <div className="match-header-actions">
-            <button 
-              onClick={() => {
-                const next = !soundOn;
-                setSoundEnabled(next);
-                setSoundOn(next);
-              }}
-              className={`btn-sound-toggle ${soundOn ? 'btn-sound-on' : 'btn-sound-off'}`}
-              title={soundOn ? 'Caller An (klicken zum Stummschalten)' : 'Caller Aus (klicken zum Einschalten)'}
-              aria-label={soundOn ? 'Caller stummschalten' : 'Caller aktivieren'}
-            >
-              {soundOn ? <Icons.IconSoundOn size={18} /> : <Icons.IconSoundOff size={18} />}
-            </button>
-
-            <Button
-              variant="dangerText"
-              size="compact"
-              onClick={() => setShowAbortConfirm(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}
-            >
-              <Icons.IconClose size={16} /> <span className="btn-abort-text">Beenden</span>
-            </Button>
-          </div>
-        </div>
-
-        <div className="game-screen-body">
-          <div className="game-screen-left">
             {celebration && gameState[celebration.playerIndex] && (
               <CelebrationStage
                 key={celebration.id}
@@ -549,10 +508,12 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
                 </ul>
               )}
             </div>
-          </div>
+        </>
+      }
+      right={
+        <>
 
-          <div className="game-screen-right" style={{ pointerEvents: (!isOnline || isMyTurn) ? 'auto' : 'none' }}>
-            <div className="keypad" style={{ padding: '10px 0' }}>
+            <div className="keypad split-pad">
               {celebration && <CelebrationBoard key={celebration.id} celebration={celebration} />}
               {currentTarget?.type === 'number' && currentTarget?.val !== 25 && (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
@@ -596,24 +557,28 @@ export const SplitScore: React.FC<SplitScoreProps> = ({ players, profiles, onFin
                 </Button>
               </div>
             </div>
-          </div>
+        </>
+      }
+    >
+      {isOnline && !isMyTurn && (
+        <div className="turn-banner" role="status">
+          <span className="turn-banner-dot" aria-hidden="true" />
+          {activeP.name} ist am Board
         </div>
-      </div>
+      )}
 
       {showAbortConfirm && (
-        <ConfirmModal
-          title="Training beenden?"
-          message="Möchtest du die aktuelle Training-Session wirklich abbrechen?"
-          confirmLabel="Beenden"
-          cancelLabel="Weiterspielen"
-          destructive
-          onConfirm={() => {
-            setShowAbortConfirm(false);
-            onAbort();
-          }}
-          onCancel={() => setShowAbortConfirm(false)}
-        />
+        <Dialog title="Training beenden?" onClose={() => setShowAbortConfirm(false)}>
+          <div className="dialog-actions">
+            <Button variant="dangerText" size="large" onClick={() => { setShowAbortConfirm(false); onAbort(); }}>
+              Training abbrechen
+            </Button>
+            <Button variant="ghost" onClick={() => setShowAbortConfirm(false)}>
+              Weiterspielen
+            </Button>
+          </div>
+        </Dialog>
       )}
-    </div>
+    </MatchShell>
   );
 };

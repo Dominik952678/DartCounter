@@ -942,3 +942,21 @@
     margin: 0 auto;
   }
 }
+
+/* ── Split Score: Tasten für das laufende Ziel ──
+   Markup: components/SplitScore.tsx. Statt 1–20 stehen hier nur die Würfe,
+   die für das Ziel zählen (Single/Double/Triple, Bull, Miss) — dieselbe Höhe
+   wie die Tasten des Keypads. */
+.split-pad {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: 10px 0;
+}
+.split-pad .num-btn {
+  min-height: 56px;
+  font-size: 22px;
+}
+.split-pad .numpad-grid .num-btn {
+  font-size: 24px;
+}

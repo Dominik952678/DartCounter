@@ -18,6 +18,8 @@ interface MatchShellProps {
   aside?: React.ReactNode;
   /** Dialoge und Blätter über dem Screen. */
   children?: React.ReactNode;
+  /** Sperrt und dimmt die Eingabe, solange online jemand anderes wirft. */
+  rightDisabled?: boolean;
 }
 
 /**
@@ -28,7 +30,7 @@ interface MatchShellProps {
  * Die Klassen `.game-screen-left` und `.game-screen-right` sind der
  * Bezugsrahmen der Feier-Animationen (styles/celebration.css) und bleiben.
  */
-export const MatchShell: React.FC<MatchShellProps> = ({ title, meta, onMenu, onStats, left, right, aside, children }) => {
+export const MatchShell: React.FC<MatchShellProps> = ({ title, meta, onMenu, onStats, left, right, aside, children, rightDisabled = false }) => {
   const [soundOn, setSoundOn] = useState(isSoundEnabled());
   const [keepAwake] = useState(readKeepAwake);
   useWakeLock(keepAwake);
@@ -64,7 +66,12 @@ export const MatchShell: React.FC<MatchShellProps> = ({ title, meta, onMenu, onS
 
       <div className="game-screen-body">
         <div className="game-screen-left">{left}</div>
-        <div className="game-screen-right">{right}</div>
+        <div
+          className="game-screen-right"
+          style={rightDisabled ? { pointerEvents: 'none', opacity: 0.6 } : undefined}
+        >
+          {right}
+        </div>
         {aside && <aside className="game-screen-stats" aria-label="Live-Statistik">{aside}</aside>}
       </div>
 

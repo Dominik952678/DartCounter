@@ -1,17 +1,15 @@
-import { readKeepAwake } from '../utils/deviceSettings';
-import { useWakeLock } from '../hooks/useWakeLock';
 import React, { useState, useEffect, useLayoutEffect } from 'react';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import type { Profile, Dart } from '../types';
 import { Keypad } from './Keypad';
 import { getBotDart } from '../utils/bot';
-import { playDartHitSound, playSciFiHitSound, speak, play180Sound, isSoundEnabled, setSoundEnabled } from '../utils/audio';
+import { playDartHitSound, playSciFiHitSound, speak, play180Sound } from '../utils/audio';
 import type { Celebration } from '../types';
 import { HIGH_SCORE_MIN, isCelebration } from '../utils/celebration';
 import { CelebrationStage } from './celebration/CelebrationStage';
 import { CelebrationBoard } from './celebration/CelebrationBoard';
-import { ConfirmModal } from './ConfirmModal';
-import { Button, StatStrip, Icons } from './ui';
+import { Button, StatStrip, Icons, Dialog } from './ui';
+import { MatchShell } from './match/MatchShell';
 import { withDartRecorded } from '../utils/segmentStats';
 import { liveStats } from '../utils/storyExport';
 import { playerColorBySeat } from '../utils/playerColors';
@@ -132,9 +130,6 @@ const PowerScoringPlayerCard: React.FC<PlayerCardProps> = ({
 
 export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, rounds, onFinish, onAbort, isOnline, isHost, roomChannel, myUsername }) => {
   const [showAbortConfirm, setShowAbortConfirm] = useState(false);
-  const [soundOn, setSoundOn] = useState(isSoundEnabled());
-  const [keepAwake] = useState(readKeepAwake);
-  useWakeLock(keepAwake);
   const [gameState, setGameState] = useState<PlayerState[]>(() => 
     players.map(p => ({
       name: p,
@@ -377,51 +372,14 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
   };
 
   return (
-    <div className="screen active-screen game-screen-layout">
-      {isOnline && !isMyTurn && (
-         <div className="bust-flash">
-            Warte auf {activeP.name}...
-         </div>
-      )}
-      
-      <div style={{ opacity: (!isOnline || isMyTurn) ? 1 : 0.6, height: '100%', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-        <div className="match-top-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden', minWidth: 0 }}>
-            <span className="match-title">
-              <Icons.IconBars size={17} /> Power Scoring
-            </span>
-            <span className="match-meta">
-              Runde {currentRound} / {rounds}
-            </span>
-          </div>
+    <MatchShell
+      title="Power Scoring"
+      meta={`Runde ${currentRound} / ${rounds}`}
+      onMenu={() => setShowAbortConfirm(true)}
+      rightDisabled={Boolean(isOnline) && !isMyTurn}
+      left={
+        <>
 
-          <div className="match-header-actions">
-            <button 
-              onClick={() => {
-                const next = !soundOn;
-                setSoundEnabled(next);
-                setSoundOn(next);
-              }}
-              className={`btn-sound-toggle ${soundOn ? 'btn-sound-on' : 'btn-sound-off'}`}
-              title={soundOn ? 'Caller An (klicken zum Stummschalten)' : 'Caller Aus (klicken zum Einschalten)'}
-              aria-label={soundOn ? 'Caller stummschalten' : 'Caller aktivieren'}
-            >
-              {soundOn ? <Icons.IconSoundOn size={18} /> : <Icons.IconSoundOff size={18} />}
-            </button>
-
-            <Button
-              variant="dangerText"
-              size="compact"
-              onClick={() => setShowAbortConfirm(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }}
-            >
-              <Icons.IconClose size={16} /> <span className="btn-abort-text">Beenden</span>
-            </Button>
-          </div>
-        </div>
-
-        <div className="game-screen-body">
-          <div className="game-screen-left">
             {celebration && gameState[celebration.playerIndex] && (
               <CelebrationStage
                 key={celebration.id}
@@ -456,9 +414,11 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
                 </ul>
               )}
             </div>
-          </div>
+        </>
+      }
+      right={
+        <>
 
-          <div className="game-screen-right" style={{ pointerEvents: (!isOnline || isMyTurn) ? 'auto' : 'none' }}>
             <Keypad 
               currentRoundDarts={currentRoundDarts}
               currentMultiplier={currentMultiplier}
@@ -470,24 +430,28 @@ export const PowerScoring: React.FC<PowerScoringProps> = ({ players, profiles, r
               canUndo={(history.length > 0 || currentRoundDarts.length > 0) && !isProcessing}
               overlay={celebration ? <CelebrationBoard key={celebration.id} celebration={celebration} /> : null}
             />
-          </div>
+        </>
+      }
+    >
+      {isOnline && !isMyTurn && (
+        <div className="turn-banner" role="status">
+          <span className="turn-banner-dot" aria-hidden="true" />
+          {activeP.name} ist am Board
         </div>
+      )}
 
-        {showAbortConfirm && (
-          <ConfirmModal
-            title="Training beenden?"
-            message="Möchtest du die aktuelle Training-Session wirklich abbrechen?"
-            confirmLabel="Beenden"
-            cancelLabel="Weiterspielen"
-            destructive
-            onConfirm={() => {
-              setShowAbortConfirm(false);
-              onAbort();
-            }}
-            onCancel={() => setShowAbortConfirm(false)}
-          />
-        )}
-      </div>
-    </div>
+      {showAbortConfirm && (
+        <Dialog title="Training beenden?" onClose={() => setShowAbortConfirm(false)}>
+          <div className="dialog-actions">
+            <Button variant="dangerText" size="large" onClick={() => { setShowAbortConfirm(false); onAbort(); }}>
+              Training abbrechen
+            </Button>
+            <Button variant="ghost" onClick={() => setShowAbortConfirm(false)}>
+              Weiterspielen
+            </Button>
+          </div>
+        </Dialog>
+      )}
+    </MatchShell>
   );
 };

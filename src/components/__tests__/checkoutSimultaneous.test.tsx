@@ -50,13 +50,13 @@ describe('Checkout Training: alle spielen dasselbe Ziel', () => {
     press('Miss'); press('Miss'); press('Miss');
     await advance(1000);
     expect(activeName()).toBe('Ben');
-    expect(meta()).toBe('Target 1 / 2');
+    expect(meta()).toBe('Ziel 1 / 2');
 
     // His second round runs out as well: now both move on together.
     press('Miss'); press('Miss'); press('Miss');
     await advance(1000);
     expect(activeName()).toBe('Anna');
-    expect(meta()).toBe('Target 2 / 2');
+    expect(meta()).toBe('Ziel 2 / 2');
   });
 
   it('celebrates the check and the missed target', async () => {
